@@ -1,0 +1,5 @@
+# ------------------------------------------------
+# file: requirements.txt  (place in the same folder as app.py)
+# ------------------------------------------------
+pandas
+openpyxl
