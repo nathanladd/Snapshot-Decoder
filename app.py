@@ -40,7 +40,8 @@ class SnapshotReaderApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_TITLE)
-        self.geometry("1200x720")
+        #self.geometry("1200x720")
+        self.state("zoomed")
 
         # State
         self.df: Optional[pd.DataFrame] = None
@@ -188,6 +189,24 @@ class SnapshotReaderApp(tk.Tk):
         self.right = ttk.Frame(root, padding=10)
         self.right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
+           # --- Status Bar ---
+        self.status_var = tk.StringVar(value="Ready")
+        self.status_bar = ttk.Label(
+            self,
+            textvariable=self.status_var,
+            anchor="w",              # left-align text
+            relief="sunken",         # classic status bar look
+            padding=(8, 2)
+        )
+        self.status_bar.pack(side="bottom", fill="x")
+    # -------------------
+
+    def set_status(self, text: str):
+        """Update the status bar text and keep the UI snappy."""
+        self.status_var.set(text)
+        # Force a quick redraw so the message appears immediately
+        self.status_bar.update_idletasks()
+
     def _build_plot_area(self):
         # Create an empty figure placeholder
         self.figure = Figure(figsize=(7,5), dpi=100)
@@ -208,6 +227,8 @@ class SnapshotReaderApp(tk.Tk):
             self._toggle_secondary_inputs()
         except Exception:
             pass
+
+ 
 
     # ---------------------- Data Loading ----------------------
     def open_file(self):
@@ -236,7 +257,10 @@ class SnapshotReaderApp(tk.Tk):
         self.df = df
         self._populate_columns_list()
         self._update_controls_state(enabled=True)
-        messagebox.showinfo("Loaded", f"Loaded {os.path.basename(path)} with {len(self.df.columns)} columns and {len(self.df)} rows.")
+        #messagebox.showinfo("Loaded", f"Loaded {os.path.basename(path)} with {len(self.df.columns)} columns and {len(self.df)} rows.")
+        #Udate the status bar with file information
+        self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
+
 
     def _load_engine_data(self, path: str) -> pd.DataFrame:
         """Load Excel, find header row containing 'P_L_Battery_raw', set headers,
