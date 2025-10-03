@@ -268,7 +268,8 @@ class SnapshotReaderApp(tk.Tk):
         and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
         """
         # Read raw with no header so we can scan rows
-        raw = pd.read_excel(path, header=None, engine="openpyxl")
+        #raw = pd.read_excel(path, header=None, engine="openpyxl")
+        raw = pd.read_excel("legacy.xls", engine="calamine")  # works for .xls and .xlsx
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
