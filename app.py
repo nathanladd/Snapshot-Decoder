@@ -234,7 +234,7 @@ class SnapshotReaderApp(tk.Tk):
     def open_file(self):
         path = filedialog.askopenfilename(
             title="Open Engine Data (.xlsx)",
-            filetypes=[("Excel Workbook", "*.xlsx"), ("All files", "*.*")],
+            filetypes=[("Modern Excel", "*.xlsx"), ("Legacy Excel", "*.xls"), ("All files", "*.*")],
         )
         if not path:
             return
@@ -255,9 +255,7 @@ class SnapshotReaderApp(tk.Tk):
             return
 
         self.df = df
-        #self._populate_columns_list()
         self._update_controls_state(enabled=True)
-        #messagebox.showinfo("Loaded", f"Loaded {os.path.basename(path)} with {len(self.df.columns)} columns and {len(self.df)} rows.")
         #Udate the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
@@ -269,7 +267,7 @@ class SnapshotReaderApp(tk.Tk):
         """
         # Read raw with no header so we can scan rows
         #raw = pd.read_excel(path, header=None, engine="openpyxl")
-        raw = pd.read_excel("legacy.xls", engine="calamine")  # works for .xls and .xlsx
+        raw = pd.read_excel(path, header=None, engine="calamine")  # works for .xls and .xlsx
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
