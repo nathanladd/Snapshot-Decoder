@@ -189,7 +189,7 @@ class SnapshotReaderApp(tk.Tk):
         self.right = ttk.Frame(root, padding=10)
         self.right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-           # --- Status Bar ---
+        # Status Bar
         self.status_var = tk.StringVar(value="Ready")
         self.status_bar = ttk.Label(
             self,
@@ -199,7 +199,7 @@ class SnapshotReaderApp(tk.Tk):
             padding=(8, 2)
         )
         self.status_bar.pack(side="bottom", fill="x")
-    # -------------------
+    
 
     def set_status(self, text: str):
         """Update the status bar text and keep the UI snappy."""
@@ -234,15 +234,17 @@ class SnapshotReaderApp(tk.Tk):
     def open_file(self):
         path = filedialog.askopenfilename(
             title="Open Engine Data (.xlsx)",
-            filetypes=[("Excel Workbook", "*.xlsx"), ("All files", "*.*")],
+            filetypes=[("Modern Excel", "*.xlsx"), ("Legacy Excel", "*.xls"), ("All files", "*.*")],
         )
         if not path:
             return
         ext = os.path.splitext(path)[1].lower()
         if ext == ".xls":
             messagebox.showwarning(
-                "Legacy .xls not supported",
-                "This app doesn't open legacy .xls files.\n\nOpen the file in Excel and Save As .xlsx, then try again.")
+                "Some Bobcat Engine Analyzer Files Not Supported",
+                "Bobcat Engine Analyzer doesn't even really generate legit .xls files.\n\n" \
+                "This app can't convert whatever those files are into proper .xlsx files.\n\n" \
+                "Open the file in Excel and use its Save As command to convert this file to a proper .xlsx, then try again.")
             return
         try:
             df = self._load_engine_data(path)
@@ -255,9 +257,7 @@ class SnapshotReaderApp(tk.Tk):
             return
 
         self.df = df
-        #self._populate_columns_list()
         self._update_controls_state(enabled=True)
-        #messagebox.showinfo("Loaded", f"Loaded {os.path.basename(path)} with {len(self.df.columns)} columns and {len(self.df)} rows.")
         #Udate the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
@@ -268,7 +268,8 @@ class SnapshotReaderApp(tk.Tk):
         and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
         """
         # Read raw with no header so we can scan rows
-        raw = pd.read_excel(path, header=None, engine="openpyxl")
+        #raw = pd.read_excel(path, header=None, engine="openpyxl")
+        raw = pd.read_excel(path, header=None, engine="calamine")  # works for .xls and .xlsx - More modern and faster than openxl
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
@@ -332,7 +333,7 @@ class SnapshotReaderApp(tk.Tk):
         # Prevent duplicates and avoid placing Time or Frame on y-axes (they can still be used on x later)
         filtered = [s for s in sel if s not in ("Frame", "Time")]
         if not filtered:
-            messagebox.showinfo("Heads up", "Select one or more signal columns (not Frame/Time).")
+            messagebox.showinfo("Heads up", "Select one or more PID columns (not Frame/Time).")
             return
 
         if target == "primary":
