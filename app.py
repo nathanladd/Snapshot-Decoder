@@ -258,7 +258,7 @@ class SnapshotReaderApp(tk.Tk):
 
         self.df = df
         self._update_controls_state(enabled=True)
-        #Udate the status bar with file information
+        #Update the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
 
@@ -291,10 +291,10 @@ class SnapshotReaderApp(tk.Tk):
 
         # Try to ensure first two columns are named exactly Frame and Time if present
         if len(df.columns) >= 2:
-            if str(df.columns[0]).strip().lower() == "frame":
-                df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
-            if str(df.columns[1]).strip().lower() == "time":
-                df.rename(columns={df.columns[1]: "Time"}, inplace=True)
+            #if str(df.columns[0]).strip().lower() == "frame":
+            df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
+            #if str(df.columns[1]).strip().lower() == "time":
+            df.rename(columns={df.columns[1]: "Time"}, inplace=True)
 
         # Coerce numerics where possible
         df = df.apply(pd.to_numeric, errors="ignore")
