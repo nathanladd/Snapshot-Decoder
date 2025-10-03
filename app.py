@@ -258,7 +258,7 @@ class SnapshotReaderApp(tk.Tk):
 
         self.df = df
         self._update_controls_state(enabled=True)
-        #Udate the status bar with file information
+        #Update the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
 
@@ -289,12 +289,16 @@ class SnapshotReaderApp(tk.Tk):
         # Normalize column names: strip and preserve original case
         df.columns = [str(c).strip() for c in df.columns]
 
-        # Try to ensure first two columns are named exactly Frame and Time if present
+
+        # Try to ensure first two columns are named exactly Frame and Time
+        # I had to copy the entire list of column names into a list, change the firts two column names
+        # then reassign the names to the data frame - all because the 'NaN' 
+        
         if len(df.columns) >= 2:
-            if str(df.columns[0]).strip().lower() == "frame":
-                df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
-            if str(df.columns[1]).strip().lower() == "time":
-                df.rename(columns={df.columns[1]: "Time"}, inplace=True)
+            new_cols = list(df.columns)  # copy all names
+            new_cols[0] = "Frame"
+            new_cols[1] = "Time"
+            df.columns = new_cols
 
         # Coerce numerics where possible
         df = df.apply(pd.to_numeric, errors="ignore")
