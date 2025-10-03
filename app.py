@@ -255,11 +255,12 @@ class SnapshotReaderApp(tk.Tk):
             return
 
         self.df = df
-        self._populate_columns_list()
+        #self._populate_columns_list()
         self._update_controls_state(enabled=True)
         #messagebox.showinfo("Loaded", f"Loaded {os.path.basename(path)} with {len(self.df.columns)} columns and {len(self.df)} rows.")
         #Udate the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
+        self._populate_columns_list()
 
 
     def _load_engine_data(self, path: str) -> pd.DataFrame:
