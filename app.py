@@ -34,6 +34,9 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+# Class to pull Snapshot header iformation - if it exists
+from header_panel import SimpleHeaderPanel, parse_simple_header
+
 APP_TITLE = "Snapshot Reader"
 
 class SnapshotReaderApp(tk.Tk):
@@ -95,6 +98,10 @@ class SnapshotReaderApp(tk.Tk):
     def _build_layout(self):
         root = ttk.Frame(self)
         root.pack(fill=tk.BOTH, expand=True)
+
+        # Snapshot Header Information
+        self.header_panel = SimpleHeaderPanel(self.left_or_top_frame, title="Snapshot Header")
+        self.header_panel.pack(fill="x", padx=8, pady=8)
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -270,6 +277,15 @@ class SnapshotReaderApp(tk.Tk):
         # Read raw with no header so we can scan rows
         #raw = pd.read_excel(path, header=None, engine="openpyxl")
         raw = pd.read_excel(path, header=None, engine="calamine")  # works for .xls and .xlsx - More modern and faster than openxl
+
+        # Pull any header information from teh Snapshot if it exists
+        header_pairs = parse_simple_header(df_raw, max_rows=4)
+
+        # If nothing found, show a gentle placeholder
+        if header_pairs:
+            self.header_panel.set_rows(header_pairs)
+        else:
+            self.header_panel.set_rows([("Header", "No header info present")])
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
