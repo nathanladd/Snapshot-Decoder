@@ -110,7 +110,7 @@ class SnapshotReaderApp(tk.Tk):
         left = ttk.Frame(root, padding=10)
         left.pack(side=tk.LEFT, fill=tk.Y)
 
-        ttk.Label(left, text="PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
+        ttk.Label(left, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
         # Search box
         self.search_var = tk.StringVar()
         search = ttk.Entry(left, textvariable=self.search_var)
