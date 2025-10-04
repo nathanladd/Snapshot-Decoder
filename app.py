@@ -31,10 +31,11 @@ from tkinter import ttk, filedialog, messagebox
 from typing import List, Optional
 
 import pandas as pd
+
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Class to pull Snapshot header iformation - if it exists
+# Class to pull Snapshot header information - if it exists
 from header_panel import SimpleHeaderPanel, parse_simple_header
 
 APP_TITLE = "Snapshot Reader"
@@ -99,16 +100,20 @@ class SnapshotReaderApp(tk.Tk):
         root = ttk.Frame(self)
         root.pack(fill=tk.BOTH, expand=True)
 
+      
+
         # Snapshot Header Information
         self.header_panel = SimpleHeaderPanel(root, title="Snapshot Header")
         self.header_panel.pack(fill="x", padx=8, pady=8)
 
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-
         # Left: column pickers
-        left = ttk.Frame(root, padding=10)
-        left.pack(side=tk.LEFT, fill=tk.Y)
+        left = ttk.Frame(root, padding=5)
+        left.pack(side=tk.LEFT, fill=tk.Y) 
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)         
+
+        
 
         ttk.Label(left, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
         # Search box
