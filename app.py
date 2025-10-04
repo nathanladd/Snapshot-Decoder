@@ -511,6 +511,8 @@ class SnapshotReaderApp(tk.Tk):
         self.figure.tight_layout()
         self.canvas.draw_idle()
 
+# Build a new window with a clean data table
+
     def open_data_table(self):
         if self.df is None or self.df.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
