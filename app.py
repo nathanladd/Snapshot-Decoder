@@ -100,7 +100,7 @@ class SnapshotReaderApp(tk.Tk):
         root.pack(fill=tk.BOTH, expand=True)
 
         # Snapshot Header Information
-        self.header_panel = SimpleHeaderPanel(self.left_or_top_frame, title="Snapshot Header")
+        self.header_panel = SimpleHeaderPanel(root, title="Snapshot Header")
         self.header_panel.pack(fill="x", padx=8, pady=8)
 
         self.columnconfigure(0, weight=1)
@@ -279,7 +279,7 @@ class SnapshotReaderApp(tk.Tk):
         raw = pd.read_excel(path, header=None, engine="calamine")  # works for .xls and .xlsx - More modern and faster than openxl
 
         # Pull any header information from teh Snapshot if it exists
-        header_pairs = parse_simple_header(df_raw, max_rows=4)
+        header_pairs = parse_simple_header(raw, max_rows=4)
 
         # If nothing found, show a gentle placeholder
         if header_pairs:
