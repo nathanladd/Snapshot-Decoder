@@ -84,16 +84,27 @@ class SimpleHeaderPanel(ttk.Frame):
         panel = SimpleHeaderPanel(parent)
         panel.set_rows([("Engine Model","X"), ("ECU Map Version","Y")])
     """
-    def __init__(self, master, title="Snapshot Header"):
+    
+
+    def __init__(self, master, title="Error"):
         super().__init__(master)
+
+        # Style to set background color
+        style = ttk.Style()
+        style.configure("Orange_Background.TFrame", background="#FF9634")
 
         # Layout: 2 columns (key/value)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
 
+        # Set frame size
+        self.config(width=20, height=130)
+        self.grid_propagate(False)
+        self.configure(style="Orange_Background.TFrame")
+
         # Title
-        self._title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"))
-        self._title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        self._title = tk.Label(self, text=title, font=("Segoe UI", 11, "bold"), bg="#FF9634")
+        self._title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
 
         self._row_start = 1
         self._rows = []  # track widgets so we can clear
@@ -114,10 +125,10 @@ class SimpleHeaderPanel(ttk.Frame):
         used = set()
 
         def add_row(k, v):
-            k_lbl = ttk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"))
-            v_lbl = tk.Label(self, text=v, justify="left", anchor="w")
-            k_lbl.grid(row=r_dict["r"], column=0, sticky="nw", padx=(0, 10), pady=2)
-            v_lbl.grid(row=r_dict["r"], column=1, sticky="ew", pady=2)
+            k_lbl = tk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"), bg="#FF9634")
+            v_lbl = tk.Label(self, text=v, justify="left", anchor="w", bg="#FF9634")
+            k_lbl.grid(row=r_dict["r"], column=0, sticky="nw", padx=(0, 10), pady=1)
+            v_lbl.grid(row=r_dict["r"], column=1, sticky="w", pady=1)
             self._rows.extend([k_lbl, v_lbl])
             r_dict["r"] += 1
 
