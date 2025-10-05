@@ -91,6 +91,10 @@ class SimpleHeaderPanel(ttk.Frame):
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
 
+        # Set frame size
+        self.config(width=120, height=100)
+        self.grid_propagate(False)
+
         # Title
         self._title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"))
         self._title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
