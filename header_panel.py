@@ -10,9 +10,7 @@ CANON_LABELS = {
     "engine model": "Engine Model",
     "ecu map version": "ECU Map Version",
     "program sw version": "Program SW Version",
-    "data logging": "Data Logging",
-    "version": "Version",
-    "start time": "Start Time"
+    "data logging": "Data Logging"
 }
 
 def _normalize_label(text: str) -> str:
