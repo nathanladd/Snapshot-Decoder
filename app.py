@@ -41,20 +41,22 @@ from header_panel import SimpleHeaderPanel, parse_simple_header
 APP_TITLE = "Snapshot Reader"
 
 class SnapshotReaderApp(tk.Tk):
+
     #__init__ is a special built-in method name in Python. 
     # When you create (or “instantiate”) an object from a class, 
     # Python automatically calls this method. 
     # It’s where you set up the initial state of the object — 
     # like its variables, default values, 
     # or anything else that needs to happen right when it’s born.
+
     def __init__(self):
         # super().__init__() says: “Run whatever setup the parent class 
         # normally does before I do my own stuff.” 
         # It’s like calling your parent’s __init__ before adding 
         # your own custom initialization steps.
         super().__init__()
+        
         self.title(APP_TITLE)
-        #self.geometry("1200x720")
         self.state("zoomed")
 
         # State
@@ -110,8 +112,6 @@ class SnapshotReaderApp(tk.Tk):
         root = ttk.Frame(self)
         root.pack(fill=tk.BOTH, expand=True)
 
-      
-
         # Snapshot Header Information
         self.header_panel = SimpleHeaderPanel(root, title="Snapshot Header")
         self.header_panel.pack(fill="x", padx=8, pady=8)
@@ -122,8 +122,6 @@ class SnapshotReaderApp(tk.Tk):
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)         
-
-        
 
         ttk.Label(left, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
         # Search box
