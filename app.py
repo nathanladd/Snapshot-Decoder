@@ -41,7 +41,17 @@ from header_panel import SimpleHeaderPanel, parse_simple_header
 APP_TITLE = "Snapshot Reader"
 
 class SnapshotReaderApp(tk.Tk):
+    #__init__ is a special built-in method name in Python. 
+    # When you create (or “instantiate”) an object from a class, 
+    # Python automatically calls this method. 
+    # It’s where you set up the initial state of the object — 
+    # like its variables, default values, 
+    # or anything else that needs to happen right when it’s born.
     def __init__(self):
+        # super().__init__() says: “Run whatever setup the parent class 
+        # normally does before I do my own stuff.” 
+        # It’s like calling your parent’s __init__ before adding 
+        # your own custom initialization steps.
         super().__init__()
         self.title(APP_TITLE)
         #self.geometry("1200x720")
