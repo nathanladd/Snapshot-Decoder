@@ -86,7 +86,7 @@ class SimpleHeaderPanel(ttk.Frame):
     """
     
 
-    def __init__(self, master, title="Snapshot Header Information"):
+    def __init__(self, master, title="Error"):
         super().__init__(master)
 
         # Style to set background color
@@ -128,7 +128,7 @@ class SimpleHeaderPanel(ttk.Frame):
             k_lbl = tk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"), bg="#FF9634")
             v_lbl = tk.Label(self, text=v, justify="left", anchor="w", bg="#FF9634")
             k_lbl.grid(row=r_dict["r"], column=0, sticky="nw", padx=(0, 10), pady=1)
-            v_lbl.grid(row=r_dict["r"], column=1, sticky="ew", pady=1)
+            v_lbl.grid(row=r_dict["r"], column=1, sticky="w", pady=1)
             self._rows.extend([k_lbl, v_lbl])
             r_dict["r"] += 1
 
