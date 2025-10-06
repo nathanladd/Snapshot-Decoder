@@ -114,14 +114,14 @@ class SnapshotReaderApp(tk.Tk):
 
         # Snapshot Header Information
         self.header_panel = SimpleHeaderPanel(root, title="Snapshot Header Information")
-        self.header_panel.pack(fill="x", padx=4, pady=4)
+        self.header_panel.pack(anchor="nw", padx=4, pady=4)
 
         # Left: column pickers
         left = ttk.Frame(root, padding=5)
         left.pack(side=tk.LEFT, fill=tk.Y) 
 
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)         
+        self.rowconfigure(0, weight=1)  
 
         ttk.Label(left, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
         # Search box
@@ -203,7 +203,7 @@ class SnapshotReaderApp(tk.Tk):
         self.secondary_max_entry.pack(side=tk.LEFT)
 
         # Plot button
-        tk.Button(left, text="Plot Combo Line Chart", font=("Segoe UI", 11, "bold"), command=self.plot_combo_chart).pack(fill=tk.X, pady=(6,0))
+        tk.Button(left, text="Plot Selected PIDs", font=("Segoe UI", 11, "bold"), command=self.plot_combo_chart).pack(fill=tk.X, pady=(6,0))
 
         # Right: figure area
         self.right = ttk.Frame(root, padding=10)
