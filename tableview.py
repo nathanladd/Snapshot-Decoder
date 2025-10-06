@@ -34,8 +34,8 @@ class DataTable(ttk.Frame):
 
         # Configure column headings and widths
         for col in columns:
-            # Set a modest width based on header length
-            width = max(80, len(col) * 10)
+            # Find the longest column name in the dataframe - Set a modest width based on header length
+            width = max(80, len(col) * 20)
             self.tree.heading(col, text=col)
             self.tree.column(col, width=width, anchor="center")
 
