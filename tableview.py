@@ -14,6 +14,10 @@ class DataTable(ttk.Frame):
         self.dataframe = dataframe
         self.max_rows = max_rows
 
+        # Make frame expandable
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
         # Create Treeview with columns from DataFrame
         columns = list(map(str, self.dataframe.columns))
         self.tree = ttk.Treeview(self, columns=columns, show="headings")
@@ -28,16 +32,12 @@ class DataTable(ttk.Frame):
         yscroll.grid(row=0, column=1, sticky="ns")
         xscroll.grid(row=1, column=0, sticky="ew")
 
-        # Make frame expandable
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
         # Configure column headings and widths
         for col in columns:
             # Find the longest column name in the dataframe - Set a modest width based on header length
-            width = max(80, len(col) * 20)
+            max_width = max(200, len(col) * 10)
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=width, anchor="center")
+            self.tree.column(col, width=max_width, minwidth=max_width, anchor="center", stretch=False)
 
         self._populate_rows()
 
