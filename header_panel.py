@@ -86,7 +86,7 @@ class SimpleHeaderPanel(ttk.Frame):
     """
     
 
-    def __init__(self, master, title="Error"):
+    def __init__(self, master, title=""):
         super().__init__(master)
 
         # Style to set background color
@@ -98,7 +98,7 @@ class SimpleHeaderPanel(ttk.Frame):
         self.columnconfigure(1, weight=1)
 
         # Set frame size
-        self.config(width=20, height=130)
+        self.config(width=400, height=130)
         self.grid_propagate(False)
         self.configure(style="Orange_Background.TFrame")
 
