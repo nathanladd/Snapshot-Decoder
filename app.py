@@ -56,7 +56,7 @@ class SnapshotReaderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         
-        self.title(APP_TITLE)
+        self._set_window_title()
         self.state("zoomed")
 
         # State
@@ -84,6 +84,14 @@ class SnapshotReaderApp(tk.Tk):
         self._update_controls_state(enabled=False)
 
     # ---------------------- UI Construction ----------------------
+    def _set_window_title(self, file_path=None):
+        '''Update the window title
+        If a Snapshot is open, include its name and path'''
+        if file_path:
+            self.title(f"{APP_TITLE} - {file_path}")
+        else:
+            self.title(APP_TITLE)
+   
     def _build_menu(self):
         menubar = tk.Menu(self)
 
@@ -278,6 +286,10 @@ class SnapshotReaderApp(tk.Tk):
 
         self.df = df
         self._update_controls_state(enabled=True)
+        
+        #Update main window title
+        self._set_window_title(file_path=os.path.basename(path))
+
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
