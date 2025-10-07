@@ -275,7 +275,7 @@ class SnapshotReaderApp(tk.Tk):
                 "Open the file in Excel and use its Save As command to convert this file to a proper .xlsx, then try again.")
             return
         try:
-            df = self._load_engine_data(path)
+            df = self._load_snapshot_data(path)
         except Exception as e:
             messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
             return
@@ -295,27 +295,26 @@ class SnapshotReaderApp(tk.Tk):
         self._populate_columns_list()
 
 
-    def _load_engine_data(self, path: str) -> pd.DataFrame:
+    def _load_snapshot_data(self, path: str) -> pd.DataFrame:
         """Load Excel, find header row containing 'P_L_Battery_raw', set headers,
         and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
         """
-        # Read raw with no header so we can scan rows
-        #raw = pd.read_excel(path, header=None, engine="openpyxl")
-        raw = pd.read_excel(path, header=None, engine="calamine")  # works for .xls and .xlsx - More modern and faster than openxl
+        # Read raw snapshot so we can pull the header information and scan rows
+        dirty_snapshot = pd.read_excel(path, header=None, engine="calamine")
 
-        # Pull any header information from teh Snapshot if it exists
-        header_pairs = parse_simple_header(raw, max_rows=4)
+        # Pull any header information from the Snapshot if it exists
+        header_info = parse_simple_header(dirty_snapshot, max_rows=4)
 
         # If nothing found, show a gentle placeholder
-        if header_pairs:
-            self.header_panel.set_rows(header_pairs)
+        if header_info:
+            self.header_panel.set_rows(header_info)
         else:
             self.header_panel.set_rows([("Header", "No header info present")])
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
-        for i in range(min(len(raw), 200)):  # scan first 200 rows for safety
-            row_values = raw.iloc[i].astype(str).str.strip().str.lower().tolist()
+        for i in range(min(len(dirty_snapshot), 200)):  # scan first 200 rows for safety
+            row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
             if any(v == "p_l_battery_raw" for v in row_values):
                 header_row_idx = i
                 break
@@ -323,34 +322,35 @@ class SnapshotReaderApp(tk.Tk):
             raise ValueError("Couldn't locate header row containing 'P_L_Battery_raw'.")
 
         # Set header row
-        header = raw.iloc[header_row_idx].astype(str).str.strip().tolist()
-        df = raw.iloc[header_row_idx+1:].copy()
-        df.columns = header
+        pid_header = dirty_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
+        clean_snapshot = dirty_snapshot.iloc[header_row_idx+1:].copy()
+        clean_snapshot.columns = pid_header
 
         # Normalize column names: strip and preserve original case
-        df.columns = [str(c).strip() for c in df.columns]
+        clean_snapshot.columns = [str(c).strip() for c in clean_snapshot.columns]
 
 
         # Try to ensure first two columns are named exactly Frame and Time
         # I had to copy the entire list of column names into a list, change the firts two column names
         # then reassign the names to the data frame - all because the 'NaN' 
         
-        if len(df.columns) >= 2:
-            new_cols = list(df.columns)  # copy all names
+        if len(clean_snapshot.columns) >= 2:
+            new_cols = list(clean_snapshot.columns)  # copy all names
             new_cols[0] = "Frame"
             new_cols[1] = "Time"
-            df.columns = new_cols
+            clean_snapshot.columns = new_cols
 
         # Coerce numerics where possible
-        df = df.apply(pd.to_numeric, errors="ignore")
+        clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
 
         # Find the start row where Frame == 0 (if Frame exists)
-        if "Frame" in df.columns:
-            start_idx = df.index[df["Frame"] == 0]
+        if "Frame" in clean_snapshot.columns:
+            start_idx = clean_snapshot.index[clean_snapshot["Frame"] == 0]
             if len(start_idx) > 0:
-                df = df.loc[start_idx[0]:].reset_index(drop=True)
+                clean_snapshot = clean_snapshot.loc[start_idx[0]:].reset_index(drop=True)
 
-        return df.reset_index(drop=True)
+        return clean_snapshot.reset_index(drop=True)
+
 
     # ---------------------- Column List Logic ----------------------
     def _populate_columns_list(self):
