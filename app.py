@@ -35,7 +35,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Class to pull Snapshot header information - if it exists
+# Class to manage Snapshot header information
 from header_panel import SimpleHeaderPanel, parse_simple_header
 
 APP_TITLE = "Snapshot Reader"

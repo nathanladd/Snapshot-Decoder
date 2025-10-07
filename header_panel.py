@@ -97,13 +97,13 @@ class SimpleHeaderPanel(ttk.Frame):
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
 
-        # Set frame size
-        self.config(width=400, height=130)
-        self.grid_propagate(False)
-        self.configure(style="Orange_Background.TFrame")
+        # # Set frame size
+        # self.config(width=400, height=130)
+        # self.grid_propagate(False)
+        # self.configure(style="Orange_Background.TFrame")
 
         # Title
-        self._title = tk.Label(self, text=title, font=("Segoe UI", 11, "bold"), bg="#FF9634")
+        self._title = tk.Label(self, text=title, font=("Segoe UI", 11, "bold"))
         self._title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
 
         self._row_start = 1
@@ -125,8 +125,8 @@ class SimpleHeaderPanel(ttk.Frame):
         used = set()
 
         def add_row(k, v):
-            k_lbl = tk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"), bg="#FF9634")
-            v_lbl = tk.Label(self, text=v, justify="left", anchor="w", bg="#FF9634")
+            k_lbl = tk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"))
+            v_lbl = tk.Label(self, text=v, justify="left", anchor="w",)
             k_lbl.grid(row=r_dict["r"], column=0, sticky="nw", padx=(0, 10), pady=1)
             v_lbl.grid(row=r_dict["r"], column=1, sticky="w", pady=1)
             self._rows.extend([k_lbl, v_lbl])
