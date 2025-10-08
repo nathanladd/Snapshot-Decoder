@@ -121,8 +121,8 @@ class SnapshotReaderApp(tk.Tk):
         root.pack(fill=tk.BOTH, expand=True)
 
         # Snapshot Header Information
-        self.header_panel = SimpleHeaderPanel(root, title="Snapshot Header Information")
-        self.header_panel.pack(anchor="nw", padx=4, pady=4)
+        self.header_frame = SimpleHeaderPanel(root, title="Snapshot Header Information")
+        self.header_frame.pack(anchor="nw", padx=4, pady=4)
 
         # Left: column pickers
         left = ttk.Frame(root, padding=5)
@@ -290,6 +290,9 @@ class SnapshotReaderApp(tk.Tk):
         #Update main window title
         self._set_window_title(file_path=os.path.basename(path))
 
+        #Update header frame PID information
+        self.header_frame.set_pid_info(pids_found=len(self.df.columns), frames_found=len(self.df))
+        
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
@@ -307,9 +310,9 @@ class SnapshotReaderApp(tk.Tk):
 
         # If nothing found, show a gentle placeholder
         if header_info:
-            self.header_panel.set_rows(header_info)
+            self.header_frame.set_rows(header_info)
         else:
-            self.header_panel.set_rows([("Header", "No header info present")])
+            self.header_frame.set_rows([("Header", "No header info present")])
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None

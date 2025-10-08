@@ -102,23 +102,39 @@ class SimpleHeaderPanel(ttk.Frame):
         # self.grid_propagate(False)
         # self.configure(style="Orange_Background.TFrame")
 
-        # Fill in Titles and headings
+        # Fill in Titles and Headings
         self.header_title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"), anchor="center")
         self.header_title.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(0, 3))
+
+        #Add a 3rd column to make white space between header and PID info
         self.columnconfigure(2,minsize=30)
+
+        #Add all the bold title informaion to the header
         self.version_title = ttk.Label(self, text="PID Information", font=("Segoe UI", 11, "bold"), anchor="center")
         self.version_title.grid(row=0, column=3, columnspan=2, sticky="nsew", pady=(0, 3))
-        self.engine_version = ttk.Label(self, text="Engine Version:", font=("Segoe UI", 9, "bold"), anchor="center")
+        self.engine_version = ttk.Label(self, text="Engine Version:", font=("Segoe UI", 9, "bold"))
         self.engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
-        self.pids_found = ttk.Label(self, text="PIDs Found:", font=("Segoe UI", 9, "bold"), anchor="center")
+        self.pids_found = ttk.Label(self, text="PIDs Found:", font=("Segoe UI", 9, "bold"))
         self.pids_found.grid(row=2, column=3, sticky="ne", pady=(0, 3))
-        self.frames_found = ttk.Label(self, text="Frames:", font=("Segoe UI", 9, "bold"), anchor="center")
+        self.frames_found = ttk.Label(self, text="Frames:", font=("Segoe UI", 9, "bold"))
         self.frames_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
+
+        #Set the minimum size of PID info columns to center the title over the information
+        self.columnconfigure(3,minsize=80)
         self.columnconfigure(4,minsize=80)
-        self.columnconfigure(5,minsize=30)
 
         self._row_start = 1
         self._rows = []  # track widgets so we can clear
+
+    #Accept PID info and fill the correct header labels
+    def set_pid_info(self, engine_version="", pids_found="", frames_found=""):
+            '''V1 or V2 engine, number of PIDS, and Frames'''
+            ev_lbl = ttk.Label(self, text=engine_version, justify="left", anchor="w",)
+            ev_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
+            pid_lbl = ttk.Label(self, text=pids_found, justify="left", anchor="w",)
+            pid_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
+            frames_lbl = ttk.Label(self, text=frames_found, justify="left", anchor="w",)
+            frames_lbl.grid(row=3, column=4, sticky="w", padx=(0, 3), pady=1)
 
     def clear(self):
         for w in self._rows:
