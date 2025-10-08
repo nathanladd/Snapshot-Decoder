@@ -102,9 +102,20 @@ class SimpleHeaderPanel(ttk.Frame):
         # self.grid_propagate(False)
         # self.configure(style="Orange_Background.TFrame")
 
-        # Title
-        self._title = tk.Label(self, text=title, font=("Segoe UI", 11, "bold"))
-        self._title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
+        # Fill in Titles and headings
+        self.header_title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"), anchor="center")
+        self.header_title.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(0, 3))
+        self.columnconfigure(2,minsize=30)
+        self.version_title = ttk.Label(self, text="PID Information", font=("Segoe UI", 11, "bold"), anchor="center")
+        self.version_title.grid(row=0, column=3, columnspan=2, sticky="nsew", pady=(0, 3))
+        self.engine_version = ttk.Label(self, text="Engine Version:", font=("Segoe UI", 9, "bold"), anchor="center")
+        self.engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
+        self.pids_found = ttk.Label(self, text="PIDs Found:", font=("Segoe UI", 9, "bold"), anchor="center")
+        self.pids_found.grid(row=2, column=3, sticky="ne", pady=(0, 3))
+        self.frames_found = ttk.Label(self, text="Frames:", font=("Segoe UI", 9, "bold"), anchor="center")
+        self.frames_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
+        self.columnconfigure(4,minsize=80)
+        self.columnconfigure(5,minsize=30)
 
         self._row_start = 1
         self._rows = []  # track widgets so we can clear
@@ -125,9 +136,9 @@ class SimpleHeaderPanel(ttk.Frame):
         used = set()
 
         def add_row(k, v):
-            k_lbl = tk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"))
-            v_lbl = tk.Label(self, text=v, justify="left", anchor="w",)
-            k_lbl.grid(row=r_dict["r"], column=0, sticky="nw", padx=(0, 10), pady=1)
+            k_lbl = ttk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"))
+            v_lbl = ttk.Label(self, text=v, justify="left", anchor="w",)
+            k_lbl.grid(row=r_dict["r"], column=0, sticky="ne", padx=(0, 5), pady=1)
             v_lbl.grid(row=r_dict["r"], column=1, sticky="w", pady=1)
             self._rows.extend([k_lbl, v_lbl])
             r_dict["r"] += 1
