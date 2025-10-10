@@ -88,7 +88,7 @@ class SnapshotReaderApp(tk.Tk):
         '''Update the window title
         If a Snapshot is open, include its name and path'''
         if file_path:
-            self.title(f"{APP_TITLE} - {file_path}")
+            self.title(f"{APP_TITLE} : {file_path}")
         else:
             self.title(APP_TITLE)
    
