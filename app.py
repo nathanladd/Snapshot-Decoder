@@ -28,7 +28,7 @@ import sys
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from typing import List, Optional
+from typing import List, Optional, Dict, Callable, Tuple
 
 import pandas as pd
 
@@ -316,7 +316,7 @@ class SnapshotReaderApp(tk.Tk):
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
-        for i in range(min(len(dirty_snapshot), 200)):  # scan first 200 rows for safety
+        for i in range(min(len(dirty_snapshot), 10)):  # scan first 10 rows for safety
             row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
             if any(v == "p_l_battery_raw" for v in row_values):
                 header_row_idx = i

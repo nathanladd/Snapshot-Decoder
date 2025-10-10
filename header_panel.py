@@ -5,7 +5,8 @@ import tkinter as tk
 from tkinter import ttk
 import pandas as pd
 
-# Canonical labels we expect in row 0..3, col 0, with values in col 1.
+#Dictionary variable
+# Standardize the labels found in the header. - labels we expect in row 0..3, col 0, with values in col 1.
 CANON_LABELS = {
     "engine model": "Engine Model",
     "ecu map version": "ECU Map Version",
