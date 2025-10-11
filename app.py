@@ -28,14 +28,14 @@ import sys
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from typing import List, Optional
+from typing import List, Optional, Dict, Callable, Tuple
 
 import pandas as pd
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Class to pull Snapshot header information - if it exists
+# Class to manage Snapshot header information
 from header_panel import SimpleHeaderPanel, parse_simple_header
 
 APP_TITLE = "Snapshot Reader"
@@ -121,8 +121,8 @@ class SnapshotReaderApp(tk.Tk):
         root.pack(fill=tk.BOTH, expand=True)
 
         # Snapshot Header Information
-        self.header_panel = SimpleHeaderPanel(root, title="Snapshot Header Information")
-        self.header_panel.pack(anchor="nw", padx=4, pady=4)
+        self.header_frame = SimpleHeaderPanel(root, title="Snapshot Header Information")
+        self.header_frame.pack(anchor="nw", padx=4, pady=4)
 
         # Left: column pickers
         left = ttk.Frame(root, padding=5)
@@ -290,6 +290,9 @@ class SnapshotReaderApp(tk.Tk):
         #Update main window title
         self._set_window_title(file_path=os.path.basename(path))
 
+        #Update header frame PID information
+        self.header_frame.set_pid_info(pids_found=len(self.df.columns), frames_found=len(self.df))
+        
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
@@ -307,13 +310,13 @@ class SnapshotReaderApp(tk.Tk):
 
         # If nothing found, show a gentle placeholder
         if header_info:
-            self.header_panel.set_rows(header_info)
+            self.header_frame.set_rows(header_info)
         else:
-            self.header_panel.set_rows([("Header", "No header info present")])
+            self.header_frame.set_rows([("Header", "No header info present")])
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
-        for i in range(min(len(dirty_snapshot), 200)):  # scan first 200 rows for safety
+        for i in range(min(len(dirty_snapshot), 10)):  # scan first 10 rows for safety
             row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
             if any(v == "p_l_battery_raw" for v in row_values):
                 header_row_idx = i

@@ -5,7 +5,8 @@ import tkinter as tk
 from tkinter import ttk
 import pandas as pd
 
-# Canonical labels we expect in row 0..3, col 0, with values in col 1.
+#Dictionary variable
+# Standardize the labels found in the header. - labels we expect in row 0..3, col 0, with values in col 1.
 CANON_LABELS = {
     "engine model": "Engine Model",
     "ecu map version": "ECU Map Version",
@@ -97,17 +98,44 @@ class SimpleHeaderPanel(ttk.Frame):
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
 
-        # Set frame size
-        self.config(width=400, height=130)
-        self.grid_propagate(False)
-        self.configure(style="Orange_Background.TFrame")
+        # # Set frame size
+        # self.config(width=400, height=130)
+        # self.grid_propagate(False)
+        # self.configure(style="Orange_Background.TFrame")
 
-        # Title
-        self._title = tk.Label(self, text=title, font=("Segoe UI", 11, "bold"), bg="#FF9634")
-        self._title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 3))
+        # Fill in Titles and Headings
+        self.header_title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"), anchor="center")
+        self.header_title.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(0, 3))
+
+        #Add a 3rd column to make white space between header and PID info
+        self.columnconfigure(2,minsize=30)
+
+        #Add all the bold title informaion to the header
+        self.version_title = ttk.Label(self, text="PID Information", font=("Segoe UI", 11, "bold"), anchor="center")
+        self.version_title.grid(row=0, column=3, columnspan=2, sticky="nsew", pady=(0, 3))
+        self.engine_version = ttk.Label(self, text="Engine Version:", font=("Segoe UI", 9, "bold"))
+        self.engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
+        self.pids_found = ttk.Label(self, text="PIDs Found:", font=("Segoe UI", 9, "bold"))
+        self.pids_found.grid(row=2, column=3, sticky="ne", pady=(0, 3))
+        self.frames_found = ttk.Label(self, text="Frames:", font=("Segoe UI", 9, "bold"))
+        self.frames_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
+
+        #Set the minimum size of PID info columns to center the title over the information
+        self.columnconfigure(3,minsize=80)
+        self.columnconfigure(4,minsize=80)
 
         self._row_start = 1
         self._rows = []  # track widgets so we can clear
+
+    #Accept PID info and fill the correct header labels
+    def set_pid_info(self, engine_version="", pids_found="", frames_found=""):
+            '''V1 or V2 engine, number of PIDS, and Frames'''
+            ev_lbl = ttk.Label(self, text=engine_version, justify="left", anchor="w",)
+            ev_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
+            pid_lbl = ttk.Label(self, text=pids_found, justify="left", anchor="w",)
+            pid_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
+            frames_lbl = ttk.Label(self, text=frames_found, justify="left", anchor="w",)
+            frames_lbl.grid(row=3, column=4, sticky="w", padx=(0, 3), pady=1)
 
     def clear(self):
         for w in self._rows:
@@ -125,9 +153,9 @@ class SimpleHeaderPanel(ttk.Frame):
         used = set()
 
         def add_row(k, v):
-            k_lbl = tk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"), bg="#FF9634")
-            v_lbl = tk.Label(self, text=v, justify="left", anchor="w", bg="#FF9634")
-            k_lbl.grid(row=r_dict["r"], column=0, sticky="nw", padx=(0, 10), pady=1)
+            k_lbl = ttk.Label(self, text=f"{k}:", font=("Segoe UI", 9, "bold"))
+            v_lbl = ttk.Label(self, text=v, justify="left", anchor="w",)
+            k_lbl.grid(row=r_dict["r"], column=0, sticky="ne", padx=(0, 5), pady=1)
             v_lbl.grid(row=r_dict["r"], column=1, sticky="w", pady=1)
             self._rows.extend([k_lbl, v_lbl])
             r_dict["r"] += 1
