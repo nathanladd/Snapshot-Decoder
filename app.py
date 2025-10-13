@@ -339,14 +339,32 @@ class SnapshotReaderApp(tk.Tk):
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
-        for i in range(min(len(dirty_snapshot), 10)):  # scan first 10 rows for safety
+
+        # Define a mapping of header keywords to SnapType enums
+        header_patterns = {
+            "p_l_battery_raw": SnapType.ECU_V1,
+            "battu_u": SnapType.ECU_V2,
+            # Add more patterns as needed
+        }
+
+        # Scan the first 10 rows
+        for i in range(min(len(dirty_snapshot), 10)):
+            # Clean and normalize each cell to lowercase strings
             row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
-            if any(v == "p_l_battery_raw" for v in row_values):
-                header_row_idx = i
-                self.header_panel.set_snaptype_info(SnapType.ECU_V1)
-                break
+
+            # Check if any known header keyword appears in this row
+            for pattern, snap_type in header_patterns.items():
+                if any(v == pattern for v in row_values):
+                    header_row_idx = i
+                    self.header_panel.set_snaptype_info(snap_type)
+                    break  # stop once a match is found
+            else:
+                # The 'else' on a for-loop runs only if the loop didn't break
+                continue
+            break  # Break outer loop after a successful match
+
         if header_row_idx is None:
-            raise ValueError("Couldn't locate header row containing 'P_L_Battery_raw'.")
+            raise ValueError("Couldn't locate header row containing useful information.")
 
         # Set header row
         pid_header = dirty_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()

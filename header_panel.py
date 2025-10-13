@@ -90,10 +90,6 @@ class SimpleHeaderPanel(ttk.Frame):
     def __init__(self, master, title=""):
         super().__init__(master)
 
-        # Style to set background color
-        style = ttk.Style()
-        style.configure("Orange_Background.TFrame", background="#FF9634")
-
         # Layout: 2 columns (key/value)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
@@ -148,7 +144,7 @@ class SimpleHeaderPanel(ttk.Frame):
         self.clear()
         r = self._row_start
         # Show known keys in a friendly order first, then the rest
-        priority = ["Engine Model", "ECU Map Version", "Program SW Version", "Data Logging"]
+        priority = ["Engine Model", "ECU Map Version", "Program SW Version", "Data Logging", "Engine No"]
         used = set()
 
         def add_row(k, v):
