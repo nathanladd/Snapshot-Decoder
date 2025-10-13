@@ -130,9 +130,7 @@ class SimpleHeaderPanel(ttk.Frame):
 
     #Accept PID info and fill the correct header labels
     def set_pid_info(self, pids_found="", frames_found=""):
-            '''V1 or V2 engine, number of PIDS, and Frames'''
-            #st_lbl = ttk.Label(self, text=Snap_Type.description, justify="left", anchor="w",)
-            #st_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
+            '''Number of PIDS, and Frames'''
             pids_lbl = ttk.Label(self, text=pids_found, justify="left", anchor="w",)
             pids_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
             frames_lbl = ttk.Label(self, text=frames_found, justify="left", anchor="w",)
