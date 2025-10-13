@@ -285,7 +285,7 @@ class SnapshotReaderApp(tk.Tk):
     def open_file(self):
         path = filedialog.askopenfilename(
             title="Open Engine Data (.xlsx)",
-            filetypes=[("Modern Excel", "*.xlsx"), ("Legacy Excel", "*.xls"), ("All files", "*.*")],
+            filetypes=[("Modern Excel", "*.xlsx"), ("All files", "*.*")],
         )
         if not path:
             return
@@ -322,7 +322,7 @@ class SnapshotReaderApp(tk.Tk):
 
 
     def _load_snapshot_data(self, path: str) -> pd.DataFrame:
-        """Load Excel, find header row containing 'P_L_Battery_raw', set headers,
+        """Load Excel, find header row containing a PID from the pattern dictionary, set headers,
         and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
         """
         # Read raw snapshot so we can pull the header information and scan rows
@@ -340,7 +340,7 @@ class SnapshotReaderApp(tk.Tk):
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
 
-        # Define a mapping of header keywords to SnapType enums
+        # Define a mapping of header PIDs to SnapType enumerations
         header_patterns = {
             "p_l_battery_raw": SnapType.ECU_V1,
             "battu_u": SnapType.ECU_V2,
@@ -420,6 +420,7 @@ class SnapshotReaderApp(tk.Tk):
         sel = [self.columns_list.get(i) for i in self.columns_list.curselection()]
         if not sel:
             return
+        
         # Prevent duplicates and avoid placing Time or Frame on y-axes (they can still be used on x later)
         filtered = [s for s in sel if s not in ("Frame", "Time")]
         if not filtered:
