@@ -98,24 +98,19 @@ class SimpleHeaderPanel(ttk.Frame):
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
 
-        # # Set frame size
-        # self.config(width=400, height=130)
-        # self.grid_propagate(False)
-        # self.configure(style="Orange_Background.TFrame")
-
         # Fill in Titles and Headings
         self.header_title = ttk.Label(self, text=title, font=("Segoe UI", 11, "bold"), anchor="center")
-        self.header_title.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(0, 3))
+        self.header_title.grid(row=0, column=0, columnspan=5, sticky="nsew", pady=(0, 3))
 
         #Add a 3rd column to make white space between header and PID info
         self.columnconfigure(2,minsize=30)
 
         #Add all the bold title informaion to the header
-        self.version_title = ttk.Label(self, text="PID Information", font=("Segoe UI", 11, "bold"), anchor="center")
-        self.version_title.grid(row=0, column=3, columnspan=2, sticky="nsew", pady=(0, 3))
-        self.engine_version = ttk.Label(self, text="Engine Version:", font=("Segoe UI", 9, "bold"))
+        #self.version_title = ttk.Label(self, text="PID Information", font=("Segoe UI", 11, "bold"), anchor="center")
+        #self.version_title.grid(row=0, column=3, columnspan=2, sticky="nsew", pady=(0, 3))
+        self.engine_version = ttk.Label(self, text="Snapshot Type:", font=("Segoe UI", 9, "bold"))
         self.engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
-        self.pids_found = ttk.Label(self, text="PIDs Found:", font=("Segoe UI", 9, "bold"))
+        self.pids_found = ttk.Label(self, text="PIDs:", font=("Segoe UI", 9, "bold"))
         self.pids_found.grid(row=2, column=3, sticky="ne", pady=(0, 3))
         self.frames_found = ttk.Label(self, text="Frames:", font=("Segoe UI", 9, "bold"))
         self.frames_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
@@ -127,11 +122,17 @@ class SimpleHeaderPanel(ttk.Frame):
         self._row_start = 1
         self._rows = []  # track widgets so we can clear
 
+    #Accept SnapType and set correct lable information
+    def set_snaptype_info(self, snaptype: str):
+        st_lbl = ttk.Label(self, text=snaptype, justify="left", anchor="w",)
+        st_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
+
+
     #Accept PID info and fill the correct header labels
-    def set_pid_info(self, snap_type="", pids_found="", frames_found=""):
+    def set_pid_info(self, pids_found="", frames_found=""):
             '''V1 or V2 engine, number of PIDS, and Frames'''
-            st_lbl = ttk.Label(self, text=snap_type, justify="left", anchor="w",)
-            st_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
+            #st_lbl = ttk.Label(self, text=Snap_Type.description, justify="left", anchor="w",)
+            #st_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
             pids_lbl = ttk.Label(self, text=pids_found, justify="left", anchor="w",)
             pids_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
             frames_lbl = ttk.Label(self, text=frames_found, justify="left", anchor="w",)

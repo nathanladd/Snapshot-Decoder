@@ -85,6 +85,7 @@ class SnapshotReaderApp(tk.Tk):
         self.snapshot: Optional[pd.DataFrame] = None
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
+    
 
         # Axis limits state
         self.primary_min = tk.StringVar()
@@ -143,8 +144,8 @@ class SnapshotReaderApp(tk.Tk):
         root.pack(fill=tk.BOTH, expand=True)
 
         # Snapshot Header Information
-        self.header_frame = SimpleHeaderPanel(root, title="Snapshot Header Information")
-        self.header_frame.pack(anchor="nw", padx=4, pady=4)
+        self.header_panel = SimpleHeaderPanel(root, title="Snapshot Information")
+        self.header_panel.pack(anchor="nw", padx=4, pady=4)
 
         # Left: column pickers
         left = ttk.Frame(root, padding=5)
@@ -313,7 +314,7 @@ class SnapshotReaderApp(tk.Tk):
         self._set_window_title(file_path=os.path.basename(path))
 
         #Update header frame PID information
-        self.header_frame.set_pid_info(pids_found=len(self.snapshot.columns), frames_found=len(self.snapshot))
+        self.header_panel.set_pid_info(pids_found=len(self.snapshot.columns), frames_found=len(self.snapshot))
         
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(path)}")
@@ -332,9 +333,9 @@ class SnapshotReaderApp(tk.Tk):
 
         # If nothing found, show a gentle placeholder
         if header_info:
-            self.header_frame.set_rows(header_info)
+            self.header_panel.set_rows(header_info)
         else:
-            self.header_frame.set_rows([("Header", "No header info present")])
+            self.header_panel.set_rows([("Header", "No header info present")])
 
         # Find header row: somewhere at/after row index 2 (3rd row to humans)
         header_row_idx = None
@@ -342,7 +343,7 @@ class SnapshotReaderApp(tk.Tk):
             row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
             if any(v == "p_l_battery_raw" for v in row_values):
                 header_row_idx = i
-
+                self.header_panel.set_snaptype_info(SnapType.ECU_V1)
                 break
         if header_row_idx is None:
             raise ValueError("Couldn't locate header row containing 'P_L_Battery_raw'.")
