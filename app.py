@@ -82,7 +82,7 @@ class SnapshotReaderApp(tk.Tk):
         self.state("zoomed")
 
         # State
-        self.df: Optional[pd.DataFrame] = None
+        self.snapshot: Optional[pd.DataFrame] = None
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
 
@@ -306,17 +306,17 @@ class SnapshotReaderApp(tk.Tk):
             messagebox.showerror("No data", "The workbook loaded but no data table was found.")
             return
 
-        self.df = df
+        self.snapshot = df
         self._update_controls_state(enabled=True)
         
         #Update main window title
         self._set_window_title(file_path=os.path.basename(path))
 
         #Update header frame PID information
-        self.header_frame.set_pid_info(pids_found=len(self.df.columns), frames_found=len(self.df))
+        self.header_frame.set_pid_info(pids_found=len(self.snapshot.columns), frames_found=len(self.snapshot))
         
         #Update the status bar with file information
-        self.set_status(f"Loaded {len(self.df)} Frames of {len(self.df.columns)} PIDs from file: {os.path.basename(path)}")
+        self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
 
 
@@ -381,22 +381,22 @@ class SnapshotReaderApp(tk.Tk):
     # ---------------------- Column List Logic ----------------------
     def _populate_columns_list(self):
         self.columns_list.delete(0, tk.END)
-        if self.df is None:
+        if self.snapshot is None:
             return
-        for col in self.df.columns:
+        for col in self.snapshot.columns:
             self.columns_list.insert(tk.END, col)
 
     def _filter_columns(self):
         term = self.search_var.get().strip().lower()
         self.columns_list.delete(0, tk.END)
-        if self.df is None:
+        if self.snapshot is None:
             return
-        cols = [c for c in self.df.columns if term in c.lower()]
+        cols = [c for c in self.snapshot.columns if term in c.lower()]
         for c in cols:
             self.columns_list.insert(tk.END, c)
 
     def _add_selected(self, target: str):
-        if self.df is None:
+        if self.snapshot is None:
             return
         sel = [self.columns_list.get(i) for i in self.columns_list.curselection()]
         if not sel:
@@ -475,14 +475,14 @@ class SnapshotReaderApp(tk.Tk):
 
     # ---------------------- Plotting ----------------------
     def plot_combo_chart(self):
-        if self.df is None:
+        if self.snapshot is None:
             messagebox.showinfo("No data", "Open a data file first.")
             return
         if not self.primary_series and not self.secondary_series:
             messagebox.showinfo("Select columns", "Add at least one series to Primary or Secondary axis.")
             return
 
-        df = self.df.copy()
+        df = self.snapshot.copy()
 
         # Choose X: prefer Time if numeric, else Frame, else index
         x_key = None
@@ -560,7 +560,7 @@ class SnapshotReaderApp(tk.Tk):
 # Build a new window with a clean data table
 
     def open_data_table(self):
-        if self.df is None or self.df.empty:
+        if self.snapshot is None or self.snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
@@ -582,7 +582,7 @@ class SnapshotReaderApp(tk.Tk):
         container.pack(fill=tk.BOTH, expand=True)
 
         # ---- Sanitize column names for Treeview ----
-        raw_cols = list(self.df.columns)
+        raw_cols = list(self.snapshot.columns)
         safe_cols = []
         used = set()
         for i, c in enumerate(raw_cols):
@@ -598,7 +598,7 @@ class SnapshotReaderApp(tk.Tk):
             safe_cols.append(name)
 
         # Use a display copy with safe column names
-        df_display = self.df.copy()
+        df_display = self.snapshot.copy()
         df_display.columns = safe_cols
 
         # Scrollbars
