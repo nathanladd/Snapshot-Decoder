@@ -134,7 +134,12 @@ class SnapshotReaderApp(tk.Tk):
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=lambda: messagebox.showinfo(
-            "About", "Snapshot Reader — Column Selector\nBuild combo line charts from your engine data."))
+            "Snapsho Reader", 
+            "Written by Nate Ladd\n" \
+            "Bobcat of the Rockies\n" \
+            "Service Trainer\n" \
+            "nladd@bobcatoftherockies.com"
+            ))
         menubar.add_cascade(label="Help", menu=help_menu)
 
         self.config(menu=menubar)
