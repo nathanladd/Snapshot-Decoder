@@ -134,8 +134,8 @@ class SnapshotReaderApp(tk.Tk):
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=lambda: messagebox.showinfo(
-            "About", 
-            "Snapshot Reader — Nate Ladd\n" \
+            "Snapsho Reader", 
+            "Written by Nate Ladd\n" \
             "Bobcat of the Rockies\n" \
             "Service Trainer\n" \
             "nladd@bobcatoftherockies.com"
