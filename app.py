@@ -128,14 +128,16 @@ class SnapshotReaderApp(tk.Tk):
         
         self._set_window_title(self)
         self.state("zoomed")
-
-        # State - Like setting properties of the Snapshot Reader App
-        # State
+    #---------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------- Properties ------------------------------------------------------
+    #---------------------------------------------------------------------------------------------------------------------
+        
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = ""
         self.snapshot_type = SnapType.UNKNOWN
 
+        # Lists to hold PIDs charted on Primary and Secondary Axis'
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
     
@@ -152,11 +154,16 @@ class SnapshotReaderApp(tk.Tk):
         self.primary_auto = tk.BooleanVar(value=True)
         self.secondary_auto = tk.BooleanVar(value=True)
 
-        # Build UI
+    #---------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------- Build UI --------------------------------------------------------
+    #---------------------------------------------------------------------------------------------------------------------
+
         self._build_menu()
         self._build_layout()          # uses the variables above
         self._build_plot_area()       # may call _toggle_* which also needs them
         self._update_controls_state(enabled=False)
+
+
 
     #---------------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------- UI Construction ----------------------------------------------------
