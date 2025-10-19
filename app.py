@@ -26,6 +26,7 @@ Note on old .xls files:
 from __future__ import annotations
 import sys
 import os
+import math
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from typing import List, Optional, Dict, Callable, Tuple
@@ -40,6 +41,53 @@ from enum import Enum, auto
 from header_panel import SimpleHeaderPanel, parse_simple_header
 
 APP_TITLE = "Snapshot Reader"
+
+#Helper function for extract_pid_metadata
+def _to_str(cell) -> str:
+    """Convert any cell to a cleaned string, treating NaN/None as empty."""
+    if cell is None:
+        return ""
+    if isinstance(cell, float) and math.isnan(cell):
+        return ""
+    s = str(cell).strip()
+    return "" if s.lower() in ("nan", "none") else s
+
+#Helper function for extract_pid_metadata
+def _within(df: pd.DataFrame, r: int) -> bool:
+    """True if r is a valid row index for df."""
+    return 0 <= r < len(df)
+
+#Extract the PID description and PID unit of measure for each PID
+def extract_pid_metadata(df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> dict[str, dict[str, str]]:
+    """
+    Starting at start_col (default: 3rd col), read:
+    - PID name from header_row_idx
+    - Description from row above (header_row_idx - 1)
+    - Unit from row below (header_row_idx + 1)
+    Returns: { PID_name: {"Description": ..., "Unit": ...}, ... }
+    """
+    pid_info: dict[str, dict[str, str]] = {}
+
+    # Row indices for description and unit (guard if out of bounds)
+    desc_row = header_row_idx - 1 if _within(df, header_row_idx - 1) else None
+    unit_row = header_row_idx + 1 if _within(df, header_row_idx + 1) else None
+
+    for c in range(start_col, len(df.columns)):
+        pid = _to_str(df.iat[header_row_idx, c])
+        if not pid:
+            continue
+
+        description = _to_str(df.iat[desc_row, c]) if desc_row is not None else ""
+        unit = _to_str(df.iat[unit_row, c]) if unit_row is not None else ""
+
+        # Optional: collapse multi-line cells
+        description = " ".join(part.strip() for part in description.splitlines() if part.strip())
+        unit = " ".join(part.strip() for part in unit.splitlines() if part.strip())
+
+        pid_info[pid] = {"Description": description, "Unit": unit}
+
+    return pid_info
+    
 #Built this enumeration as a class to allow for the tuple and override the string type
 #Enumeration to hold the type desription of the snapshot as a global variable
 class SnapType(Enum):
@@ -81,8 +129,10 @@ class SnapshotReaderApp(tk.Tk):
         self._set_window_title()
         self.state("zoomed")
 
+        # State - Like setting properties of the Snapshot Reader App
         # State
         self.snapshot: Optional[pd.DataFrame] = None
+        self.pid_info: dict[str, dict[str, str]] = {}
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
     
@@ -106,7 +156,10 @@ class SnapshotReaderApp(tk.Tk):
         self._build_plot_area()       # may call _toggle_* which also needs them
         self._update_controls_state(enabled=False)
 
-    # ---------------------- UI Construction ----------------------
+    #---------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------- UI Construction ----------------------------------------------------
+    #---------------------------------------------------------------------------------------------------------------------
+
     def _set_window_title(self, file_path=None):
         '''Update the window title
         If a Snapshot is open, include its name and path'''
@@ -126,6 +179,7 @@ class SnapshotReaderApp(tk.Tk):
 
         view_menu = tk.Menu(menubar, tearoff=0)
         view_menu.add_command(label="Data Table…", command=self.open_data_table)
+        view_menu.add_command(label="PID Descriptions", command=self.show_pid_info)
         menubar.add_cascade(label="View", menu=view_menu)
 
         plot_menu = tk.Menu(menubar, tearoff=0)
@@ -191,16 +245,6 @@ class SnapshotReaderApp(tk.Tk):
         ttk.Button(pf_controls, text="▼", width=3, command=lambda: self._move_in_list(self.primary_list, +1)).pack(pady=2)
         ttk.Button(pf_controls, text="🗑", width=3, command=lambda: self._remove_selected_from("primary")).pack(pady=2)
 
-        '''  I'm not sure about these min/max boxes in the primary axis frame
-        # Axis min/max inputs
-        lims = ttk.Frame(primary_frame)
-        lims.pack(fill=tk.X, pady=(4,0))
-        ttk.Label(lims, text="Min").pack(side=tk.LEFT)
-        ttk.Entry(lims, textvariable=self.primary_min, width=6).pack(side=tk.LEFT, padx=(2,10))
-        ttk.Label(lims, text="Max").pack(side=tk.LEFT)
-        ttk.Entry(lims, textvariable=self.primary_max, width=6).pack(side=tk.LEFT)
-        '''
-
         # Secondary frame with min/max
         secondary_frame = ttk.Labelframe(buckets, text="Secondary axis (right)")
         secondary_frame.pack(fill=tk.BOTH, expand=False)
@@ -256,7 +300,6 @@ class SnapshotReaderApp(tk.Tk):
         )
         self.status_bar.pack(side="bottom", fill="x")
     
-
     def set_status(self, text: str):
         """Update the status bar text and keep the UI snappy."""
         self.status_var.set(text)
@@ -285,8 +328,11 @@ class SnapshotReaderApp(tk.Tk):
             pass
 
  
-
-    # ---------------------- Data Loading ----------------------
+    #---------------------------------------------------------------------------------------------------------------------
+    # -------------------------------------------------- Data Loading ----------------------------------------------------
+    #---------------------------------------------------------------------------------------------------------------------
+    
+    #Open the SnapShot
     def open_file(self):
         path = filedialog.askopenfilename(
             title="Open Engine Data (.xlsx)",
@@ -325,7 +371,7 @@ class SnapshotReaderApp(tk.Tk):
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(path)}")
         self._populate_columns_list()
 
-
+    #Use the opened path to extract Snapshot data
     def _load_snapshot_data(self, path: str) -> pd.DataFrame:
         """Load Excel, find header row containing a PID from the pattern dictionary, set headers,
         and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
@@ -371,6 +417,8 @@ class SnapshotReaderApp(tk.Tk):
         if header_row_idx is None:
             raise ValueError("Couldn't locate header row containing useful information.")
 
+        self.pid_info = extract_pid_metadata(dirty_snapshot, header_row_idx,)
+
         # Set header row
         pid_header = dirty_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
         clean_snapshot = dirty_snapshot.iloc[header_row_idx+1:].copy()
@@ -401,8 +449,10 @@ class SnapshotReaderApp(tk.Tk):
 
         return clean_snapshot.reset_index(drop=True)
 
+#------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------- Column List Logic -------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 
-    # ---------------------- Column List Logic ----------------------
     def _populate_columns_list(self):
         self.columns_list.delete(0, tk.END)
         if self.snapshot is None:
@@ -498,7 +548,10 @@ class SnapshotReaderApp(tk.Tk):
         except ValueError:
             return None
 
-    # ---------------------- Plotting ----------------------
+#------------------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------- Plotting ---------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+
     def plot_combo_chart(self):
         if self.snapshot is None:
             messagebox.showinfo("No data", "Open a data file first.")
@@ -582,7 +635,9 @@ class SnapshotReaderApp(tk.Tk):
         self.figure.tight_layout()
         self.canvas.draw_idle()
 
-# Build a new window with a clean data table
+#------------------------------------------------------------------------------------------------------------------------------
+# ------------------------------------ Build a new window with a clean data table ---------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 
     def open_data_table(self):
         if self.snapshot is None or self.snapshot.empty:
@@ -670,6 +725,50 @@ class SnapshotReaderApp(tk.Tk):
             finally:
                 win.destroy()
         win.protocol("WM_DELETE_WINDOW", _on_close)
+
+#------------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------- Open PID Info Window -------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+
+    def show_pid_info(self):
+        """Display PID info in a new Treeview window with 3 columns."""
+        if not self.pid_info:
+            tk.messagebox.showinfo("PID Descriptions", "No PID information available.")
+            return
+
+        window = tk.Toplevel(self)
+        window.title("PID Descriptions")
+        window.geometry("800x400")
+
+        # Define the columns
+        columns = ("PID", "Description", "Unit")
+
+        tree = ttk.Treeview(window, columns=columns, show="headings")
+        tree.pack(fill="both", expand=True)
+
+        # Define headings
+        tree.heading("PID", text="PID Name")
+        tree.heading("Description", text="Description")
+        tree.heading("Unit", text="Unit")
+
+        # Optional: set column widths and alignment
+        tree.column("PID", width=180, anchor="w")
+        tree.column("Description", width=480, anchor="w")
+        tree.column("Unit", width=120, anchor="w")
+
+        # Insert rows from your dictionary
+        for pid, data in self.pid_info.items():
+            tree.insert(
+                "",
+                "end",
+                values=(
+                    pid,
+                    data.get("Description", ""),
+                    data.get("Unit", "")
+                )
+            )
+
+
 
 
 
