@@ -126,14 +126,14 @@ class SnapshotReaderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         
-        self._set_window_title()
+        self._set_window_title(self)
         self.state("zoomed")
 
         # State - Like setting properties of the Snapshot Reader App
         # State
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
-
+        self.snapshot_path: str = ""
 
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
@@ -161,11 +161,11 @@ class SnapshotReaderApp(tk.Tk):
     # ----------------------------------------------- UI Construction ----------------------------------------------------
     #---------------------------------------------------------------------------------------------------------------------
 
-    def _set_window_title(self, file_path=None):
+    def _set_window_title(self, snapshot_path):
         '''Update the window title
         If a Snapshot is open, include its name and path'''
-        if file_path:
-            self.title(f"{APP_TITLE} : {file_path}")
+        if snapshot_path:
+            self.title(f"{APP_TITLE} : {snapshot_path}")
         else:
             self.title(APP_TITLE)
    
@@ -360,10 +360,11 @@ class SnapshotReaderApp(tk.Tk):
             return
 
         self.snapshot = df
+        self.snapshot_path = os.path.basename(path)
         self._update_controls_state(enabled=True)
         
         #Update main window title
-        self._set_window_title(file_path=os.path.basename(path))
+        self._set_window_title(self.snapshot_path)
 
         #Update header frame PID information
         self.header_panel.set_pid_info(pids_found=len(self.snapshot.columns), frames_found=len(self.snapshot))
@@ -656,7 +657,7 @@ class SnapshotReaderApp(tk.Tk):
 
         win = tk.Toplevel(self)
         self._table_win = win
-        win.title("Validation — Cleaned Data Table")
+        win.title(f"Validation — Cleaned Data Table: {self.snapshot_path}")
         win.geometry("1000x600")
 
         container = ttk.Frame(win)
@@ -738,7 +739,7 @@ class SnapshotReaderApp(tk.Tk):
             return
 
         window = tk.Toplevel(self)
-        window.title("PID Descriptions")
+        window.title(f"PID Descriptions: {self.snapshot_path}" )
         window.geometry("800x400")
 
         # Define the columns
@@ -755,7 +756,7 @@ class SnapshotReaderApp(tk.Tk):
         # Optional: set column widths and alignment
         tree.column("PID", width=180, anchor="w")
         tree.column("Description", width=480, anchor="w")
-        tree.column("Unit", width=120, anchor="w")
+        tree.column("Unit", width=90, anchor="w")
 
         # Insert rows from your dictionary
         for pid, data in self.pid_info.items():
