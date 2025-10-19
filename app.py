@@ -133,10 +133,11 @@ class SnapshotReaderApp(tk.Tk):
         # State
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
+
+
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
     
-
         # Axis limits state
         self.primary_min = tk.StringVar()
         self.primary_max = tk.StringVar()
