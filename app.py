@@ -100,7 +100,7 @@ class SnapType(Enum):
 
     def __init__(self, type: str, description: str):
         # Initialize the enumeration with a tuple - type of snap and plain word description for labels
-        self.type =type
+        self.type = type
         self.description = description
 
     def __str__(self):
@@ -134,6 +134,7 @@ class SnapshotReaderApp(tk.Tk):
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = ""
+        self.snap_type = SnapType.UNKNOWN
 
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
@@ -371,6 +372,8 @@ class SnapshotReaderApp(tk.Tk):
         
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(path)}")
+
+        
         self._populate_columns_list()
 
     #Use the opened path to extract Snapshot data
