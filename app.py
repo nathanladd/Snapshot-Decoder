@@ -412,7 +412,8 @@ class SnapshotReaderApp(tk.Tk):
             for pattern, snap_type in header_patterns.items():
                 if any(v == pattern for v in row_values):
                     header_row_idx = i
-                    self.header_panel.set_snaptype_info(snap_type)
+                    self.snapshot_type = snap_type
+                    self.header_panel.set_snaptype_info(self.snapshot_type)
                     break  # stop once a match is found
             else:
                 # The 'else' on a for-loop runs only if the loop didn't break
