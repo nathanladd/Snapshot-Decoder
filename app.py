@@ -134,7 +134,7 @@ class SnapshotReaderApp(tk.Tk):
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = ""
-        self.snap_type = SnapType.UNKNOWN
+        self.snapshot_type = SnapType.UNKNOWN
 
         self.primary_series: List[str] = []
         self.secondary_series: List[str] = []
