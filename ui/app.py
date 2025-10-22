@@ -765,9 +765,3 @@ class SnapshotReaderApp(tk.Tk):
 
 
 
-def main():
-    app = SnapshotReaderApp()
-    app.mainloop()
-
-if __name__ == "__main__":
-    main()
