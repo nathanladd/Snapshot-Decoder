@@ -38,7 +38,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 
 # Class to manage Snapshot header information
-from header_panel import SimpleHeaderPanel, parse_simple_header
+from ui.header_panel import SimpleHeaderPanel, parse_simple_header
 
 APP_TITLE = "Snapshot Reader"
 
