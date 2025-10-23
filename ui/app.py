@@ -157,7 +157,7 @@ class SnapshotReaderApp(tk.Tk):
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=lambda: messagebox.showinfo(
-            "Snapsho Reader", 
+            "Snapshot Reader", 
             "Written by Nate Ladd\n" \
             "Bobcat of the Rockies\n" \
             "Service Trainer\n" \
@@ -171,36 +171,41 @@ class SnapshotReaderApp(tk.Tk):
         root = ttk.Frame(self)
         root.pack(fill=tk.BOTH, expand=True)
 
+        # Border frames for main UI
+        header_border = ttk.Frame(root, relief="groove", borderwidth=2)
+        header_border.pack(fill="x", padx=4, pady=4)
+        
+        left_border = ttk.Frame(root, relief="groove", borderwidth=2)
+        left_border.pack(side="left", fill="y", padx=4, pady=4)
+
+        chart_border = ttk.Frame(root, relief="groove", borderwidth=2)
+        chart_border.pack(side="right", fill="both", expand=True, padx=4, pady=4)
+
         # Snapshot Header Information
-        self.header_panel = SimpleHeaderPanel(root, title="Snapshot Information")
-        self.header_panel.pack(anchor="nw", padx=4, pady=4)
+        self.header_panel = SimpleHeaderPanel(header_border, title="Snapshot Information")
+        self.header_panel.pack(anchor="nw", padx=4, pady=4) 
 
-        # Left: column pickers
-        left = ttk.Frame(root, padding=5)
-        left.pack(side=tk.LEFT, fill=tk.Y) 
-
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)  
-
-        ttk.Label(left, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
+        # Search box label
+        ttk.Label(left_border, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
+        
         # Search box
         self.search_var = tk.StringVar()
-        search = ttk.Entry(left, textvariable=self.search_var)
-        search.pack(fill=tk.X, pady=(4, 8))
+        search = ttk.Entry(left_border, textvariable=self.search_var)
+        search.pack(fill=tk.X, pady=(4, 8), padx=(8,8))
         search.bind("<KeyRelease>", lambda e: self._filter_columns())
 
         # All columns listbox (multi-select)
-        self.columns_list = tk.Listbox(left, selectmode=tk.EXTENDED, exportselection=False, height=22, width=40)
+        self.columns_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
         self.columns_list.pack(fill=tk.Y)
 
         # Buttons to add to primary/secondary
-        btns = ttk.Frame(left)
+        btns = ttk.Frame(left_border)
         btns.pack(fill=tk.X, pady=8)
         ttk.Button(btns, text="➕ Add to Primary", command=lambda: self._add_selected(target="primary")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,4))
         ttk.Button(btns, text="➕ Add to Secondary", command=lambda: self._add_selected(target="secondary")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(4,0))
 
         # Buckets display
-        buckets = ttk.Frame(left)
+        buckets = ttk.Frame(left_border)
         buckets.pack(fill=tk.BOTH, expand=False)
 
         # Primary frame with min/max
@@ -226,7 +231,7 @@ class SnapshotReaderApp(tk.Tk):
         ttk.Button(sf_btns, text="🗑", width=3, command=lambda: self._remove_selected_from("secondary")).pack(pady=2)
 
         # Axis controls
-        axis = ttk.Labelframe(left, text="Axis ranges (optional)")
+        axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
         axis.pack(fill=tk.X, pady=(8,6))
 
         # Primary axis controls
@@ -252,10 +257,10 @@ class SnapshotReaderApp(tk.Tk):
         self.secondary_max_entry.pack(side=tk.LEFT)
 
         # Plot button
-        tk.Button(left, text="Plot Selected PIDs", font=("Segoe UI", 11, "bold"), command=self.plot_combo_chart).pack(fill=tk.X, pady=(6,0))
+        tk.Button(left_border, text="Plot Selected PIDs", font=("Segoe UI", 11, "bold"), command=self.plot_combo_chart).pack(fill=tk.X, padx=(6,6), pady=(4,4))
 
         # Right: figure area
-        self.right = ttk.Frame(root, padding=10)
+        self.right = ttk.Frame(chart_border, padding=10)
         self.right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Status Bar
