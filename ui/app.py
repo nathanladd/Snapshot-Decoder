@@ -16,9 +16,11 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
+from file_io.reader_excel import load_xls, load_xlsx
+from services.parse_header import parse_header
 
 # Class to manage Snapshot header information
-from ui.header_panel import SimpleHeaderPanel, parse_simple_header
+from ui.header_panel import HeaderPanel
 
 APP_TITLE = "Snapshot Reader"
 
@@ -149,9 +151,9 @@ class SnapshotReaderApp(tk.Tk):
         menubar.add_cascade(label="File", menu=file_menu)
 
         view_menu = tk.Menu(menubar, tearoff=0)
-        view_menu.add_command(label="Data Table…", command=self.open_data_table)
-        view_menu.add_command(label="PID Descriptions", command=self.show_pid_info)
-        menubar.add_cascade(label="View", menu=view_menu)
+        view_menu.add_command(label="Snapshot Table...", command=self.open_data_table)
+        view_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
+        menubar.add_cascade(label="Data", menu=view_menu)
 
         plot_menu = tk.Menu(menubar, tearoff=0)
         plot_menu.add_command(label="Combo Line Chart", command=self.plot_combo_chart)
@@ -184,7 +186,7 @@ class SnapshotReaderApp(tk.Tk):
         chart_border.pack(side="right", fill="both", expand=True, padx=4, pady=4)
 
         # Snapshot Header Information
-        self.header_panel = SimpleHeaderPanel(header_border, on_action=handle_header_action)
+        self.header_panel = HeaderPanel(header_border, on_action=handle_header_action)
         self.header_panel.pack(anchor="nw", padx=4, pady=4) 
 
         # Search box label
@@ -310,41 +312,110 @@ class SnapshotReaderApp(tk.Tk):
     
     #Open the SnapShot
     def open_file(self):
+
+        # Use an Open File diaglog box to get the file path
         self.snapshot_path = filedialog.askopenfilename(
             title="Open Bobcat Snapshot File",
             filetypes=[("Fake .xls", ".xls"), ("Converted Excel", "*.xlsx"), ("All files", "*.*")],
         )
-
         if not self.snapshot_path:
             return
-        
+        # Get the new file extension
         ext = os.path.splitext(self.snapshot_path)[1].lower()
-
+        # Decide how to process the file
         if ext == ".xlsx":       
             try:
-                df = self._load_xlsx(self.snapshot_path)
+                self.snapshot = load_xlsx(self.snapshot_path)
             except Exception as e:
                 messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
                 return
-
         elif ext == ".xls":       
             try:
-                df = self._load_xls(self.snapshot_path)
+                self.snapshot = load_xls(self.snapshot_path)
             except Exception as e:
                 messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
-                return
-            
+                return     
         else:
             messagebox.showerror("Unsupported file type", f"Unknown file extension: {ext}")
             return
         
-        if df is None or df.empty:
-            print(self.snapshot.head())
+        if self.snapshot is None or self.snapshot.empty:
             messagebox.showerror("No data", "The workbook loaded but no data table was found.")
             return
 
-        self.snapshot = df
+        # Process the snapshot header
+
+        # Pull any header information from the Snapshot if it exists
+        header_info = parse_header(self.snapshot, max_rows=4)
+        if header_info:
+            self.header_panel.set_rows(header_info)
+        else:
+            self.header_panel.set_rows([("Header", "No header info present")])
+
+        # Find header row: somewhere at/after row index 2 (3rd row to humans)
+        header_row_idx = None
+
+        # Define a mapping of header PIDs to SnapType enumerations
+        header_patterns = {
+            "p_l_battery_raw": SnapType.ECU_V1,
+            "battu_u": SnapType.ECU_V2,
+            # Add more patterns as needed
+        }
+
+        # Scan the first 10 rows
+        for i in range(min(len(self.snapshot), 10)):
+            # Clean and normalize each cell to lowercase strings
+            row_values = self.snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
+
+            # Check if any known header keyword appears in this row
+            for pattern, snap_type in header_patterns.items():
+                if any(v == pattern for v in row_values):
+                    header_row_idx = i
+                    self.snapshot_type = snap_type
+                    self.header_panel.set_snaptype_info(self.snapshot_type)
+                    break  # stop once a match is found
+            else:
+                # The 'else' on a for-loop runs only if the loop didn't break
+                continue
+            break  # Break outer loop after a successful match
+
+        if header_row_idx is None:
+            raise ValueError("Couldn't locate header row containing useful information.")
+
+        self.pid_info = extract_pid_metadata(self.snapshot, header_row_idx,)
+
+        # Set header row
+        pid_header = self.snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
+        clean_snapshot = self.snapshot.iloc[header_row_idx+1:].copy()
+        clean_snapshot.columns = pid_header
+
+        # Normalize column names: strip and preserve original case
+        clean_snapshot.columns = [str(c).strip() for c in clean_snapshot.columns]
+
+
+        # Try to ensure first two columns are named exactly Frame and Time
+        # I had to copy the entire list of column names into a list, change the firts two column names
+        # then reassign the names to the data frame - all because the 'NaN' 
         
+        if len(clean_snapshot.columns) >= 2:
+            new_cols = list(clean_snapshot.columns)  # copy all names
+            new_cols[0] = "Frame"
+            new_cols[1] = "Time"
+            clean_snapshot.columns = new_cols
+
+        # Coerce numerics where possible
+        clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
+
+        # Find the start row where Frame == 0 (if Frame exists)
+        if "Frame" in clean_snapshot.columns:
+            start_idx = clean_snapshot.index[clean_snapshot["Frame"] == 0]
+            if len(start_idx) > 0:
+                clean_snapshot = clean_snapshot.loc[start_idx[0]:].reset_index(drop=True)
+
+        self.snapshot = clean_snapshot
+
+
+        # Update the UI
         self._update_controls_state(enabled=True)
         
         #Update main window title
@@ -359,170 +430,6 @@ class SnapshotReaderApp(tk.Tk):
         
         self._populate_columns_list()
 
-    #Use the opened path to extract Snapshot data
-    def _load_xlsx(self, path: str) -> pd.DataFrame:
-        """Load Excel, find header row containing a PID from the pattern dictionary, set headers,
-        and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
-        """
-        # Read raw snapshot so we can pull the header information and scan rows
-        dirty_snapshot = pd.read_excel(path, header=None, engine="calamine")
-
-        # Pull any header information from the Snapshot if it exists
-        header_info = parse_simple_header(dirty_snapshot, max_rows=4)
-
-        # If nothing found, show a gentle placeholder
-        if header_info:
-            self.header_panel.set_rows(header_info)
-        else:
-            self.header_panel.set_rows([("Header", "No header info present")])
-
-        # Find header row: somewhere at/after row index 2 (3rd row to humans)
-        header_row_idx = None
-
-        # Define a mapping of header PIDs to SnapType enumerations
-        header_patterns = {
-            "p_l_battery_raw": SnapType.ECU_V1,
-            "battu_u": SnapType.ECU_V2,
-            # Add more patterns as needed
-        }
-
-        # Scan the first 10 rows
-        for i in range(min(len(dirty_snapshot), 10)):
-            # Clean and normalize each cell to lowercase strings
-            row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
-
-            # Check if any known header keyword appears in this row
-            for pattern, snap_type in header_patterns.items():
-                if any(v == pattern for v in row_values):
-                    header_row_idx = i
-                    self.snapshot_type = snap_type
-                    self.header_panel.set_snaptype_info(self.snapshot_type)
-                    break  # stop once a match is found
-            else:
-                # The 'else' on a for-loop runs only if the loop didn't break
-                continue
-            break  # Break outer loop after a successful match
-
-        if header_row_idx is None:
-            raise ValueError("Couldn't locate header row containing useful information.")
-
-        self.pid_info = extract_pid_metadata(dirty_snapshot, header_row_idx,)
-
-        # Set header row
-        pid_header = dirty_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
-        clean_snapshot = dirty_snapshot.iloc[header_row_idx+1:].copy()
-        clean_snapshot.columns = pid_header
-
-        # Normalize column names: strip and preserve original case
-        clean_snapshot.columns = [str(c).strip() for c in clean_snapshot.columns]
-
-
-        # Try to ensure first two columns are named exactly Frame and Time
-        # I had to copy the entire list of column names into a list, change the firts two column names
-        # then reassign the names to the data frame - all because the 'NaN' 
-        
-        if len(clean_snapshot.columns) >= 2:
-            new_cols = list(clean_snapshot.columns)  # copy all names
-            new_cols[0] = "Frame"
-            new_cols[1] = "Time"
-            clean_snapshot.columns = new_cols
-
-        # Coerce numerics where possible
-        clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
-
-        # Find the start row where Frame == 0 (if Frame exists)
-        if "Frame" in clean_snapshot.columns:
-            start_idx = clean_snapshot.index[clean_snapshot["Frame"] == 0]
-            if len(start_idx) > 0:
-                clean_snapshot = clean_snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
-        return clean_snapshot.reset_index(drop=True)
-
-    #Use the opened path to extract Snapshot data
-    def _load_xls(self, path: str) -> pd.DataFrame:
-        """Load Excel, find header row containing a PID from the pattern dictionary, set headers,
-        and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
-        """
-        # Read raw snapshot so we can pull the header information and scan rows
-        # dirty_snapshot = pd.read_csv(path, sep=",", encoding="utf-16")
-
-        with open(path, "r", encoding="utf-16") as f:
-            text = f.read()
-        rows = text.split("\n")
-        data = [r.split("\t") for r in rows]
-        dirty_snapshot = pd.DataFrame(data)
-        
-        
-        # Pull any header information from the Snapshot if it exists
-        header_info = parse_simple_header(dirty_snapshot, max_rows=4)
-
-        # If nothing found, show a gentle placeholder
-        if header_info:
-            self.header_panel.set_rows(header_info)
-        else:
-            self.header_panel.set_rows([("Header", "No header info present")])
-
-        # Find header row: somewhere at/after row index 2 (3rd row to humans)
-        header_row_idx = None
-
-        # Define a mapping of header PIDs to SnapType enumerations
-        header_patterns = {
-            "p_l_battery_raw": SnapType.ECU_V1,
-            "battu_u": SnapType.ECU_V2,
-            # Add more patterns as needed
-        }
-
-        # Scan the first 10 rows
-        for i in range(min(len(dirty_snapshot), 10)):
-            # Clean and normalize each cell to lowercase strings
-            row_values = dirty_snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
-
-            # Check if any known header keyword appears in this row
-            for pattern, snap_type in header_patterns.items():
-                if any(v == pattern for v in row_values):
-                    header_row_idx = i
-                    self.snapshot_type = snap_type
-                    self.header_panel.set_snaptype_info(self.snapshot_type)
-                    break  # stop once a match is found
-            else:
-                # The 'else' on a for-loop runs only if the loop didn't break
-                continue
-            break  # Break outer loop after a successful match
-
-        if header_row_idx is None:
-            raise ValueError("Couldn't locate header row containing useful information.")
-
-        self.pid_info = extract_pid_metadata(dirty_snapshot, header_row_idx,)
-
-        # Set header row
-        pid_header = dirty_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
-        clean_snapshot = dirty_snapshot.iloc[header_row_idx+1:].copy()
-        clean_snapshot.columns = pid_header
-
-        # Normalize column names: strip and preserve original case
-        clean_snapshot.columns = [str(c).strip() for c in clean_snapshot.columns]
-
-
-        # Try to ensure first two columns are named exactly Frame and Time
-        # I had to copy the entire list of column names into a list, change the firts two column names
-        # then reassign the names to the data frame - all because the 'NaN' 
-        
-        if len(clean_snapshot.columns) >= 2:
-            new_cols = list(clean_snapshot.columns)  # copy all names
-            new_cols[0] = "Frame"
-            new_cols[1] = "Time"
-            clean_snapshot.columns = new_cols
-
-        # Coerce numerics where possible
-        clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
-
-        # Find the start row where Frame == 0 (if Frame exists)
-        if "Frame" in clean_snapshot.columns:
-            start_idx = clean_snapshot.index[clean_snapshot["Frame"] == 0]
-            if len(start_idx) > 0:
-                clean_snapshot = clean_snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
-        return clean_snapshot.reset_index(drop=True)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- Column List Logic -------------------------------------------------------
