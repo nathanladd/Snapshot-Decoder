@@ -18,5 +18,5 @@ class SnapType(Enum):
         self.description = description
 
     def __str__(self):
-        #Overrides the string type - when I call the string of this enumeration, I'll get the description from teh tuple
+        #Overrides the string type - when I call the string of this enumeration, I'll get the description from the tuple
         return self.description

@@ -68,7 +68,8 @@ def extract_pid_metadata(df: pd.DataFrame, header_row_idx: int, start_col: int =
 
     return pid_info
     
-
+def handle_header_action(action_id: str, snaptype: SnapType):
+        print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
 class SnapshotReaderApp(tk.Tk):
 
@@ -183,7 +184,7 @@ class SnapshotReaderApp(tk.Tk):
         chart_border.pack(side="right", fill="both", expand=True, padx=4, pady=4)
 
         # Snapshot Header Information
-        self.header_panel = SimpleHeaderPanel(header_border, title="Snapshot Information")
+        self.header_panel = SimpleHeaderPanel(header_border, on_action=handle_header_action)
         self.header_panel.pack(anchor="nw", padx=4, pady=4) 
 
         # Search box label
@@ -341,7 +342,7 @@ class SnapshotReaderApp(tk.Tk):
         self._set_window_title()
 
         #Update header frame PID information
-        self.header_panel.set_pid_info(pids_found=len(self.snapshot.columns), frames_found=len(self.snapshot))
+        self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
         
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
