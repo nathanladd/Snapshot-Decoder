@@ -1,5 +1,7 @@
 # peek_file.py
 import chardet
+import pandas as pd
+
 
 path = "No start snapshot.xls"
 
@@ -11,3 +13,6 @@ print("First 300 bytes:", start[:300])
 # Detect likely text encoding
 raw = open(path, "rb").read(20000)
 print("Detected encoding:", chardet.detect(raw))
+
+df = pd.read_csv("No start snapshot.xls", sep="\t", encoding="utf-16")
+print(df.head())
