@@ -86,15 +86,15 @@ class SnapshotReaderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         
-        self._set_window_title(self)
-        self.state("zoomed")
+        
+        
     #---------------------------------------------------------------------------------------------------------------------
     # -------------------------------------------------- Properties ------------------------------------------------------
     #---------------------------------------------------------------------------------------------------------------------
         
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
-        self.snapshot_path: str = ""
+        self.snapshot_path: str = None
         self.snapshot_type = SnapType.UNKNOWN
 
         # Lists to hold PIDs charted on Primary and Secondary Axis'
@@ -117,7 +117,8 @@ class SnapshotReaderApp(tk.Tk):
     #---------------------------------------------------------------------------------------------------------------------
     # -------------------------------------------------- Build UI --------------------------------------------------------
     #---------------------------------------------------------------------------------------------------------------------
-
+        self.state("zoomed")
+        self._set_window_title()
         self._build_menu()
         self._build_layout()          # uses the variables above
         self._build_plot_area()       # may call _toggle_* which also needs them
@@ -129,11 +130,11 @@ class SnapshotReaderApp(tk.Tk):
     # ----------------------------------------------- UI Construction ----------------------------------------------------
     #---------------------------------------------------------------------------------------------------------------------
 
-    def _set_window_title(self, snapshot_path):
+    def _set_window_title(self):
         '''Update the window title
         If a Snapshot is open, include its name and path'''
-        if snapshot_path:
-            self.title(f"{APP_TITLE} : {snapshot_path}")
+        if self.snapshot_path:
+            self.title(f"{APP_TITLE} : {os.path.basename(self.snapshot_path)}")
         else:
             self.title(APP_TITLE)
    
@@ -308,13 +309,13 @@ class SnapshotReaderApp(tk.Tk):
     
     #Open the SnapShot
     def open_file(self):
-        path = filedialog.askopenfilename(
+        self.snapshot_path = filedialog.askopenfilename(
             title="Open Engine Data (.xlsx)",
             filetypes=[("Modern Excel", "*.xlsx"), ("All files", "*.*")],
         )
-        if not path:
+        if not self.snapshot_path:
             return
-        ext = os.path.splitext(path)[1].lower()
+        ext = os.path.splitext(self.snapshot_path)[1].lower()
         if ext == ".xls":
             messagebox.showwarning(
                 "Some Bobcat Engine Analyzer Files Not Supported",
@@ -323,7 +324,7 @@ class SnapshotReaderApp(tk.Tk):
                 "Open the file in Excel and use its Save As command to convert this file to a proper .xlsx, then try again.")
             return
         try:
-            df = self._load_snapshot_data(path)
+            df = self._load_snapshot_data(self.snapshot_path)
         except Exception as e:
             messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
             return
@@ -333,17 +334,17 @@ class SnapshotReaderApp(tk.Tk):
             return
 
         self.snapshot = df
-        self.snapshot_path = os.path.basename(path)
+        
         self._update_controls_state(enabled=True)
         
         #Update main window title
-        self._set_window_title(self.snapshot_path)
+        self._set_window_title()
 
         #Update header frame PID information
         self.header_panel.set_pid_info(pids_found=len(self.snapshot.columns), frames_found=len(self.snapshot))
         
         #Update the status bar with file information
-        self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(path)}")
+        self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
 
         
         self._populate_columns_list()
