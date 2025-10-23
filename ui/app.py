@@ -6,7 +6,7 @@ Main Window
 from __future__ import annotations
 import sys
 import os
-import math
+
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from typing import List, Optional, Dict, Callable, Tuple
@@ -18,7 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
-from services.id_snapshot import id_snapshot, find_header_row, extract_pid_metadata
+from services.parse_snapshot import id_snapshot, find_header_row, extract_pid_metadata
 
 
 # Class to manage Snapshot header information
@@ -26,52 +26,6 @@ from ui.header_panel import HeaderPanel
 
 APP_TITLE = "Snapshot Reader"
 
-# #Helper function for extract_pid_metadata
-# def _to_str(cell) -> str:
-#     """Convert any cell to a cleaned string, treating NaN/None as empty."""
-#     if cell is None:
-#         return ""
-#     if isinstance(cell, float) and math.isnan(cell):
-#         return ""
-#     s = str(cell).strip()
-#     return "" if s.lower() in ("nan", "none") else s
-
-# #Helper function for extract_pid_metadata
-# def _within(df: pd.DataFrame, r: int) -> bool:
-#     """True if r is a valid row index for df."""
-#     return 0 <= r < len(df)
-
-# #Extract the PID description and PID unit of measure for each PID
-# def extract_pid_metadata(df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> dict[str, dict[str, str]]:
-#     """
-#     Starting at start_col (default: 3rd col), read:
-#     - PID name from header_row_idx
-#     - Description from row above (header_row_idx - 1)
-#     - Unit from row below (header_row_idx + 1)
-#     Returns: { PID_name: {"Description": ..., "Unit": ...}, ... }
-#     """
-#     pid_info: dict[str, dict[str, str]] = {}
-
-#     # Row indices for description and unit (guard if out of bounds)
-#     desc_row = header_row_idx - 1 if _within(df, header_row_idx - 1) else None
-#     unit_row = header_row_idx + 1 if _within(df, header_row_idx + 1) else None
-
-#     for c in range(start_col, len(df.columns)):
-#         pid = _to_str(df.iat[header_row_idx, c])
-#         if not pid:
-#             continue
-
-#         description = _to_str(df.iat[desc_row, c]) if desc_row is not None else ""
-#         unit = _to_str(df.iat[unit_row, c]) if unit_row is not None else ""
-
-#         # Optional: collapse multi-line cells
-#         description = " ".join(part.strip() for part in description.splitlines() if part.strip())
-#         unit = " ".join(part.strip() for part in unit.splitlines() if part.strip())
-
-#         pid_info[pid] = {"Description": description, "Unit": unit}
-
-#     return pid_info
-    
 def handle_header_action(action_id: str, snaptype: SnapType):
         print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
@@ -352,7 +306,7 @@ class SnapshotReaderApp(tk.Tk):
         else:
             self.header_panel.set_rows([("Header", "No header info present")])
 
-        # ID the snapshot
+        # ID the snapshot snapshot type
         self.snapshot_type = id_snapshot(self.snapshot)
         self.header_panel.set_snaptype_info(self.snapshot_type)
 
@@ -403,7 +357,7 @@ class SnapshotReaderApp(tk.Tk):
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
 
-        
+        # Fill the PID list box
         self._populate_columns_list()
 
 

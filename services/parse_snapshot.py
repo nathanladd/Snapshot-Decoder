@@ -1,5 +1,6 @@
 from domain.snaptypes import SnapType
 import pandas as pd
+import math
 
 # Define a mapping of header PIDs to SnapType enumerations
 header_patterns = {
