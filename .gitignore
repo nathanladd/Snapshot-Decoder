@@ -23,10 +23,10 @@ Thumbs.db
 *.log
 
 # Temporary data or exports
-*.csv
-*.xlsx
-*.xls
-*.tsv
+# *.csv
+# *.xlsx
+# *.xls
+# *.tsv
 
 # Build artifacts (for PyInstaller or packaging)
 dist/
