@@ -357,7 +357,7 @@ class SnapshotReaderApp(tk.Tk):
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
 
-        # Fill the PID list box
+        # Fill the PID list box 
         self._populate_columns_list()
 
 
