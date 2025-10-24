@@ -45,12 +45,11 @@ class SnapshotReaderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         
-        
-        
-    #---------------------------------------------------------------------------------------------------------------------
-    # -------------------------------------------------- Properties ------------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
-        
+        self.state("zoomed")
+        self.imitialize_state()
+
+    def _initialize_state(self):
+        '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
@@ -72,18 +71,22 @@ class SnapshotReaderApp(tk.Tk):
         self.secondary_ymax = tk.StringVar(value="")
         self.primary_auto = tk.BooleanVar(value=True)
         self.secondary_auto = tk.BooleanVar(value=True)
-
-    #---------------------------------------------------------------------------------------------------------------------
-    # -------------------------------------------------- Build UI --------------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
-        self.state("zoomed")
+        
         self._set_window_title()
         self._build_menu()
         self._build_layout()          # uses the variables above
         self._build_plot_area()       # may call _toggle_* which also needs them
         self._update_controls_state(enabled=False)
 
-
+    def clear_all(self):
+        """Reset all data and UI components to blank/default."""
+        self._initialize_state()
+        # also clear UI elements if needed
+        if hasattr(self, "chart_frame"):
+            for widget in self.chart_frame.winfo_children():
+                widget.destroy()
+        if hasattr(self, "status_label"):
+            self.status_label.config(text="")
 
     #---------------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------- UI Construction ----------------------------------------------------
@@ -102,6 +105,7 @@ class SnapshotReaderApp(tk.Tk):
 
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Open…", command=self.open_file)
+        file_menu.add_command(label="Close", command=self.clear_all)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
