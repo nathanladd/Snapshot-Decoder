@@ -1,85 +1,15 @@
 # header_panel.py
 # Simple, dependable 2-column header panel + parser for your Snapshot Reader.
 
-import tkinter as tk
+
 from tkinter import ttk
 # import pandas as pd
 from domain.snaptypes import SnapType
+from ui.tool_tip import ToolTip
+from domain.constants import BUTTONS_BY_TYPE
 
-#Dictionary variable
-# # Standardize the labels found in the header. - labels we expect in row 0..3, col 0, with values in col 1.
-# CANON_LABELS = {
-#     "engine model": "Engine Model",
-#     "ecu map version": "ECU Map Version",
-#     "program sw version": "Program SW Version",
-#     "data logging": "Data Logging"
-# }
 
-_BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
-    SnapType.ECU_V1: [
-        ("Battery Test", "battery_test", "Plot battery V vs RPM"),
-        ("Rail Pressure", "rail_pressure", "Demand vs Actual + Gap"),
-        ("IMV Test", "imv_test", "Demand vs Feedback"),
-        ("Injector Balance", "inj_balance", "Delta speed per cylinder"),
-        ("Start Health", "start_health", "Cranking RPM, V, rail build"),
-    ],
-    SnapType.ECU_V2: [
-        ("Start Health", "start_health", "Cranking RPM, V, rail build"),
-        ("Boost Check", "boost_check", "MAP vs Atmosphere"),
-        ("EGR Position", "egr_position", "Cmd vs Feedback"),
-    ],
-    SnapType.DCU_V1: [
-        ("Usage Summary", "usage_summary", "Key hours, PTO, load"),
-        ("Min/Max Chart", "minmax_chart", "Voltage & RPM extremes"),
-    ],
-    SnapType.EUD_V1: [
-        ("I/O Monitor", "io_monitor", "Digital/analog channels"),
-        ("Fault Timeline", "fault_timeline", "DTCs over time"),
-    ],
-}
 
-# Tool Tip Class
-class ToolTip:
-    """Attach a tooltip to any Tkinter widget."""
-
-    def __init__(self, widget, text, delay=500):
-        self.widget = widget
-        self.text = text
-        self.delay = delay  # milliseconds before showing
-        self.tipwindow = None
-        self.id = None
-        self.widget.bind("<Enter>", self._schedule)
-        self.widget.bind("<Leave>", self._hide)
-
-    def _schedule(self, event=None):
-        self._unschedule()
-        self.id = self.widget.after(self.delay, self._show)
-
-    def _unschedule(self):
-        if self.id:
-            self.widget.after_cancel(self.id)
-            self.id = None
-
-    def _show(self):
-        if self.tipwindow or not self.text:
-            return
-        x = self.widget.winfo_rootx() + 20
-        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
-        self.tipwindow = tw = tk.Toplevel(self.widget)
-        tw.wm_overrideredirect(True)  # remove window borders
-        tw.wm_geometry(f"+{x}+{y}")
-        label = ttk.Label(
-            tw, text=self.text, justify="left",
-            background="#ffffe0", relief="solid", borderwidth=1,
-            padding=(5, 3)
-        )
-        label.pack(ipadx=1)
-
-    def _hide(self, event=None):
-        self._unschedule()
-        if self.tipwindow:
-            self.tipwindow.destroy()
-            self.tipwindow = None
 
 
 class HeaderPanel(ttk.Frame):
@@ -139,7 +69,7 @@ class HeaderPanel(ttk.Frame):
         if snaptype is SnapType.UNKNOWN:
             return
 
-        specs = _BUTTONS_BY_TYPE.get(snaptype, [])
+        specs = BUTTONS_BY_TYPE.get(snaptype, [])
         # Create buttons in a flowing grid: 4 per row looks tidy; adjust as you like
         max_per_row = 4
         for i, (text, action_id, _tip) in enumerate(specs):
