@@ -1,13 +1,7 @@
 import pandas as pd
+from domain.constants import HEADER_LABELS
 
 
-# Standardize the labels found in the header. - labels we expect in row 0..3, col 0, with values in col 1.
-CANON_LABELS = {
-    "engine model": "Engine Model",
-    "ecu map version": "ECU Map Version",
-    "program sw version": "Program SW Version",
-    "data logging": "Data Logging"
-}
 
 # Helper function for parse_simple_header
 def _normalize_label(text: str) -> str:
@@ -19,12 +13,12 @@ def _normalize_label(text: str) -> str:
         return ""
     raw = text.strip().lower()
     # quick exact lookup
-    if raw in CANON_LABELS:
-        return CANON_LABELS[raw]
+    if raw in HEADER_LABELS:
+        return HEADER_LABELS[raw]
 
     # light fuzzy: remove punctuation/spaces to catch 'Program SW Version' vs 'Program SW-Version'
     squished = "".join(ch for ch in raw if ch.isalnum())
-    for k, v in CANON_LABELS.items():
+    for k, v in HEADER_LABELS.items():
         k_squished = "".join(ch for ch in k if ch.isalnum())
         if squished == k_squished:
             return v

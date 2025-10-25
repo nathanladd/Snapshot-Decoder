@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 # Tool Tip Class
 class ToolTip:

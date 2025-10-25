@@ -19,12 +19,12 @@ from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
 from services.parse_snapshot import id_snapshot, find_header_row, extract_pid_metadata
-
+from domain.constants import APP_TITLE
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
 
-APP_TITLE = "Snapshot Reader"
+
 
 def handle_header_action(action_id: str, snaptype: SnapType):
         print(f"[Quick Chart Button Action] {snaptype}: {action_id}")

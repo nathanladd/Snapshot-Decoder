@@ -54,7 +54,7 @@ class HeaderPanel(ttk.Frame):
         self._initialize_header()
 
 
-    #Accept SnapType and set correct lable information
+    #Accept SnapType and set correct label information
     def set_snaptype_info(self, snaptype: SnapType):
         self._snaptype = snaptype
         engine_version = ttk.Label(self.snap_info_frame, text="Snapshot Type:", font=("Segoe UI", 9, "bold"))
