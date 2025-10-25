@@ -7,8 +7,8 @@ APP_TITLE = "Snapshot Decoder"
 
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     SnapType.ECU_V1: [
-        ("Battery Test", "battery_test", "Plot battery V vs RPM"),
-        ("Rail Pressure", "rail_pressure", "Demand vs Actual + Gap"),
+        ("Battery Test", "V1_BATTERY_TEST", "Plot battery V vs RPM"),
+        ("Rail Pressure", "V1_RAIL_PRESSURE", "Demand vs Actual + Gap"),
         ("IMV Test", "imv_test", "Demand vs Feedback"),
         ("Injector Balance", "inj_balance", "Delta speed per cylinder"),
         ("Start Health", "start_health", "Cranking RPM, V, rail build"),
