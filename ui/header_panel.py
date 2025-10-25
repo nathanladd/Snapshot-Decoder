@@ -81,70 +81,6 @@ class ToolTip:
             self.tipwindow.destroy()
             self.tipwindow = None
 
-# # Helper function for parse_simple_header
-# def _normalize_label(text: str) -> str:
-#     """
-#     Normalize a label to a canonical display name if recognized.
-#     Loosened matching: exact, case-insensitive; also allows minor spacing/punctuation differences.
-#     """
-#     if not text:
-#         return ""
-#     raw = text.strip().lower()
-#     # quick exact lookup
-#     if raw in CANON_LABELS:
-#         return CANON_LABELS[raw]
-
-#     # light fuzzy: remove punctuation/spaces to catch 'Program SW Version' vs 'Program SW-Version'
-#     squished = "".join(ch for ch in raw if ch.isalnum())
-#     for k, v in CANON_LABELS.items():
-#         k_squished = "".join(ch for ch in k if ch.isalnum())
-#         if squished == k_squished:
-#             return v
-
-#     # fall back to original as-is if unknown
-#     return text.strip()
-
-# def parse_simple_header(df: pd.DataFrame, max_rows: int = 4):
-#     """
-#     Parse up to the first `max_rows` rows as 2-column key/value pairs.
-#     - Column 0: label (string)
-#     - Column 1: value (string)
-#     - Stops early if Column 0 == 'Frame' (table header reached).
-#     Returns: ordered list of (key, value).
-#     """
-#     results = []
-#     if df is None or df.empty:
-#         return results
-
-#     nrows = min(max_rows, df.shape[0])
-#     for r in range(nrows):
-#         # Stop if we hit the actual table header row
-#         try:
-#             k_raw = str(df.iat[r, 0]).strip()
-#         except Exception:
-#             k_raw = ""
-#         if k_raw and k_raw.lower() == "frame":
-#             break
-
-#         # Pull the value column
-#         try:
-#             v_raw = str(df.iat[r, 1]).strip()
-#         except Exception:
-#             v_raw = ""
-
-#         # Skip truly empty/NaN-ish rows
-#         if not k_raw or k_raw.lower() == "nan":
-#             continue
-#         if not v_raw or v_raw.lower() == "nan":
-#             # Keep keys without values? For this app, we skip them.
-#             continue
-
-#         key = _normalize_label(k_raw)
-#         value = v_raw
-#         results.append((key, value))
-
-#     return results
-
 
 class HeaderPanel(ttk.Frame):
     """
@@ -157,12 +93,16 @@ class HeaderPanel(ttk.Frame):
 
     def __init__(self, master, on_action=None):
         super().__init__(master)
+        self.on_action = on_action
+        self._initialize_header()
+
+    def _initialize_header(self):
         # Properties
         self._row_start = 1
         self._rows = []  # track widgets so we can clear
 
         self._button_widgets: list[ttk.Button] = []
-        self.on_action = on_action
+        
 
         self._snaptype: SnapType | None = None
 
@@ -176,8 +116,13 @@ class HeaderPanel(ttk.Frame):
         # Snapshot Quick Chart Buttons
         self.button_frame = ttk.Labelframe(self, text="Quick Chart Buttons")
         self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
-        #ttk.Label(self.button_frame, text="Test Button Label").pack(padx=10, pady=10)
        
+    def clear_header_panel(self):
+        """Completely rebuild panel if structure may have changed."""
+        for widget in self.winfo_children():
+            widget.destroy()
+        self._initialize_header()
+
 
     #Accept SnapType and set correct lable information
     def set_snaptype_info(self, snaptype: SnapType):

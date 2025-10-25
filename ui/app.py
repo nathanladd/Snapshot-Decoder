@@ -44,13 +44,13 @@ class SnapshotReaderApp(tk.Tk):
         # It’s like calling your parent’s __init__ before adding 
         # your own custom initialization steps.
         super().__init__()
-        
-        
-        
-    #---------------------------------------------------------------------------------------------------------------------
-    # -------------------------------------------------- Properties ------------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
-        
+        self.state("zoomed")
+        self._initialize_state()
+        self._build_ui()
+
+
+    def _initialize_state(self):
+        '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
@@ -72,18 +72,21 @@ class SnapshotReaderApp(tk.Tk):
         self.secondary_ymax = tk.StringVar(value="")
         self.primary_auto = tk.BooleanVar(value=True)
         self.secondary_auto = tk.BooleanVar(value=True)
-
-    #---------------------------------------------------------------------------------------------------------------------
-    # -------------------------------------------------- Build UI --------------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
-        self.state("zoomed")
+        
+    def _build_ui(self):
         self._set_window_title()
         self._build_menu()
         self._build_layout()          # uses the variables above
         self._build_plot_area()       # may call _toggle_* which also needs them
         self._update_controls_state(enabled=False)
 
-
+    def _clear_all(self):
+        """Reset all data and UI components to blank/default."""
+        self._initialize_state()
+        for widget in self.winfo_children():
+            widget.destroy()
+        self._build_ui()
+        
 
     #---------------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------- UI Construction ----------------------------------------------------
@@ -101,7 +104,8 @@ class SnapshotReaderApp(tk.Tk):
         menubar = tk.Menu(self)
 
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Open…", command=self.open_file)
+        file_menu.add_command(label="Open Snapshot…", command=self.open_file)
+        file_menu.add_command(label="Close Snapshot", command=self._clear_all)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
@@ -270,12 +274,15 @@ class SnapshotReaderApp(tk.Tk):
     def open_file(self):
 
         # Use an Open File diaglog box to get the file path
-        self.snapshot_path = filedialog.askopenfilename(
+        path = filedialog.askopenfilename(
             title="Open Bobcat Snapshot File",
-            filetypes=[("Fake .xls", ".xls"), ("Converted Excel", "*.xlsx"), ("All files", "*.*")],
+            filetypes=[("Fake .xls", ".xls"), ("Converted Excel", "*.xlsx"), ("All files", "*.*")]
         )
-        if not self.snapshot_path:
+        if not path:
             return
+        
+        self._clear_all()
+        self.snapshot_path = path
         # Get the new file extension
         ext = os.path.splitext(self.snapshot_path)[1].lower()
         # Decide how to process the file
