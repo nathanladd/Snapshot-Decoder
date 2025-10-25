@@ -26,8 +26,7 @@ from ui.header_panel import HeaderPanel
 
 
 
-def handle_header_action(action_id: str, snaptype: SnapType):
-        print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
+
 
 class SnapshotReaderApp(tk.Tk):
 
@@ -86,7 +85,6 @@ class SnapshotReaderApp(tk.Tk):
         for widget in self.winfo_children():
             widget.destroy()
         self._build_ui()
-        
 
     #---------------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------- UI Construction ----------------------------------------------------
@@ -146,7 +144,7 @@ class SnapshotReaderApp(tk.Tk):
         chart_border.pack(side="right", fill="both", expand=True, padx=4, pady=4)
 
         # Snapshot Header Information
-        self.header_panel = HeaderPanel(header_border, on_action=handle_header_action)
+        self.header_panel = HeaderPanel(header_border, on_action=self.handle_header_action)
         self.header_panel.pack(anchor="nw", padx=4, pady=4) 
 
         # Search box label
@@ -367,7 +365,37 @@ class SnapshotReaderApp(tk.Tk):
         # Fill the PID list box 
         self._populate_columns_list()
 
+    #---------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------ Button Handling ---------------------------------------------------
+    #---------------------------------------------------------------------------------------------------------------------
+    
+    def handle_header_action(self, action_id: str, snaptype: SnapType):
+        print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
+        # Dispatch table: map action IDs to handler functions
+        dispatch = {
+            "V1_BATTERY_TEST": self.V1_show_battery_chart,
+            "V1_RAIL_PRESSURE": self.V1_show_rail_pressure_chart,
+            
+            # add more as needed
+        }
+
+        # Lookup and call the handler if it exists
+        handler = dispatch.get(action_id)
+        if handler:
+            handler(snaptype)  # or pass whatever args your handlers need
+        else:
+            print(f"No handler found for action: {action_id}")
+
+
+    def V1_show_battery_chart(self, snaptype: SnapType):
+        print(f"Generating battery chart for {snaptype}")
+        
+        
+    def V1_show_rail_pressure_chart(self, snaptype: SnapType):
+        print(f"Generating rail pressure chart for {snaptype}")
+
+        
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- Column List Logic -------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
