@@ -18,7 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
-from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions
+from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions, scrub_snapshot
 from domain.constants import APP_TITLE, APP_VERSION
 
 # Class to manage Snapshot header information
@@ -315,41 +315,11 @@ class SnapshotDecoderApp(tk.Tk):
         # ID the snapshot snapshot type
         header_row_idx = find_pid_names(self.raw_snapshot)
         self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
-
         self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
-        self.header_panel.set_header_snaptype(self.snapshot_type)
         
-        # Set column header row
-        pid_header = self.raw_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
-        self.snapshot = self.raw_snapshot.iloc[header_row_idx+1:].copy()
-        self.snapshot.columns = pid_header
-
-        # Normalize column names: strip and preserve original case
-        self.snapshot.columns = [str(c).strip() for c in self.snapshot.columns]
-
-
-        # Try to ensure first two columns are named exactly Frame and Time
-        # I had to copy the entire list of column names into a list, change the firts two column names
-        # then reassign the names to the data frame - all because the 'NaN' 
         
-        if len(self.snapshot.columns) >= 2:
-            new_cols = list(self.snapshot.columns)  # copy all names
-            new_cols[0] = "Frame"
-            new_cols[1] = "Time"
-            self.snapshot.columns = new_cols
-
-        # Coerce numerics where possible
-        # FutureWarning: errors='ignore' is deprecated and will raise in a future version. 
-        # Use to_numeric without passing `errors` and catch exceptions explicitly instead
-        self.snapshot = self.snapshot.apply(pd.to_numeric, errors="ignore")
-
-        # Find the start row where Frame == 0 (if Frame exists)
-        if "Frame" in self.snapshot.columns:
-            start_idx = self.snapshot.index[self.snapshot["Frame"] == 0]
-            if len(start_idx) > 0:
-                self.snapshot = self.snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
-        #self.snapshot = clean_snapshot
+        # Process the snapshot
+        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
 
 
         # Update the UI
@@ -360,11 +330,12 @@ class SnapshotDecoderApp(tk.Tk):
 
         #Update header frame PID information
         self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
+        self.header_panel.set_header_snaptype(self.snapshot_type)
         
         #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
 
-        # Fill the PID list box 
+        # Fill the PID list box on the main window
         self._populate_columns_list()
 
     #---------------------------------------------------------------------------------------------------------------------
