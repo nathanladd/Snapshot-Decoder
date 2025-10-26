@@ -52,7 +52,6 @@ class SnapshotDecoderApp(tk.Tk):
         '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
         self.raw_snapshot: Optional[pd.DataFrame] = None
-        #self.snapshot_header: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
         self.snapshot_type = SnapType.EMPTY
@@ -81,7 +80,7 @@ class SnapshotDecoderApp(tk.Tk):
         self._build_plot_area()       # may call _toggle_* which also needs them
         self._update_controls_state(enabled=False)
 
-    def _clear_all(self):
+    def _clear_ui(self):
         """Reset all data and UI components to blank/default."""
         self._initialize_state()
         for widget in self.winfo_children():
@@ -105,7 +104,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Open Snapshot…", command=self.open_file)
-        file_menu.add_command(label="Close Snapshot", command=self._clear_all)
+        file_menu.add_command(label="Close Snapshot", command=self._clear_ui)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
@@ -280,7 +279,7 @@ class SnapshotDecoderApp(tk.Tk):
         if not path:
             return
         
-        self._clear_all()
+        self._clear_ui()
         self.snapshot_path = path
 
         # Get the new file extension and decide how to process it
@@ -314,28 +313,18 @@ class SnapshotDecoderApp(tk.Tk):
 
         # ID the snapshot snapshot type
         header_row_idx = find_pid_names(self.raw_snapshot)
-        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
         self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
-        
-        
-        # Process the snapshot
-        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
+        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)  
 
+        # Clean the snapshot
+        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
 
         # Update the UI
         self._update_controls_state(enabled=True)
-        
-        #Update main window title
         self._set_window_title()
-
-        #Update header frame PID information
         self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
         self.header_panel.set_header_snaptype(self.snapshot_type)
-        
-        #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
-
-        # Fill the PID list box on the main window
         self._populate_columns_list()
 
     #---------------------------------------------------------------------------------------------------------------------
