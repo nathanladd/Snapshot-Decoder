@@ -51,6 +51,8 @@ class SnapshotDecoderApp(tk.Tk):
     def _initialize_state(self):
         '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
+        self.raw_snapshot: Optional[pd.DataFrame] = None
+        #self.snapshot_header: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
         self.snapshot_type = SnapType.EMPTY
@@ -86,9 +88,9 @@ class SnapshotDecoderApp(tk.Tk):
             widget.destroy()
         self._build_ui()
 
-    #---------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------- UI Construction ----------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------- UI Construction ----------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 
     def _set_window_title(self):
         '''Update the window title
@@ -109,7 +111,8 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="File", menu=file_menu)
 
         view_menu = tk.Menu(menubar, tearoff=0)
-        view_menu.add_command(label="Snapshot Table...", command=self.open_data_table)
+        view_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot))
+        view_menu.add_command(label="Snapshot Table...", command=lambda: self.open_data_table(self.snapshot))
         view_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
         menubar.add_cascade(label="Data", menu=view_menu)
 
@@ -262,10 +265,9 @@ class SnapshotDecoderApp(tk.Tk):
         except Exception:
             pass
 
- 
-    #---------------------------------------------------------------------------------------------------------------------
-    # -------------------------------------------------- Data Loading ----------------------------------------------------
-    #--------------------------------------------Open and Process the Snapshot--------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------- Data Loading ----------------------------------------------------
+#--------------------------------------------Open and Process the Snapshot--------------------------------------------
     
     #Open the SnapShot
     def open_file(self):
@@ -285,13 +287,13 @@ class SnapshotDecoderApp(tk.Tk):
         ext = os.path.splitext(self.snapshot_path)[1].lower()
         if ext == ".xlsx":       
             try:
-                self.snapshot = load_xlsx(self.snapshot_path)
+                self.raw_snapshot = load_xlsx(self.snapshot_path)
             except Exception as e:
                 messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
                 return
         elif ext == ".xls":       
             try:
-                self.snapshot = load_xls(self.snapshot_path)
+                self.raw_snapshot = load_xls(self.snapshot_path)
             except Exception as e:
                 messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
                 return     
@@ -299,55 +301,55 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showerror("Unsupported file type", f"Unknown file extension: {ext}")
             return
         
-        if self.snapshot is None or self.snapshot.empty:
+        if self.raw_snapshot is None or self.raw_snapshot.empty:
             messagebox.showerror("No data", "The workbook loaded but no data table was found.")
             return
 
         # Pull any header information from the Snapshot if it exists
-        header_info = parse_header(self.snapshot, max_rows=4)
+        header_info = parse_header(self.raw_snapshot, max_rows=4)
         if header_info:
             self.header_panel.set_rows(header_info)
         else:
             self.header_panel.set_rows([("Header", "No header info present")])
 
         # ID the snapshot snapshot type
-        header_row_idx = find_pid_names(self.snapshot)
-        self.pid_info = extract_pid_descriptions(self.snapshot, header_row_idx)
+        header_row_idx = find_pid_names(self.raw_snapshot)
+        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
 
-        self.snapshot_type = id_snapshot(self.snapshot, header_row_idx)
+        self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
         self.header_panel.set_header_snaptype(self.snapshot_type)
         
         # Set column header row
-        pid_header = self.snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
-        clean_snapshot = self.snapshot.iloc[header_row_idx+1:].copy()
-        clean_snapshot.columns = pid_header
+        pid_header = self.raw_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
+        self.snapshot = self.raw_snapshot.iloc[header_row_idx+1:].copy()
+        self.snapshot.columns = pid_header
 
         # Normalize column names: strip and preserve original case
-        clean_snapshot.columns = [str(c).strip() for c in clean_snapshot.columns]
+        self.snapshot.columns = [str(c).strip() for c in self.snapshot.columns]
 
 
         # Try to ensure first two columns are named exactly Frame and Time
         # I had to copy the entire list of column names into a list, change the firts two column names
         # then reassign the names to the data frame - all because the 'NaN' 
         
-        if len(clean_snapshot.columns) >= 2:
-            new_cols = list(clean_snapshot.columns)  # copy all names
+        if len(self.snapshot.columns) >= 2:
+            new_cols = list(self.snapshot.columns)  # copy all names
             new_cols[0] = "Frame"
             new_cols[1] = "Time"
-            clean_snapshot.columns = new_cols
+            self.snapshot.columns = new_cols
 
         # Coerce numerics where possible
         # FutureWarning: errors='ignore' is deprecated and will raise in a future version. 
         # Use to_numeric without passing `errors` and catch exceptions explicitly instead
-        clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
+        self.snapshot = self.snapshot.apply(pd.to_numeric, errors="ignore")
 
         # Find the start row where Frame == 0 (if Frame exists)
-        if "Frame" in clean_snapshot.columns:
-            start_idx = clean_snapshot.index[clean_snapshot["Frame"] == 0]
+        if "Frame" in self.snapshot.columns:
+            start_idx = self.snapshot.index[self.snapshot["Frame"] == 0]
             if len(start_idx) > 0:
-                clean_snapshot = clean_snapshot.loc[start_idx[0]:].reset_index(drop=True)
+                self.snapshot = self.snapshot.loc[start_idx[0]:].reset_index(drop=True)
 
-        self.snapshot = clean_snapshot
+        #self.snapshot = clean_snapshot
 
 
         # Update the UI
@@ -394,7 +396,6 @@ class SnapshotDecoderApp(tk.Tk):
     def V1_show_rail_pressure_chart(self, snaptype: SnapType):
         print(f"Generating rail pressure chart for {snaptype}")
 
-        
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- Column List Logic -------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
@@ -585,8 +586,8 @@ class SnapshotDecoderApp(tk.Tk):
 # ------------------------------------ Build a new window with a clean data table ---------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
 
-    def open_data_table(self):
-        if self.snapshot is None or self.snapshot.empty:
+    def open_data_table(self, snapshot: pd.DataFrame):
+        if snapshot is None or snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
@@ -604,11 +605,15 @@ class SnapshotDecoderApp(tk.Tk):
         win.title(f"Validation — Cleaned Data Table: {self.snapshot_path}")
         win.geometry("1000x600")
 
+        # Style to make headings bold
+        style = ttk.Style(win)
+        style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
+
         container = ttk.Frame(win)
         container.pack(fill=tk.BOTH, expand=True)
 
         # ---- Sanitize column names for Treeview ----
-        raw_cols = list(self.snapshot.columns)
+        raw_cols = list(snapshot.columns)
         safe_cols = []
         used = set()
         for i, c in enumerate(raw_cols):
@@ -624,7 +629,7 @@ class SnapshotDecoderApp(tk.Tk):
             safe_cols.append(name)
 
         # Use a display copy with safe column names
-        df_display = self.snapshot.copy()
+        df_display = snapshot.copy()
         df_display.columns = safe_cols
 
         # Scrollbars
@@ -651,13 +656,14 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Headings + widths
         for col in safe_cols:
-            tree.heading(col, text=col)
-            # width heuristic: 80px min, 300px max, based on ~80th percentile of text length
+            tree.heading(col, text=col, anchor='center')
+            # width heuristic: 150px min, 300px max, based on ~80th percentile of text length
             try:
-                w = max(80, min(300, int(df_display[col].astype(str).map(len).quantile(0.8)) * 8))
+                w = max(150, min(300, int(df_display[col].astype(str).map(len).quantile(0.8)) * 8))
             except Exception:
                 w = 120
-            tree.column(col, width=w, stretch=True, anchor=tk.W)
+                # I disabled stretch to prevent columns from getting slammed
+            tree.column(col, width=w, stretch=False, minwidth=w, anchor='center')
 
         # Insert rows (convert cells to strings; empty for NaN)
         for _, row in df_display.iterrows():
@@ -686,11 +692,24 @@ class SnapshotDecoderApp(tk.Tk):
         window.title(f"PID Descriptions: {self.snapshot_path}" )
         window.geometry("800x400")
 
+        # Style to make headings bold
+        style = ttk.Style(window)
+        style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
+
+        # Container for tree and scrollbar
+        container = ttk.Frame(window)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        # Vertical scrollbar
+        yscroll = ttk.Scrollbar(container, orient=tk.VERTICAL)
+        yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+
         # Define the columns
         columns = ("PID", "Description", "Unit")
 
-        tree = ttk.Treeview(window, columns=columns, show="headings")
-        tree.pack(fill="both", expand=True)
+        tree = ttk.Treeview(container, columns=columns, show="headings", yscrollcommand=yscroll.set)
+        yscroll.config(command=tree.yview)
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Define headings
         tree.heading("PID", text="PID Name")
