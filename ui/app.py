@@ -53,7 +53,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.snapshot: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
-        self.snapshot_type = SnapType.UNKNOWN
+        self.snapshot_type = SnapType.EMPTY
 
         # Lists to hold PIDs charted on Primary and Secondary Axis'
         self.primary_series: List[str] = []
@@ -312,7 +312,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         # ID the snapshot snapshot type
         self.snapshot_type = id_snapshot(self.snapshot)
-        self.header_panel.set_snaptype_info(self.snapshot_type)
+        self.header_panel.set_header_snaptype(self.snapshot_type)
 
         # Find column header row index and extract the PID descriptions
         header_row_idx = find_header_row(self.snapshot)

@@ -34,6 +34,8 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
 HEADER_LABELS = {
     "engine model": "Engine Model",
     "ecu map version": "ECU Map Version",
-    "program sw version": "Engine Analyzer Version",
-    "data logging": "Data Logging"
+    "program sw version": "Engine Analyzer",
+    "data logging": "Date / Time",
+    "engine no": "Engine Model",
+    "sw version": "Engine Analyzer",
 }

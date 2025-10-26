@@ -17,10 +17,10 @@ Key bits:
 """
 
 # Main entry point
-from ui.app import SnapshotReaderApp
+from ui.app import SnapshotDecoderApp
 
 # The apps 'main' function definition
-# - common convenion for the app starting point
+# Common convenion for the app starting point
 def main():
     """Main entry point for the application"""
     # Create the main application window
