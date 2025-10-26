@@ -118,11 +118,10 @@ class SnapshotReaderApp(tk.Tk):
         menubar.add_cascade(label="Plot", menu=plot_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label="About", command=lambda: messagebox.showinfo(
-            "Snapshot Reader", 
-            "Written by Nate Ladd\n" \
-            "Bobcat of the Rockies\n" \
-            "Service Trainer\n" \
+        help_menu.add_command(label="About", command=lambda: messagebox.showinfo(f"{APP_TITLE} {APP_VERSION} ",  
+            "Written by Nate Ladd\n" 
+            "Service Trainer\n" 
+            "Bobcat of the Rockies\n" 
             "nladd@bobcatoftherockies.com"
             ))
         menubar.add_cascade(label="Help", menu=help_menu)
