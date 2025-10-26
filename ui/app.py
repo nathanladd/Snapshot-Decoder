@@ -52,7 +52,7 @@ class SnapshotDecoderApp(tk.Tk):
         '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
         self.raw_snapshot: Optional[pd.DataFrame] = None
-        self.snapshot_header: Optional[pd.DataFrame] = None
+        #self.snapshot_header: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
         self.snapshot_type = SnapType.EMPTY
@@ -694,11 +694,24 @@ class SnapshotDecoderApp(tk.Tk):
         window.title(f"PID Descriptions: {self.snapshot_path}" )
         window.geometry("800x400")
 
+        # Style to make headings bold
+        style = ttk.Style(window)
+        style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
+
+        # Container for tree and scrollbar
+        container = ttk.Frame(window)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        # Vertical scrollbar
+        yscroll = ttk.Scrollbar(container, orient=tk.VERTICAL)
+        yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+
         # Define the columns
         columns = ("PID", "Description", "Unit")
 
-        tree = ttk.Treeview(window, columns=columns, show="headings")
-        tree.pack(fill="both", expand=True)
+        tree = ttk.Treeview(container, columns=columns, show="headings", yscrollcommand=yscroll.set)
+        yscroll.config(command=tree.yview)
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Define headings
         tree.heading("PID", text="PID Name")
