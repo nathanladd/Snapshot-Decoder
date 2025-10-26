@@ -330,6 +330,7 @@ class SnapshotDecoderApp(tk.Tk):
     #---------------------------------------------------------------------------------------------------------------------
     # ------------------------------------------------ Button Handling ---------------------------------------------------
     #---------------------------------------------------------------------------------------------------------------------
+    # Button handler for quick chart actions - Uses dispatch dictionary to map action IDs to handler functions
     def handle_header_action(self, action_id: str, snaptype: SnapType):
         print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
@@ -337,7 +338,7 @@ class SnapshotDecoderApp(tk.Tk):
         dispatch = {
             "V1_BATTERY_TEST": self.V1_show_battery_chart,
             "V1_RAIL_PRESSURE": self.V1_show_rail_pressure_chart,
-            
+            "V1_RAIL_GAP": self.V1_show_rail_gap_chart,
             # add more as needed
         }
 
@@ -348,21 +349,19 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             print(f"No handler found for action: {action_id}")
 
-
-    def V1_show_battery_chart(self, snaptype: SnapType):
-        print(f"Generating battery chart for {snaptype}")
-        
+    # Helper function to apply quick chart setup
+    def _apply_quick_chart_setup(self, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str, primary_max: str, secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str=""):
         # Retrieve tooltip for the chart title
         tooltip = None
         if snaptype in BUTTONS_BY_TYPE:
             for button_name, cmd, tip in BUTTONS_BY_TYPE[snaptype]:
-                if cmd == "V1_BATTERY_TEST":
+                if cmd == action_id:
                     tooltip = tip
                     break
         
         # Set scripted PID names for primary and secondary axes
-        self.primary_series = ["P_L_Battery_raw"]
-        self.secondary_series = ["IN_Engine_cycle_speed"]
+        self.primary_series = primary_pids
+        self.secondary_series = secondary_pids
         
         # Update list boxes
         self.primary_list.delete(0, tk.END)
@@ -375,12 +374,12 @@ class SnapshotDecoderApp(tk.Tk):
         
         # Set scripted min/max values for axes
         self.primary_auto.set(False)
-        self.primary_ymin.set("0")
-        self.primary_ymax.set("18")
+        self.primary_ymin.set(primary_min)
+        self.primary_ymax.set(primary_max)
         
         self.secondary_auto.set(False)
-        self.secondary_ymin.set("-50")
-        self.secondary_ymax.set("3000")
+        self.secondary_ymin.set(secondary_min)
+        self.secondary_ymax.set(secondary_max)
         
         # Trigger toggle to update entry states
         self._toggle_primary_inputs()
@@ -393,10 +392,39 @@ class SnapshotDecoderApp(tk.Tk):
         if tooltip:
             self.ax_left.set_title(tooltip)
             self.canvas.draw_idle()
+
+    def V1_show_battery_chart(self, snaptype: SnapType):
+        self._apply_quick_chart_setup(
+            snaptype,
+            "V1_BATTERY_TEST",
+            ["P_L_Battery_raw"],
+            "0",
+            "18",
+            ["IN_Engine_cycle_speed"],
+            "-50",
+            "3000"
+        )
         
     def V1_show_rail_pressure_chart(self, snaptype: SnapType):
-        print(f"Generating rail pressure chart for {snaptype}")
+        self._apply_quick_chart_setup(
+            snaptype,
+            "V1_RAIL_PRESSURE",
+            ["RPC_Rail_pressure_dmnd", "P_L_RAIL_PRES_RAW"],
+            "-15",
+            "30000",
+            ["FQD_Chkd_inj_fuel_dmnd"],
+            "-5",
+            "300"
+        )
 
+    def V1_show_rail_gap_chart(self, snaptype: SnapType):
+        self._apply_quick_chart_setup(
+            snaptype,
+            "V1_RAIL_GAP",
+            ["RPC_Rail_pressure_error"],
+            "-5000",
+            "5000",
+        )
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- Column List Logic -------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------

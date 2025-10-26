@@ -9,9 +9,12 @@ APP_VERSION = "1.0.0"
 # Button name, COMMAND NAME, tooltip
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     SnapType.ECU_V1: [
-        ("Battery Test", "V1_BATTERY_TEST", "Battery Voltage vs RPM (cranking voltage drop and charging voltage)"),
-        ("Rail Pressure", "V1_RAIL_PRESSURE", "Demand vs Actual + Gap"),
-        
+        ("Battery Test", "V1_BATTERY_TEST", 
+        "Battery Voltage vs RPM (Cranking voltage drop and charging voltage)"),
+        ("Rail Pressure", "V1_RAIL_PRESSURE", 
+        "Demand vs Actual Rail Pressure (Measured at 'steady-state' consistant fuel mg/stroke)"),
+        ("Rail Gap", "V1_RAIL_GAP", 
+        "Rail Pressure Gap (Greater than 2150 for 5 seconds the ECU will shut down the injectors)"),
     ],
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", "Battery V vs RPM"),
