@@ -39,3 +39,12 @@ HEADER_LABELS = {
     "engine no": "Engine Model",
     "sw version": "Engine Analyzer",
 }
+
+# Define a mapping of header PIDs to SnapType enumerations
+PID_KEY = {
+    "p_l_battery_raw": SnapType.ECU_V1,
+    "battu_u": SnapType.ECU_V2,
+    "p_l_egr_close_pos_learnt_nvv": SnapType.EUD_V1,
+    
+    # Add more patterns as needed
+}

@@ -18,8 +18,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
-from services.parse_snapshot import id_snapshot, find_header_row, extract_pid_metadata
-from domain.constants import APP_TITLE
+from services.parse_snapshot import id_snapshot, find_header_row, extract_pid_descriptions
+from domain.constants import APP_TITLE, APP_VERSION
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
@@ -311,13 +311,12 @@ class SnapshotDecoderApp(tk.Tk):
             self.header_panel.set_rows([("Header", "No header info present")])
 
         # ID the snapshot snapshot type
-        self.snapshot_type = id_snapshot(self.snapshot)
-        self.header_panel.set_header_snaptype(self.snapshot_type)
-
-        # Find column header row index and extract the PID descriptions
         header_row_idx = find_header_row(self.snapshot)
-        self.pid_info = extract_pid_metadata(self.snapshot, header_row_idx,)
+        self.pid_info = extract_pid_descriptions(self.snapshot, header_row_idx)
 
+        self.snapshot_type = id_snapshot(self.snapshot, header_row_idx)
+        self.header_panel.set_header_snaptype(self.snapshot_type)
+        
         # Set column header row
         pid_header = self.snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
         clean_snapshot = self.snapshot.iloc[header_row_idx+1:].copy()
@@ -338,6 +337,8 @@ class SnapshotDecoderApp(tk.Tk):
             clean_snapshot.columns = new_cols
 
         # Coerce numerics where possible
+        # FutureWarning: errors='ignore' is deprecated and will raise in a future version. 
+        # Use to_numeric without passing `errors` and catch exceptions explicitly instead
         clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
 
         # Find the start row where Frame == 0 (if Frame exists)

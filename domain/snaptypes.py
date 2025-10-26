@@ -2,7 +2,7 @@ from enum import Enum
 
 # Enumeration to hold the type desription of the snapshot as a global variable
 class SnapType(Enum):
-    EMPTY = ("UNKNOWN", "Unknown Snapshot Type")
+    EMPTY = ("EMPTY", "Error")
     ECU_V1 = ("ECU_V1", "Bobcat V1 Engine (Delphi ECU)")
     DCU_V1 = ("DCU_V1", "Bobcat V1 Engine SCR System (Bosch DCU)")
     EUD_V1 = ("EUD_V1", "Bobcat V1 Engine Use Data")
