@@ -105,6 +105,16 @@ class HeaderPanel(ttk.Frame):
         """
         self.clear()
         r = self._row_start
+        
+        # Special case: if only one pair and value is "none", show only the key, not bold
+        if len(pairs) == 1 and pairs[0][1].lower() == "none":
+            k, v = pairs[0]
+            lbl = ttk.Label(self.snap_info_frame, text=k, anchor="w")
+            lbl.grid(row=r, column=0, columnspan=2, sticky="w", padx=(0, 5), pady=1)
+            self._rows.append(lbl)
+            return
+        
+        # Normal case
         # Show known keys in a friendly order first, then the rest
         priority = ["Engine Model", "ECU Map Version", "Program SW Version", "Data Logging", "Engine No"]
         used = set()
