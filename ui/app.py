@@ -411,6 +411,10 @@ class SnapshotDecoderApp(tk.Tk):
                     self.secondary_series.append(s)
                     self.secondary_list.insert(tk.END, s)
 
+        # Redraw chart if snapshot is loaded
+        if self.snapshot is not None:
+            self.plot_combo_chart()
+
     def _move_in_list(self, listbox: tk.Listbox, delta: int):
         idxs = list(listbox.curselection())
         if not idxs:
@@ -430,6 +434,10 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             self.secondary_series = list(listbox.get(0, tk.END))
 
+        # Redraw chart if snapshot is loaded
+        if self.snapshot is not None:
+            self.plot_combo_chart()
+
     def _remove_selected_from(self, which: str):
         lb = self.primary_list if which == "primary" else self.secondary_list
         sel = list(lb.curselection())
@@ -441,6 +449,10 @@ class SnapshotDecoderApp(tk.Tk):
             self.primary_series = list(lb.get(0, tk.END))
         else:
             self.secondary_series = list(lb.get(0, tk.END))
+
+        # Redraw chart if snapshot is loaded
+        if self.snapshot is not None:
+            self.plot_combo_chart()
 
     def _update_controls_state(self, enabled: bool):
         state = tk.NORMAL if enabled else tk.DISABLED
