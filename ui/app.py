@@ -607,6 +607,10 @@ class SnapshotDecoderApp(tk.Tk):
         win.title(f"Validation — Cleaned Data Table: {self.snapshot_path}")
         win.geometry("1000x600")
 
+        # Style to make headings bold
+        style = ttk.Style(win)
+        style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
+
         container = ttk.Frame(win)
         container.pack(fill=tk.BOTH, expand=True)
 
@@ -654,13 +658,14 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Headings + widths
         for col in safe_cols:
-            tree.heading(col, text=col)
-            # width heuristic: 80px min, 300px max, based on ~80th percentile of text length
+            tree.heading(col, text=col, anchor='center')
+            # width heuristic: 150px min, 300px max, based on ~80th percentile of text length
             try:
-                w = max(80, min(300, int(df_display[col].astype(str).map(len).quantile(0.8)) * 8))
+                w = max(150, min(300, int(df_display[col].astype(str).map(len).quantile(0.8)) * 8))
             except Exception:
                 w = 120
-            tree.column(col, width=w, stretch=True, anchor=tk.W)
+                # I disabled stretch to prevent columns from getting slammed
+            tree.column(col, width=w, stretch=False, minwidth=w, anchor='center')
 
         # Insert rows (convert cells to strings; empty for NaN)
         for _, row in df_display.iterrows():
