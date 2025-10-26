@@ -28,7 +28,7 @@ from ui.header_panel import HeaderPanel
 
 
 
-class SnapshotReaderApp(tk.Tk):
+class SnapshotDecoderApp(tk.Tk):
 
     #__init__ is a special built-in method name in Python. 
     # When you create (or “instantiate”) an object from a class, 
