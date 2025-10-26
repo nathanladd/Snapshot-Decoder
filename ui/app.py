@@ -18,7 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
-from services.parse_snapshot import id_snapshot, find_header_row, extract_pid_descriptions
+from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions
 from domain.constants import APP_TITLE, APP_VERSION
 
 # Class to manage Snapshot header information
@@ -311,7 +311,7 @@ class SnapshotDecoderApp(tk.Tk):
             self.header_panel.set_rows([("Header", "No header info present")])
 
         # ID the snapshot snapshot type
-        header_row_idx = find_header_row(self.snapshot)
+        header_row_idx = find_pid_names(self.snapshot)
         self.pid_info = extract_pid_descriptions(self.snapshot, header_row_idx)
 
         self.snapshot_type = id_snapshot(self.snapshot, header_row_idx)

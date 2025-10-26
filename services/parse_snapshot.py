@@ -20,7 +20,7 @@ def id_snapshot(snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
     return SnapType.EMPTY
       
 
-def find_header_row(snapshot: pd.DataFrame) -> int:
+def find_pid_names(snapshot: pd.DataFrame) -> int:
     '''
     Find the header row
     '''
