@@ -51,6 +51,8 @@ class SnapshotDecoderApp(tk.Tk):
     def _initialize_state(self):
         '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
+        self.raw_snapshot: Optional[pd.DataFrame] = None
+        self.snapshot_header: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
         self.snapshot_type = SnapType.EMPTY
@@ -86,9 +88,9 @@ class SnapshotDecoderApp(tk.Tk):
             widget.destroy()
         self._build_ui()
 
-    #---------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------- UI Construction ----------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------- UI Construction ----------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 
     def _set_window_title(self):
         '''Update the window title
@@ -263,9 +265,9 @@ class SnapshotDecoderApp(tk.Tk):
             pass
 
  
-    #---------------------------------------------------------------------------------------------------------------------
-    # -------------------------------------------------- Data Loading ----------------------------------------------------
-    #--------------------------------------------Open and Process the Snapshot--------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------- Data Loading ----------------------------------------------------
+#--------------------------------------------Open and Process the Snapshot--------------------------------------------
     
     #Open the SnapShot
     def open_file(self):
@@ -285,13 +287,13 @@ class SnapshotDecoderApp(tk.Tk):
         ext = os.path.splitext(self.snapshot_path)[1].lower()
         if ext == ".xlsx":       
             try:
-                self.snapshot = load_xlsx(self.snapshot_path)
+                self.raw_snapshot = load_xlsx(self.snapshot_path)
             except Exception as e:
                 messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
                 return
         elif ext == ".xls":       
             try:
-                self.snapshot = load_xls(self.snapshot_path)
+                self.raw_snapshot = load_xls(self.snapshot_path)
             except Exception as e:
                 messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
                 return     
@@ -299,55 +301,55 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showerror("Unsupported file type", f"Unknown file extension: {ext}")
             return
         
-        if self.snapshot is None or self.snapshot.empty:
+        if self.raw_snapshot is None or self.raw_snapshot.empty:
             messagebox.showerror("No data", "The workbook loaded but no data table was found.")
             return
 
         # Pull any header information from the Snapshot if it exists
-        header_info = parse_header(self.snapshot, max_rows=4)
+        header_info = parse_header(self.raw_snapshot, max_rows=4)
         if header_info:
             self.header_panel.set_rows(header_info)
         else:
             self.header_panel.set_rows([("Header", "No header info present")])
 
         # ID the snapshot snapshot type
-        header_row_idx = find_pid_names(self.snapshot)
-        self.pid_info = extract_pid_descriptions(self.snapshot, header_row_idx)
+        header_row_idx = find_pid_names(self.raw_snapshot)
+        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
 
-        self.snapshot_type = id_snapshot(self.snapshot, header_row_idx)
+        self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
         self.header_panel.set_header_snaptype(self.snapshot_type)
         
         # Set column header row
-        pid_header = self.snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
-        clean_snapshot = self.snapshot.iloc[header_row_idx+1:].copy()
-        clean_snapshot.columns = pid_header
+        pid_header = self.raw_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
+        self.snapshot = self.raw_snapshot.iloc[header_row_idx+1:].copy()
+        self.snapshot.columns = pid_header
 
         # Normalize column names: strip and preserve original case
-        clean_snapshot.columns = [str(c).strip() for c in clean_snapshot.columns]
+        self.snapshot.columns = [str(c).strip() for c in self.snapshot.columns]
 
 
         # Try to ensure first two columns are named exactly Frame and Time
         # I had to copy the entire list of column names into a list, change the firts two column names
         # then reassign the names to the data frame - all because the 'NaN' 
         
-        if len(clean_snapshot.columns) >= 2:
-            new_cols = list(clean_snapshot.columns)  # copy all names
+        if len(self.snapshot.columns) >= 2:
+            new_cols = list(self.snapshot.columns)  # copy all names
             new_cols[0] = "Frame"
             new_cols[1] = "Time"
-            clean_snapshot.columns = new_cols
+            self.snapshot.columns = new_cols
 
         # Coerce numerics where possible
         # FutureWarning: errors='ignore' is deprecated and will raise in a future version. 
         # Use to_numeric without passing `errors` and catch exceptions explicitly instead
-        clean_snapshot = clean_snapshot.apply(pd.to_numeric, errors="ignore")
+        self.snapshot = self.snapshot.apply(pd.to_numeric, errors="ignore")
 
         # Find the start row where Frame == 0 (if Frame exists)
-        if "Frame" in clean_snapshot.columns:
-            start_idx = clean_snapshot.index[clean_snapshot["Frame"] == 0]
+        if "Frame" in self.snapshot.columns:
+            start_idx = self.snapshot.index[self.snapshot["Frame"] == 0]
             if len(start_idx) > 0:
-                clean_snapshot = clean_snapshot.loc[start_idx[0]:].reset_index(drop=True)
+                self.snapshot = self.snapshot.loc[start_idx[0]:].reset_index(drop=True)
 
-        self.snapshot = clean_snapshot
+        #self.snapshot = clean_snapshot
 
 
         # Update the UI
