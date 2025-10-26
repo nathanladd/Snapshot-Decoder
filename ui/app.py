@@ -19,7 +19,7 @@ from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
 from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions, scrub_snapshot
-from domain.constants import APP_TITLE, APP_VERSION
+from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
@@ -352,6 +352,47 @@ class SnapshotDecoderApp(tk.Tk):
     def V1_show_battery_chart(self, snaptype: SnapType):
         print(f"Generating battery chart for {snaptype}")
         
+        # Retrieve tooltip for the chart title
+        tooltip = None
+        if snaptype in BUTTONS_BY_TYPE:
+            for button_name, cmd, tip in BUTTONS_BY_TYPE[snaptype]:
+                if cmd == "V1_BATTERY_TEST":
+                    tooltip = tip
+                    break
+        
+        # Set scripted PID names for primary and secondary axes
+        self.primary_series = ["P_L_Battery_raw"]
+        self.secondary_series = ["IN_Engine_cycle_speed"]
+        
+        # Update list boxes
+        self.primary_list.delete(0, tk.END)
+        for pid in self.primary_series:
+            self.primary_list.insert(tk.END, pid)
+        
+        self.secondary_list.delete(0, tk.END)
+        for pid in self.secondary_series:
+            self.secondary_list.insert(tk.END, pid)
+        
+        # Set scripted min/max values for axes
+        self.primary_auto.set(False)
+        self.primary_ymin.set("0")
+        self.primary_ymax.set("18")
+        
+        self.secondary_auto.set(False)
+        self.secondary_ymin.set("-50")
+        self.secondary_ymax.set("3000")
+        
+        # Trigger toggle to update entry states
+        self._toggle_primary_inputs()
+        self._toggle_secondary_inputs()
+        
+        # Generate the chart
+        self.plot_combo_chart()
+        
+        # Set custom title if tooltip found
+        if tooltip:
+            self.ax_left.set_title(tooltip)
+            self.canvas.draw_idle()
         
     def V1_show_rail_pressure_chart(self, snaptype: SnapType):
         print(f"Generating rail pressure chart for {snaptype}")
