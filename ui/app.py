@@ -265,7 +265,7 @@ class SnapshotDecoderApp(tk.Tk):
  
     #---------------------------------------------------------------------------------------------------------------------
     # -------------------------------------------------- Data Loading ----------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
+    #--------------------------------------------Open and Process the Snapshot--------------------------------------------
     
     #Open the SnapShot
     def open_file(self):
@@ -280,9 +280,9 @@ class SnapshotDecoderApp(tk.Tk):
         
         self._clear_all()
         self.snapshot_path = path
-        # Get the new file extension
+
+        # Get the new file extension and decide how to process it
         ext = os.path.splitext(self.snapshot_path)[1].lower()
-        # Decide how to process the file
         if ext == ".xlsx":       
             try:
                 self.snapshot = load_xlsx(self.snapshot_path)
