@@ -99,3 +99,39 @@ def extract_pid_descriptions(df: pd.DataFrame, header_row_idx: int, start_col: i
 
     return pid_info
     
+
+def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFrame:
+    """
+    Process the raw snapshot DataFrame:
+    - Set column headers from the header row.
+    - Normalize column names.
+    - Rename first two columns to 'Frame' and 'Time'.
+    - Coerce columns to numeric where possible.
+    - Trim to start from Frame == 0 if 'Frame' column exists.
+    Returns the processed snapshot.
+    """
+    # Set column header row
+    pid_header = raw_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
+    snapshot = raw_snapshot.iloc[header_row_idx+1:].copy()
+    snapshot.columns = pid_header
+
+    # Normalize column names: strip and preserve original case
+    snapshot.columns = [str(c).strip() for c in snapshot.columns]
+
+    # Try to ensure first two columns are named exactly Frame and Time
+    if len(snapshot.columns) >= 2:
+        new_cols = list(snapshot.columns)  # copy all names
+        new_cols[0] = "Frame"
+        new_cols[1] = "Time"
+        snapshot.columns = new_cols
+
+    # Coerce numerics where possible
+    snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
+
+    # Find the start row where Frame == 0 (if Frame exists)
+    if "Frame" in snapshot.columns:
+        start_idx = snapshot.index[snapshot["Frame"] == 0]
+        if len(start_idx) > 0:
+            snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
+
+    return snapshot
