@@ -557,8 +557,10 @@ class SnapshotDecoderApp(tk.Tk):
         elif "Frame" in df.columns and pd.api.types.is_numeric_dtype(df["Frame"]):
             x_key = "Frame"
 
-        self.ax_left.clear()
-        self.ax_right.clear()
+        # Clear the entire figure and recreate axes for a clean slate
+        self.figure.clear()
+        self.ax_left = self.figure.add_subplot(111)
+        self.ax_right = self.ax_left.twinx()
 
         # Plot primary series
         if self.primary_series:
