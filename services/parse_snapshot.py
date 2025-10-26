@@ -1,57 +1,47 @@
 from domain.snaptypes import SnapType
+from domain.constants import PID_KEY
 import pandas as pd
 import math
 
-# Define a mapping of header PIDs to SnapType enumerations
-header_patterns = {
-    "p_l_battery_raw": SnapType.ECU_V1,
-    "battu_u": SnapType.ECU_V2,
-    # Add more patterns as needed
-}
 
-def id_snapshot(snapshot: pd.DataFrame) -> SnapType:
-        
-    header_row_idx = None
-    # Scan the first 10 rows
-    for i in range(min(len(snapshot), 10)):
-        # Clean and normalize each cell to lowercase strings
-        row_values = snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
 
-        # Check if any known header keyword appears in this row
-        for pattern, snap_type in header_patterns.items():
-            if any(v == pattern for v in row_values):
-                header_row_idx = i
-                return snap_type  # stop once a match is found
-        else:
-            # The 'else' on a for-loop runs only if the loop didn't break
-            continue
-        break  # Break outer loop after a successful match
+def id_snapshot(snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
+    '''
+    ID the snapshot type based on the header row
+    '''
+    # Clean and normalize each cell to lowercase strings
+    row_values = snapshot.iloc[header_row_idx].astype(str).str.strip().str.lower().tolist()
 
-    if header_row_idx is None:
-        raise ValueError("Couldn't locate header row containing useful information.")
-
-# ------------------------------------------------------------------------------------------------------------------------
-# ------------------------------------------------- Find the header row --------------------------------------------------
-# ------------------------------------------------------------------------------------------------------------------------       
+    # Check if any known header keyword appears in this row
+    for pattern, st in PID_KEY.items():
+        if any(v == pattern for v in row_values):
+            return st
+    # if pattern not found, return EMPTY
+    return SnapType.EMPTY
+      
 
 def find_header_row(snapshot: pd.DataFrame) -> int:
+    '''
+    Find the header row
+    '''
     header_row_idx = None
     # Scan the first 10 rows
     for i in range(min(len(snapshot), 10)):
         # Clean and normalize each cell to lowercase strings
         row_values = snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
+        print(f"Row {i}: {row_values}")
 
         # Check if any known header keyword appears in this row
-        for pattern, snap_type in header_patterns.items():
+        for pattern, snap_type in PID_KEY.items():
             if any(v == pattern for v in row_values):
+                #print(f"Match found in row {i}")
                 return i  # stop once a match is found
-        else:
+        #else:
             # The 'else' on a for-loop runs only if the loop didn't break
-            continue
-        break  # Break outer loop after a successful match
+            #print(f"No match found in row {i}")
 
     if header_row_idx is None:
-        raise ValueError("Couldn't locate header row containing useful information.")
+        raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
 
 
  # ------------------------------------------------------------------------------------------------------------------------
@@ -74,14 +64,19 @@ def _within(df: pd.DataFrame, r: int) -> bool:
     return 0 <= r < len(df)
 
 #Extract the PID description and PID unit of measure for each PID
-def extract_pid_metadata(df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> dict[str, dict[str, str]]:
+#Starting at start_col (default: 3rd col), read:
+#    - PID name from header_row_idx
+#    - Description from row above (header_row_idx - 1)
+#    - Unit from row below (header_row_idx + 1)
+#    Returns: { PID_name: {"Description": ..., "Unit": ...}, ... }
+def extract_pid_descriptions(df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> dict[str, dict[str, str]]:
     """
-    Starting at start_col (default: 3rd col), read:
-    - PID name from header_row_idx
-    - Description from row above (header_row_idx - 1)
-    - Unit from row below (header_row_idx + 1)
-    Returns: { PID_name: {"Description": ..., "Unit": ...}, ... }
+    HORIZONTAL TABLES ONLY
+    Extract the PID description and PID unit of measure for each PID
     """
+    
+    # Initialize the dictionary to store PID information
+    # Dictionary <PID Name, Dictionary<Description, Unit>>
     pid_info: dict[str, dict[str, str]] = {}
 
     # Row indices for description and unit (guard if out of bounds)
