@@ -111,7 +111,8 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="File", menu=file_menu)
 
         view_menu = tk.Menu(menubar, tearoff=0)
-        view_menu.add_command(label="Snapshot Table...", command=self.open_data_table)
+        view_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot))
+        view_menu.add_command(label="Snapshot Table...", command=lambda: self.open_data_table(self.snapshot))
         view_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
         menubar.add_cascade(label="Data", menu=view_menu)
 
@@ -587,8 +588,8 @@ class SnapshotDecoderApp(tk.Tk):
 # ------------------------------------ Build a new window with a clean data table ---------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
 
-    def open_data_table(self):
-        if self.snapshot is None or self.snapshot.empty:
+    def open_data_table(self, snapshot: pd.DataFrame):
+        if snapshot is None or snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
@@ -610,7 +611,7 @@ class SnapshotDecoderApp(tk.Tk):
         container.pack(fill=tk.BOTH, expand=True)
 
         # ---- Sanitize column names for Treeview ----
-        raw_cols = list(self.snapshot.columns)
+        raw_cols = list(snapshot.columns)
         safe_cols = []
         used = set()
         for i, c in enumerate(raw_cols):
@@ -626,7 +627,7 @@ class SnapshotDecoderApp(tk.Tk):
             safe_cols.append(name)
 
         # Use a display copy with safe column names
-        df_display = self.snapshot.copy()
+        df_display = snapshot.copy()
         df_display.columns = safe_cols
 
         # Scrollbars
