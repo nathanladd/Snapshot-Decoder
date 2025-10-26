@@ -1,25 +1,17 @@
-# header_panel.py
-# Simple, dependable 2-column header panel + parser for your Snapshot Reader.
-
 
 from tkinter import ttk
-# import pandas as pd
+
 from domain.snaptypes import SnapType
 from ui.tool_tip import ToolTip
 from domain.constants import BUTTONS_BY_TYPE
 
-
-
-
+# Intended to be used as a child of the main window
+# First label frame shows snapshot information
+# Second label frame shows quick chart buttons
+# SnapType is used to determine which buttons to show
 
 class HeaderPanel(ttk.Frame):
-    """
-    Minimal two-column label panel for showing header key/value pairs.
-    Usage:
-        panel = SimpleHeaderPanel(parent)
-        panel.set_rows([("Engine Model","X"), ("ECU Map Version","Y")])
-    """
-    
+    """Header Panel for Snapshot Reader"""    
 
     def __init__(self, master, on_action=None):
         super().__init__(master)
@@ -29,12 +21,11 @@ class HeaderPanel(ttk.Frame):
     def _initialize_header(self):
         # Properties
         self._row_start = 1
-        self._rows = []  # track widgets so we can clear
-
+        self._rows = []  
+        self._snaptype: SnapType | None = None
+        # Property to track widgets so we can clear them later
         self._button_widgets: list[ttk.Button] = []
         
-
-        self._snaptype: SnapType | None = None
 
         # Snapshot Information Frame
         self.snap_info_frame = ttk.Labelframe(self, text="Snapshot Information")
@@ -43,34 +34,35 @@ class HeaderPanel(ttk.Frame):
         #Add a 3rd column to make white space between header and PID info
         self.snap_info_frame.columnconfigure(2,minsize=30)     
         
-        # Snapshot Quick Chart Buttons
+        # Snapshot Quick Chart Buttons frame
         self.button_frame = ttk.Labelframe(self, text="Quick Chart Buttons")
         self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
        
     def clear_header_panel(self):
-        """Completely rebuild panel if structure may have changed."""
+        """Completely clear the header panel"""
         for widget in self.winfo_children():
             widget.destroy()
         self._initialize_header()
 
 
     #Accept SnapType and set correct label information
-    def set_snaptype_info(self, snaptype: SnapType):
+    def set_header_snaptype(self, snaptype: SnapType):
         self._snaptype = snaptype
         engine_version = ttk.Label(self.snap_info_frame, text="Snapshot Type:", font=("Segoe UI", 9, "bold"))
         engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
-        st_lbl = ttk.Label(self.snap_info_frame, text=snaptype, justify="left", anchor="w",)
-        st_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
+        snapshot_type_lbl = ttk.Label(self.snap_info_frame, text=snaptype, justify="left", anchor="w",)
+        snapshot_type_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
 
+        if snaptype is SnapType.EMPTY:
+            return
+
+        # Clear existing buttons, if any
         for b in self._button_widgets:
             b.destroy()
         self._button_widgets.clear()
 
-        if snaptype is SnapType.UNKNOWN:
-            return
-
-        specs = BUTTONS_BY_TYPE.get(snaptype, [])
         # Create buttons in a flowing grid: 4 per row looks tidy; adjust as you like
+        specs = BUTTONS_BY_TYPE.get(snaptype, [])
         max_per_row = 4
         for i, (text, action_id, _tip) in enumerate(specs):
             btn = ttk.Button(self.button_frame, text=text,
@@ -78,6 +70,7 @@ class HeaderPanel(ttk.Frame):
             r, c = divmod(i, max_per_row)
             ToolTip(btn, _tip)
             btn.grid(row=r, column=c, padx=(0, 6), pady=(0, 6), sticky="w")
+            # Add new button to wigit list
             self._button_widgets.append(btn)
 
     # Event handler that handles the button presses 
@@ -86,8 +79,8 @@ class HeaderPanel(ttk.Frame):
             self.on_action(action_id, self._snaptype)
 
 
-    #Accept PID info and fill the correct header labels
-    def set_pid_info(self, total_pids="", frames_found=""):
+    #Accept PID info and fill a rigid layout of labels 
+    def set_pid_info(self, total_pids: str="", frames_found: str=""):
         '''Number of PIDS, and Frames'''
         pids_found = ttk.Label(self.snap_info_frame, text="PIDs:", font=("Segoe UI", 9, "bold"))
         pids_found.grid(row=2, column=3, sticky="ne", pady=(0, 3))
@@ -98,11 +91,14 @@ class HeaderPanel(ttk.Frame):
         frames_lbl = ttk.Label(self.snap_info_frame, text=frames_found, justify="left", anchor="w",)
         frames_lbl.grid(row=3, column=4, sticky="w", padx=(0, 3), pady=1)
 
+     
+    # Helper function for set_rows to clear all rows
     def clear(self):
         for w in self._rows:
             w.destroy()
         self._rows.clear()
 
+    # Accept pairs of (key, value) and set them in the header
     def set_rows(self, pairs):
         """
         pairs: iterable of (key, value)
