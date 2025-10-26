@@ -1,22 +1,14 @@
 import pandas as pd
 
-#Use the opened path to extract Snapshot data
+# Use the Pandas Calamine engine to read the Excel file
 def load_xlsx(path: str) -> pd.DataFrame:
-    """Load Excel, find header row containing a PID from the pattern dictionary, set headers,
-    and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
-    """
-    # Read raw snapshot so we can pull the header information and scan rows
+    '''Read the file as XLSX and return a DataFrame'''
     return pd.read_excel(path, header=None, engine="calamine")
 
 
-#Use the opened path to extract Snapshot data
+# Read the file as UTF-16 and return a DataFrame
 def load_xls(path: str) -> pd.DataFrame:
-    """Load Excel, find header row containing a PID from the pattern dictionary, set headers,
-    and return data starting from Frame == 0. Enforces first two headers as Frame/Time if present.
-    """
-    # Read raw snapshot so we can pull the header information and scan rows
-    # dirty_snapshot = pd.read_csv(path, sep=",", encoding="utf-16")
-
+    '''Read the file as UTF-16 and return a DataFrame'''
     with open(path, "r", encoding="utf-16") as f:
         text = f.read()
     rows = text.split("\n")
