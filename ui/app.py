@@ -436,6 +436,9 @@ class SnapshotDecoderApp(tk.Tk):
             ["RPC_Rail_pressure_error"],
             "-5000",
             "5000",
+            ["FQD_Chkd_inj_fuel_dmnd"],
+            "-5",
+            "300"
         )
 
 
