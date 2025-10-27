@@ -23,6 +23,7 @@ from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
+from ui.pid_info_window import PidInfoWindow
 
 
 
@@ -148,16 +149,26 @@ class SnapshotDecoderApp(tk.Tk):
         self.header_panel = HeaderPanel(header_border, on_action=self.handle_header_action)
         self.header_panel.pack(anchor="nw", padx=4, pady=4) 
 
-        # Search box label
-        ttk.Label(left_border, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
+        # Configure the style for larger font
+        style = ttk.Style()
+        style.configure("Book.TButton", font=("Helvetica", 22), padding=0, relief="flat", anchor="s")
+        
+        # Search box label and button
+        search_label_frame = ttk.Frame(left_border)
+        search_label_frame.pack(fill=tk.X, pady=(0,0), padx=(8,8))
+        ttk.Label(search_label_frame, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
+        book_btn = ttk.Button(search_label_frame, text="📖", width=0, style="Book.TButton", command=self.show_pid_info)
+        book_btn.pack(side=tk.RIGHT)
         
         # Search box
+        search_frame = ttk.Frame(left_border)
+        search_frame.pack(fill=tk.X, pady=(0, 8), padx=(8,8))
         self.search_var = tk.StringVar()
-        search = ttk.Entry(left_border, textvariable=self.search_var)
-        search.pack(fill=tk.X, pady=(4, 8), padx=(8,8))
+        search = ttk.Entry(search_frame, textvariable=self.search_var)
+        search.pack(side=tk.LEFT, fill=tk.X, expand=True)
         search.bind("<KeyRelease>", lambda e: self._filter_pids())
 
-        # All columns listbox (multi-select)
+        # All PID Names listbox (multi-select)
         self.pid_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
         self.pid_list.pack(fill=tk.Y)
 
@@ -425,6 +436,9 @@ class SnapshotDecoderApp(tk.Tk):
             ["RPC_Rail_pressure_error"],
             "-5000",
             "5000",
+            ["FQD_Chkd_inj_fuel_dmnd"],
+            "-5",
+            "300"
         )
 
 
@@ -720,56 +734,13 @@ class SnapshotDecoderApp(tk.Tk):
 #------------------------------------------------------------------------------------------------------------------------------
 
     def show_pid_info(self):
-        """Display PID info in a new Treeview window with 3 columns."""
+        """Display PID info in a new PidInfoWindow."""
         if not self.pid_info:
             tk.messagebox.showinfo("PID Descriptions", "No PID information available.")
             return
 
-        window = tk.Toplevel(self)
-        window.attributes("-topmost", True)
-        window.title(f"PID Descriptions: {self.snapshot_path}" )
-        window.geometry("800x400")
+        PidInfoWindow(self, self.pid_info, self.snapshot_path, self)
 
-        # Style to make headings bold
-        style = ttk.Style(window)
-        style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
-
-        # Container for tree and scrollbar
-        container = ttk.Frame(window)
-        container.pack(fill=tk.BOTH, expand=True)
-
-        # Vertical scrollbar
-        yscroll = ttk.Scrollbar(container, orient=tk.VERTICAL)
-        yscroll.pack(side=tk.RIGHT, fill=tk.Y)
-
-        # Define the columns
-        columns = ("PID", "Description", "Unit")
-
-        tree = ttk.Treeview(container, columns=columns, show="headings", yscrollcommand=yscroll.set)
-        yscroll.config(command=tree.yview)
-        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Define headings
-        tree.heading("PID", text="PID Name")
-        tree.heading("Description", text="Description")
-        tree.heading("Unit", text="Unit")
-
-        # Optional: set column widths and alignment
-        tree.column("PID", width=180, anchor="w")
-        tree.column("Description", width=480, anchor="w")
-        tree.column("Unit", width=90, anchor="w")
-
-        # Insert rows from your dictionary
-        for pid, data in self.pid_info.items():
-            tree.insert(
-                "",
-                "end",
-                values=(
-                    pid,
-                    data.get("Description", ""),
-                    data.get("Unit", "")
-                )
-            )
 
 
 
