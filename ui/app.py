@@ -637,15 +637,6 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        # # Reuse an existing table window if it's open
-        # if hasattr(self, "_table_win") and self._table_win and tk.Toplevel.winfo_exists(self._table_win):
-        #     try:
-        #         self._table_win.lift()
-        #         self._table_win.focus_force()
-        #     except Exception:
-        #         pass
-        #     return
-
         win = tk.Toplevel(self)
         self._table_win = win
         win.title(f"Validation — Cleaned Data Table: {self.snapshot_path}")
