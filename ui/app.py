@@ -155,11 +155,11 @@ class SnapshotDecoderApp(tk.Tk):
         self.search_var = tk.StringVar()
         search = ttk.Entry(left_border, textvariable=self.search_var)
         search.pack(fill=tk.X, pady=(4, 8), padx=(8,8))
-        search.bind("<KeyRelease>", lambda e: self._filter_columns())
+        search.bind("<KeyRelease>", lambda e: self._filter_pids())
 
         # All columns listbox (multi-select)
-        self.columns_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
-        self.columns_list.pack(fill=tk.Y)
+        self.pid_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
+        self.pid_list.pack(fill=tk.Y)
 
         # Buttons to add to primary/secondary
         btns = ttk.Frame(left_border)
@@ -517,7 +517,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _update_controls_state(self, enabled: bool):
         state = tk.NORMAL if enabled else tk.DISABLED
-        for w in (self.columns_list, self.primary_list, self.secondary_list):
+        for w in (self.pid_list, self.primary_list, self.secondary_list):
             w.configure(state=state)
 
     def _toggle_primary_inputs(self):
@@ -637,14 +637,14 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        # Reuse an existing table window if it's open
-        if hasattr(self, "_table_win") and self._table_win and tk.Toplevel.winfo_exists(self._table_win):
-            try:
-                self._table_win.lift()
-                self._table_win.focus_force()
-            except Exception:
-                pass
-            return
+        # # Reuse an existing table window if it's open
+        # if hasattr(self, "_table_win") and self._table_win and tk.Toplevel.winfo_exists(self._table_win):
+        #     try:
+        #         self._table_win.lift()
+        #         self._table_win.focus_force()
+        #     except Exception:
+        #         pass
+        #     return
 
         win = tk.Toplevel(self)
         self._table_win = win
@@ -735,6 +735,7 @@ class SnapshotDecoderApp(tk.Tk):
             return
 
         window = tk.Toplevel(self)
+        window.attributes("-topmost", True)
         window.title(f"PID Descriptions: {self.snapshot_path}" )
         window.geometry("800x400")
 
