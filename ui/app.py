@@ -19,7 +19,7 @@ from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
 from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions, scrub_snapshot
-from domain.constants import APP_TITLE, APP_VERSION
+from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
@@ -52,7 +52,6 @@ class SnapshotDecoderApp(tk.Tk):
         '''initialize or reset all app-level parameters'''        
         self.snapshot: Optional[pd.DataFrame] = None
         self.raw_snapshot: Optional[pd.DataFrame] = None
-        #self.snapshot_header: Optional[pd.DataFrame] = None
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
         self.snapshot_type = SnapType.EMPTY
@@ -81,7 +80,7 @@ class SnapshotDecoderApp(tk.Tk):
         self._build_plot_area()       # may call _toggle_* which also needs them
         self._update_controls_state(enabled=False)
 
-    def _clear_all(self):
+    def _clear_ui(self):
         """Reset all data and UI components to blank/default."""
         self._initialize_state()
         for widget in self.winfo_children():
@@ -105,7 +104,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Open Snapshot…", command=self.open_file)
-        file_menu.add_command(label="Close Snapshot", command=self._clear_all)
+        file_menu.add_command(label="Close Snapshot", command=self._clear_ui)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
@@ -280,7 +279,7 @@ class SnapshotDecoderApp(tk.Tk):
         if not path:
             return
         
-        self._clear_all()
+        self._clear_ui()
         self.snapshot_path = path
 
         # Get the new file extension and decide how to process it
@@ -314,33 +313,24 @@ class SnapshotDecoderApp(tk.Tk):
 
         # ID the snapshot snapshot type
         header_row_idx = find_pid_names(self.raw_snapshot)
-        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
         self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
-        
-        
-        # Process the snapshot
-        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
+        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)  
 
+        # Clean the snapshot
+        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
 
         # Update the UI
         self._update_controls_state(enabled=True)
-        
-        #Update main window title
         self._set_window_title()
-
-        #Update header frame PID information
         self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
         self.header_panel.set_header_snaptype(self.snapshot_type)
-        
-        #Update the status bar with file information
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
-
-        # Fill the PID list box on the main window
         self._populate_columns_list()
 
     #---------------------------------------------------------------------------------------------------------------------
     # ------------------------------------------------ Button Handling ---------------------------------------------------
     #---------------------------------------------------------------------------------------------------------------------
+    # Button handler for quick chart actions - Uses dispatch dictionary to map action IDs to handler functions
     def handle_header_action(self, action_id: str, snaptype: SnapType):
         print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
@@ -348,7 +338,7 @@ class SnapshotDecoderApp(tk.Tk):
         dispatch = {
             "V1_BATTERY_TEST": self.V1_show_battery_chart,
             "V1_RAIL_PRESSURE": self.V1_show_rail_pressure_chart,
-            
+            "V1_RAIL_GAP": self.V1_show_rail_gap_chart,
             # add more as needed
         }
 
@@ -359,14 +349,82 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             print(f"No handler found for action: {action_id}")
 
+    # Helper function to apply quick chart setup
+    def _apply_quick_chart_setup(self, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str, primary_max: str, secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str=""):
+        # Retrieve tooltip for the chart title
+        tooltip = None
+        if snaptype in BUTTONS_BY_TYPE:
+            for button_name, cmd, tip in BUTTONS_BY_TYPE[snaptype]:
+                if cmd == action_id:
+                    tooltip = tip
+                    break
+        
+        # Set scripted PID names for primary and secondary axes
+        self.primary_series = primary_pids
+        self.secondary_series = secondary_pids
+        
+        # Update list boxes
+        self.primary_list.delete(0, tk.END)
+        for pid in self.primary_series:
+            self.primary_list.insert(tk.END, pid)
+        
+        self.secondary_list.delete(0, tk.END)
+        for pid in self.secondary_series:
+            self.secondary_list.insert(tk.END, pid)
+        
+        # Set scripted min/max values for axes
+        self.primary_auto.set(False)
+        self.primary_ymin.set(primary_min)
+        self.primary_ymax.set(primary_max)
+        
+        self.secondary_auto.set(False)
+        self.secondary_ymin.set(secondary_min)
+        self.secondary_ymax.set(secondary_max)
+        
+        # Trigger toggle to update entry states
+        self._toggle_primary_inputs()
+        self._toggle_secondary_inputs()
+        
+        # Generate the chart
+        self.plot_combo_chart()
+        
+        # Set custom title if tooltip found
+        if tooltip:
+            self.ax_left.set_title(tooltip)
+            self.canvas.draw_idle()
 
     def V1_show_battery_chart(self, snaptype: SnapType):
-        print(f"Generating battery chart for {snaptype}")
-        
+        self._apply_quick_chart_setup(
+            snaptype,
+            "V1_BATTERY_TEST",
+            ["P_L_Battery_raw"],
+            "0",
+            "18",
+            ["IN_Engine_cycle_speed"],
+            "-50",
+            "3000"
+        )
         
     def V1_show_rail_pressure_chart(self, snaptype: SnapType):
-        print(f"Generating rail pressure chart for {snaptype}")
+        self._apply_quick_chart_setup(
+            snaptype,
+            "V1_RAIL_PRESSURE",
+            ["RPC_Rail_pressure_dmnd", "P_L_RAIL_PRES_RAW"],
+            "-15",
+            "30000",
+            ["FQD_Chkd_inj_fuel_dmnd"],
+            "-5",
+            "300"
+        )
 
+    def V1_show_rail_gap_chart(self, snaptype: SnapType):
+        self._apply_quick_chart_setup(
+            snaptype,
+            "V1_RAIL_GAP",
+            ["RPC_Rail_pressure_error"],
+            "-5000",
+            "5000",
+        )
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- Column List Logic -------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
@@ -499,8 +557,10 @@ class SnapshotDecoderApp(tk.Tk):
         elif "Frame" in df.columns and pd.api.types.is_numeric_dtype(df["Frame"]):
             x_key = "Frame"
 
-        self.ax_left.clear()
-        self.ax_right.clear()
+        # Clear the entire figure and recreate axes for a clean slate
+        self.figure.clear()
+        self.ax_left = self.figure.add_subplot(111)
+        self.ax_right = self.ax_left.twinx()
 
         # Plot primary series
         if self.primary_series:
