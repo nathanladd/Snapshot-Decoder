@@ -155,11 +155,11 @@ class SnapshotDecoderApp(tk.Tk):
         self.search_var = tk.StringVar()
         search = ttk.Entry(left_border, textvariable=self.search_var)
         search.pack(fill=tk.X, pady=(4, 8), padx=(8,8))
-        search.bind("<KeyRelease>", lambda e: self._filter_columns())
+        search.bind("<KeyRelease>", lambda e: self._filter_pids())
 
         # All columns listbox (multi-select)
-        self.columns_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
-        self.columns_list.pack(fill=tk.Y)
+        self.pid_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
+        self.pid_list.pack(fill=tk.Y)
 
         # Buttons to add to primary/secondary
         btns = ttk.Frame(left_border)
@@ -325,11 +325,12 @@ class SnapshotDecoderApp(tk.Tk):
         self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
         self.header_panel.set_header_snaptype(self.snapshot_type)
         self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
-        self._populate_columns_list()
+        self._populate_pid_list()
 
-    #---------------------------------------------------------------------------------------------------------------------
-    # ------------------------------------------------ Button Handling ---------------------------------------------------
-    #---------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------ Button Handling ------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+
     # Button handler for quick chart actions - Uses dispatch dictionary to map action IDs to handler functions
     def handle_header_action(self, action_id: str, snaptype: SnapType):
         print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
@@ -425,30 +426,32 @@ class SnapshotDecoderApp(tk.Tk):
             "-5000",
             "5000",
         )
+
+
 #------------------------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------- Column List Logic -------------------------------------------------------
+#---------------------------------------------------- PID List Logic ---------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
 
-    def _populate_columns_list(self):
-        self.columns_list.delete(0, tk.END)
+    def _populate_pid_list(self):
+        self.pid_list.delete(0, tk.END)
         if self.snapshot is None:
             return
         for col in self.snapshot.columns:
-            self.columns_list.insert(tk.END, col)
+            self.pid_list.insert(tk.END, col)
 
-    def _filter_columns(self):
+    def _filter_pids(self):
         term = self.search_var.get().strip().lower()
-        self.columns_list.delete(0, tk.END)
+        self.pid_list.delete(0, tk.END)
         if self.snapshot is None:
             return
         cols = [c for c in self.snapshot.columns if term in c.lower()]
         for c in cols:
-            self.columns_list.insert(tk.END, c)
+            self.pid_list.insert(tk.END, c)
 
     def _add_selected(self, target: str):
         if self.snapshot is None:
             return
-        sel = [self.columns_list.get(i) for i in self.columns_list.curselection()]
+        sel = [self.pid_list.get(i) for i in self.pid_list.curselection()]
         if not sel:
             return
         
@@ -514,7 +517,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _update_controls_state(self, enabled: bool):
         state = tk.NORMAL if enabled else tk.DISABLED
-        for w in (self.columns_list, self.primary_list, self.secondary_list):
+        for w in (self.pid_list, self.primary_list, self.secondary_list):
             w.configure(state=state)
 
     def _toggle_primary_inputs(self):
@@ -634,14 +637,14 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        # Reuse an existing table window if it's open
-        if hasattr(self, "_table_win") and self._table_win and tk.Toplevel.winfo_exists(self._table_win):
-            try:
-                self._table_win.lift()
-                self._table_win.focus_force()
-            except Exception:
-                pass
-            return
+        # # Reuse an existing table window if it's open
+        # if hasattr(self, "_table_win") and self._table_win and tk.Toplevel.winfo_exists(self._table_win):
+        #     try:
+        #         self._table_win.lift()
+        #         self._table_win.focus_force()
+        #     except Exception:
+        #         pass
+        #     return
 
         win = tk.Toplevel(self)
         self._table_win = win
@@ -732,6 +735,7 @@ class SnapshotDecoderApp(tk.Tk):
             return
 
         window = tk.Toplevel(self)
+        window.attributes("-topmost", True)
         window.title(f"PID Descriptions: {self.snapshot_path}" )
         window.geometry("800x400")
 
