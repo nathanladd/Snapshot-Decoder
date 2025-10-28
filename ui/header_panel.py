@@ -35,7 +35,7 @@ class HeaderPanel(ttk.Frame):
         self.snap_info_frame.columnconfigure(2,minsize=30)     
         
         # Snapshot Quick Chart Buttons frame
-        self.button_frame = ttk.Labelframe(self, text="Quick Chart Buttons")
+        self.button_frame = ttk.Labelframe(self, text="Quick Charts")
         self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
        
     def clear_header_panel(self):

@@ -232,8 +232,11 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_max_entry = ttk.Entry(s_row, width=8, textvariable=self.secondary_ymax)
         self.secondary_max_entry.pack(side=tk.LEFT)
 
-        # Plot button
-        tk.Button(left_border, text="Plot Selected PIDs", font=("Segoe UI", 11, "bold"), command=self.plot_combo_chart).pack(fill=tk.X, padx=(6,6), pady=(4,4))
+        # Plot + Clear buttons row
+        plot_row = ttk.Frame(left_border)
+        plot_row.pack(fill=tk.X, padx=(6,6), pady=(4,4))
+        ttk.Button(plot_row, text="Plot Selected PIDs", command=self.plot_combo_chart).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Button(plot_row, text="Clear", command=self.clear_chart).pack(side=tk.RIGHT, padx=(8,0))
 
         # Right: figure area
         self.right = ttk.Frame(chart_border, padding=10)
@@ -277,9 +280,9 @@ class SnapshotDecoderApp(tk.Tk):
         except Exception:
             pass
 
-#---------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------- Data Loading ----------------------------------------------------
-#--------------------------------------------Open and Process the Snapshot--------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------- Data Loading -------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------
     
     #Open the SnapShot
     def open_file(self):
@@ -362,8 +365,6 @@ class SnapshotDecoderApp(tk.Tk):
             handler(self, snaptype)  # pass self as main_app
         else:
             print(f"No handler found for action: {action_id}")
-
-
 
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- PID List Logic ---------------------------------------------------------
@@ -565,8 +566,54 @@ class SnapshotDecoderApp(tk.Tk):
         self.figure.tight_layout()
         self.canvas.draw_idle()
 
+    def clear_chart(self):
+        # Clear selected series and listboxes
+        self.primary_series = []
+        self.secondary_series = []
+        try:
+            self.primary_list.delete(0, tk.END)
+            self.secondary_list.delete(0, tk.END)
+        except Exception:
+            pass
+
+        # Reset axis auto toggles and range entries
+        self.primary_auto.set(True)
+        self.secondary_auto.set(True)
+        try:
+            self._toggle_primary_inputs()
+            self._toggle_secondary_inputs()
+        except Exception:
+            pass
+
+        # Clear any manual limits
+        try:
+            self.primary_ymin.set("")
+            self.primary_ymax.set("")
+            self.secondary_ymin.set("")
+            self.secondary_ymax.set("")
+        except Exception:
+            pass
+        try:
+            self.primary_min.set("")
+            self.primary_max.set("")
+            self.secondary_min.set("")
+            self.secondary_max.set("")
+        except Exception:
+            pass
+
+        # Clear and rebuild the axes
+        self.figure.clear()
+        self.ax_left = self.figure.add_subplot(111)
+        self.ax_right = self.ax_left.twinx()
+        self.ax_left.set_title("Custom Line Chart")
+        self.ax_left.set_xlabel("Index / Time")
+        self.ax_left.set_ylabel("Primary")
+        self.ax_right.set_ylabel("Secondary")
+        self.figure.tight_layout()
+        self.canvas.draw_idle()
+
 #------------------------------------------------------------------------------------------------------------------------------
-# ------------------------------------ Build a new window with a data table ---------------------------------------------
+# ------------------------------------ Build a new window with a data table ---------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
 
     def open_data_table(self, snapshot: pd.DataFrame):
