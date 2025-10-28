@@ -18,6 +18,12 @@ class DataTableWindow:
         style = ttk.Style(self.win)
         style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
 
+        if self.window_name == "Chart Table":
+            top_bar = ttk.Frame(self.win)
+            top_bar.pack(fill=tk.X, padx=4, pady=4)
+            ttk.Button(top_bar, text="Zoom", command=self._chart_selection).pack(side=tk.LEFT)
+            ttk.Button(top_bar, text="Clear", command=self._clear_selection).pack(side=tk.LEFT, padx=(6,0))
+
         container = ttk.Frame(self.win)
         container.pack(fill=tk.BOTH, expand=True)
 
@@ -75,12 +81,65 @@ class DataTableWindow:
             tree.column(col, width=w, stretch=False, minwidth=w, anchor='center')
 
         # Insert rows (convert cells to strings; empty for NaN)
-        for _, row in df_display.iterrows():
+        self._iid_to_time = {}
+        for i, (_, row) in enumerate(df_display.iterrows()):
             values = [(("" if pd.isna(v) else v)) for v in row.tolist()]
             values = [str(v) for v in values]
-            tree.insert("", tk.END, values=values)
+            iid = tree.insert("", tk.END, values=values)
+            if "Time" in df_display.columns:
+                self._iid_to_time[iid] = row.get("Time")
+
+        self._tree = tree
 
         def _on_close():
-            self.win.destroy()
+            try:
+                if self.window_name == "Chart Table":
+                    self._clear_selection()
+            finally:
+                self.win.destroy()
 
         self.win.protocol("WM_DELETE_WINDOW", _on_close)
+
+    def _chart_selection(self):
+        # Keep existing primary/secondary lists; adjust chart time axis to selection
+        sel = ()
+        try:
+            sel = self._tree.selection()
+        except Exception:
+            sel = ()
+        if not sel and hasattr(self, "_iid_to_time"):
+            times = list(self._iid_to_time.values())
+        else:
+            times = [self._iid_to_time.get(iid) for iid in sel] if hasattr(self, "_iid_to_time") else []
+        times = [t for t in times if t is not None]
+        if not times or "Time" not in self.snapshot.columns:
+            return
+        try:
+            s = pd.to_numeric(pd.Series(times), errors="coerce").dropna()
+            if s.empty:
+                return
+            tmin, tmax = float(s.min()), float(s.max())
+            if self.parent.snapshot is not None:
+                # Replot with current selections, then zoom to time range
+                self.parent.plot_combo_chart()
+                try:
+                    self.parent.ax_left.set_xlim(tmin, tmax)
+                except Exception:
+                    pass
+                self.parent.canvas.draw_idle()
+        except Exception:
+            pass
+
+    def _clear_selection(self):
+        try:
+            sel = self._tree.selection()
+            if sel:
+                self._tree.selection_remove(sel)
+        except Exception:
+            pass
+        try:
+            if self.parent.snapshot is not None:
+                self.parent.plot_combo_chart()
+                self.parent.canvas.draw_idle()
+        except Exception:
+            pass
