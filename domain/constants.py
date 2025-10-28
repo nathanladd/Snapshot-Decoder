@@ -67,6 +67,12 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "mg/str": "Milligrams/Stroke",
     "kg/h": "Kilograms/Hour",
     "m^3/h": "Cubic Meters/Hour",
+    "mg/s": "Milligrams/Second",
+    "mm": "Millimeters",
+    "counts": "AD Counts",
+    "hours": "Hours",
+    "min": "Minutes",
+    "l(liter)": "Liter",
     
     }
 
