@@ -73,6 +73,10 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "hours": "Hours",
     "min": "Minutes",
     "l(liter)": "Liter",
+    "v": "Volts",
+    "mg/s": "Milligrams/Second",
+    "mg": "Milligrams",
+    "count": "Counter",
     
     }
 
