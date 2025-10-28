@@ -29,7 +29,7 @@ def find_pid_names(snapshot: pd.DataFrame) -> int:
     for i in range(min(len(snapshot), 10)):
         # Clean and normalize each cell to lowercase strings
         row_values = snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
-        print(f"Row {i}: {row_values}")
+        #print(f"Row {i}: {row_values}")
 
         # Check if any known header keyword appears in this row
         for pattern, snap_type in PID_KEY.items():

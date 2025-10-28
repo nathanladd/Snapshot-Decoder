@@ -25,6 +25,7 @@ from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 from ui.header_panel import HeaderPanel
 from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
+from domain.quick_charts import V1_show_battery_chart, V1_show_rail_pressure_chart, V1_show_rail_gap_chart
 
 
 
@@ -349,98 +350,19 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Dispatch table: map action IDs to handler functions
         dispatch = {
-            "V1_BATTERY_TEST": self.V1_show_battery_chart,
-            "V1_RAIL_PRESSURE": self.V1_show_rail_pressure_chart,
-            "V1_RAIL_GAP": self.V1_show_rail_gap_chart,
+            "V1_BATTERY_TEST": V1_show_battery_chart,
+            "V1_RAIL_PRESSURE": V1_show_rail_pressure_chart,
+            "V1_RAIL_GAP": V1_show_rail_gap_chart,
             # add more as needed
         }
 
         # Lookup and call the handler if it exists
         handler = dispatch.get(action_id)
         if handler:
-            handler(snaptype)  # or pass whatever args your handlers need
+            handler(self, snaptype)  # pass self as main_app
         else:
             print(f"No handler found for action: {action_id}")
 
-    # Helper function to apply quick chart setup
-    def _apply_quick_chart_setup(self, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str, primary_max: str, secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str=""):
-        # Retrieve tooltip for the chart title
-        tooltip = None
-        if snaptype in BUTTONS_BY_TYPE:
-            for button_name, cmd, tip in BUTTONS_BY_TYPE[snaptype]:
-                if cmd == action_id:
-                    tooltip = tip
-                    break
-        
-        # Set scripted PID names for primary and secondary axes
-        self.primary_series = primary_pids
-        self.secondary_series = secondary_pids
-        
-        # Update list boxes
-        self.primary_list.delete(0, tk.END)
-        for pid in self.primary_series:
-            self.primary_list.insert(tk.END, pid)
-        
-        self.secondary_list.delete(0, tk.END)
-        for pid in self.secondary_series:
-            self.secondary_list.insert(tk.END, pid)
-        
-        # Set scripted min/max values for axes
-        self.primary_auto.set(False)
-        self.primary_ymin.set(primary_min)
-        self.primary_ymax.set(primary_max)
-        
-        self.secondary_auto.set(False)
-        self.secondary_ymin.set(secondary_min)
-        self.secondary_ymax.set(secondary_max)
-        
-        # Trigger toggle to update entry states
-        self._toggle_primary_inputs()
-        self._toggle_secondary_inputs()
-        
-        # Generate the chart
-        self.plot_combo_chart()
-        
-        # Set custom title if tooltip found
-        if tooltip:
-            self.ax_left.set_title(tooltip)
-            self.canvas.draw_idle()
-
-    def V1_show_battery_chart(self, snaptype: SnapType):
-        self._apply_quick_chart_setup(
-            snaptype,
-            "V1_BATTERY_TEST",
-            ["P_L_Battery_raw"],
-            "0",
-            "18",
-            ["IN_Engine_cycle_speed"],
-            "-50",
-            "3000"
-        )
-        
-    def V1_show_rail_pressure_chart(self, snaptype: SnapType):
-        self._apply_quick_chart_setup(
-            snaptype,
-            "V1_RAIL_PRESSURE",
-            ["RPC_Rail_pressure_dmnd", "P_L_RAIL_PRES_RAW"],
-            "-15",
-            "30000",
-            ["FQD_Chkd_inj_fuel_dmnd"],
-            "-5",
-            "300"
-        )
-
-    def V1_show_rail_gap_chart(self, snaptype: SnapType):
-        self._apply_quick_chart_setup(
-            snaptype,
-            "V1_RAIL_GAP",
-            ["RPC_Rail_pressure_error"],
-            "-5000",
-            "5000",
-            ["FQD_Chkd_inj_fuel_dmnd"],
-            "-5",
-            "300"
-        )
 
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -665,9 +587,4 @@ class SnapshotDecoderApp(tk.Tk):
             return
 
         PidInfoWindow(self, self.pid_info, self.snapshot_path, self)
-
-
-
-
-
 
