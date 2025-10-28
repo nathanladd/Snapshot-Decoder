@@ -492,6 +492,23 @@ class SnapshotDecoderApp(tk.Tk):
 
         df = self.snapshot.copy()
 
+        # Determine axis labels based on PID units
+        primary_label = "Primary"
+        secondary_label = "Secondary"
+        if self.pid_info:
+            for pid_name in self.primary_series:
+                info = self.pid_info.get(pid_name)
+                unit = (info or {}).get("Unit") if info else None
+                if unit:
+                    primary_label = unit
+                    break
+            for pid_name in self.secondary_series:
+                info = self.pid_info.get(pid_name)
+                unit = (info or {}).get("Unit") if info else None
+                if unit:
+                    secondary_label = unit
+                    break
+
         # Choose X: prefer Time if numeric, else Frame, else index
         x_key = None
         if "Time" in df.columns and pd.api.types.is_numeric_dtype(df["Time"]):
@@ -513,7 +530,7 @@ class SnapshotDecoderApp(tk.Tk):
                         self.ax_left.plot(df[x_key], y, label=s)
                     else:
                         self.ax_left.plot(y.index, y, label=s)
-            self.ax_left.set_ylabel("Primary")
+            self.ax_left.set_ylabel(primary_label)
             self.ax_left.legend(loc="upper left")
 
         # Plot secondary series
@@ -525,7 +542,7 @@ class SnapshotDecoderApp(tk.Tk):
                         self.ax_right.plot(df[x_key], y, label=s, linestyle='--')
                     else:
                         self.ax_right.plot(y.index, y, label=s, linestyle='--')
-            self.ax_right.set_ylabel("Secondary")
+            self.ax_right.set_ylabel(secondary_label)
             self.ax_right.legend(loc="upper right")
 
         # Apply axis limits if user entered them
