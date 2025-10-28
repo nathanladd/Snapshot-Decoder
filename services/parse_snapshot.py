@@ -1,5 +1,5 @@
 from domain.snaptypes import SnapType
-from domain.constants import PID_KEY
+from domain.constants import PID_KEY, UNIT_NORMALIZATION
 import pandas as pd
 import math
 
@@ -94,6 +94,11 @@ def extract_pid_descriptions(df: pd.DataFrame, header_row_idx: int, start_col: i
         # Optional: collapse multi-line cells
         description = " ".join(part.strip() for part in description.splitlines() if part.strip())
         unit = " ".join(part.strip() for part in unit.splitlines() if part.strip())
+
+        if unit:
+            normalized_unit = UNIT_NORMALIZATION.get(unit.strip().lower())
+            if normalized_unit:
+                unit = normalized_unit
 
         pid_info[pid] = {"Description": description, "Unit": unit}
 

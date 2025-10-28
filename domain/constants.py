@@ -1,4 +1,3 @@
-
 from domain.snaptypes import SnapType
 
 # Application title global
@@ -41,6 +40,28 @@ HEADER_LABELS = {
     "data logging": "Date / Time",
     "engine no": "Engine Model",
     "sw version": "Engine Analyzer",
+}
+
+# Mapping of raw unit strings to normalized display text
+UNIT_NORMALIZATION: dict[str, str] = {
+    "s": "Seconds",
+    "ms": "Milliseconds",
+    "rpm": "RPM",
+    "adcnt": "AD Counts",
+    "g": "Grams",
+    "us": "Microseconds",
+    "l": "Liters",
+    "g/s": "Grams/Second",
+    "t/f": "True(1)/False(0)",
+    "false/true": "True(1)/False(0)",
+    "%": "Percent",
+    "deg c": "Degrees Celsius",
+    "deg f": "Degrees Fahrenheit",
+    "ma": "Milliamps",
+    "mv": "Millivolts",
+    "nm": "Newton Meters",
+    "edeg": "Crankshaft Angle",
+    "psi": "PSI"
 }
 
 # Define a mapping of header PIDs to SnapType enumerations
