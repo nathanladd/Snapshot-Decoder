@@ -27,6 +27,10 @@ from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
 from domain.quick_charts import V1_show_battery_chart, V1_show_rail_pressure_chart, V1_show_rail_gap_chart
 
+# Chart rendering
+from domain.chart_config import ChartConfig, AxisConfig
+from ui.chart_renderer import ChartRenderer
+
 
 
 
@@ -268,7 +272,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.ax_left = self.figure.add_subplot(111)
         self.ax_right = self.ax_left.twinx()
         self.ax_left.set_title("Combo Line Chart")
-        self.ax_left.set_xlabel("Index / Time")
+        self.ax_left.set_xlabel("Frame / Time")
         self.ax_left.set_ylabel("Primary")
         self.ax_right.set_ylabel("Secondary")
 
@@ -485,6 +489,7 @@ class SnapshotDecoderApp(tk.Tk):
 #------------------------------------------------------------------------------------------------------------------------------
 
     def plot_combo_chart(self):
+        """Plot chart using the ChartRenderer class."""
         if self.snapshot is None:
             messagebox.showinfo("No data", "Open a data file first.")
             return
@@ -492,99 +497,38 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("Select columns", "Add at least one series to Primary or Secondary axis.")
             return
 
-        df = self.snapshot.copy()
+        # Configure primary axis
+        primary_axis = AxisConfig(
+            series=list(self.primary_series),
+            auto_scale=self.primary_auto.get(),
+            min_value=self._parse_limit(self.primary_ymin.get()),
+            max_value=self._parse_limit(self.primary_ymax.get())
+        )
 
-        # Determine axis labels based on PID units
-        primary_label = "Primary"
-        secondary_label = "Secondary"
-        if self.pid_info:
-            for pid_name in self.primary_series:
-                info = self.pid_info.get(pid_name)
-                unit = (info or {}).get("Unit") if info else None
-                if unit:
-                    primary_label = unit
-                    break
-            for pid_name in self.secondary_series:
-                info = self.pid_info.get(pid_name)
-                unit = (info or {}).get("Unit") if info else None
-                if unit:
-                    secondary_label = unit
-                    break
+        # Configure secondary axis
+        secondary_axis = AxisConfig(
+            series=list(self.secondary_series),
+            auto_scale=self.secondary_auto.get(),
+            min_value=self._parse_limit(self.secondary_ymin.get()),
+            max_value=self._parse_limit(self.secondary_ymax.get())
+        )
 
-        # Choose X: prefer Time if numeric, else Frame, else index
-        x_key = None
-        if "Time" in df.columns and pd.api.types.is_numeric_dtype(df["Time"]):
-            x_key = "Time"
-        elif "Frame" in df.columns and pd.api.types.is_numeric_dtype(df["Frame"]):
-            x_key = "Frame"
+        # Create chart configuration
+        config = ChartConfig(
+            data=self.snapshot.copy(),
+            chart_type="line",
+            primary_axis=primary_axis,
+            secondary_axis=secondary_axis,
+            title="Custom Line Chart",
+            pid_info=self.pid_info
+        )
 
-        # Clear the entire figure and recreate axes for a clean slate
-        self.figure.clear()
-        self.ax_left = self.figure.add_subplot(111)
-        self.ax_right = self.ax_left.twinx()
-
-        # Plot primary series
-        if self.primary_series:
-            for s in self.primary_series:
-                if s in df.columns:
-                    y = pd.to_numeric(df[s], errors="coerce")
-                    if x_key:
-                        self.ax_left.plot(df[x_key], y, label=s)
-                    else:
-                        self.ax_left.plot(y.index, y, label=s)
-            self.ax_left.set_ylabel(primary_label)
-            self.ax_left.legend(loc="upper left")
-
-        # Plot secondary series
-        if self.secondary_series:
-            for s in self.secondary_series:
-                if s in df.columns:
-                    y = pd.to_numeric(df[s], errors="coerce")
-                    if x_key:
-                        self.ax_right.plot(df[x_key], y, label=s, linestyle='--')
-                    else:
-                        self.ax_right.plot(y.index, y, label=s, linestyle='--')
-            self.ax_right.set_ylabel(secondary_label)
-            self.ax_right.legend(loc="upper right")
-
-        # Apply axis limits if user entered them
+        # Render the chart
         try:
-            if self.primary_min.get():
-                self.ax_left.set_ylim(bottom=float(self.primary_min.get()))
-            if self.primary_max.get():
-                self.ax_left.set_ylim(top=float(self.primary_max.get()))
-        except ValueError:
-            pass
-        try:
-            if self.secondary_min.get():
-                self.ax_right.set_ylim(bottom=float(self.secondary_min.get()))
-            if self.secondary_max.get():
-                self.ax_right.set_ylim(top=float(self.secondary_max.get()))
-        except ValueError:
-            pass
-
-        # Labels and grid
-        self.ax_left.set_title("Custom Line Chart")
-        self.ax_left.set_xlabel(x_key if x_key else "Index")
-        self.ax_left.grid(True, linestyle=":", linewidth=0.6)
-
-        # Apply axis limits if provided
-        if not self.primary_auto.get():
-            ymin = self._parse_limit(self.primary_ymin.get())
-            ymax = self._parse_limit(self.primary_ymax.get())
-            if ymin is not None or ymax is not None:
-                self.ax_left.set_ylim(bottom=ymin if ymin is not None else None,
-                              top=ymax if ymax is not None else None)
-
-        if not self.secondary_auto.get():
-            ymin = self._parse_limit(self.secondary_ymin.get())
-            ymax = self._parse_limit(self.secondary_ymax.get())
-            if ymin is not None or ymax is not None:
-                self.ax_right.set_ylim(bottom=ymin if ymin is not None else None,
-                               top=ymax if ymax is not None else None)
-
-        self.figure.tight_layout()
-        self.canvas.draw_idle()
+            renderer = ChartRenderer(config)
+            self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
+        except Exception as e:
+            messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
 
     def open_chart_table(self):
         if self.snapshot is None or self.snapshot.empty:
