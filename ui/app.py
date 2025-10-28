@@ -543,7 +543,7 @@ class SnapshotDecoderApp(tk.Tk):
             pass
 
         # Labels and grid
-        self.ax_left.set_title("Combo Line Chart")
+        self.ax_left.set_title("Custom Line Chart")
         self.ax_left.set_xlabel(x_key if x_key else "Index")
         self.ax_left.grid(True, linestyle=":", linewidth=0.6)
 
