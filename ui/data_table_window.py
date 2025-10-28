@@ -4,13 +4,14 @@ import pandas as pd
 
 
 class DataTableWindow:
-    def __init__(self, parent, snapshot: pd.DataFrame, snapshot_path: str):
+    def __init__(self, parent, snapshot: pd.DataFrame, snapshot_path: str, window_name: str):
         self.parent = parent
         self.snapshot = snapshot
         self.snapshot_path = snapshot_path
+        self.window_name = window_name
 
         self.win = tk.Toplevel(parent)
-        self.win.title(f"PID Table: {snapshot_path}")
+        self.win.title(f"{window_name}: {snapshot_path}")
         self.win.geometry("1000x600")
 
         # Style to make headings bold

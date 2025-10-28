@@ -113,8 +113,8 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="File", menu=file_menu)
 
         view_menu = tk.Menu(menubar, tearoff=0)
-        view_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot))
-        view_menu.add_command(label="Snapshot Table...", command=lambda: self.open_data_table(self.snapshot))
+        view_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot, "Raw Data"))
+        view_menu.add_command(label="Snapshot Table...", command=lambda: self.open_data_table(self.snapshot, "Snapshot Table"))
         view_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
         menubar.add_cascade(label="Data", menu=view_menu)
 
@@ -236,6 +236,7 @@ class SnapshotDecoderApp(tk.Tk):
         plot_row = ttk.Frame(left_border)
         plot_row.pack(fill=tk.X, padx=(6,6), pady=(4,4))
         ttk.Button(plot_row, text="Plot Selected PIDs", command=self.plot_combo_chart).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Button(plot_row, text="Chart Table", command=self.open_chart_table).pack(side=tk.LEFT, padx=(8,0))
         ttk.Button(plot_row, text="Clear", command=self.clear_chart).pack(side=tk.RIGHT, padx=(8,0))
 
         # Right: figure area
@@ -566,6 +567,26 @@ class SnapshotDecoderApp(tk.Tk):
         self.figure.tight_layout()
         self.canvas.draw_idle()
 
+    def open_chart_table(self):
+        if self.snapshot is None or self.snapshot.empty:
+            messagebox.showinfo("No data", "Open a file first so I can show the chart table.")
+            return
+        # Union of primary and secondary (no duplicates, preserve order)
+        selected = list(dict.fromkeys(list(self.primary_series) + list(self.secondary_series)))
+        if not selected:
+            messagebox.showinfo("No selection", "Add PIDs to Primary or Secondary axis first.")
+            return
+        existing = [c for c in selected if c in self.snapshot.columns]
+        if not existing:
+            messagebox.showinfo("No selection", "Selected PIDs not found in data.")
+            return
+        if "Time" in self.snapshot.columns:
+            columns = ["Time"] + [c for c in existing if c != "Time"]
+        else:
+            columns = existing
+        df = self.snapshot[columns].copy()
+        self.open_data_table(df, "Chart Table")
+
     def clear_chart(self):
         # Clear selected series and listboxes
         self.primary_series = []
@@ -616,12 +637,12 @@ class SnapshotDecoderApp(tk.Tk):
 # ------------------------------------ Build a new window with a data table ---------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
 
-    def open_data_table(self, snapshot: pd.DataFrame):
+    def open_data_table(self, snapshot: pd.DataFrame, window_name: str):
         if snapshot is None or snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        DataTableWindow(self, snapshot, self.snapshot_path)
+        DataTableWindow(self, snapshot, self.snapshot_path, window_name)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------- Open PID Info Window -------------------------------------------------------
