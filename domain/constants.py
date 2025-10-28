@@ -61,8 +61,14 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "mv": "Millivolts",
     "nm": "Newton Meters",
     "edeg": "Crankshaft Angle",
-    "psi": "PSI"
-}
+    "psi": "PSI",
+    "ppm": "Parts Per Million",
+    "deg crs": "Crankshaft Angle",
+    "mg/str": "Milligrams/Stroke",
+    "kg/h": "Kilograms/Hour",
+    "m^3/h": "Cubic Meters/Hour",
+    
+    }
 
 # Define a mapping of header PIDs to SnapType enumerations
 PID_KEY = {
