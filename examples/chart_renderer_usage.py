@@ -7,6 +7,11 @@ This file demonstrates how to use the ChartRenderer class in different contexts:
 3. PDF export
 """
 
+import sys
+import os
+# Add the parent directory to Python path so we can import from the project
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pandas as pd
 import tkinter as tk
 from tkinter import ttk
