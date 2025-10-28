@@ -77,6 +77,7 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "mg/s": "Milligrams/Second",
     "mg": "Milligrams",
     "count": "Counter",
+    "mg/stroke": "Milligrams/Stroke",
     
     }
 

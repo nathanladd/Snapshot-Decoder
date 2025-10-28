@@ -94,7 +94,7 @@ class DataTableWindow:
         def _on_close():
             try:
                 if self.window_name == "Chart Table":
-                    self._clear_selection()
+                    self.parent.chart_table_window = None
             finally:
                 self.win.destroy()
 
