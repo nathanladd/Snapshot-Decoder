@@ -119,8 +119,10 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="Data", menu=view_menu)
 
         plot_menu = tk.Menu(menubar, tearoff=0)
-        plot_menu.add_command(label="Combo Line Chart", command=self.plot_combo_chart)
-        menubar.add_cascade(label="Plot", menu=plot_menu)
+        plot_menu.add_command(label="Plot Selected PIDs", command=self.plot_combo_chart)
+        plot_menu.add_command(label="Chart Table", command=self.open_chart_table)
+        plot_menu.add_command(label="Clear Chart", command=self.clear_chart)
+        menubar.add_cascade(label="Chart", menu=plot_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=lambda: messagebox.showinfo(f"{APP_TITLE} {APP_VERSION} ",  
@@ -588,6 +590,10 @@ class SnapshotDecoderApp(tk.Tk):
         if self.snapshot is None or self.snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the chart table.")
             return
+        # Check if Chart Table is already open
+        if hasattr(self, 'chart_table_window') and self.chart_table_window and self.chart_table_window.winfo_exists():
+            self.chart_table_window.lift()
+            return
         # Union of primary and secondary (no duplicates, preserve order)
         selected = list(dict.fromkeys(list(self.primary_series) + list(self.secondary_series)))
         if not selected:
@@ -602,7 +608,8 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             columns = existing
         df = self.snapshot[columns].copy()
-        self.open_data_table(df, "Chart Table")
+        win = DataTableWindow(self, df, self.snapshot_path, "Chart Table")
+        self.chart_table_window = win.win
 
     def clear_chart(self):
         # Clear selected series and listboxes
