@@ -114,7 +114,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         view_menu = tk.Menu(menubar, tearoff=0)
         view_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot, "Raw Data"))
-        view_menu.add_command(label="Snapshot Table...", command=lambda: self.open_data_table(self.snapshot, "Snapshot Table"))
+        view_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.snapshot, "Snapshot Table"))
         view_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
         menubar.add_cascade(label="Data", menu=view_menu)
 
