@@ -161,39 +161,45 @@ class SnapshotDecoderApp(tk.Tk):
         style = ttk.Style()
         style.configure("Book.TButton", font=("Helvetica", 22), padding=0, relief="flat", anchor="s")
         
-        # Search box label and button
+        # Configure left_border to use grid layout for better control over shrinking
+        left_border.columnconfigure(0, weight=1)
+        left_border.rowconfigure(2, weight=1)  # PID listbox row gets all the shrinking weight
+
+        # Search box label and button - row 0
         search_label_frame = ttk.Frame(left_border)
-        search_label_frame.pack(fill=tk.X, pady=(0,0), padx=(8,8))
+        search_label_frame.grid(row=0, column=0, sticky="ew", pady=(0,0), padx=(8,8))
         ttk.Label(search_label_frame, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
         book_btn = ttk.Button(search_label_frame, text="📖", width=0, style="Book.TButton", command=self.show_pid_info)
         book_btn.pack(side=tk.RIGHT)
-        
-        # Search box
+
+        # Search box - row 1
         search_frame = ttk.Frame(left_border)
-        search_frame.pack(fill=tk.X, pady=(0, 8), padx=(8,8))
+        search_frame.grid(row=1, column=0, sticky="ew", pady=(0, 8), padx=(8,8))
         self.search_var = tk.StringVar()
         search = ttk.Entry(search_frame, textvariable=self.search_var)
         search.pack(side=tk.LEFT, fill=tk.X, expand=True)
         search.bind("<KeyRelease>", lambda e: self._filter_pids())
 
-        # All PID Names listbox (multi-select)
-        self.pid_list = tk.Listbox(left_border, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
-        self.pid_list.pack(fill=tk.Y)
+        # All PID Names listbox (multi-select) - row 2 (gets all shrinking priority)
+        pid_list_frame = ttk.Frame(left_border)
+        pid_list_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 8))
+        self.pid_list = tk.Listbox(pid_list_frame, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
+        self.pid_list.pack(fill=tk.BOTH, expand=True)
 
-        # Buttons to add to primary/secondary
+        # Buttons to add to primary/secondary - row 3
         btns = ttk.Frame(left_border)
-        btns.pack(fill=tk.X, pady=8)
+        btns.grid(row=3, column=0, sticky="ew", pady=8)
         ttk.Button(btns, text="➕ Add to Primary", command=lambda: self._add_selected(target="primary")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,4))
         ttk.Button(btns, text="➕ Add to Secondary", command=lambda: self._add_selected(target="secondary")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(4,0))
 
-        # Buckets display
+        # Buckets display - row 4
         buckets = ttk.Frame(left_border)
-        buckets.pack(fill=tk.BOTH, expand=False)
+        buckets.grid(row=4, column=0, sticky="ew")
 
         # Primary frame with min/max
         primary_frame = ttk.Labelframe(buckets, text="Primary axis (left)")
-        primary_frame.pack(fill=tk.BOTH, expand=False, pady=(4,6))
-        self.primary_list = tk.Listbox(primary_frame, height=6, exportselection=False)
+        primary_frame.pack(fill=tk.BOTH, expand=True, pady=(4,6))
+        self.primary_list = tk.Listbox(primary_frame, height=1, exportselection=False)  # Reduced to 1 for minimal space
         self.primary_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         pf_controls = ttk.Frame(primary_frame)
         pf_controls.pack(side=tk.RIGHT, fill=tk.Y)
@@ -203,8 +209,8 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Secondary frame with min/max
         secondary_frame = ttk.Labelframe(buckets, text="Secondary axis (right)")
-        secondary_frame.pack(fill=tk.BOTH, expand=False)
-        self.secondary_list = tk.Listbox(secondary_frame, height=6, exportselection=False)
+        secondary_frame.pack(fill=tk.BOTH, expand=True)
+        self.secondary_list = tk.Listbox(secondary_frame, height=1, exportselection=False)  # Reduced to 1 for minimal space
         self.secondary_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         sf_btns = ttk.Frame(secondary_frame)
         sf_btns.pack(side=tk.RIGHT, fill=tk.Y)
@@ -212,9 +218,9 @@ class SnapshotDecoderApp(tk.Tk):
         ttk.Button(sf_btns, text="▼", width=3, command=lambda: self._move_in_list(self.secondary_list, +1)).pack(pady=2)
         ttk.Button(sf_btns, text="🗑", width=3, command=lambda: self._remove_selected_from("secondary")).pack(pady=2)
 
-        # Axis controls
+        # Axis controls - row 5
         axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
-        axis.pack(fill=tk.X, pady=(8,6))
+        axis.grid(row=5, column=0, sticky="ew", pady=(8,6))
 
         # Primary axis controls
         p_row = ttk.Frame(axis)
@@ -238,9 +244,9 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_max_entry = ttk.Entry(s_row, width=8, textvariable=self.secondary_ymax)
         self.secondary_max_entry.pack(side=tk.LEFT)
 
-        # Plot + Clear buttons row
+        # Plot + Clear buttons row - row 6
         plot_row = ttk.Frame(left_border)
-        plot_row.pack(fill=tk.X, padx=(6,6), pady=(4,4))
+        plot_row.grid(row=6, column=0, sticky="ew", padx=(6,6), pady=(4,4))
         ttk.Button(plot_row, text="Plot Selected PIDs", command=self.plot_combo_chart).pack(side=tk.LEFT, fill=tk.X, expand=True)
         ttk.Button(plot_row, text="Chart Table", command=self.open_chart_table).pack(side=tk.LEFT, padx=(8,0))
         ttk.Button(plot_row, text="Clear", command=self.clear_chart).pack(side=tk.RIGHT, padx=(8,0))
