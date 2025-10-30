@@ -133,6 +133,10 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
     # Coerce numerics where possible
     snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
 
+    # Convert time to seconds
+    if "Time" in snapshot.columns:
+        snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
+
     # Find the start row where Frame == 0 (if Frame exists)
     if "Frame" in snapshot.columns:
         start_idx = snapshot.index[snapshot["Frame"] == 0]
