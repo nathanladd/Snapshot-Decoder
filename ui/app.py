@@ -155,7 +155,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Snapshot Header Information
         self.header_panel = HeaderPanel(header_border, on_action=self.handle_header_action)
-        self.header_panel.pack(anchor="nw", padx=4, pady=4) 
+        self.header_panel.pack(fill="x", expand=True, padx=4, pady=4) 
 
         # Configure the style for larger font
         style = ttk.Style()

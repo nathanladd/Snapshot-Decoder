@@ -1,5 +1,6 @@
 
 from tkinter import ttk
+from PIL import Image, ImageTk
 
 from domain.snaptypes import SnapType
 from ui.tool_tip import ToolTip
@@ -37,6 +38,13 @@ class HeaderPanel(ttk.Frame):
         # Snapshot Quick Chart Buttons frame
         self.button_frame = ttk.Labelframe(self, text="Quick Charts")
         self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
+
+        # Logo frame
+        image=Image.open("ui/logo.png")
+        photo=ImageTk.PhotoImage(image)
+        label=ttk.Label(self, image=photo)
+        label.image=photo
+        label.pack(side="right", padx=(4, 4), pady=(4, 6))
        
     def clear_header_panel(self):
         """Completely clear the header panel"""
@@ -48,7 +56,7 @@ class HeaderPanel(ttk.Frame):
     #Accept SnapType and set correct label information
     def set_header_snaptype(self, snaptype: SnapType):
         self._snaptype = snaptype
-        engine_version = ttk.Label(self.snap_info_frame, text="Snapshot Type:", font=("Segoe UI", 9, "bold"))
+        engine_version = ttk.Label(self.snap_info_frame, text="Type:", font=("Segoe UI", 9, "bold"))
         engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
         snapshot_type_lbl = ttk.Label(self.snap_info_frame, text=snaptype, justify="left", anchor="w",)
         snapshot_type_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
