@@ -303,7 +303,10 @@ class ChartRenderer:
         
         # X-axis label
         x_key = self.config.get_x_column()
-        x_label = self.config.x_label if self.config.x_label else (x_key if x_key else "Index")
+        if x_key == "Time":
+            x_label = "Time (mm:ss)"
+        else:
+            x_label = self.config.x_label if self.config.x_label else (x_key if x_key else "Index")
         ax_left.set_xlabel(x_label)
         
         # X-axis formatter for Time
