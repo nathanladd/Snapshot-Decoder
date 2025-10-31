@@ -135,9 +135,17 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
 
     # Convert time to datetime
     if "Time" in snapshot.columns:
-        snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
-        snapshot["Time"] = snapshot["Time"].dt.total_seconds()
-        #snapshot.rename(columns={"Time": "Time (Seconds)"}, inplace=True)
+        if pd.api.types.is_numeric_dtype(snapshot["Time"]):
+            snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
+            snapshot["Time"] = snapshot["Time"].dt.total_seconds()
+        else:
+            # If not numeric, try without unit (assumes string format like "00:00:01")
+            try:
+                snapshot["Time"] = pd.to_timedelta(snapshot["Time"])
+                snapshot["Time"] = snapshot["Time"].dt.total_seconds()
+            except ValueError:
+                pass  # Leave as is if conversion fails
+        
 
     # Find the start row where Frame == 0 (if Frame exists)
     if "Frame" in snapshot.columns:
