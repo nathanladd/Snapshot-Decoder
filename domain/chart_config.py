@@ -77,8 +77,10 @@ class ChartConfig:
         if self.x_column:
             return self.x_column
         
-        # Auto-detect: prefer Time, then Frame
-        if "Time" in self.data.columns and pd.api.types.is_numeric_dtype(self.data["Time"]):
+        # Auto-detect: prefer Time (MM:SS), then Time, then Frame
+        if "Time (MM:SS)" in self.data.columns and pd.api.types.is_numeric_dtype(self.data["Time (MM:SS)"]):
+            return "Time (MM:SS)"
+        elif "Time" in self.data.columns and (pd.api.types.is_numeric_dtype(self.data["Time"]) or pd.api.types.is_datetime64_any_dtype(self.data["Time"]) or pd.api.types.is_timedelta64_dtype(self.data["Time"])):
             return "Time"
         elif "Frame" in self.data.columns and pd.api.types.is_numeric_dtype(self.data["Frame"]):
             return "Frame"

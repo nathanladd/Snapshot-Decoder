@@ -11,6 +11,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib.ticker import FuncFormatter
+from matplotlib import dates as mdates
 
 from domain.chart_config import ChartConfig, ChartType
 
@@ -71,17 +73,24 @@ class ChartRenderer:
         if clear_figure:
             figure.clear()
         
+        # Prepare data: convert Timedelta to seconds for plotting
+        plot_data = self.config.data.copy()
+        if pd.api.types.is_timedelta64_dtype(plot_data.get("Time")):
+            plot_data["Time"] = plot_data["Time"].dt.total_seconds()
+        elif pd.api.types.is_timedelta64_dtype(plot_data.get("Time (MM:SS)")):
+            plot_data["Time (MM:SS)"] = plot_data["Time (MM:SS)"].dt.total_seconds()
+        
         # Create axes
         ax_left = figure.add_subplot(111)
         ax_right = ax_left.twinx() if self.config.secondary_axis.series else None
         
         # Render based on chart type
         if self.config.chart_type == "line":
-            self._render_line_chart(ax_left, ax_right)
+            self._render_line_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "bar":
-            self._render_bar_chart(ax_left, ax_right)
+            self._render_bar_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "bubble":
-            self._render_bubble_chart(ax_left, ax_right)
+            self._render_bubble_chart(ax_left, ax_right, plot_data)
         else:
             raise ValueError(f"Unsupported chart type: {self.config.chart_type}")
         
@@ -114,9 +123,9 @@ class ChartRenderer:
         ax_left, ax_right = self.render(fig, canvas=None, clear_figure=False)
         return fig, ax_left, ax_right
     
-    def _render_line_chart(self, ax_left: Axes, ax_right: Optional[Axes]):
+    def _render_line_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
         """Render a line chart."""
-        df = self.config.data
+        df = plot_data
         x_key = self.config.get_x_column()
         
         # Plot primary series
@@ -179,9 +188,9 @@ class ChartRenderer:
                             alpha=style.alpha
                         )
     
-    def _render_bar_chart(self, ax_left: Axes, ax_right: Optional[Axes]):
+    def _render_bar_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
         """Render a bar chart."""
-        df = self.config.data
+        df = plot_data
         x_key = self.config.get_x_column()
         
         # Calculate bar width and positions
@@ -232,9 +241,9 @@ class ChartRenderer:
                         alpha=style.alpha
                     )
     
-    def _render_bubble_chart(self, ax_left: Axes, ax_right: Optional[Axes]):
+    def _render_bubble_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
         """Render a bubble chart (scatter plot with variable size)."""
-        df = self.config.data
+        df = plot_data
         x_key = self.config.get_x_column()
         
         # For bubble charts, we'll use scatter plots
@@ -296,6 +305,14 @@ class ChartRenderer:
         x_key = self.config.get_x_column()
         x_label = self.config.x_label if self.config.x_label else (x_key if x_key else "Index")
         ax_left.set_xlabel(x_label)
+        
+        # X-axis formatter for Time
+        if x_key in ["Time", "Time (MM:SS)"]:
+            def format_time(x, pos):
+                minutes = int(x // 60)
+                seconds = int(x % 60)
+                return f"{minutes:02d}:{seconds:02d}"
+            ax_left.xaxis.set_major_formatter(FuncFormatter(format_time))
         
         # Title
         ax_left.set_title(self.config.title)
