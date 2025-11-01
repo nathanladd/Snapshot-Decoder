@@ -334,7 +334,7 @@ class SnapshotDecoderApp(tk.Tk):
             return
 
         # Pull any header information from the Snapshot if it exists
-        header_info = parse_header(self.raw_snapshot, max_rows=4)
+        header_info = parse_header(self.raw_snapshot, max_rows=5)
         if header_info:
             self.header_panel.set_rows(header_info)
         else:

@@ -26,7 +26,7 @@ def _normalize_label(text: str) -> str:
     # fall back to original as-is if unknown
     return text.strip()
 
-def parse_header(df: pd.DataFrame, max_rows: int = 4):
+def parse_header(df: pd.DataFrame, max_rows: int = 5):
     """
     Parse up to the first `max_rows` rows as 2-column key/value pairs.
     - Column 0: label (string)

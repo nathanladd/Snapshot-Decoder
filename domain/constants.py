@@ -40,6 +40,7 @@ HEADER_LABELS = {
     "data logging": "Date / Time",
     "engine no": "Engine Model",
     "sw version": "Engine Analyzer",
+    "ecu map": "ECU Map Version",
 }
 
 # Mapping of raw unit strings to normalized display text
