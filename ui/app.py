@@ -150,8 +150,20 @@ class SnapshotDecoderApp(tk.Tk):
         left_border = ttk.Frame(root, relief="groove", borderwidth=2)
         left_border.pack(side="left", fill="y", padx=4, pady=4)
 
-        chart_border = ttk.Frame(root, relief="groove", borderwidth=2)
+        # Chart border - use classic theme for visible sash
+        style = ttk.Style()
+        style.theme_use("classic")
+        
+        chart_border = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
         chart_border.pack(side="right", fill="both", expand=True, padx=4, pady=4)
+
+        # Left pane: Chart canvas area
+        chart_pane = ttk.Frame(chart_border)
+        chart_border.add(chart_pane, weight=1)
+
+        # Right pane: Chart Cart
+        cart_pane = ttk.Frame(chart_border)
+        chart_border.add(cart_pane, weight=1)
 
         # Snapshot Header Information
         self.header_panel = HeaderPanel(header_border, on_action=self.handle_header_action)
@@ -171,6 +183,9 @@ class SnapshotDecoderApp(tk.Tk):
         ttk.Label(search_label_frame, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
         book_btn = ttk.Button(search_label_frame, text="📖", width=0, style="Book.TButton", command=self.show_pid_info)
         book_btn.pack(side=tk.RIGHT)
+
+        # Chart Cart in right pane
+        ttk.Label(cart_pane, text="Chart Cart", font=("Segoe UI", 14, "bold")).pack(pady=10)
 
         # Search box - row 1
         search_frame = ttk.Frame(left_border)
@@ -222,6 +237,13 @@ class SnapshotDecoderApp(tk.Tk):
         axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
         axis.grid(row=5, column=0, sticky="ew", pady=(8,6))
 
+        # Plot and clear buttons - row 6
+        plot_btns = ttk.Frame(left_border)
+        plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
+        ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
+        ttk.Button(plot_btns, text="Chart Table", command=self.open_chart_table).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
+        ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
+
         # Primary axis controls
         p_row = ttk.Frame(axis)
         p_row.pack(fill=tk.X, pady=2)
@@ -244,16 +266,9 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_max_entry = ttk.Entry(s_row, width=8, textvariable=self.secondary_ymax)
         self.secondary_max_entry.pack(side=tk.LEFT)
 
-        # Plot + Clear buttons row - row 6
-        plot_row = ttk.Frame(left_border)
-        plot_row.grid(row=6, column=0, sticky="ew", padx=(6,6), pady=(4,4))
-        ttk.Button(plot_row, text="Plot Selected PIDs", command=self.plot_combo_chart).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(plot_row, text="Chart Table", command=self.open_chart_table).pack(side=tk.LEFT, padx=(8,0))
-        ttk.Button(plot_row, text="Clear", command=self.clear_chart).pack(side=tk.RIGHT, padx=(8,0))
-
-        # Right: figure area
-        self.right = ttk.Frame(chart_border, padding=10)
-        self.right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Chart canvas in left pane
+        self.right = ttk.Frame(chart_pane, padding=10)
+        self.right.pack(fill=tk.BOTH, expand=True)
 
         # Status Bar
         self.status_var = tk.StringVar(value="Ready")
