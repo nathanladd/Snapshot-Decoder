@@ -518,6 +518,15 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("Select columns", "Add at least one series to Primary or Secondary axis.")
             return
 
+        # Determine x_column
+        x_key = "Time" if "Time" in self.snapshot.columns else ("Frame" if "Frame" in self.snapshot.columns else None)
+        
+        # Select only relevant columns
+        relevant_columns = list(self.primary_series) + list(self.secondary_series)
+        if x_key:
+            relevant_columns.insert(0, x_key)
+        chart_data = self.snapshot[relevant_columns].copy()
+
         # Configure primary axis
         primary_axis = AxisConfig(
             series=list(self.primary_series),
@@ -536,7 +545,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Create chart configuration
         config = ChartConfig(
-            data=self.snapshot.copy(),
+            data=chart_data,
             chart_type="line",
             primary_axis=primary_axis,
             secondary_axis=secondary_axis,
