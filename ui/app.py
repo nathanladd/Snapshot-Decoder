@@ -6,6 +6,7 @@ Main Window
 from __future__ import annotations
 import sys
 import os
+import copy
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -31,8 +32,103 @@ from domain.quick_charts import V1_show_battery_chart, V1_show_rail_pressure_cha
 from domain.chart_config import ChartConfig, AxisConfig
 from ui.chart_renderer import ChartRenderer
 
-
-
+class ChartCart:
+    """Manages a list of chart configurations with thumbnail display."""
+    
+    def __init__(self):
+        self.configs = []
+        self.items = []  # list of (config, frame) tuples
+    
+    def add_config(self, config):
+        """Add a new chart config and update UI."""
+        self.configs.append(config)
+        if hasattr(self, 'container'):
+            self._add_item(config)
+    
+    def remove_config(self, index):
+        """Remove config at index."""
+        if 0 <= index < len(self.configs):
+            del self.configs[index]
+            if hasattr(self, 'container'):
+                self._rebuild_ui()
+    
+    def reorder_configs(self, from_idx, to_idx):
+        """Move config from from_idx to to_idx."""
+        if 0 <= from_idx < len(self.configs) and 0 <= to_idx < len(self.configs):
+            config = self.configs.pop(from_idx)
+            self.configs.insert(to_idx, config)
+            if hasattr(self, 'container'):
+                self._rebuild_ui()
+    
+    def build_ui(self, parent):
+        """Build the UI in the parent frame."""
+        self.parent = parent
+        self.container = ttk.Frame(parent)
+        self.container.pack(fill=tk.BOTH, expand=True)
+        
+        # Scrollable frame for thumbnails
+        self.scrollbar = tk.Scrollbar(self.container, orient="vertical", width=20)
+        self.canvas = tk.Canvas(self.container)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+        
+        self.scrollbar.config(command=self.canvas.yview)
+        self.canvas.config(yscrollcommand=self.scrollbar.set)
+        
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+        
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        
+        # Populate existing configs
+        for config in self.configs:
+            self._add_item(config)
+    
+    def _add_item(self, config):
+        """Add a single item to the UI."""
+        item_frame = ttk.Frame(self.scrollable_frame, relief="raised", borderwidth=1)
+        item_frame.pack(fill=tk.X, padx=2, pady=2)
+        
+        # Thumbnail
+        renderer = ChartRenderer(config)
+        fig = renderer.render_thumbnail()
+        canvas = FigureCanvasTkAgg(fig, master=item_frame)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(side=tk.TOP, padx=2, pady=2)
+        
+        # Title
+        ttk.Label(item_frame, text=config.title, font=("Segoe UI", 8)).pack(side=tk.TOP, padx=2, pady=(0,2))
+        
+        # Buttons
+        btn_frame = ttk.Frame(item_frame)
+        btn_frame.pack(side=tk.TOP, padx=2, pady=2)
+        
+        idx = len(self.items)
+        ttk.Button(btn_frame, text="↑", width=2, command=lambda: self._move_up(idx)).pack(side=tk.LEFT, padx=(0,1))
+        ttk.Button(btn_frame, text="↓", width=2, command=lambda: self._move_down(idx)).pack(side=tk.LEFT, padx=(1,1))
+        ttk.Button(btn_frame, text="X", width=2, command=lambda: self.remove_config(idx)).pack(side=tk.LEFT, padx=(1,0))
+        
+        self.items.append((config, item_frame))
+    
+    def _move_up(self, idx):
+        if idx > 0:
+            self.reorder_configs(idx, idx - 1)
+    
+    def _move_down(self, idx):
+        if idx < len(self.configs) - 1:
+            self.reorder_configs(idx, idx + 1)
+    
+    def _rebuild_ui(self):
+        """Rebuild the entire UI."""
+        for _, frame in self.items:
+            frame.destroy()
+        self.items = []
+        for config in self.configs:
+            self._add_item(config)
 
 
 class SnapshotDecoderApp(tk.Tk):
@@ -79,6 +175,19 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_ymax = tk.StringVar(value="")
         self.primary_auto = tk.BooleanVar(value=True)
         self.secondary_auto = tk.BooleanVar(value=True)
+        
+        # Add trace callbacks to sync working_config when axis settings change
+        self.primary_ymin.trace_add("write", self._on_axis_setting_change)
+        self.primary_ymax.trace_add("write", self._on_axis_setting_change)
+        self.secondary_ymin.trace_add("write", self._on_axis_setting_change)
+        self.secondary_ymax.trace_add("write", self._on_axis_setting_change)
+        self.primary_auto.trace_add("write", self._on_axis_setting_change)
+        self.secondary_auto.trace_add("write", self._on_axis_setting_change)
+        
+        self.chart_cart = ChartCart()
+        
+        # Single working config that's always synced with widgets
+        self.working_config: Optional[ChartConfig] = None
         
     def _build_ui(self):
         self._set_window_title()
@@ -172,6 +281,7 @@ class SnapshotDecoderApp(tk.Tk):
         # Configure the style for larger font
         style = ttk.Style()
         style.configure("Book.TButton", font=("Helvetica", 22), padding=0, relief="flat", anchor="s")
+        style.configure("Plus.TButton", font=("Helvetica", 16, "bold"))
         
         # Configure left_border to use grid layout for better control over shrinking
         left_border.columnconfigure(0, weight=1)
@@ -185,7 +295,12 @@ class SnapshotDecoderApp(tk.Tk):
         book_btn.pack(side=tk.RIGHT)
 
         # Chart Cart in right pane
-        ttk.Label(cart_pane, text="Chart Cart", font=("Segoe UI", 14, "bold")).pack(pady=10)
+        cart_title_frame = ttk.Frame(cart_pane)
+        cart_title_frame.pack(pady=10)
+        ttk.Label(cart_title_frame, text="Chart Cart", font=("Segoe UI", 14, "bold")).pack(side=tk.LEFT)
+        ttk.Button(cart_title_frame, text="+", style="Plus.TButton", command=self.add_current_to_cart).pack(side=tk.RIGHT)
+        
+        self.chart_cart.build_ui(cart_pane)
 
         # Search box - row 1
         search_frame = ttk.Frame(left_border)
@@ -438,8 +553,9 @@ class SnapshotDecoderApp(tk.Tk):
                     self.secondary_series.append(s)
                     self.secondary_list.insert(tk.END, s)
 
-        # Redraw chart if snapshot is loaded
+        # Sync and redraw chart if snapshot is loaded
         if self.snapshot is not None:
+            self._sync_working_config()
             self.plot_combo_chart()
 
     def _move_in_list(self, listbox: tk.Listbox, delta: int):
@@ -461,8 +577,9 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             self.secondary_series = list(listbox.get(0, tk.END))
 
-        # Redraw chart if snapshot is loaded
+        # Sync and redraw chart if snapshot is loaded
         if self.snapshot is not None:
+            self._sync_working_config()
             self.plot_combo_chart()
 
     def _remove_selected_from(self, which: str):
@@ -477,8 +594,9 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             self.secondary_series = list(lb.get(0, tk.END))
 
-        # Redraw chart if snapshot is loaded
+        # Sync and redraw chart if snapshot is loaded
         if self.snapshot is not None:
+            self._sync_working_config()
             self.plot_combo_chart()
 
     def _update_controls_state(self, enabled: bool):
@@ -495,7 +613,55 @@ class SnapshotDecoderApp(tk.Tk):
         st = tk.DISABLED if self.secondary_auto.get() else tk.NORMAL
         self.secondary_min_entry.configure(state=st)
         self.secondary_max_entry.configure(state=st)
+    
+    def _on_axis_setting_change(self, *args):
+        """Callback when axis settings change to sync working_config."""
+        if self.snapshot is not None and (self.primary_series or self.secondary_series):
+            self._sync_working_config()
 
+    def _sync_working_config(self):
+        """Synchronize working_config with current widget states."""
+        if self.snapshot is None:
+            self.working_config = None
+            return
+        
+        # Determine x_column
+        x_key = "Time" if "Time" in self.snapshot.columns else ("Frame" if "Frame" in self.snapshot.columns else None)
+        
+        # Select only relevant columns for the chart data
+        relevant_columns = list(self.primary_series) + list(self.secondary_series)
+        if x_key:
+            relevant_columns.insert(0, x_key)
+        
+        # Create a copy of the data with only relevant columns
+        chart_data = self.snapshot[relevant_columns].copy() if relevant_columns else pd.DataFrame()
+
+        # Configure primary axis
+        primary_axis = AxisConfig(
+            series=list(self.primary_series),
+            auto_scale=self.primary_auto.get(),
+            min_value=self._parse_limit(self.primary_ymin.get()),
+            max_value=self._parse_limit(self.primary_ymax.get())
+        )
+
+        # Configure secondary axis
+        secondary_axis = AxisConfig(
+            series=list(self.secondary_series),
+            auto_scale=self.secondary_auto.get(),
+            min_value=self._parse_limit(self.secondary_ymin.get()),
+            max_value=self._parse_limit(self.secondary_ymax.get())
+        )
+
+        # Create/update working configuration
+        self.working_config = ChartConfig(
+            data=chart_data,
+            chart_type="line",
+            primary_axis=primary_axis,
+            secondary_axis=secondary_axis,
+            title=self.ax_left.get_title() if hasattr(self, 'ax_left') else "Combo Line Chart",
+            pid_info=self.pid_info
+        )
+    
     def _parse_limit(self, s: str):
         s = (s or "").strip()
         if not s:
@@ -518,44 +684,16 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("Select columns", "Add at least one series to Primary or Secondary axis.")
             return
 
-        # Determine x_column
-        x_key = "Time" if "Time" in self.snapshot.columns else ("Frame" if "Frame" in self.snapshot.columns else None)
+        # Sync working config with current widget states
+        self._sync_working_config()
         
-        # Select only relevant columns
-        relevant_columns = list(self.primary_series) + list(self.secondary_series)
-        if x_key:
-            relevant_columns.insert(0, x_key)
-        chart_data = self.snapshot[relevant_columns].copy()
+        if not self.working_config:
+            messagebox.showinfo("No config", "Failed to create chart configuration.")
+            return
 
-        # Configure primary axis
-        primary_axis = AxisConfig(
-            series=list(self.primary_series),
-            auto_scale=self.primary_auto.get(),
-            min_value=self._parse_limit(self.primary_ymin.get()),
-            max_value=self._parse_limit(self.primary_ymax.get())
-        )
-
-        # Configure secondary axis
-        secondary_axis = AxisConfig(
-            series=list(self.secondary_series),
-            auto_scale=self.secondary_auto.get(),
-            min_value=self._parse_limit(self.secondary_ymin.get()),
-            max_value=self._parse_limit(self.secondary_ymax.get())
-        )
-
-        # Create chart configuration
-        config = ChartConfig(
-            data=chart_data,
-            chart_type="line",
-            primary_axis=primary_axis,
-            secondary_axis=secondary_axis,
-            title="Custom Line Chart",
-            pid_info=self.pid_info
-        )
-
-        # Render the chart
+        # Render the chart using working_config
         try:
-            renderer = ChartRenderer(config)
+            renderer = ChartRenderer(self.working_config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
         except Exception as e:
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
@@ -620,6 +758,9 @@ class SnapshotDecoderApp(tk.Tk):
         except Exception:
             pass
 
+        # Clear working config
+        self.working_config = None
+
         # Clear and rebuild the axes
         self.figure.clear()
         self.ax_left = self.figure.add_subplot(111)
@@ -630,6 +771,18 @@ class SnapshotDecoderApp(tk.Tk):
         self.ax_right.set_ylabel("Secondary")
         self.figure.tight_layout()
         self.canvas.draw_idle()
+
+    def add_current_to_cart(self):
+        """Add a deep copy of the working config to the cart."""
+        # Sync to capture any uncommitted widget changes
+        self._sync_working_config()
+        
+        if self.working_config:
+            # Deep copy the config including the DataFrame to avoid reference issues
+            config_copy = copy.deepcopy(self.working_config)
+            self.chart_cart.add_config(config_copy)
+        else:
+            messagebox.showinfo("No chart", "Configure a chart first to add it to the cart.")
 
 #------------------------------------------------------------------------------------------------------------------------------
 # ------------------------------------ Build a new window with a data table ---------------------------------------------------
