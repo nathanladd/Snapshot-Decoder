@@ -225,17 +225,18 @@ class SnapshotDecoderApp(tk.Tk):
         file_menu.add_command(label="Exit", command=self.destroy)
         menubar.add_cascade(label="File", menu=file_menu)
 
-        view_menu = tk.Menu(menubar, tearoff=0)
-        view_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot, "Raw Data"))
-        view_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.snapshot, "Snapshot Table"))
-        view_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
-        menubar.add_cascade(label="Data", menu=view_menu)
+        data_menu = tk.Menu(menubar, tearoff=0)
+        data_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot, "Raw Data"))
+        data_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.snapshot, "Snapshot Table"))
+        data_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
+        menubar.add_cascade(label="Data", menu=data_menu)
 
-        plot_menu = tk.Menu(menubar, tearoff=0)
-        plot_menu.add_command(label="Plot Selected PIDs", command=self.plot_combo_chart)
-        plot_menu.add_command(label="Chart Table", command=self.open_chart_table)
-        plot_menu.add_command(label="Clear Chart", command=self.clear_chart)
-        menubar.add_cascade(label="Chart", menu=plot_menu)
+        chart_menu = tk.Menu(menubar, tearoff=0)
+        chart_menu.add_command(label="Plot Selected PIDs", command=self.plot_combo_chart)
+        chart_menu.add_command(label="Add to Cart", command=self.add_current_to_cart)
+        chart_menu.add_command(label="Chart Table", command=self.open_chart_table)
+        chart_menu.add_command(label="Clear Chart", command=self.clear_chart)
+        menubar.add_cascade(label="Chart", menu=chart_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=lambda: messagebox.showinfo(f"{APP_TITLE} {APP_VERSION} ",  
@@ -249,6 +250,11 @@ class SnapshotDecoderApp(tk.Tk):
         self.config(menu=menubar)
 
     def _build_layout(self):
+
+        # Chart border - use classic theme for visible sash
+        style = ttk.Style()
+        style.theme_use("classic")
+        
         root = ttk.Frame(self)
         root.pack(fill=tk.BOTH, expand=True)
 
@@ -259,10 +265,6 @@ class SnapshotDecoderApp(tk.Tk):
         left_border = ttk.Frame(root, relief="groove", borderwidth=2)
         left_border.pack(side="left", fill="y", padx=4, pady=4)
 
-        # Chart border - use classic theme for visible sash
-        style = ttk.Style()
-        style.theme_use("classic")
-        
         chart_border = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
         chart_border.pack(side="right", fill="both", expand=True, padx=4, pady=4)
 
@@ -298,7 +300,6 @@ class SnapshotDecoderApp(tk.Tk):
         cart_title_frame = ttk.Frame(cart_pane)
         cart_title_frame.pack(pady=10)
         ttk.Label(cart_title_frame, text="Chart Cart", font=("Segoe UI", 14, "bold")).pack(side=tk.LEFT)
-        ttk.Button(cart_title_frame, text="+", style="Plus.TButton", command=self.add_current_to_cart).pack(side=tk.RIGHT)
         
         self.chart_cart.build_ui(cart_pane)
 
@@ -356,7 +357,7 @@ class SnapshotDecoderApp(tk.Tk):
         plot_btns = ttk.Frame(left_border)
         plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
         ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
-        ttk.Button(plot_btns, text="Chart Table", command=self.open_chart_table).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
+        ttk.Button(plot_btns, text="Add to Cart", command=self.add_current_to_cart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
         ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
 
         # Primary axis controls
@@ -385,22 +386,6 @@ class SnapshotDecoderApp(tk.Tk):
         self.right = ttk.Frame(chart_pane, padding=10)
         self.right.pack(fill=tk.BOTH, expand=True)
 
-        # Status Bar
-        self.status_var = tk.StringVar(value="Ready")
-        self.status_bar = ttk.Label(
-            self,
-            textvariable=self.status_var,
-            anchor="w",              # left-align text
-            relief="sunken",         # classic status bar look
-            padding=(8, 2)
-        )
-        self.status_bar.pack(side="bottom", fill="x")
-    
-    def set_status(self, text: str):
-        """Update the status bar text and keep the UI snappy."""
-        self.status_var.set(text)
-        # Force a quick redraw so the message appears immediately
-        self.status_bar.update_idletasks()
 
     def _build_plot_area(self):
         # Create an empty figure placeholder
@@ -489,7 +474,6 @@ class SnapshotDecoderApp(tk.Tk):
         self._set_window_title()
         self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
         self.header_panel.set_header_snaptype(self.snapshot_type)
-        self.set_status(f"Loaded {len(self.snapshot)} Frames of {len(self.snapshot.columns)} PIDs from file: {os.path.basename(self.snapshot_path)}")
         self._populate_pid_list()
 
 #------------------------------------------------------------------------------------------------------------------------------

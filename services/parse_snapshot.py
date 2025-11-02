@@ -132,14 +132,14 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
         new_cols[1] = "Time"
         snapshot.columns = new_cols
 
+    # Coerce numerics where possible
+    snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
+
     # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
     if "Frame" in snapshot.columns:
         start_idx = snapshot.index[snapshot["Frame"] == 0]
         if len(start_idx) > 0:
             snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
-    # Coerce numerics where possible
-    snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
 
     # Convert time to datetime
     if "Time" in snapshot.columns:
@@ -154,7 +154,4 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
             except ValueError:
                 pass  # Leave as is if conversion fails
         
-
-
-
     return snapshot
