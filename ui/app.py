@@ -15,7 +15,7 @@ from typing import List, Optional, Dict, Callable, Tuple
 import pandas as pd
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
@@ -413,8 +413,14 @@ class SnapshotDecoderApp(tk.Tk):
         self.ax_right.set_ylabel("Secondary")
 
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.right)
+        
+        # Add matplotlib toolbar for zoom, pan, save, etc.
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
+        self.toolbar.update()
+        self.toolbar.pack(side=tk.TOP, fill=tk.X)
+        
         self.canvas_widget = self.canvas.get_tk_widget()
-        self.canvas_widget.pack(fill=tk.BOTH, expand=True)
+        self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
          # Initialize input toggle states after widgets exist
         try:
