@@ -111,8 +111,10 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
     - Set column headers from the header row.
     - Normalize column names.
     - Rename first two columns to 'Frame' and 'Time'.
-    - Coerce columns to numeric where possible.
     - Trim to start from Frame == 0 if 'Frame' column exists.
+    - Coerce columns to numeric where possible.
+    - Convert time to datetime.
+
     Returns the processed snapshot.
     """
     # Set column header row
@@ -133,6 +135,12 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
     # Coerce numerics where possible
     snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
 
+    # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
+    if "Frame" in snapshot.columns:
+        start_idx = snapshot.index[snapshot["Frame"] == 0]
+        if len(start_idx) > 0:
+            snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
+
     # Convert time to datetime
     if "Time" in snapshot.columns:
         if pd.api.types.is_numeric_dtype(snapshot["Time"]):
@@ -146,11 +154,4 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
             except ValueError:
                 pass  # Leave as is if conversion fails
         
-
-    # Find the start row where Frame == 0 (if Frame exists)
-    if "Frame" in snapshot.columns:
-        start_idx = snapshot.index[snapshot["Frame"] == 0]
-        if len(start_idx) > 0:
-            snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
     return snapshot
