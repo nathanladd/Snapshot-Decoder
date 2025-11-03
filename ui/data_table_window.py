@@ -53,7 +53,7 @@ class DataTableWindow:
 
         # Convert DataFrame to list of lists
         self.progress_label.config(text="Converting data to sheet format...")
-        all_data = df_display.values.tolist()
+        all_data = df_display.astype(str).values.tolist()
 
         self.progress['value'] = 70
         self.progress_label.config(text="Data converted, creating spreadsheet...")
@@ -78,8 +78,7 @@ class DataTableWindow:
         self.win.update()
 
         # Enable specific table interactions (selection, resizing, and editing)
-        sheet.enable_bindings("column_width_resize", "column_select", "row_select", "cell_select", "drag_select", "edit_cell")
-
+        sheet.enable_bindings("single_select", "row_select", "column_select","column_width_resize", "arrowkeys", "right_click_popup_menu", "rc_select", "rc_insert_row", "rc_delete_row", "copy", "cut", "paste", "delete", "undo", "edit_cell")
         # Refresh the sheet to ensure proper display
         sheet.refresh()
 
