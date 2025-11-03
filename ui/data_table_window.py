@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
+import tksheet
 
 
 class DataTableWindow:
@@ -14,14 +15,10 @@ class DataTableWindow:
         self.win.title(f"{window_name}: {snapshot_path}")
         self.win.geometry("1000x600")
 
-        # Style to make headings bold
-        style = ttk.Style(self.win)
-        style.configure("Treeview.Heading", font=("TkDefaultFont", 9, "bold"))
-
         container = ttk.Frame(self.win)
         container.pack(fill=tk.BOTH, expand=True)
 
-        # ---- Sanitize column names for Treeview ----
+        # ---- Sanitize column names for tksheet ----
         raw_cols = list(snapshot.columns)
         safe_cols = []
         used = set()
@@ -41,55 +38,34 @@ class DataTableWindow:
         df_display = snapshot.copy()
         df_display.columns = safe_cols
 
-        # Scrollbars
-        xscroll = ttk.Scrollbar(container, orient=tk.HORIZONTAL)
-        yscroll = ttk.Scrollbar(container, orient=tk.VERTICAL)
+        # Convert DataFrame to list of lists
+        all_data = df_display.values.tolist()
 
-        tree = ttk.Treeview(
+        # Create tksheet table widget with all data (tksheet handles virtual scrolling internally)
+        sheet = tksheet.Sheet(
             container,
-            columns=safe_cols,     # must be a list of strings
-            show="headings",       # hide the #0 column
-            xscrollcommand=xscroll.set,
-            yscrollcommand=yscroll.set,
-            height=24
+            data=all_data,  # Load all data - tksheet handles virtual display
+            headers=safe_cols,
+            height=24,
+            width=None,
+            show_row_index=True,
+            show_header=True,
+            show_top_left=True,
+            set_all_heights_and_widths=True
         )
-        xscroll.config(command=tree.xview)
-        yscroll.config(command=tree.yview)
+        sheet.pack(fill=tk.BOTH, expand=True)
 
-        tree.grid(row=0, column=0, sticky="nsew")
-        yscroll.grid(row=0, column=1, sticky="ns")
-        xscroll.grid(row=1, column=0, sticky="ew")
+        # Enable specific table interactions (selection, resizing) but not editing
+        sheet.enable_bindings("column_width_resize", "column_select", "row_select", "cell_select", "drag_select")
 
-        container.rowconfigure(0, weight=1)
-        container.columnconfigure(0, weight=1)
+        # Refresh the sheet to ensure proper display
+        sheet.refresh()
 
-        # Headings + widths
-        for col in safe_cols:
-            tree.heading(col, text=col, anchor='center')
-            # width heuristic: 150px min, 300px max, based on ~80th percentile of text length
-            try:
-                w = max(150, min(300, int(df_display[col].astype(str).map(len).quantile(0.8)) * 8))
-            except Exception:
-                w = 120
-                # I disabled stretch to prevent columns from getting slammed
-            tree.column(col, width=w, stretch=False, minwidth=w, anchor='center')
-
-        # Insert rows (convert cells to strings; empty for NaN)
-        self._iid_to_time = {}
-        for i, (_, row) in enumerate(df_display.iterrows()):
-            values = [(("" if pd.isna(v) else v)) for v in row.tolist()]
-            values = [str(v) for v in values]
-            iid = tree.insert("", tk.END, values=values)
-            if "Time" in df_display.columns:
-                self._iid_to_time[iid] = row.get("Time")
-
-        self._tree = tree
+        # Set default column width - users can resize manually
+        for i in range(len(safe_cols)):
+            sheet.column_width(column=i, width=120)
 
         def _on_close():
-            try:
-                if self.window_name == "Chart Table":
-                    self.parent.chart_table_window = None
-            finally:
-                self.win.destroy()
+            self.win.destroy()
 
         self.win.protocol("WM_DELETE_WINDOW", _on_close)
