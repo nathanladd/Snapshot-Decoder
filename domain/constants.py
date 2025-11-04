@@ -79,7 +79,8 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "mg": "Milligrams",
     "count": "Counter",
     "mg/stroke": "Milligrams/Stroke",
-    "kps": "Kilograms/Second",
+    "kpa": "Kilopascals",
+    "bar": "Barometric Pressure",
     
     }
 
