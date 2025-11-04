@@ -15,7 +15,7 @@ from typing import List, Optional, Dict, Callable, Tuple
 import pandas as pd
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
@@ -26,6 +26,7 @@ from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 from ui.header_panel import HeaderPanel
 from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
+from ui.custom_toolbar import CustomNavigationToolbar
 from domain.quick_charts import V1_show_battery_chart, V1_show_rail_pressure_chart, V1_show_rail_gap_chart
 
 # Chart rendering
@@ -400,7 +401,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.right)
         
         # Add matplotlib toolbar for zoom, pan, save, etc.
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
+        self.toolbar = CustomNavigationToolbar(self.canvas, self.right, pack_toolbar=False)
         self.toolbar.update()
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
         
