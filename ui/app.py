@@ -306,7 +306,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _build_plot_area(self):
         # Create an empty figure placeholder
-        self.figure = Figure(figsize=(7,5), dpi=100)
+        self.figure = Figure(figsize=(15,5), dpi=100)
         self.ax_left = self.figure.add_subplot(111)
         self.ax_right = self.ax_left.twinx()
         self.ax_left.set_title("Chart Area")
@@ -691,6 +691,19 @@ class SnapshotDecoderApp(tk.Tk):
         self._sync_working_config()
         
         if self.working_config:
+            # Capture current axis limits from the chart (after pan/zoom)
+            if hasattr(self, 'ax_left') and self.ax_left:
+                ymin_primary, ymax_primary = self.ax_left.get_ylim()
+                self.working_config.primary_axis.min_value = ymin_primary
+                self.working_config.primary_axis.max_value = ymax_primary
+                self.working_config.primary_axis.auto_scale = False
+            
+            if hasattr(self, 'ax_right') and self.ax_right:
+                ymin_secondary, ymax_secondary = self.ax_right.get_ylim()
+                self.working_config.secondary_axis.min_value = ymin_secondary
+                self.working_config.secondary_axis.max_value = ymax_secondary
+                self.working_config.secondary_axis.auto_scale = False
+            
             # Deep copy the config including the DataFrame to avoid reference issues
             config_copy = copy.deepcopy(self.working_config)
             self.chart_cart.add_config(config_copy)

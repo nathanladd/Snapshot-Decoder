@@ -159,6 +159,20 @@ class ChartRenderer:
                 legend.remove()
         
         fig.tight_layout()
+        
+        # Re-apply axis limits after tight_layout to ensure they're preserved
+        if not self.config.primary_axis.auto_scale:
+            ymin = self.config.primary_axis.min_value
+            ymax = self.config.primary_axis.max_value
+            if ymin is not None or ymax is not None:
+                ax_left.set_ylim(bottom=ymin, top=ymax)
+        
+        if ax_right and not self.config.secondary_axis.auto_scale:
+            ymin = self.config.secondary_axis.min_value
+            ymax = self.config.secondary_axis.max_value
+            if ymin is not None or ymax is not None:
+                ax_right.set_ylim(bottom=ymin, top=ymax)
+        
         return fig
     
     def _render_line_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
