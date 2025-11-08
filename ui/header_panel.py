@@ -86,18 +86,25 @@ class HeaderPanel(ttk.Frame):
         if callable(self.on_action):
             self.on_action(action_id, self._snaptype)
 
+    #Accept Engine Hours and set correct label information
+    def set_engine_hours(self, hours: float):
+        self.engine_hours = hours
+        engine_hours = ttk.Label(self.snap_info_frame, text="Engine Hours:", font=("Segoe UI", 9, "bold"))
+        engine_hours.grid(row=2, column=3, sticky="ne", pady=(0, 3))
+        hours_lbl = ttk.Label(self.snap_info_frame, text=f"{hours:.2f}", justify="left", anchor="w",)
+        hours_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
 
     #Accept PID info and fill a rigid layout of labels 
     def set_pid_info(self, total_pids: str="", frames_found: str=""):
         '''Number of PIDS, and Frames'''
         pids_found = ttk.Label(self.snap_info_frame, text="PIDs:", font=("Segoe UI", 9, "bold"))
-        pids_found.grid(row=2, column=3, sticky="ne", pady=(0, 3))
+        pids_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
         pids_lbl = ttk.Label(self.snap_info_frame, text=total_pids, justify="left", anchor="w",)
-        pids_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
+        pids_lbl.grid(row=3, column=4, sticky="w", padx=(0, 3), pady=1)
         self.frames_found = ttk.Label(self.snap_info_frame, text="Frames:", font=("Segoe UI", 9, "bold"))
-        self.frames_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
+        self.frames_found.grid(row=4, column=3, sticky="ne", pady=(0, 3))
         frames_lbl = ttk.Label(self.snap_info_frame, text=frames_found, justify="left", anchor="w",)
-        frames_lbl.grid(row=3, column=4, sticky="w", padx=(0, 3), pady=1)
+        frames_lbl.grid(row=4, column=4, sticky="w", padx=(0, 3), pady=1)
 
      
     # Helper function for set_rows to clear all rows

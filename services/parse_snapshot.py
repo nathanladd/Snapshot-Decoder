@@ -1,5 +1,5 @@
 from domain.snaptypes import SnapType
-from domain.constants import PID_KEY, UNIT_NORMALIZATION
+from domain.constants import PID_KEY, UNIT_NORMALIZATION, ENGINE_HOURS_COLUMNS
 import pandas as pd
 import math
 
@@ -132,14 +132,14 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
         new_cols[1] = "Time"
         snapshot.columns = new_cols
 
-    # Coerce numerics where possible
-    snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
-
     # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
     if "Frame" in snapshot.columns:
-        start_idx = snapshot.index[snapshot["Frame"] == 0]
+        start_idx = snapshot.index[snapshot["Frame"] == '0']
         if len(start_idx) > 0:
             snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
+
+    # Coerce numerics where possible
+    snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
 
     # Convert time to datetime
     if "Time" in snapshot.columns:
@@ -147,11 +147,46 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
             snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
             snapshot["Time"] = snapshot["Time"].dt.total_seconds()
         else:
-            # If not numeric, try without unit (assumes string format like "00:00:01")
-            try:
-                snapshot["Time"] = pd.to_timedelta(snapshot["Time"])
-                snapshot["Time"] = snapshot["Time"].dt.total_seconds()
-            except ValueError:
-                pass  # Leave as is if conversion fails
-        
+            pass  # Leave as is if conversion fails
+
+    
     return snapshot
+
+def find_engine_hours(snapshot: pd.DataFrame, snaptype: SnapType) -> float:
+    """
+    Find the engine hours in the snapshot by reading specific columns based on snapshot type.
+    Gets the value at Frame == 0 and converts from seconds to hours.
+    
+    Args:
+        snapshot: Cleaned snapshot DataFrame (after scrub_snapshot)
+        snaptype: Type of snapshot to determine which column to read
+    
+    Returns:
+        Engine hours as float rounded to hundredth of an hour, or 0 if not found
+    """
+    # Get the column name for this snapshot type from constants
+    column_name = ENGINE_HOURS_COLUMNS.get(snaptype)
+    if not column_name:
+        return 0.0  # No engine hours column defined for this snapshot type
+    
+    # Check if column exists in the snapshot
+    if column_name not in snapshot.columns:
+        return 0.0
+    
+    # Check if Frame column exists
+    if "Frame" not in snapshot.columns:
+        return 0.0
+    
+    # Get the row where Frame == 0
+    frame_zero_rows = snapshot[snapshot["Frame"] == 0]
+    if frame_zero_rows.empty:
+        return 0.0
+    
+    # Get the engine hours value (in seconds) from Frame == 0
+    try:
+        seconds = float(frame_zero_rows[column_name].iloc[0])
+        # Convert seconds to hours and round to hundredth of an hour (2 decimal places)
+        hours = round(seconds / 3600, 2)
+        return hours
+    except (ValueError, IndexError, TypeError):
+        return 0.0
