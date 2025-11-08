@@ -53,6 +53,22 @@ class ChartRenderer:
         if not self.config.primary_axis.series and not self.config.secondary_axis.series:
             raise ValueError("At least one series must be specified in primary or secondary axis")
     
+    def _get_legend_label(self, pid_name: str) -> str:
+        """
+        Get the legend label for a PID, using its description from pid_info if available.
+        
+        Args:
+            pid_name: The PID column name
+            
+        Returns:
+            The PID description if available, otherwise the PID name
+        """
+        if self.config.pid_info and pid_name in self.config.pid_info:
+            description = self.config.pid_info[pid_name].get("Description", "")
+            if description:
+                return description
+        return pid_name
+    
     def render(
         self, 
         figure: Figure, 
@@ -187,10 +203,11 @@ class ChartRenderer:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=False)
                     
+                    legend_label = self._get_legend_label(series_name)
                     if x_key:
                         ax_left.plot(
                             df[x_key], y, 
-                            label=series_name,
+                            label=legend_label,
                             linestyle=style.linestyle,
                             linewidth=style.linewidth,
                             marker=style.marker,
@@ -201,7 +218,7 @@ class ChartRenderer:
                     else:
                         ax_left.plot(
                             y.index, y, 
-                            label=series_name,
+                            label=legend_label,
                             linestyle=style.linestyle,
                             linewidth=style.linewidth,
                             marker=style.marker,
@@ -217,10 +234,11 @@ class ChartRenderer:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=True)
                     
+                    legend_label = self._get_legend_label(series_name)
                     if x_key:
                         ax_right.plot(
                             df[x_key], y, 
-                            label=series_name,
+                            label=legend_label,
                             linestyle=style.linestyle,
                             linewidth=style.linewidth,
                             marker=style.marker,
@@ -231,7 +249,7 @@ class ChartRenderer:
                     else:
                         ax_right.plot(
                             y.index, y, 
-                            label=series_name,
+                            label=legend_label,
                             linestyle=style.linestyle,
                             linewidth=style.linewidth,
                             marker=style.marker,
@@ -264,10 +282,11 @@ class ChartRenderer:
                         x = y.index
                     
                     offset = (i - num_primary / 2) * bar_width
+                    legend_label = self._get_legend_label(series_name)
                     ax_left.bar(
                         x + offset, y,
                         width=bar_width,
-                        label=series_name,
+                        label=legend_label,
                         color=style.color,
                         alpha=style.alpha
                     )
@@ -285,10 +304,11 @@ class ChartRenderer:
                         x = y.index
                     
                     offset = ((i + num_primary) - total_bars / 2) * bar_width
+                    legend_label = self._get_legend_label(series_name)
                     ax_right.bar(
                         x + offset, y,
                         width=bar_width,
-                        label=series_name,
+                        label=legend_label,
                         color=style.color,
                         alpha=style.alpha
                     )
@@ -313,9 +333,10 @@ class ChartRenderer:
                     else:
                         x = y.index
                     
+                    legend_label = self._get_legend_label(series_name)
                     ax_left.scatter(
                         x, y,
-                        label=series_name,
+                        label=legend_label,
                         s=style.markersize ** 2,  # scatter uses area, not radius
                         marker='o' if not style.marker else style.marker,
                         color=style.color,
@@ -334,9 +355,10 @@ class ChartRenderer:
                     else:
                         x = y.index
                     
+                    legend_label = self._get_legend_label(series_name)
                     ax_right.scatter(
                         x, y,
-                        label=series_name,
+                        label=legend_label,
                         s=style.markersize ** 2,
                         marker='o' if not style.marker else style.marker,
                         color=style.color,
