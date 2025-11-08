@@ -40,7 +40,7 @@ HEADER_LABELS = {
     "data logging": "Date / Time",
     "engine no": "Engine Model",
     "sw version": "Engine Analyzer",
-    "ecu map": "ECU Map Version",
+    "ecu map": "Map Version",
 }
 
 # Mapping of raw unit strings to normalized display text
@@ -91,4 +91,12 @@ PID_KEY = {
     "p_l_egr_close_pos_learnt_nvv": SnapType.EUD_V1,
     
     # Add more patterns as needed
+}
+
+# Map snapshot types to their engine hours column names
+ENGINE_HOURS_COLUMNS = {
+    SnapType.ECU_V1: "EUD_Engine_run_time_total_nvv",
+    SnapType.ECU_V2: "EngDa_tiEngOn",
+    # Add more snapshot types and their column names as needed
+    # SnapType.ECU_V2: "column_name_for_v2",
 }

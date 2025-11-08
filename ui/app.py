@@ -19,7 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from file_io.reader_excel import load_xls, load_xlsx
 from services.parse_header import parse_header
-from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions, scrub_snapshot
+from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions, scrub_snapshot, find_engine_hours
 from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 
 # Class to manage Snapshot header information
@@ -60,6 +60,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.pid_info: dict[str, dict[str, str]] = {}
         self.snapshot_path: str = None
         self.snapshot_type = SnapType.EMPTY
+        self.engine_hours = 0.0
 
         # Lists to hold PIDs charted on Primary and Secondary Axis'
         self.primary_series: List[str] = []
@@ -385,10 +386,14 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Clean the snapshot
         self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
+        
+        # Extract engine hours from cleaned snapshot (needs Frame column and data columns)
+        self.engine_hours = find_engine_hours(self.snapshot, self.snapshot_type)
 
         # Update the UI
         self._update_controls_state(enabled=True)
         self._set_window_title()
+        self.header_panel.set_engine_hours(self.engine_hours)
         self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
         self.header_panel.set_header_snaptype(self.snapshot_type)
         self._populate_pid_list()
@@ -399,6 +404,8 @@ class SnapshotDecoderApp(tk.Tk):
 
     # Button handler for quick chart actions - Uses dispatch dictionary to map action IDs to handler functions
     def handle_header_action(self, action_id: str, snaptype: SnapType):
+        
+        # Diagnostic logging for quick chart actions
         print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
         # Dispatch table: map action IDs to handler functions
@@ -406,6 +413,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_BATTERY_TEST": quick_charts.V1_show_battery_chart,
             "V1_RAIL_PRESSURE": quick_charts.V1_show_rail_pressure_chart,
             "V1_RAIL_GAP": quick_charts.V1_show_rail_gap_chart,
+            "V2_BATTERY_TEST": quick_charts.V2_BATTERY_TEST,
             # add more as needed
         }
 
