@@ -78,6 +78,9 @@ class SnapshotDecoderApp(tk.Tk):
         self.primary_auto = tk.BooleanVar(value=True)
         self.secondary_auto = tk.BooleanVar(value=True)
         
+        # Chart type selection
+        self.chart_type_var = tk.StringVar(value="line")
+        
         # Add trace callbacks to sync working_config when axis settings change
         self.primary_ymin.trace_add("write", self._on_axis_setting_change)
         self.primary_ymax.trace_add("write", self._on_axis_setting_change)
@@ -85,6 +88,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_ymax.trace_add("write", self._on_axis_setting_change)
         self.primary_auto.trace_add("write", self._on_axis_setting_change)
         self.secondary_auto.trace_add("write", self._on_axis_setting_change)
+        self.chart_type_var.trace_add("write", self._on_chart_type_change)
         
         self.chart_cart = ChartCart()
         
@@ -251,13 +255,24 @@ class SnapshotDecoderApp(tk.Tk):
         ttk.Button(sf_btns, text="▼", width=3, command=lambda: self._move_in_list(self.secondary_list, +1)).pack(pady=2)
         ttk.Button(sf_btns, text="🗑", width=3, command=lambda: self._remove_selected_from("secondary")).pack(pady=2)
 
-        # Axis controls - row 5
-        axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
-        axis.grid(row=5, column=0, sticky="ew", pady=(8,6))
+        # Chart Type selection - row 5
+        chart_type_frame = ttk.Labelframe(left_border, text="Chart Type")
+        chart_type_frame.grid(row=5, column=0, sticky="ew", pady=(8,6))
+        
+        # Radio buttons for chart type (exclusive selection)
+        chart_type_row = ttk.Frame(chart_type_frame)
+        chart_type_row.pack(fill=tk.X, pady=4, padx=4)
+        ttk.Radiobutton(chart_type_row, text="Line", variable=self.chart_type_var, value="line").pack(side=tk.LEFT, padx=8)
+        ttk.Radiobutton(chart_type_row, text="Bar", variable=self.chart_type_var, value="bar").pack(side=tk.LEFT, padx=8)
+        ttk.Radiobutton(chart_type_row, text="Bubble", variable=self.chart_type_var, value="bubble").pack(side=tk.LEFT, padx=8)
 
-        # Plot and clear buttons - row 6
+        # Axis controls - row 6
+        axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
+        axis.grid(row=6, column=0, sticky="ew", pady=(8,6))
+
+        # Plot and clear buttons - row 7
         plot_btns = ttk.Frame(left_border)
-        plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
+        plot_btns.grid(row=7, column=0, sticky="ew", pady=(0,8))
         ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
         ttk.Button(plot_btns, text="Add to Cart", command=self.add_current_to_cart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
         ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
@@ -291,10 +306,10 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _build_plot_area(self):
         # Create an empty figure placeholder
-        self.figure = Figure(figsize=(7,5), dpi=100)
+        self.figure = Figure(figsize=(15,5), dpi=100)
         self.ax_left = self.figure.add_subplot(111)
         self.ax_right = self.ax_left.twinx()
-        self.ax_left.set_title("Combo Line Chart")
+        self.ax_left.set_title("Chart Area")
         self.ax_left.set_xlabel("Frame / Time")
         self.ax_left.set_ylabel("Primary")
         self.ax_right.set_ylabel("Secondary")
@@ -510,6 +525,12 @@ class SnapshotDecoderApp(tk.Tk):
         """Callback when axis settings change to sync working_config."""
         if self.snapshot is not None and (self.primary_series or self.secondary_series):
             self._sync_working_config()
+    
+    def _on_chart_type_change(self, *args):
+        """Callback when chart type changes to re-render the chart."""
+        if self.snapshot is not None and (self.primary_series or self.secondary_series):
+            self._sync_working_config()
+            self.plot_combo_chart()
 
     def _sync_working_config(self):
         """Synchronize working_config with current widget states."""
@@ -547,10 +568,10 @@ class SnapshotDecoderApp(tk.Tk):
         # Create/update working configuration
         self.working_config = ChartConfig(
             data=chart_data,
-            chart_type="line",
+            chart_type=self.chart_type_var.get(),
             primary_axis=primary_axis,
             secondary_axis=secondary_axis,
-            title=self.ax_left.get_title() if hasattr(self, 'ax_left') else "Combo Line Chart",
+            title=self.ax_left.get_title() if hasattr(self, 'ax_left') else "Chart Area",
             pid_info=self.pid_info
         )
     
@@ -657,7 +678,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.figure.clear()
         self.ax_left = self.figure.add_subplot(111)
         self.ax_right = self.ax_left.twinx()
-        self.ax_left.set_title("Custom Line Chart")
+        self.ax_left.set_title("Chart Area")
         self.ax_left.set_xlabel("Index / Time")
         self.ax_left.set_ylabel("Primary")
         self.ax_right.set_ylabel("Secondary")
@@ -670,6 +691,19 @@ class SnapshotDecoderApp(tk.Tk):
         self._sync_working_config()
         
         if self.working_config:
+            # Capture current axis limits from the chart (after pan/zoom)
+            if hasattr(self, 'ax_left') and self.ax_left:
+                ymin_primary, ymax_primary = self.ax_left.get_ylim()
+                self.working_config.primary_axis.min_value = ymin_primary
+                self.working_config.primary_axis.max_value = ymax_primary
+                self.working_config.primary_axis.auto_scale = False
+            
+            if hasattr(self, 'ax_right') and self.ax_right:
+                ymin_secondary, ymax_secondary = self.ax_right.get_ylim()
+                self.working_config.secondary_axis.min_value = ymin_secondary
+                self.working_config.secondary_axis.max_value = ymax_secondary
+                self.working_config.secondary_axis.auto_scale = False
+            
             # Deep copy the config including the DataFrame to avoid reference issues
             config_copy = copy.deepcopy(self.working_config)
             self.chart_cart.add_config(config_copy)
