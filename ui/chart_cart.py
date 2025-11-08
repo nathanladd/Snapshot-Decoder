@@ -105,3 +105,23 @@ class ChartCart:
         self.items = []
         for config in self.configs:
             self._add_item(config)
+    
+    def export_to_pdf(self, filepath: str, **kwargs):
+        """
+        Export all charts in the cart to a PDF file.
+        
+        Args:
+            filepath: Path to save the PDF file
+            **kwargs: Additional arguments (page_size, dpi, metadata)
+        """
+        from file_io.pdf_export import ChartCartPdfExporter
+        
+        if not self.configs:
+            raise ValueError("Chart cart is empty. Add charts before exporting.")
+        
+        exporter = ChartCartPdfExporter(self.configs)
+        
+        if 'metadata' in kwargs:
+            exporter.export_with_metadata(filepath, **kwargs)
+        else:
+            exporter.export(filepath, **kwargs)
