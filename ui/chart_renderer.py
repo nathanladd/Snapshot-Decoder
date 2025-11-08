@@ -123,7 +123,7 @@ class ChartRenderer:
         ax_left, ax_right = self.render(fig, canvas=None, clear_figure=False)
         return fig, ax_left, ax_right
     
-    def render_thumbnail(self, figsize=(6, 4), dpi=50):
+    def render_thumbnail(self, figsize=(4, 2), dpi=50):
         """Render a small thumbnail of the chart."""
         fig = Figure(figsize=figsize, dpi=dpi)
         
@@ -132,13 +132,6 @@ class ChartRenderer:
         ax_right = None
         if self.config.secondary_axis.series:
             ax_right = ax_left.twinx()
-        
-        # Apply formatting without labels/titles for thumbnail
-        ax_left.set_title("")
-        ax_left.set_xlabel("")
-        ax_left.set_ylabel("")
-        if ax_right:
-            ax_right.set_ylabel("")
         
         # Render the chart
         if self.config.chart_type == "line":
@@ -151,12 +144,19 @@ class ChartRenderer:
         # Apply formatting (limits, grid, etc.)
         self._apply_formatting(ax_left, ax_right)
         
-        # Apply formatting without labels/titles for thumbnail
+        # Apply formatting without labels/titles/legends for thumbnail
         ax_left.set_title("")
         ax_left.set_xlabel("")
         ax_left.set_ylabel("")
+        legend = ax_left.get_legend()
+        if legend:
+            legend.remove()
+        
         if ax_right:
             ax_right.set_ylabel("")
+            legend = ax_right.get_legend()
+            if legend:
+                legend.remove()
         
         fig.tight_layout()
         return fig
