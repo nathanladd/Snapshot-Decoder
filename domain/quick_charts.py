@@ -88,7 +88,7 @@ def V1_show_rail_gap_chart(main_app, snaptype: SnapType):
         "300"
     )
 
-def V2_BATTERY_TEST(main_app, snaptype: SnapType):
+def V2_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
         snaptype,
