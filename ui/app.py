@@ -257,24 +257,14 @@ class SnapshotDecoderApp(tk.Tk):
         ttk.Button(sf_btns, text="▼", width=3, command=lambda: self._move_in_list(self.secondary_list, +1)).pack(pady=2)
         ttk.Button(sf_btns, text="🗑", width=3, command=lambda: self._remove_selected_from("secondary")).pack(pady=2)
 
-        # Chart Type selection - row 5
-        chart_type_frame = ttk.Labelframe(left_border, text="Chart Type")
-        chart_type_frame.grid(row=5, column=0, sticky="ew", pady=(8,6))
         
-        # Radio buttons for chart type (exclusive selection)
-        chart_type_row = ttk.Frame(chart_type_frame)
-        chart_type_row.pack(fill=tk.X, pady=4, padx=4)
-        ttk.Radiobutton(chart_type_row, text="Line", variable=self.chart_type_var, value="line").pack(side=tk.LEFT, padx=8)
-        ttk.Radiobutton(chart_type_row, text="Bar", variable=self.chart_type_var, value="bar").pack(side=tk.LEFT, padx=8)
-        ttk.Radiobutton(chart_type_row, text="Bubble", variable=self.chart_type_var, value="bubble").pack(side=tk.LEFT, padx=8)
-
-        # Axis controls - row 6
+        # Axis controls - row 5
         axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
-        axis.grid(row=6, column=0, sticky="ew", pady=(8,6))
+        axis.grid(row=5, column=0, sticky="ew", pady=(8,6))
 
-        # Plot and clear buttons - row 7
+        # Plot and clear buttons - row 6
         plot_btns = ttk.Frame(left_border)
-        plot_btns.grid(row=7, column=0, sticky="ew", pady=(0,8))
+        plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
         ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
         ttk.Button(plot_btns, text="Add to Cart", command=self.add_current_to_cart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
         ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
