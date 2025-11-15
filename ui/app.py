@@ -17,9 +17,11 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
-from file_io.reader_excel import load_xls, load_xlsx
-from services.parse_header import parse_header
-from services.parse_snapshot import id_snapshot, find_pid_names, extract_pid_descriptions, scrub_snapshot, find_engine_hours
+from domain import quick_charts
+import domain.chart_config
+from domain.chart_config import ChartConfig, AxisConfig
+from ui.chart_renderer import ChartRenderer
+from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
 
 # Class to manage Snapshot header information
@@ -28,10 +30,6 @@ from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
 from ui.custom_toolbar import CustomNavigationToolbar
 from ui.chart_cart import ChartCart
-from domain import quick_charts
-import domain.chart_config
-from domain.chart_config import ChartConfig, AxisConfig
-from ui.chart_renderer import ChartRenderer
 
 class SnapshotDecoderApp(tk.Tk):
 
@@ -55,12 +53,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _initialize_state(self):
         '''initialize or reset all app-level parameters'''        
-        self.snapshot: Optional[pd.DataFrame] = None
-        self.raw_snapshot: Optional[pd.DataFrame] = None
-        self.pid_info: dict[str, dict[str, str]] = {}
-        self.snapshot_path: str = None
-        self.snapshot_type = SnapType.EMPTY
-        self.engine_hours = 0.0
+        self.snapshot_obj: Optional[Snapshot] = None
 
         # Lists to hold PIDs charted on Primary and Secondary Axis'
         self.primary_series: List[str] = []
@@ -117,8 +110,8 @@ class SnapshotDecoderApp(tk.Tk):
     def _set_window_title(self):
         '''Update the window title
         If a Snapshot is open, include its name and path'''
-        if self.snapshot_path:
-            self.title(f"{APP_TITLE} : {os.path.basename(self.snapshot_path)}")
+        if self.snapshot_obj and self.snapshot_obj.snapshot_path:
+            self.title(f"{APP_TITLE} : {os.path.basename(self.snapshot_obj.snapshot_path)}")
         else:
             self.title(APP_TITLE)
    
@@ -133,8 +126,8 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="File", menu=file_menu)
 
         data_menu = tk.Menu(menubar, tearoff=0)
-        data_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.raw_snapshot, "Raw Data"))
-        data_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.snapshot, "Snapshot Table"))
+        data_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.snapshot_obj.raw_snapshot if self.snapshot_obj else None, "Raw Data"))
+        data_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.snapshot_obj.snapshot if self.snapshot_obj else None, "Snapshot Table"))
         data_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
         menubar.add_cascade(label="Data", menu=data_menu)
 
@@ -339,54 +332,22 @@ class SnapshotDecoderApp(tk.Tk):
             return
         
         self._clear_ui()
-        self.snapshot_path = path
-
-        # Get the new file extension and decide how to process it
-        ext = os.path.splitext(self.snapshot_path)[1].lower()
-        if ext == ".xlsx":       
-            try:
-                self.raw_snapshot = load_xlsx(self.snapshot_path)
-            except Exception as e:
-                messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
-                return
-        elif ext == ".xls":       
-            try:
-                self.raw_snapshot = load_xls(self.snapshot_path)
-            except Exception as e:
-                messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
-                return     
-        else:
-            messagebox.showerror("Unsupported file type", f"Unknown file extension: {ext}")
+        try:
+            self.snapshot_obj = Snapshot.load(path)
+        except Exception as e:
+            messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
             return
-        
-        if self.raw_snapshot is None or self.raw_snapshot.empty:
-            messagebox.showerror("No data", "The workbook loaded but no data table was found.")
-            return
-
-        # Pull any header information from the Snapshot if it exists
-        header_info = parse_header(self.raw_snapshot, max_rows=5)
-        if header_info:
-            self.header_panel.set_rows(header_info)
-        else:
-            self.header_panel.set_rows([("Header", "No header info present")])
-
-        # ID the snapshot snapshot type
-        header_row_idx = find_pid_names(self.raw_snapshot)
-        self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
-        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)  
-
-        # Clean the snapshot
-        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
-        
-        # Extract engine hours from cleaned snapshot (needs Frame column and data columns)
-        self.engine_hours = find_engine_hours(self.snapshot, self.snapshot_type)
 
         # Update the UI
+        if self.snapshot_obj.header_info:
+            self.header_panel.set_rows(self.snapshot_obj.header_info)
+        else:
+            self.header_panel.set_rows([("Header", "No header info present")])
         self._update_controls_state(enabled=True)
         self._set_window_title()
-        self.header_panel.set_engine_hours(self.engine_hours)
-        self.header_panel.set_pid_info(total_pids=len(self.snapshot.columns), frames_found=len(self.snapshot))
-        self.header_panel.set_header_snaptype(self.snapshot_type)
+        self.header_panel.set_engine_hours(self.snapshot_obj.engine_hours)
+        self.header_panel.set_pid_info(total_pids=len(self.snapshot_obj.snapshot.columns), frames_found=len(self.snapshot_obj.snapshot))
+        self.header_panel.set_header_snaptype(self.snapshot_obj.snapshot_type)
         self._populate_pid_list()
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -421,22 +382,22 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _populate_pid_list(self):
         self.pid_list.delete(0, tk.END)
-        if self.snapshot is None:
+        if not self.snapshot_obj:
             return
-        for col in self.snapshot.columns:
+        for col in self.snapshot_obj.snapshot.columns:
             self.pid_list.insert(tk.END, col)
 
     def _filter_pids(self):
         term = self.search_var.get().strip().lower()
         self.pid_list.delete(0, tk.END)
-        if self.snapshot is None:
+        if not self.snapshot_obj:
             return
-        cols = [c for c in self.snapshot.columns if term in c.lower()]
+        cols = [c for c in self.snapshot_obj.snapshot.columns if term in c.lower()]
         for c in cols:
             self.pid_list.insert(tk.END, c)
 
     def _add_selected(self, target: str):
-        if self.snapshot is None:
+        if not self.snapshot_obj:
             return
         sel = [self.pid_list.get(i) for i in self.pid_list.curselection()]
         if not sel:
@@ -460,7 +421,7 @@ class SnapshotDecoderApp(tk.Tk):
                     self.secondary_list.insert(tk.END, s)
 
         # Sync and redraw chart if snapshot is loaded
-        if self.snapshot is not None:
+        if self.snapshot_obj is not None:
             self._sync_working_config()
             self.plot_combo_chart()
 
@@ -484,7 +445,7 @@ class SnapshotDecoderApp(tk.Tk):
             self.secondary_series = list(listbox.get(0, tk.END))
 
         # Sync and redraw chart if snapshot is loaded
-        if self.snapshot is not None:
+        if self.snapshot_obj is not None:
             self._sync_working_config()
             self.plot_combo_chart()
 
@@ -501,7 +462,7 @@ class SnapshotDecoderApp(tk.Tk):
             self.secondary_series = list(lb.get(0, tk.END))
 
         # Sync and redraw chart if snapshot is loaded
-        if self.snapshot is not None:
+        if self.snapshot_obj is not None:
             self._sync_working_config()
             self.plot_combo_chart()
 
@@ -522,23 +483,23 @@ class SnapshotDecoderApp(tk.Tk):
     
     def _on_axis_setting_change(self, *args):
         """Callback when axis settings change to sync working_config."""
-        if self.snapshot is not None and (self.primary_series or self.secondary_series):
+        if self.snapshot_obj is not None and (self.primary_series or self.secondary_series):
             self._sync_working_config()
     
     def _on_chart_type_change(self, *args):
         """Callback when chart type changes to re-render the chart."""
-        if self.snapshot is not None and (self.primary_series or self.secondary_series):
+        if self.snapshot_obj is not None and (self.primary_series or self.secondary_series):
             self._sync_working_config()
             self.plot_combo_chart()
 
     def _sync_working_config(self):
         """Synchronize working_config with current widget states."""
-        if self.snapshot is None:
+        if self.snapshot_obj is None:
             self.working_config = None
             return
         
         # Determine x_column
-        x_key = "Time" if "Time" in self.snapshot.columns else ("Frame" if "Frame" in self.snapshot.columns else None)
+        x_key = "Time" if "Time" in self.snapshot_obj.snapshot.columns else ("Frame" if "Frame" in self.snapshot_obj.snapshot.columns else None)
         
         # Select only relevant columns for the chart data
         relevant_columns = list(self.primary_series) + list(self.secondary_series)
@@ -546,7 +507,7 @@ class SnapshotDecoderApp(tk.Tk):
             relevant_columns.insert(0, x_key)
         
         # Create a copy of the data with only relevant columns
-        chart_data = self.snapshot[relevant_columns].copy() if relevant_columns else pd.DataFrame()
+        chart_data = self.snapshot_obj.snapshot[relevant_columns].copy() if relevant_columns else pd.DataFrame()
 
         # Configure primary axis
         primary_axis = AxisConfig(
@@ -571,7 +532,7 @@ class SnapshotDecoderApp(tk.Tk):
             primary_axis=primary_axis,
             secondary_axis=secondary_axis,
             title=self.ax_left.get_title() if hasattr(self, 'ax_left') else "Chart Area",
-            pid_info=self.pid_info
+            pid_info=self.snapshot_obj.pid_info
         )
     
     def _parse_limit(self, s: str):
@@ -589,7 +550,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def plot_combo_chart(self):
         """Plot chart using the ChartRenderer class."""
-        if self.snapshot is None:
+        if not self.snapshot_obj:
             messagebox.showinfo("No data", "Open a data file first.")
             return
         if not self.primary_series and not self.secondary_series:
@@ -611,7 +572,7 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
 
     def open_chart_table(self):
-        if self.snapshot is None or self.snapshot.empty:
+        if not self.snapshot_obj or self.snapshot_obj.snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the chart table.")
             return
         # Check if Chart Table is already open
@@ -623,16 +584,16 @@ class SnapshotDecoderApp(tk.Tk):
         if not selected:
             messagebox.showinfo("No selection", "Add PIDs to Primary or Secondary axis first.")
             return
-        existing = [c for c in selected if c in self.snapshot.columns]
+        existing = [c for c in selected if c in self.snapshot_obj.snapshot.columns]
         if not existing:
             messagebox.showinfo("No selection", "Selected PIDs not found in data.")
             return
-        if "Time" in self.snapshot.columns:
+        if "Time" in self.snapshot_obj.snapshot.columns:
             columns = ["Time"] + [c for c in existing if c != "Time"]
         else:
             columns = existing
-        df = self.snapshot[columns].copy()
-        win = DataTableWindow(self, df, self.snapshot_path, "Chart Table")
+        df = self.snapshot_obj.snapshot[columns].copy()
+        win = DataTableWindow(self, df, self.snapshot_obj.snapshot_path, "Chart Table")
         self.chart_table_window = win.win
 
     def clear_chart(self):
@@ -718,7 +679,7 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        DataTableWindow(self, snapshot, self.snapshot_path, window_name)
+        DataTableWindow(self, snapshot, self.snapshot_obj.snapshot_path if self.snapshot_obj else None, window_name)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------- Open PID Info Window -------------------------------------------------------
@@ -726,11 +687,11 @@ class SnapshotDecoderApp(tk.Tk):
 
     def show_pid_info(self):
         """Display PID info in a new PidInfoWindow."""
-        if not self.pid_info:
+        if not self.snapshot_obj or not self.snapshot_obj.pid_info:
             tk.messagebox.showinfo("PID Descriptions", "No PID information available.")
             return
 
-        PidInfoWindow(self, self.pid_info, self.snapshot_path, self)
+        PidInfoWindow(self, self.snapshot_obj.pid_info, self.snapshot_obj.snapshot_path, self)
     
     def export_cart_to_pdf(self):
         """Export all charts in the cart to a PDF file."""
@@ -753,7 +714,7 @@ class SnapshotDecoderApp(tk.Tk):
             metadata = {
                 'Title': 'Snapshot Chart Report',
                 'Author': 'Snapshot Decoder',
-                'Subject': f'Charts from {self.snapshot_path or "snapshot"}',
+                'Subject': f'Charts from {self.snapshot_obj.snapshot_path if self.snapshot_obj else "snapshot"}',
                 'Creator': f'{APP_TITLE} v{APP_VERSION}'
             }
             
