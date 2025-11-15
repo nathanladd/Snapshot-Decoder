@@ -328,10 +328,12 @@ class SnapshotDecoderApp(tk.Tk):
             title="Open Bobcat Snapshot File",
             filetypes=[("Fake .xls", ".xls"), ("Converted Excel", "*.xlsx"), ("All files", "*.*")]
         )
+
         if not path:
             return
         
         self._clear_ui()
+
         try:
             self.snapshot_obj = Snapshot.load(path)
         except Exception as e:
@@ -340,9 +342,10 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Update the UI
         if self.snapshot_obj.header_info:
-            self.header_panel.set_rows(self.snapshot_obj.header_info)
+            self.header_panel.set_header_info(self.snapshot_obj.header_info)
         else:
-            self.header_panel.set_rows([("Header", "No header info present")])
+            self.header_panel.set_header_info([("Header", "No header info present")])
+            
         self._update_controls_state(enabled=True)
         self._set_window_title()
         self.header_panel.set_engine_hours(self.snapshot_obj.engine_hours)
@@ -692,7 +695,11 @@ class SnapshotDecoderApp(tk.Tk):
             return
 
         PidInfoWindow(self, self.snapshot_obj.pid_info, self.snapshot_obj.snapshot_path, self)
-    
+
+#------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------- Export PDF--------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------  
+ 
     def export_cart_to_pdf(self):
         """Export all charts in the cart to a PDF file."""
         if not self.chart_cart.configs:

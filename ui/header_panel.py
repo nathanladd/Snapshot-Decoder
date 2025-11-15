@@ -107,14 +107,14 @@ class HeaderPanel(ttk.Frame):
         frames_lbl.grid(row=4, column=4, sticky="w", padx=(0, 3), pady=1)
 
      
-    # Helper function for set_rows to clear all rows
+    # Helper function for set_header_info to clear all rows
     def clear(self):
         for w in self._rows:
             w.destroy()
         self._rows.clear()
 
     # Accept pairs of (key, value) and set them in the header
-    def set_rows(self, pairs):
+    def set_header_info(self, pairs):
         """
         pairs: iterable of (key, value)
         """
