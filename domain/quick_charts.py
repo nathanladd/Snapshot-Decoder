@@ -57,7 +57,7 @@ def V1_show_battery_chart(main_app, snaptype: SnapType):
         "18",
         ["IN_Engine_cycle_speed"],
         "-50",
-        "3000"
+        "4000"
     )
     
 
@@ -86,6 +86,42 @@ def V1_show_rail_gap_chart(main_app, snaptype: SnapType):
         ["FQD_Chkd_inj_fuel_dmnd"],
         "-5",
         "300"
+    )
+    
+def V1_show_imv_current_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_IMV_CURRENT",
+        ["RPC_Im_crt_dmnd", "P_L_Im_crt_fb"],
+        "0",
+        "1050"
+        
+    )
+
+def V1_show_turbo_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_TURBO",
+        ["P_L_MAP_RAW", "P_L_Atmosp_raw"],
+        "-10",
+        "35",
+        ["IN_Engine_cycle_speed"],
+        "-50",
+        "6250"
+    )
+def V1_show_EGR_flow_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_EGR_FLOW",
+        ["ACM_INTAKE_PORT_AIR_FLOW_SPD", "ACM_INTAKE_PORT_AIR_FLOW_MAF"],
+        "0",
+        "150",
+        ["IN_Egr_position"],
+        "-50",
+        "400"
     )
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):

@@ -14,6 +14,12 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Demand vs Actual Rail Pressure"),
         ("Rail Gap", "V1_RAIL_GAP", 
         "Rail Pressure Gap"),
+        ("IMV Current", "V1_IMV_CURRENT", 
+        "IMV Current Actual vs Demand"),
+        ("Turbo", "V1_TURBO", 
+        "Manifold Pressure, Atmospheric Pressure, and RPM"),
+        ("EGR Flow", "V1_EGR_FLOW", 
+        "Mass Air Flow Sensor vs Speed Density"),
     ],
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", "Battery V vs RPM"),

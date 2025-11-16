@@ -116,7 +116,7 @@ class PidInfoWindow:
             if pid not in self.main_app.primary_series:
                 self.main_app.primary_series.append(pid)
                 self.main_app.primary_list.insert(tk.END, pid)
-                if self.main_app.snapshot is not None:
+                if self.main_app.snapshot_obj is not None:
                     self.main_app.plot_combo_chart()
             choice_win.destroy()
 
@@ -124,7 +124,7 @@ class PidInfoWindow:
             if pid not in self.main_app.secondary_series:
                 self.main_app.secondary_series.append(pid)
                 self.main_app.secondary_list.insert(tk.END, pid)
-                if self.main_app.snapshot is not None:
+                if self.main_app.snapshot_obj is not None:
                     self.main_app.plot_combo_chart()
             choice_win.destroy()
 
