@@ -374,6 +374,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_EGR_POSITION": quick_charts.V1_show_EGR_position_chart,
             "V1_PISTON_DELTA": quick_charts.V1_show_piston_delta_chart,
             "V1_CAM_CRANK": quick_charts.V1_show_cam_crank_chart,
+            "V1_START_AID": quick_charts.V1_show_start_aid_chart,
 
             # add more as needed
         }

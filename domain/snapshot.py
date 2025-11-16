@@ -71,7 +71,7 @@ class Snapshot:
         # Set the unit for SMC_ENGINE_STATE PID if the snapshot is ECU_V1 type
         if self.snapshot_type == SnapType.ECU_V1:
             if "SMC_ENGINE_STATE" in self.pid_info:
-                self.pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off | [1]Cranking | [2]Running | [3]Stalling"
+                self.pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off   [1]Cranking   [2]Running   [3]Stalling"
 
 
 # ==================================================================================================
