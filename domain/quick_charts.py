@@ -142,14 +142,14 @@ def V1_show_EGR_position_chart(main_app, snaptype: SnapType):
 
 def V1_show_piston_delta_chart(main_app, snaptype: SnapType):
     # Filter PIDs to only include those present in the snapshot (for 3 cylinder engine 1.8L)
-    all_primary_pids = ["IN_Bal_delta_speed[0]", "IN_Bal_delta_speed[1]", "IN_Bal_delta_speed[2]", "IN_Bal_delta_speed[3]"]
-    primary_pids = [pid for pid in all_primary_pids if pid in main_app.snapshot_obj.snapshot.columns]
+    all_cylinders = ["IN_Bal_delta_speed[0]", "IN_Bal_delta_speed[1]", "IN_Bal_delta_speed[2]", "IN_Bal_delta_speed[3]"]
+    cylinders_present = [pid for pid in all_cylinders if pid in main_app.engine.snapshot.columns]
     
     apply_quick_chart_setup(
         main_app,
         snaptype,
         "V1_PISTON_DELTA",
-        primary_pids,
+        cylinders_present,
         "-100",
         "100",
         ["FQD_Chkd_inj_fuel_dmnd"],
