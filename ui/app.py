@@ -288,7 +288,6 @@ class SnapshotDecoderApp(tk.Tk):
         self.right = ttk.Frame(chart_pane, padding=10)
         self.right.pack(fill=tk.BOTH, expand=True)
 
-
     def _build_plot_area(self):
         # Create an empty figure placeholder
         self.figure = Figure(figsize=(15,5), dpi=100)
@@ -361,7 +360,7 @@ class SnapshotDecoderApp(tk.Tk):
     def handle_header_action(self, action_id: str, snaptype: SnapType):
         
         # Diagnostic logging for quick chart actions
-        print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
+        #print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
         # Dispatch table: map action IDs to handler functions
         dispatch = {
@@ -372,6 +371,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_IMV_CURRENT": quick_charts.V1_show_imv_current_chart,
             "V1_TURBO": quick_charts.V1_show_turbo_chart,
             "V1_EGR_FLOW": quick_charts.V1_show_EGR_flow_chart,
+            "V1_EGR_POSITION": quick_charts.V1_show_EGR_position_chart,
             # add more as needed
         }
 

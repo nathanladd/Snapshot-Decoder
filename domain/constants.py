@@ -20,6 +20,8 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Manifold Pressure, Atmospheric Pressure, and RPM"),
         ("EGR Flow", "V1_EGR_FLOW", 
         "Mass Air Flow Sensor vs Speed Density"),
+        ("EGR Position", "V1_EGR_POSITION", 
+        "EGR Position vs percent Demand"),
     ],
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", "Battery V vs RPM"),

@@ -46,6 +46,7 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
         main_app.ax_left.set_title(tooltip)
         main_app.canvas.draw_idle()
 
+# ----------------------------------V1 Charts----------------------------------
 
 def V1_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
@@ -123,6 +124,20 @@ def V1_show_EGR_flow_chart(main_app, snaptype: SnapType):
         "-50",
         "400"
     )
+
+def V1_show_EGR_position_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_EGR_POSITION",
+        ["P_L_Egr_close_pos_mean_nvv", "P_L_Egr_feedback_pos_cnts"],
+        "0",
+        "1000",
+        ["ACM_Egr_position_dmnd"],
+        "-10",
+        "400"
+    )
+# ----------------------------------V2 Charts----------------------------------
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
