@@ -24,6 +24,8 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "EGR Position vs percent Demand"),
         ("Piston Delta", "V1_PISTON_DELTA", 
         "Piston Delta Speed"),
+        ("Cam/Crank", "V1_CAM_CRANK", 
+        "Cam/Crank Condition with Engine State"),
     ],
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", "Battery V vs RPM"),
@@ -58,7 +60,7 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "s": "Seconds",
     "ms": "Milliseconds",
     "rpm": "RPM",
-    "adcnt": "AD Counts",
+    "adcnt": "Analog to Digital Counts",
     "g": "Grams",
     "us": "Microseconds",
     "l": "Liters",

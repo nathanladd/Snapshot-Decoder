@@ -67,6 +67,7 @@ class Snapshot:
         
         # Extract engine hours
         self.engine_hours = find_engine_hours(self.snapshot, self.snapshot_type)
+        
 
 
 # ==================================================================================================

@@ -150,6 +150,19 @@ def V1_show_piston_delta_chart(main_app, snaptype: SnapType):
         "-5",
         "300"
     )
+
+def V1_show_cam_crank_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_CAM_CRANK",
+        ["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"],
+        "-10",
+        "4",
+        ["SMC_ENGINE_STATE"],
+        "-2",
+        "10"
+    )
 # ----------------------------------V2 Charts----------------------------------
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):
