@@ -200,7 +200,7 @@ class SnapshotDecoderApp(tk.Tk):
         cart_title_frame = ttk.Frame(cart_pane)
         cart_title_frame.pack(pady=10)
         ttk.Label(cart_title_frame, text="Chart Cart", font=("Segoe UI", 14, "bold")).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(cart_title_frame, text="Export PDF", command=self.export_cart_to_pdf).pack(side=tk.LEFT)
+        ttk.Button(cart_title_frame, text="💾 Export PDF", command=self.export_cart_to_pdf).pack(side=tk.LEFT)
         
         self.chart_cart.build_ui(cart_pane)
 
