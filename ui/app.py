@@ -367,7 +367,6 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_BATTERY_TEST": quick_charts.V1_show_battery_chart,
             "V1_RAIL_PRESSURE": quick_charts.V1_show_rail_pressure_chart,
             "V1_RAIL_GAP": quick_charts.V1_show_rail_gap_chart,
-            "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
             "V1_IMV_CURRENT": quick_charts.V1_show_imv_current_chart,
             "V1_TURBO": quick_charts.V1_show_turbo_chart,
             "V1_EGR_FLOW": quick_charts.V1_show_EGR_flow_chart,
@@ -376,6 +375,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_CAM_CRANK": quick_charts.V1_show_cam_crank_chart,
             "V1_START_AID": quick_charts.V1_show_start_aid_chart,
 
+            "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
             # add more as needed
         }
 
