@@ -25,9 +25,6 @@ class HeaderPanel(ttk.Frame):
         self._rows = []  
         self._snaptype: SnapType | None = None
 
-        # # Property to track widgets so we can clear them later
-        # self._button_widgets: list[ttk.Button] = []
-
         # Logo graphic to the right side of the header panel
         image=Image.open("ui/logo.png")
         photo=ImageTk.PhotoImage(image)
@@ -124,8 +121,11 @@ class HeaderPanel(ttk.Frame):
         self.clear()
         r = self._row_start
 
+        # Create custom label for the frame with bold larger font
+        label = ttk.Label(self, text=file_name, font=("Segoe UI", 12, "bold"))
+
         # Snapshot Information Frame
-        self.snap_info_frame = ttk.Labelframe(self, text=file_name)
+        self.snap_info_frame = ttk.Labelframe(self, labelwidget=label)
         self.snap_info_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,0))
 
         #Add a 3rd column to make white space between header and PID info
