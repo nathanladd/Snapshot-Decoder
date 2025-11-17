@@ -19,7 +19,8 @@ class Snapshot:
     """
     
     def __init__(self, path: str):
-        self.snapshot_path: str = path
+        self.file_path: str = path
+        self.file_name: str = os.path.basename(path)
         self.raw_snapshot: Optional[pd.DataFrame] = None
         self.snapshot: Optional[pd.DataFrame] = None
         self.header_info: List[Tuple[str, str]] = []
@@ -43,11 +44,11 @@ class Snapshot:
         Internal method to load the file and perform all parsing steps.
         """
         # Determine file type and load raw data
-        ext = os.path.splitext(self.snapshot_path)[1].lower()
+        ext = os.path.splitext(self.file_path)[1].lower()
         if ext == ".xlsx":
-            self.raw_snapshot = load_xlsx(self.snapshot_path)
+            self.raw_snapshot = load_xlsx(self.file_path)
         elif ext == ".xls":
-            self.raw_snapshot = load_xls(self.snapshot_path)
+            self.raw_snapshot = load_xls(self.file_path)
         else:
             raise ValueError(f"Unsupported file extension: {ext}")
         
@@ -59,7 +60,7 @@ class Snapshot:
         
         # Find header row and identify snapshot type
         header_row_idx = self.find_pid_names(self.raw_snapshot)
-        self.snapshot_type = Snapshot.id_snapshot(self.raw_snapshot, header_row_idx)
+        self.snapshot_type = self.id_snapshot(self.raw_snapshot, header_row_idx)
         
         # Extract PID descriptions
         self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
@@ -142,8 +143,7 @@ class Snapshot:
         except (ValueError, IndexError, TypeError):
             return 0
 
-    @classmethod
-    def _normalize_label(cls, text: str) -> str:
+    def _normalize_label(self, text: str) -> str:
         """
         Normalize a label to a canonical display name if recognized.
         Loosened matching: exact, case-insensitive; also allows minor spacing/punctuation differences.
@@ -165,8 +165,7 @@ class Snapshot:
         # fall back to original as-is if unknown
         return text.strip()
 
-    @classmethod
-    def parse_header(cls, df: pd.DataFrame, max_rows: int = 5):
+    def parse_header(self, df: pd.DataFrame, max_rows: int = 5):
         """
         Parse up to the first `max_rows` rows as 2-column key/value pairs.
         - Column 0: label (string)
@@ -201,14 +200,13 @@ class Snapshot:
                 # Keep keys without values? For this app, we skip them.
                 continue
 
-            key = cls._normalize_label(k_raw)
+            key = self._normalize_label(k_raw)
             value = v_raw
             results.append((key, value))
 
         return results
 
-    @classmethod
-    def id_snapshot(cls, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
+    def id_snapshot(self, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
         '''
         ID the snapshot type based on the header row
         '''
@@ -222,8 +220,7 @@ class Snapshot:
         # if pattern not found, return EMPTY
         return SnapType.EMPTY
 
-    @classmethod
-    def find_pid_names(cls, snapshot: pd.DataFrame) -> int:
+    def find_pid_names(self, snapshot: pd.DataFrame) -> int:
         '''
         Find the header row
         '''
@@ -341,6 +338,4 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
             snapshot["Time"] = snapshot["Time"].dt.total_seconds()
         else:
             pass  # Leave as is if conversion fails
-
-    
     return snapshot

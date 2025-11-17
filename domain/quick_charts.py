@@ -33,9 +33,12 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
     else:
         main_app.primary_auto.set(True)
     
-    main_app.secondary_auto.set(False)
-    main_app.secondary_ymin.set(secondary_min)
-    main_app.secondary_ymax.set(secondary_max)
+    if secondary_min and secondary_max:
+        main_app.secondary_auto.set(False)
+        main_app.secondary_ymin.set(secondary_min)
+        main_app.secondary_ymax.set(secondary_max)
+    else:
+        main_app.secondary_auto.set(True)
     
     # Trigger toggle to update entry states
     main_app._toggle_primary_inputs()

@@ -24,22 +24,11 @@ class HeaderPanel(ttk.Frame):
         self._row_start = 1
         self._rows = []  
         self._snaptype: SnapType | None = None
-        # Property to track widgets so we can clear them later
-        self._button_widgets: list[ttk.Button] = []
-        
 
-        # Snapshot Information Frame
-        self.snap_info_frame = ttk.Labelframe(self, text="Snapshot Information")
-        self.snap_info_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,0))
+        # # Property to track widgets so we can clear them later
+        # self._button_widgets: list[ttk.Button] = []
 
-        #Add a 3rd column to make white space between header and PID info
-        self.snap_info_frame.columnconfigure(2,minsize=30)     
-        
-        # Snapshot Quick Chart Buttons frame
-        self.button_frame = ttk.Labelframe(self, text="Quick Charts")
-        self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
-
-        # Logo frame
+        # Logo graphic to the right side of the header panel
         image=Image.open("ui/logo.png")
         photo=ImageTk.PhotoImage(image)
         label=ttk.Label(self, image=photo)
@@ -55,6 +44,10 @@ class HeaderPanel(ttk.Frame):
 
     #Accept SnapType and set correct label information
     def set_header_snaptype(self, snaptype: SnapType):
+
+        # Property to track widgets so we can clear them later
+        self._button_widgets: list[ttk.Button] = []
+
         self._snaptype = snaptype
         engine_version = ttk.Label(self.snap_info_frame, text="Type:", font=("Segoe UI", 9, "bold"))
         engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
@@ -68,6 +61,10 @@ class HeaderPanel(ttk.Frame):
         for b in self._button_widgets:
             b.destroy()
         self._button_widgets.clear()
+
+        # Snapshot Quick Chart Buttons frame
+        self.button_frame = ttk.Labelframe(self, text="Quick Charts")
+        self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
 
         # Create buttons in a flowing grid
         specs = BUTTONS_BY_TYPE.get(snaptype, [])
@@ -120,12 +117,19 @@ class HeaderPanel(ttk.Frame):
         self._rows.clear()
 
     # Accept pairs of (key, value) and set them in the header
-    def set_header_info(self, pairs):
+    def set_header_info(self, file_name: str, pairs):
         """
         pairs: iterable of (key, value)
         """
         self.clear()
         r = self._row_start
+
+        # Snapshot Information Frame
+        self.snap_info_frame = ttk.Labelframe(self, text=file_name)
+        self.snap_info_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,0))
+
+        #Add a 3rd column to make white space between header and PID info
+        self.snap_info_frame.columnconfigure(2,minsize=30)
         
         # Special case: if only one pair and value is "none", show only the key, not bold
         if len(pairs) == 1 and pairs[0][1].lower() == "none":

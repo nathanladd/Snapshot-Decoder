@@ -108,13 +108,8 @@ class SnapshotDecoderApp(tk.Tk):
 #---------------------------------------------------------------------------------------------------------------------
 
     def _set_window_title(self):
-        '''Update the window title
-        If a Snapshot is open, include its name and path'''
-        if self.engine and self.engine.snapshot_path:
-            self.title(f"{APP_TITLE} : {os.path.basename(self.engine.snapshot_path)}")
-        else:
-            self.title(APP_TITLE)
-   
+        self.title(f"{APP_TITLE} : {APP_VERSION}")
+
     def _build_menu(self):
         menubar = tk.Menu(self)
 
@@ -341,16 +336,16 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Update the UI
         if self.engine.header_info:
-            self.header_panel.set_header_info(self.engine.header_info)
+            self.header_panel.set_header_info(self.engine.file_name,self.engine.header_info)
         else:
-            self.header_panel.set_header_info([("Header", "No header info present")])
+            self.header_panel.set_header_info(self.engine.file_name,[("Header", "No header info present")])
             
-        self._update_controls_state(enabled=True)
-        self._set_window_title()
         self.header_panel.set_engine_hours(self.engine.engine_hours)
         self.header_panel.set_pid_info(total_pids=len(self.engine.snapshot.columns), frames_found=len(self.engine.snapshot))
         self.header_panel.set_header_snaptype(self.engine.snapshot_type)
         self.header_panel.set_mdp_success_rate(self.engine.mdp_success_rate)
+
+        self._update_controls_state(enabled=True)
         self._populate_pid_list()
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -606,7 +601,7 @@ class SnapshotDecoderApp(tk.Tk):
         else:
             columns = existing
         df = self.engine.snapshot[columns].copy()
-        win = DataTableWindow(self, df, self.engine.snapshot_path, "Chart Table")
+        win = DataTableWindow(self, df, self.engine.file_path, "Chart Table")
         self.chart_table_window = win.win
 
     def clear_chart(self):
@@ -692,7 +687,7 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        DataTableWindow(self, snapshot, self.engine.snapshot_path if self.engine else None, window_name)
+        DataTableWindow(self, snapshot, self.engine.file_path if self.engine else None, window_name)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------- Open PID Info Window -------------------------------------------------------
@@ -704,7 +699,7 @@ class SnapshotDecoderApp(tk.Tk):
             tk.messagebox.showinfo("PID Descriptions", "No PID information available.")
             return
 
-        PidInfoWindow(self, self.engine.pid_info, self.engine.snapshot_path, self)
+        PidInfoWindow(self, self.engine.pid_info, self.engine.file_path, self)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------- Export PDF--------------------------------------------------------------
@@ -731,7 +726,7 @@ class SnapshotDecoderApp(tk.Tk):
             metadata = {
                 'Title': 'Snapshot Chart Report',
                 'Author': 'Snapshot Decoder',
-                'Subject': f'Charts from {self.engine.snapshot_path if self.engine else "snapshot"}',
+                'Subject': f'Charts from {self.engine.file_path if self.engine else "snapshot"}',
                 'Creator': f'{APP_TITLE} v{APP_VERSION}'
             }
             
