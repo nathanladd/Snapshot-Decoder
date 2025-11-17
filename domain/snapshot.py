@@ -122,7 +122,7 @@ class Snapshot:
             MDP Success as float rounded to hundredth of a percent, or 0 if not found
         """
         # Check if MDP_SUCCESS column exists
-        if "I_C_Mdp_nb_update_failure_nvv" and "I_C_Mdp_nb_update_success_nvv" not in self.snapshot.columns:
+        if not ("I_C_Mdp_nb_update_failure_nvv" in self.snapshot.columns and "I_C_Mdp_nb_update_success_nvv" in self.snapshot.columns):
             return 0
         
         # Check if Frame column exists
@@ -324,12 +324,12 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
 
     # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
     if "Frame" in snapshot.columns:
-        start_idx = snapshot.index[snapshot["Frame"] == '0']
+        start_idx = snapshot.index[snapshot["Frame"] == 0]
         if len(start_idx) > 0:
             snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
 
     # Coerce numerics where possible
-    snapshot = snapshot.apply(pd.to_numeric, errors="ignore")
+    snapshot = snapshot.apply(pd.to_numeric, errors="coerce")
 
     # Convert time to datetime
     if "Time" in snapshot.columns:

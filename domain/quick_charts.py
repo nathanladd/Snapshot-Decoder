@@ -52,7 +52,9 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
         main_app.ax_left.set_title(tooltip)
         main_app.canvas.draw_idle()
 
+# ----------------------------------------------------------------------------
 # ----------------------------------V1 Charts----------------------------------
+# ----------------------------------------------------------------------------
 
 def V1_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
@@ -211,7 +213,9 @@ def V1_show_torque_control_chart(main_app, snaptype: SnapType):
         
     )
 
+# ----------------------------------------------------------------------------
 # ----------------------------------V2 Charts----------------------------------
+# ----------------------------------------------------------------------------
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(

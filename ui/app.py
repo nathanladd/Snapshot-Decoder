@@ -47,6 +47,7 @@ class SnapshotDecoderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         self.state("zoomed")
+        self.iconbitmap("Snapshot_Decoder_Icon.ico")  # Replace with actual path to your .ico file
         self._initialize_state()
         self._build_ui()
 
