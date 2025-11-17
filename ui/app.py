@@ -350,6 +350,7 @@ class SnapshotDecoderApp(tk.Tk):
         self.header_panel.set_engine_hours(self.engine.engine_hours)
         self.header_panel.set_pid_info(total_pids=len(self.engine.snapshot.columns), frames_found=len(self.engine.snapshot))
         self.header_panel.set_header_snaptype(self.engine.snapshot_type)
+        self.header_panel.set_mdp_success_rate(self.engine.mdp_success_rate)
         self._populate_pid_list()
 
 #------------------------------------------------------------------------------------------------------------------------------
