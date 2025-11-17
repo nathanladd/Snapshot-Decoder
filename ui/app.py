@@ -141,7 +141,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _build_layout(self):
 
-        # Chart border - use classic theme for visible sash
+        # Use classic theme for visible sash
         style = ttk.Style()
         style.theme_use("classic")
         
