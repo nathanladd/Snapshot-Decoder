@@ -3,7 +3,7 @@ from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
 
 
-def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str, primary_max: str, secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str=""):
+def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str = "", primary_max: str = "", secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str=""):
     # Retrieve tooltip for the chart title
     tooltip = None
     if snaptype in BUTTONS_BY_TYPE:
@@ -26,9 +26,12 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
         main_app.secondary_list.insert('end', pid)
     
     # Set scripted min/max values for axes
-    main_app.primary_auto.set(False)
-    main_app.primary_ymin.set(primary_min)
-    main_app.primary_ymax.set(primary_max)
+    if primary_min and primary_max:
+        main_app.primary_auto.set(False)
+        main_app.primary_ymin.set(primary_min)
+        main_app.primary_ymax.set(primary_max)
+    else:
+        main_app.primary_auto.set(True)
     
     main_app.secondary_auto.set(False)
     main_app.secondary_ymin.set(secondary_min)
@@ -182,6 +185,29 @@ def V1_show_start_aid_chart(main_app, snaptype: SnapType):
         "-2",
         "10"
     )
+
+def V1_show_air_fuel_ratio_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_AIR_FUEL_RATIO",
+        ["AFC_Air_fuel_ratio"],
+        "-50",
+        "130",
+        ["T_D_Smoke_limit_active"],
+        "-2",
+        "10"
+    )
+
+def V1_show_torque_control_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_TORQUE_CONTROL",
+        ["T_D_Actual_brake_torque", "T_D_Max_brake_torque"]
+        
+    )
+
 # ----------------------------------V2 Charts----------------------------------
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):

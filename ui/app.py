@@ -374,6 +374,8 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_PISTON_DELTA": quick_charts.V1_show_piston_delta_chart,
             "V1_CAM_CRANK": quick_charts.V1_show_cam_crank_chart,
             "V1_START_AID": quick_charts.V1_show_start_aid_chart,
+            "V1_AIR_FUEL_RATIO": quick_charts.V1_show_air_fuel_ratio_chart,
+            "V1_TORQUE_CONTROL": quick_charts.V1_show_torque_control_chart,
 
             "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
             # add more as needed

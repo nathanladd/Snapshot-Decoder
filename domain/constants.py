@@ -28,6 +28,10 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Cam/Crank Condition with Engine State"),
         ("Start Aid", "V1_START_AID", 
         "Start Aid Condition with Engine State"),
+        ("Air/Fuel Ratio", "V1_AIR_FUEL_RATIO", 
+        "Air/Fuel Ratio and Smoke Limit Control"),
+        ("Torque Control", "V1_TORQUE_CONTROL", 
+        "Actual Brake Torque vs Torque Limit"),
     ],
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", "Battery V vs RPM"),
