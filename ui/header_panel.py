@@ -41,18 +41,19 @@ class HeaderPanel(ttk.Frame):
 
     #Accept SnapType and set correct label information
     def set_header_snaptype(self, snaptype: SnapType):
-
-        # Property to track widgets so we can clear them later
-        self._button_widgets: list[ttk.Button] = []
-
         self._snaptype = snaptype
+
         engine_version = ttk.Label(self.snap_info_frame, text="Type:", font=("Segoe UI", 9, "bold"))
         engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
         snapshot_type_lbl = ttk.Label(self.snap_info_frame, text=snaptype, justify="left", anchor="w",)
         snapshot_type_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
 
-        if snaptype is SnapType.EMPTY:
+    def build_quick_chart_buttons(self):
+        if self._snaptype is SnapType.EMPTY:
             return
+
+        # Property to track widgets so we can clear them later
+        self._button_widgets: list[ttk.Button] = []
 
         # Clear existing buttons, if any
         for b in self._button_widgets:
@@ -64,7 +65,7 @@ class HeaderPanel(ttk.Frame):
         self.button_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,4))
 
         # Create buttons in a flowing grid
-        specs = BUTTONS_BY_TYPE.get(snaptype, [])
+        specs = BUTTONS_BY_TYPE.get(self._snaptype, [])
         max_per_row = 5
         for i, (text, action_id, _tip) in enumerate(specs):
             btn = ttk.Button(self.button_frame, text=text,

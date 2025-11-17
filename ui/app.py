@@ -134,12 +134,7 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="Chart", menu=chart_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label="About", command=lambda: messagebox.showinfo(f"{APP_TITLE} {APP_VERSION} ",  
-            "Written by Nate Ladd\n" 
-            "Service Trainer\n" 
-            "Bobcat of the Rockies\n" 
-            "nladd@bobcatoftherockies.com"
-            ))
+        help_menu.add_command(label="About", command=self.show_about)
         menubar.add_cascade(label="Help", menu=help_menu)
 
         self.config(menu=menubar)
@@ -334,17 +329,19 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
             return
 
-        # Update the UI
+        # Update the header panel
         if self.engine.header_info:
             self.header_panel.set_header_info(self.engine.file_name,self.engine.header_info)
         else:
             self.header_panel.set_header_info(self.engine.file_name,[("Header", "No header info present")])
-            
+
+        self.header_panel.set_header_snaptype(self.engine.snapshot_type)
+        self.header_panel.build_quick_chart_buttons()  
         self.header_panel.set_engine_hours(self.engine.engine_hours)
         self.header_panel.set_pid_info(total_pids=len(self.engine.snapshot.columns), frames_found=len(self.engine.snapshot))
-        self.header_panel.set_header_snaptype(self.engine.snapshot_type)
         self.header_panel.set_mdp_success_rate(self.engine.mdp_success_rate)
 
+        # Update the UI
         self._update_controls_state(enabled=True)
         self._populate_pid_list()
 
@@ -742,4 +739,33 @@ class SnapshotDecoderApp(tk.Tk):
         
         except Exception as e:
             messagebox.showerror("Export Failed", f"Failed to export PDF:\n{str(e)}")
+
+#------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------- About Window -------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+    def show_about(self):
+        """Display a custom About dialog with larger font."""
+        about_win = tk.Toplevel(self)
+        about_win.title(f"{APP_TITLE} {APP_VERSION}")
+        about_win.resizable(False, False)
+        about_win.transient(self)  # Make it modal-like
+        about_win.grab_set()
+        about_win.configure(bg="white")  # Set window background to white
+
+        # Center the window on the screen
+        window_width = 400
+        window_height = 300
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        about_win.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+        msg = tk.Label(about_win, text=f"Snapshot Decoder: {APP_VERSION}\nWritten by Nate Ladd\nService Trainer\nBobcat of the Rockies\nnladd@bobcatoftherockies.com", 
+                       font=("Segoe UI", 14), bg="white", anchor="center")
+        msg.pack(expand=True, pady=20)
+
+        ok_btn = tk.Button(about_win, text="OK", command=about_win.destroy, bg="white")
+        ok_btn.pack(pady=(0, 20))
+
 
