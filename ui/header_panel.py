@@ -71,7 +71,7 @@ class HeaderPanel(ttk.Frame):
 
         # Create buttons in a flowing grid: 4 per row looks tidy; adjust as you like
         specs = BUTTONS_BY_TYPE.get(snaptype, [])
-        max_per_row = 4
+        max_per_row = 5
         for i, (text, action_id, _tip) in enumerate(specs):
             btn = ttk.Button(self.button_frame, text=text,
                              command=lambda a=action_id: self._handle_click(a))

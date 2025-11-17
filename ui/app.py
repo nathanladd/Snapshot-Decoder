@@ -53,7 +53,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _initialize_state(self):
         '''initialize or reset all app-level parameters'''        
-        self.snapshot_obj: Optional[Snapshot] = None
+        self.engine: Optional[Snapshot] = None
 
         # Lists to hold PIDs charted on Primary and Secondary Axis'
         self.primary_series: List[str] = []
@@ -110,8 +110,8 @@ class SnapshotDecoderApp(tk.Tk):
     def _set_window_title(self):
         '''Update the window title
         If a Snapshot is open, include its name and path'''
-        if self.snapshot_obj and self.snapshot_obj.snapshot_path:
-            self.title(f"{APP_TITLE} : {os.path.basename(self.snapshot_obj.snapshot_path)}")
+        if self.engine and self.engine.snapshot_path:
+            self.title(f"{APP_TITLE} : {os.path.basename(self.engine.snapshot_path)}")
         else:
             self.title(APP_TITLE)
    
@@ -126,8 +126,8 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="File", menu=file_menu)
 
         data_menu = tk.Menu(menubar, tearoff=0)
-        data_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.snapshot_obj.raw_snapshot if self.snapshot_obj else None, "Raw Data"))
-        data_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.snapshot_obj.snapshot if self.snapshot_obj else None, "Snapshot Table"))
+        data_menu.add_command(label="Raw Data...", command=lambda: self.open_data_table(self.engine.raw_snapshot if self.engine else None, "Raw Data"))
+        data_menu.add_command(label="Clean Table...", command=lambda: self.open_data_table(self.engine.snapshot if self.engine else None, "Snapshot Table"))
         data_menu.add_command(label="PID Descriptions...", command=self.show_pid_info)
         menubar.add_cascade(label="Data", menu=data_menu)
 
@@ -200,7 +200,7 @@ class SnapshotDecoderApp(tk.Tk):
         cart_title_frame = ttk.Frame(cart_pane)
         cart_title_frame.pack(pady=10)
         ttk.Label(cart_title_frame, text="Chart Cart", font=("Segoe UI", 14, "bold")).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(cart_title_frame, text="Export PDF", command=self.export_cart_to_pdf).pack(side=tk.LEFT)
+        ttk.Button(cart_title_frame, text="💾 Export PDF", command=self.export_cart_to_pdf).pack(side=tk.LEFT)
         
         self.chart_cart.build_ui(cart_pane)
 
@@ -288,7 +288,6 @@ class SnapshotDecoderApp(tk.Tk):
         self.right = ttk.Frame(chart_pane, padding=10)
         self.right.pack(fill=tk.BOTH, expand=True)
 
-
     def _build_plot_area(self):
         # Create an empty figure placeholder
         self.figure = Figure(figsize=(15,5), dpi=100)
@@ -335,22 +334,22 @@ class SnapshotDecoderApp(tk.Tk):
         self._clear_ui()
 
         try:
-            self.snapshot_obj = Snapshot.load(path)
+            self.engine = Snapshot.load(path)
         except Exception as e:
             messagebox.showerror("Load failed", f"Couldn't load file.\n\n{e}")
             return
 
         # Update the UI
-        if self.snapshot_obj.header_info:
-            self.header_panel.set_header_info(self.snapshot_obj.header_info)
+        if self.engine.header_info:
+            self.header_panel.set_header_info(self.engine.header_info)
         else:
             self.header_panel.set_header_info([("Header", "No header info present")])
             
         self._update_controls_state(enabled=True)
         self._set_window_title()
-        self.header_panel.set_engine_hours(self.snapshot_obj.engine_hours)
-        self.header_panel.set_pid_info(total_pids=len(self.snapshot_obj.snapshot.columns), frames_found=len(self.snapshot_obj.snapshot))
-        self.header_panel.set_header_snaptype(self.snapshot_obj.snapshot_type)
+        self.header_panel.set_engine_hours(self.engine.engine_hours)
+        self.header_panel.set_pid_info(total_pids=len(self.engine.snapshot.columns), frames_found=len(self.engine.snapshot))
+        self.header_panel.set_header_snaptype(self.engine.snapshot_type)
         self._populate_pid_list()
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -361,13 +360,23 @@ class SnapshotDecoderApp(tk.Tk):
     def handle_header_action(self, action_id: str, snaptype: SnapType):
         
         # Diagnostic logging for quick chart actions
-        print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
+        #print(f"[Quick Chart Button Action] {snaptype}: {action_id}")
 
         # Dispatch table: map action IDs to handler functions
         dispatch = {
             "V1_BATTERY_TEST": quick_charts.V1_show_battery_chart,
             "V1_RAIL_PRESSURE": quick_charts.V1_show_rail_pressure_chart,
             "V1_RAIL_GAP": quick_charts.V1_show_rail_gap_chart,
+            "V1_IMV_CURRENT": quick_charts.V1_show_imv_current_chart,
+            "V1_TURBO": quick_charts.V1_show_turbo_chart,
+            "V1_EGR_FLOW": quick_charts.V1_show_EGR_flow_chart,
+            "V1_EGR_POSITION": quick_charts.V1_show_EGR_position_chart,
+            "V1_PISTON_DELTA": quick_charts.V1_show_piston_delta_chart,
+            "V1_CAM_CRANK": quick_charts.V1_show_cam_crank_chart,
+            "V1_START_AID": quick_charts.V1_show_start_aid_chart,
+            "V1_AIR_FUEL_RATIO": quick_charts.V1_show_air_fuel_ratio_chart,
+            "V1_TORQUE_CONTROL": quick_charts.V1_show_torque_control_chart,
+
             "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
             # add more as needed
         }
@@ -385,22 +394,22 @@ class SnapshotDecoderApp(tk.Tk):
 
     def _populate_pid_list(self):
         self.pid_list.delete(0, tk.END)
-        if not self.snapshot_obj:
+        if not self.engine:
             return
-        for col in self.snapshot_obj.snapshot.columns:
+        for col in self.engine.snapshot.columns:
             self.pid_list.insert(tk.END, col)
 
     def _filter_pids(self):
         term = self.search_var.get().strip().lower()
         self.pid_list.delete(0, tk.END)
-        if not self.snapshot_obj:
+        if not self.engine:
             return
-        cols = [c for c in self.snapshot_obj.snapshot.columns if term in c.lower()]
+        cols = [c for c in self.engine.snapshot.columns if term in c.lower()]
         for c in cols:
             self.pid_list.insert(tk.END, c)
 
     def _add_selected(self, target: str):
-        if not self.snapshot_obj:
+        if not self.engine:
             return
         sel = [self.pid_list.get(i) for i in self.pid_list.curselection()]
         if not sel:
@@ -424,7 +433,7 @@ class SnapshotDecoderApp(tk.Tk):
                     self.secondary_list.insert(tk.END, s)
 
         # Sync and redraw chart if snapshot is loaded
-        if self.snapshot_obj is not None:
+        if self.engine is not None:
             self._sync_working_config()
             self.plot_combo_chart()
 
@@ -448,7 +457,7 @@ class SnapshotDecoderApp(tk.Tk):
             self.secondary_series = list(listbox.get(0, tk.END))
 
         # Sync and redraw chart if snapshot is loaded
-        if self.snapshot_obj is not None:
+        if self.engine is not None:
             self._sync_working_config()
             self.plot_combo_chart()
 
@@ -465,7 +474,7 @@ class SnapshotDecoderApp(tk.Tk):
             self.secondary_series = list(lb.get(0, tk.END))
 
         # Sync and redraw chart if snapshot is loaded
-        if self.snapshot_obj is not None:
+        if self.engine is not None:
             self._sync_working_config()
             self.plot_combo_chart()
 
@@ -486,23 +495,23 @@ class SnapshotDecoderApp(tk.Tk):
     
     def _on_axis_setting_change(self, *args):
         """Callback when axis settings change to sync working_config."""
-        if self.snapshot_obj is not None and (self.primary_series or self.secondary_series):
+        if self.engine is not None and (self.primary_series or self.secondary_series):
             self._sync_working_config()
     
     def _on_chart_type_change(self, *args):
         """Callback when chart type changes to re-render the chart."""
-        if self.snapshot_obj is not None and (self.primary_series or self.secondary_series):
+        if self.engine is not None and (self.primary_series or self.secondary_series):
             self._sync_working_config()
             self.plot_combo_chart()
 
     def _sync_working_config(self):
         """Synchronize working_config with current widget states."""
-        if self.snapshot_obj is None:
+        if self.engine is None:
             self.working_config = None
             return
         
         # Determine x_column
-        x_key = "Time" if "Time" in self.snapshot_obj.snapshot.columns else ("Frame" if "Frame" in self.snapshot_obj.snapshot.columns else None)
+        x_key = "Time" if "Time" in self.engine.snapshot.columns else ("Frame" if "Frame" in self.engine.snapshot.columns else None)
         
         # Select only relevant columns for the chart data
         relevant_columns = list(self.primary_series) + list(self.secondary_series)
@@ -510,7 +519,7 @@ class SnapshotDecoderApp(tk.Tk):
             relevant_columns.insert(0, x_key)
         
         # Create a copy of the data with only relevant columns
-        chart_data = self.snapshot_obj.snapshot[relevant_columns].copy() if relevant_columns else pd.DataFrame()
+        chart_data = self.engine.snapshot[relevant_columns].copy() if relevant_columns else pd.DataFrame()
 
         # Configure primary axis
         primary_axis = AxisConfig(
@@ -535,7 +544,7 @@ class SnapshotDecoderApp(tk.Tk):
             primary_axis=primary_axis,
             secondary_axis=secondary_axis,
             title=self.ax_left.get_title() if hasattr(self, 'ax_left') else "Chart Area",
-            pid_info=self.snapshot_obj.pid_info
+            pid_info=self.engine.pid_info
         )
     
     def _parse_limit(self, s: str):
@@ -553,7 +562,7 @@ class SnapshotDecoderApp(tk.Tk):
 
     def plot_combo_chart(self):
         """Plot chart using the ChartRenderer class."""
-        if not self.snapshot_obj:
+        if not self.engine:
             messagebox.showinfo("No data", "Open a data file first.")
             return
         if not self.primary_series and not self.secondary_series:
@@ -575,7 +584,7 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
 
     def open_chart_table(self):
-        if not self.snapshot_obj or self.snapshot_obj.snapshot.empty:
+        if not self.engine or self.engine.snapshot.empty:
             messagebox.showinfo("No data", "Open a file first so I can show the chart table.")
             return
         # Check if Chart Table is already open
@@ -587,16 +596,16 @@ class SnapshotDecoderApp(tk.Tk):
         if not selected:
             messagebox.showinfo("No selection", "Add PIDs to Primary or Secondary axis first.")
             return
-        existing = [c for c in selected if c in self.snapshot_obj.snapshot.columns]
+        existing = [c for c in selected if c in self.engine.snapshot.columns]
         if not existing:
             messagebox.showinfo("No selection", "Selected PIDs not found in data.")
             return
-        if "Time" in self.snapshot_obj.snapshot.columns:
+        if "Time" in self.engine.snapshot.columns:
             columns = ["Time"] + [c for c in existing if c != "Time"]
         else:
             columns = existing
-        df = self.snapshot_obj.snapshot[columns].copy()
-        win = DataTableWindow(self, df, self.snapshot_obj.snapshot_path, "Chart Table")
+        df = self.engine.snapshot[columns].copy()
+        win = DataTableWindow(self, df, self.engine.snapshot_path, "Chart Table")
         self.chart_table_window = win.win
 
     def clear_chart(self):
@@ -682,7 +691,7 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showinfo("No data", "Open a file first so I can show the cleaned table.")
             return
 
-        DataTableWindow(self, snapshot, self.snapshot_obj.snapshot_path if self.snapshot_obj else None, window_name)
+        DataTableWindow(self, snapshot, self.engine.snapshot_path if self.engine else None, window_name)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------- Open PID Info Window -------------------------------------------------------
@@ -690,11 +699,11 @@ class SnapshotDecoderApp(tk.Tk):
 
     def show_pid_info(self):
         """Display PID info in a new PidInfoWindow."""
-        if not self.snapshot_obj or not self.snapshot_obj.pid_info:
+        if not self.engine or not self.engine.pid_info:
             tk.messagebox.showinfo("PID Descriptions", "No PID information available.")
             return
 
-        PidInfoWindow(self, self.snapshot_obj.pid_info, self.snapshot_obj.snapshot_path, self)
+        PidInfoWindow(self, self.engine.pid_info, self.engine.snapshot_path, self)
 
 #------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------- Export PDF--------------------------------------------------------------
@@ -721,7 +730,7 @@ class SnapshotDecoderApp(tk.Tk):
             metadata = {
                 'Title': 'Snapshot Chart Report',
                 'Author': 'Snapshot Decoder',
-                'Subject': f'Charts from {self.snapshot_obj.snapshot_path if self.snapshot_obj else "snapshot"}',
+                'Subject': f'Charts from {self.engine.snapshot_path if self.engine else "snapshot"}',
                 'Creator': f'{APP_TITLE} v{APP_VERSION}'
             }
             
