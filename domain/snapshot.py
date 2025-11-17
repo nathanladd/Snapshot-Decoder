@@ -165,7 +165,6 @@ class Snapshot:
         # fall back to original as-is if unknown
         return text.strip()
 
-
     @classmethod
     def parse_header(cls, df: pd.DataFrame, max_rows: int = 5):
         """
@@ -208,7 +207,6 @@ class Snapshot:
 
         return results
 
-
     @classmethod
     def id_snapshot(cls, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
         '''
@@ -223,7 +221,6 @@ class Snapshot:
                 return st
         # if pattern not found, return EMPTY
         return SnapType.EMPTY
-
 
     @classmethod
     def find_pid_names(cls, snapshot: pd.DataFrame) -> int:
