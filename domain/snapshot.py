@@ -26,6 +26,8 @@ class Snapshot:
         self.pid_info: Dict[str, Dict[str, str]] = {}
         self.snapshot_type: SnapType = SnapType.EMPTY
         self.engine_hours: float = 0.0
+        self.mdp_success_rate: float = 0.0
+        
     
     @classmethod
     def load(cls, path: str) -> Snapshot:
@@ -53,11 +55,11 @@ class Snapshot:
             raise ValueError("The workbook loaded but no data table was found.")
         
         # Parse header information
-        self.header_info = parse_header(self.raw_snapshot, max_rows=5)
+        self.header_info = self.parse_header(self.raw_snapshot, max_rows=5)
         
         # Find header row and identify snapshot type
-        header_row_idx = find_pid_names(self.raw_snapshot)
-        self.snapshot_type = id_snapshot(self.raw_snapshot, header_row_idx)
+        header_row_idx = self.find_pid_names(self.raw_snapshot)
+        self.snapshot_type = Snapshot.id_snapshot(self.raw_snapshot, header_row_idx)
         
         # Extract PID descriptions
         self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
@@ -66,120 +68,186 @@ class Snapshot:
         self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
         
         # Extract engine hours
-        self.engine_hours = find_engine_hours(self.snapshot, self.snapshot_type)
+        self.engine_hours = self.find_engine_hours()
+        
+        # Extract MDP success rate
+        self.mdp_success_rate = self.calculate_mdp_success()
         
         # Set the unit for SMC_ENGINE_STATE PID if the snapshot is ECU_V1 type
         if self.snapshot_type == SnapType.ECU_V1:
             if "SMC_ENGINE_STATE" in self.pid_info:
                 self.pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off   [1]Cranking   [2]Running   [3]Stalling"
+        
+    def find_engine_hours(self) -> float:
+        """
+        Find the engine hours in the snapshot by reading specific columns based on snapshot type.
+        Gets the value at Frame == 0 and converts from seconds to hours.
+        
+        Returns:
+            Engine hours as float rounded to tenth of an hour, or 0 if not found
+        """
+        # Get the column name for this snapshot type from constants
+        column_name = ENGINE_HOURS_COLUMNS.get(self.snapshot_type)
+        if not column_name:
+            return 0.0  # No engine hours column defined for this snapshot type
+        
+        # Check if column exists in the snapshot
+        if column_name not in self.snapshot.columns:
+            return 0.0
+        
+        # Check if Frame column exists
+        if "Frame" not in self.snapshot.columns:
+            return 0.0
+        
+        # Get the row where Frame == 0
+        frame_zero_rows = self.snapshot[self.snapshot["Frame"] == 0]
+        if frame_zero_rows.empty:
+            return 0.0
+        
+        # Get the engine hours value (in seconds) from Frame == 0
+        try:
+            seconds = float(frame_zero_rows[column_name].iloc[0])
+            # Convert seconds to hours and round to tenth of an hour
+            hours = round(seconds / 3600, 1)
+            return hours
+        except (ValueError, IndexError, TypeError):
+            return 0.0
+
+    def calculate_mdp_success(self) -> float:
+        """
+        Calculate the MDP_SUCCESS value in the snapshot.
+        
+        Returns:
+            MDP Success as float rounded to hundredth of a percent, or 0 if not found
+        """
+        # Check if MDP_SUCCESS column exists
+        if "I_C_Mdp_nb_update_failure_nvv" and "I_C_Mdp_nb_update_success_nvv" not in self.snapshot.columns:
+            return 0
+        
+        # Check if Frame column exists
+        if "Frame" not in self.snapshot.columns:
+            return 0
+        
+        # Get the row where Frame == 0
+        frame_zero_row = self.snapshot[self.snapshot["Frame"] == 0]
+        if frame_zero_row.empty:
+            return 0
+        
+        # Get the MDP_SUCCESS value from Frame == 0
+        try:
+            mdp_success = int(frame_zero_row["I_C_Mdp_nb_update_success_nvv"].iloc[0])
+            mdp_success_rate = mdp_success / (frame_zero_row["I_C_Mdp_nb_update_failure_nvv"].iloc[0] + frame_zero_row["I_C_Mdp_nb_update_success_nvv"].iloc[0])
+            return round(mdp_success_rate * 100, 1)
+
+        except (ValueError, IndexError, TypeError):
+            return 0
+
+    @classmethod
+    def _normalize_label(cls, text: str) -> str:
+        """
+        Normalize a label to a canonical display name if recognized.
+        Loosened matching: exact, case-insensitive; also allows minor spacing/punctuation differences.
+        """
+        if not text:
+            return ""
+        raw = text.strip().lower()
+        # quick exact lookup
+        if raw in HEADER_LABELS:
+            return HEADER_LABELS[raw]
+
+        # light fuzzy: remove punctuation/spaces to catch 'Program SW Version' vs 'Program SW-Version'
+        squished = "".join(ch for ch in raw if ch.isalnum())
+        for k, v in HEADER_LABELS.items():
+            k_squished = "".join(ch for ch in k if ch.isalnum())
+            if squished == k_squished:
+                return v
+
+        # fall back to original as-is if unknown
+        return text.strip()
 
 
-# ==================================================================================================
-# Parsing Functions (moved from services/)
-# ==================================================================================================
+    @classmethod
+    def parse_header(cls, df: pd.DataFrame, max_rows: int = 5):
+        """
+        Parse up to the first `max_rows` rows as 2-column key/value pairs.
+        - Column 0: label (string)
+        - Column 1: value (string)
+        - Stops early if Column 0 == 'Frame' (table header reached).
+        Returns: ordered list of (key, value).
+        """
+        results = []
+        if df is None or df.empty:
+            return results
 
-def _normalize_label(text: str) -> str:
-    """
-    Normalize a label to a canonical display name if recognized.
-    Loosened matching: exact, case-insensitive; also allows minor spacing/punctuation differences.
-    """
-    if not text:
-        return ""
-    raw = text.strip().lower()
-    # quick exact lookup
-    if raw in HEADER_LABELS:
-        return HEADER_LABELS[raw]
+        nrows = min(max_rows, df.shape[0])
+        for r in range(nrows):
+            # Stop if we hit the actual table header row
+            try:
+                k_raw = str(df.iat[r, 0]).strip()
+            except Exception:
+                k_raw = ""
+            if k_raw and k_raw.lower() == "frame":
+                break
 
-    # light fuzzy: remove punctuation/spaces to catch 'Program SW Version' vs 'Program SW-Version'
-    squished = "".join(ch for ch in raw if ch.isalnum())
-    for k, v in HEADER_LABELS.items():
-        k_squished = "".join(ch for ch in k if ch.isalnum())
-        if squished == k_squished:
-            return v
+            # Pull the value column
+            try:
+                v_raw = str(df.iat[r, 1]).strip()
+            except Exception:
+                v_raw = ""
 
-    # fall back to original as-is if unknown
-    return text.strip()
+            # Skip truly empty/NaN-ish rows
+            if not k_raw or k_raw.lower() == "nan":
+                continue
+            if not v_raw or v_raw.lower() == "nan":
+                # Keep keys without values? For this app, we skip them.
+                continue
 
+            key = cls._normalize_label(k_raw)
+            value = v_raw
+            results.append((key, value))
 
-def parse_header(df: pd.DataFrame, max_rows: int = 5):
-    """
-    Parse up to the first `max_rows` rows as 2-column key/value pairs.
-    - Column 0: label (string)
-    - Column 1: value (string)
-    - Stops early if Column 0 == 'Frame' (table header reached).
-    Returns: ordered list of (key, value).
-    """
-    results = []
-    if df is None or df.empty:
         return results
 
-    nrows = min(max_rows, df.shape[0])
-    for r in range(nrows):
-        # Stop if we hit the actual table header row
-        try:
-            k_raw = str(df.iat[r, 0]).strip()
-        except Exception:
-            k_raw = ""
-        if k_raw and k_raw.lower() == "frame":
-            break
 
-        # Pull the value column
-        try:
-            v_raw = str(df.iat[r, 1]).strip()
-        except Exception:
-            v_raw = ""
-
-        # Skip truly empty/NaN-ish rows
-        if not k_raw or k_raw.lower() == "nan":
-            continue
-        if not v_raw or v_raw.lower() == "nan":
-            # Keep keys without values? For this app, we skip them.
-            continue
-
-        key = _normalize_label(k_raw)
-        value = v_raw
-        results.append((key, value))
-
-    return results
-
-
-def id_snapshot(snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
-    '''
-    ID the snapshot type based on the header row
-    '''
-    # Clean and normalize each cell to lowercase strings
-    row_values = snapshot.iloc[header_row_idx].astype(str).str.strip().str.lower().tolist()
-
-    # Check if any known header keyword appears in this row
-    for pattern, st in PID_KEY.items():
-        if any(v == pattern for v in row_values):
-            return st
-    # if pattern not found, return EMPTY
-    return SnapType.EMPTY
-
-
-def find_pid_names(snapshot: pd.DataFrame) -> int:
-    '''
-    Find the header row
-    '''
-    header_row_idx = None
-    # Scan the first 10 rows
-    for i in range(min(len(snapshot), 10)):
+    @classmethod
+    def id_snapshot(cls, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
+        '''
+        ID the snapshot type based on the header row
+        '''
         # Clean and normalize each cell to lowercase strings
-        row_values = snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
-        #print(f"Row {i}: {row_values}")
+        row_values = snapshot.iloc[header_row_idx].astype(str).str.strip().str.lower().tolist()
 
         # Check if any known header keyword appears in this row
-        for pattern, snap_type in PID_KEY.items():
+        for pattern, st in PID_KEY.items():
             if any(v == pattern for v in row_values):
-                #print(f"Match found in row {i}")
-                return i  # stop once a match is found
-        #else:
-            # The 'else' on a for-loop runs only if the loop didn't break
-            #print(f"No match found in row {i}")
+                return st
+        # if pattern not found, return EMPTY
+        return SnapType.EMPTY
 
-    if header_row_idx is None:
-        raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
+
+    @classmethod
+    def find_pid_names(cls, snapshot: pd.DataFrame) -> int:
+        '''
+        Find the header row
+        '''
+        header_row_idx = None
+        # Scan the first 10 rows
+        for i in range(min(len(snapshot), 10)):
+            # Clean and normalize each cell to lowercase strings
+            row_values = snapshot.iloc[i].astype(str).str.strip().str.lower().tolist()
+            #print(f"Row {i}: {row_values}")
+
+            # Check if any known header keyword appears in this row
+            for pattern, snap_type in PID_KEY.items():
+                if any(v == pattern for v in row_values):
+                    #print(f"Match found in row {i}")
+                    return i  # stop once a match is found
+            #else:
+                # The 'else' on a for-loop runs only if the loop didn't break
+                #print(f"No match found in row {i}")
+
+        if header_row_idx is None:
+            raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
 
 
 def _to_str(cell) -> str:
@@ -279,43 +347,3 @@ def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFr
 
     
     return snapshot
-
-
-def find_engine_hours(snapshot: pd.DataFrame, snaptype: SnapType) -> float:
-    """
-    Find the engine hours in the snapshot by reading specific columns based on snapshot type.
-    Gets the value at Frame == 0 and converts from seconds to hours.
-    
-    Args:
-        snapshot: Cleaned snapshot DataFrame (after scrub_snapshot)
-        snaptype: Type of snapshot to determine which column to read
-    
-    Returns:
-        Engine hours as float rounded to hundredth of an hour, or 0 if not found
-    """
-    # Get the column name for this snapshot type from constants
-    column_name = ENGINE_HOURS_COLUMNS.get(snaptype)
-    if not column_name:
-        return 0.0  # No engine hours column defined for this snapshot type
-    
-    # Check if column exists in the snapshot
-    if column_name not in snapshot.columns:
-        return 0.0
-    
-    # Check if Frame column exists
-    if "Frame" not in snapshot.columns:
-        return 0.0
-    
-    # Get the row where Frame == 0
-    frame_zero_rows = snapshot[snapshot["Frame"] == 0]
-    if frame_zero_rows.empty:
-        return 0.0
-    
-    # Get the engine hours value (in seconds) from Frame == 0
-    try:
-        seconds = float(frame_zero_rows[column_name].iloc[0])
-        # Convert seconds to hours and round to hundredth of an hour (2 decimal places)
-        hours = round(seconds / 3600, 2)
-        return hours
-    except (ValueError, IndexError, TypeError):
-        return 0.0

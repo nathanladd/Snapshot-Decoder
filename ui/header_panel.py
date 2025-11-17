@@ -69,7 +69,7 @@ class HeaderPanel(ttk.Frame):
             b.destroy()
         self._button_widgets.clear()
 
-        # Create buttons in a flowing grid: 4 per row looks tidy; adjust as you like
+        # Create buttons in a flowing grid
         specs = BUTTONS_BY_TYPE.get(snaptype, [])
         max_per_row = 5
         for i, (text, action_id, _tip) in enumerate(specs):
@@ -106,7 +106,13 @@ class HeaderPanel(ttk.Frame):
         frames_lbl = ttk.Label(self.snap_info_frame, text=frames_found, justify="left", anchor="w",)
         frames_lbl.grid(row=4, column=4, sticky="w", padx=(0, 3), pady=1)
 
-     
+    def set_mdp_success_rate(self, mdp_success_rate: float):
+        #self.mdp_success_rate = mdp_success_rate
+        mdp_label = ttk.Label(self.snap_info_frame, text="MDP Success Rate:", font=("Segoe UI", 9, "bold"))
+        mdp_label.grid(row=5, column=3, sticky="ne", pady=(0, 3))
+        mdp_success_rate_lbl = ttk.Label(self.snap_info_frame, text=f"{mdp_success_rate} %", justify="left", anchor="w",)
+        mdp_success_rate_lbl.grid(row=5, column=4, sticky="w", padx=(0, 3), pady=1) 
+
     # Helper function for set_header_info to clear all rows
     def clear(self):
         for w in self._rows:
