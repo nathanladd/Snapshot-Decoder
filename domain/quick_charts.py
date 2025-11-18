@@ -235,7 +235,8 @@ def V2_show_rail_pressure_chart(main_app, snaptype: SnapType):
         main_app,
         snaptype,
         "V2_RAIL_PRESSURE",
-        ["RailP_pFlt", "Rail_pSetPoint"],  
+        ["RailP_pFlt", "Rail_pSetPoint"],
+        "-15", "30000"  
     )
 
 def V2_show_rail_gap_chart(main_app, snaptype: SnapType):
@@ -244,6 +245,7 @@ def V2_show_rail_gap_chart(main_app, snaptype: SnapType):
         snaptype,
         "V2_RAIL_GAP",
         ["Rail_pDvt"],
+        "-50","4000"
     )
 
 def V2_show_imv_current_chart(main_app, snaptype: SnapType):
@@ -272,8 +274,8 @@ def V2_show_misfire_chart(main_app, snaptype: SnapType):
         main_app,
         snaptype,
         "V2_MISFIRE",
-        ["MisfDet_ctMifMem_[0]", "MisfDet_ctMifMem_[1]", "MisfDet_ctMifMem_[2]", "MisfDet_ctMifMem_[3]"],
-
+        ["MisfDet_ctMifMem_[0]", "MisfDet_ctMifMem_[2]", "MisfDet_ctMifMem_[3]","MisfDet_ctMifMem_[1]"],
+        "-20","150"
     )
 
 def V2_show_throttle_chart(main_app, snaptype: SnapType):
