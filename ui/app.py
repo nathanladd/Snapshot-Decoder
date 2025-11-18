@@ -767,7 +767,7 @@ class SnapshotDecoderApp(tk.Tk):
         y = (screen_height - window_height) // 2
         about_win.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-        msg = tk.Label(about_win, text=f"Snapshot Decoder: {APP_VERSION}\nWritten by Nate Ladd\nService Trainer\nBobcat of the Rockies\nnladd@bobcatoftherockies.com", 
+        msg = tk.Label(about_win, text=f"Snapshot Decoder {APP_VERSION}\nWritten by Nathan Ladd\nService Trainer\nBobcat of the Rockies\nnladd@bobcatoftherockies.com", 
                        font=("Segoe UI", 14), bg="white", anchor="center")
         msg.pack(expand=True, pady=20)
 
