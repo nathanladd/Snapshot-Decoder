@@ -229,3 +229,50 @@ def V2_show_battery_chart(main_app, snaptype: SnapType):
         "-50",
         "3000"
     )
+
+def V2_show_rail_pressure_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_RAIL_PRESSURE",
+        ["RailP_pFlt", "Rail_pSetPoint"],  
+    )
+
+def V2_show_rail_gap_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_RAIL_GAP",
+        ["Rail_pDvt"],
+    )
+
+def V2_show_imv_current_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_IMV_CURRENT",
+        ["MeUn_iActFlt", "MeUn_iSet"],
+    )
+
+def V2_show_turbo_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_TURBO",
+        ["Air_pIntkVUs", "EnvP_p"],
+        "-20",
+        "35",
+        ["InjCrv_qMI1Des"],
+        "-5",
+        "200"
+    )
+
+def V2_show_misfire_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_MISFIRE",
+        ["MisfDet_ctMifMem_[0]", "MisfDet_ctMifMem_[1]", "MisfDet_ctMifMem_[2]", "MisfDet_ctMifMem_[3]"],
+
+    )
+

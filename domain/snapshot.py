@@ -243,7 +243,6 @@ class Snapshot:
         if header_row_idx is None:
             raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
 
-
 def _to_str(cell) -> str:
     """Convert any cell to a cleaned string, treating NaN/None as empty."""
     if cell is None:
@@ -253,11 +252,9 @@ def _to_str(cell) -> str:
     s = str(cell).strip()
     return "" if s.lower() in ("nan", "none") else s
 
-
 def _within(df: pd.DataFrame, r: int) -> bool:
     """True if r is a valid row index for df."""
     return 0 <= r < len(df)
-
 
 def extract_pid_descriptions(df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> Dict[str, Dict[str, str]]:
     """
@@ -293,7 +290,6 @@ def extract_pid_descriptions(df: pd.DataFrame, header_row_idx: int, start_col: i
         pid_info[pid] = {"Description": description, "Unit": unit}
 
     return pid_info
-
 
 def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFrame:
     """

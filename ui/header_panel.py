@@ -86,7 +86,7 @@ class HeaderPanel(ttk.Frame):
         self.engine_hours = hours
         engine_hours = ttk.Label(self.snap_info_frame, text="Engine Hours:", font=("Segoe UI", 9, "bold"))
         engine_hours.grid(row=2, column=3, sticky="ne", pady=(0, 3))
-        hours_lbl = ttk.Label(self.snap_info_frame, text=f"{hours:.2f}", justify="left", anchor="w",)
+        hours_lbl = ttk.Label(self.snap_info_frame, text=hours, justify="left", anchor="w",)
         hours_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
 
     #Accept PID info and fill a rigid layout of labels 
@@ -102,11 +102,11 @@ class HeaderPanel(ttk.Frame):
         frames_lbl.grid(row=4, column=4, sticky="w", padx=(0, 3), pady=1)
 
     def set_mdp_success_rate(self, mdp_success_rate: float):
-        #self.mdp_success_rate = mdp_success_rate
-        mdp_label = ttk.Label(self.snap_info_frame, text="MDP Success Rate:", font=("Segoe UI", 9, "bold"))
-        mdp_label.grid(row=5, column=3, sticky="ne", pady=(0, 3))
-        mdp_success_rate_lbl = ttk.Label(self.snap_info_frame, text=f"{mdp_success_rate} %", justify="left", anchor="w",)
-        mdp_success_rate_lbl.grid(row=5, column=4, sticky="w", padx=(0, 3), pady=1) 
+        if mdp_success_rate:
+            mdp_label = ttk.Label(self.snap_info_frame, text="MDP Success Rate:", font=("Segoe UI", 9, "bold"))
+            mdp_label.grid(row=5, column=3, sticky="ne", pady=(0, 3))
+            mdp_success_rate_lbl = ttk.Label(self.snap_info_frame, text=f"{mdp_success_rate} %", justify="left", anchor="w",)
+            mdp_success_rate_lbl.grid(row=5, column=4, sticky="w", padx=(0, 3), pady=1) 
 
     # Helper function for set_header_info to clear all rows
     def clear(self):
