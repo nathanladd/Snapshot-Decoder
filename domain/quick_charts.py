@@ -52,7 +52,9 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
         main_app.ax_left.set_title(tooltip)
         main_app.canvas.draw_idle()
 
+# ----------------------------------------------------------------------------
 # ----------------------------------V1 Charts----------------------------------
+# ----------------------------------------------------------------------------
 
 def V1_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
@@ -211,7 +213,9 @@ def V1_show_torque_control_chart(main_app, snaptype: SnapType):
         
     )
 
+# ----------------------------------------------------------------------------
 # ----------------------------------V2 Charts----------------------------------
+# ----------------------------------------------------------------------------
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
@@ -225,3 +229,74 @@ def V2_show_battery_chart(main_app, snaptype: SnapType):
         "-50",
         "3000"
     )
+
+def V2_show_rail_pressure_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_RAIL_PRESSURE",
+        ["RailP_pFlt", "Rail_pSetPoint"],
+        "-15", "30000"  
+    )
+
+def V2_show_rail_gap_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_RAIL_GAP",
+        ["Rail_pDvt"],
+        "-50","4000"
+    )
+
+def V2_show_imv_current_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_IMV_CURRENT",
+        ["MeUn_iActFlt", "MeUn_iSet"],
+    )
+
+def V2_show_turbo_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_TURBO",
+        ["Air_pIntkVUs", "EnvP_p"],
+        "-20",
+        "35",
+        ["InjCrv_qMI1Des"],
+        "-5",
+        "200"
+    )
+
+def V2_show_misfire_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_MISFIRE",
+        ["MisfDet_ctMifMem_[0]", "MisfDet_ctMifMem_[2]", "MisfDet_ctMifMem_[3]","MisfDet_ctMifMem_[1]"],
+        "-20","150"
+    )
+
+def V2_show_throttle_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_THROTTLE_VALVE",
+        ["ThrVlv_r", "ThrVlv_rAct"],
+        "-5",
+        "140"
+
+    )
+
+def V2_show_load_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_ENGINE_LOAD",
+        ["CoETS_rTrq"],
+        "-100","110",
+        ["PthSet_TrqInrSet"],
+        "0","800"
+    )
+

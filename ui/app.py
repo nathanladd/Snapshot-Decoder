@@ -47,6 +47,7 @@ class SnapshotDecoderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         self.state("zoomed")
+        self.iconbitmap("Snapshot_Decoder_Icon.ico")
         self._initialize_state()
         self._build_ui()
 
@@ -108,7 +109,7 @@ class SnapshotDecoderApp(tk.Tk):
 #---------------------------------------------------------------------------------------------------------------------
 
     def _set_window_title(self):
-        self.title(f"{APP_TITLE} : {APP_VERSION}")
+        self.title(f"{APP_TITLE} {APP_VERSION}")
 
     def _build_menu(self):
         menubar = tk.Menu(self)
@@ -371,6 +372,13 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_TORQUE_CONTROL": quick_charts.V1_show_torque_control_chart,
 
             "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
+            "V2_RAIL_PRESSURE": quick_charts.V2_show_rail_pressure_chart,
+            "V2_RAIL_GAP": quick_charts.V2_show_rail_gap_chart,
+            "V2_IMV_CURRENT": quick_charts.V2_show_imv_current_chart,
+            "V2_TURBO": quick_charts.V2_show_turbo_chart,
+            "V2_MISFIRE": quick_charts.V2_show_misfire_chart,
+            "V2_THROTTLE_VALVE": quick_charts.V2_show_throttle_chart,
+            "V2_ENGINE_LOAD": quick_charts.V2_show_load_chart,
             # add more as needed
         }
 
@@ -761,7 +769,7 @@ class SnapshotDecoderApp(tk.Tk):
         y = (screen_height - window_height) // 2
         about_win.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-        msg = tk.Label(about_win, text=f"Snapshot Decoder: {APP_VERSION}\nWritten by Nate Ladd\nService Trainer\nBobcat of the Rockies\nnladd@bobcatoftherockies.com", 
+        msg = tk.Label(about_win, text=f"Snapshot Decoder {APP_VERSION}\nWritten by Nathan Ladd\nService Trainer\nBobcat of the Rockies\nnladd@bobcatoftherockies.com", 
                        font=("Segoe UI", 14), bg="white", anchor="center")
         msg.pack(expand=True, pady=20)
 

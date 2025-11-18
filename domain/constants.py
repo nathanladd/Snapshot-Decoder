@@ -2,7 +2,7 @@ from domain.snaptypes import SnapType
 
 # Application title global
 APP_TITLE = "Snapshot Decoder"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.0 (Beta)"
 
 # Buttons for each snapshot type
 # Button name, COMMAND NAME, tooltip
@@ -34,7 +34,22 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Actual Brake Torque vs Torque Limit"),
     ],
     SnapType.ECU_V2: [
-        ("Battery Test", "V2_BATTERY_TEST", "Battery V vs RPM"),
+        ("Battery Test", "V2_BATTERY_TEST", 
+        "Battery Voltage vs RPM"),
+        ("Rail Pressure", "V2_RAIL_PRESSURE", 
+        "Demand vs Actual Rail Pressure"),
+        ("Rail Gap", "V2_RAIL_GAP", 
+        "Rail Pressure Gap"),
+        ("IMV Current", "V2_IMV_CURRENT", 
+        "IMV Current Actual vs Demand"),
+        ("Turbo", "V2_TURBO", 
+        "Manifold Pressure, Atmospheric Pressure, and Fuel Quantity"),
+        ("Misfire", "V2_MISFIRE", 
+        "Misfire Count per Cylinder"),
+        ("Throttle Valve", "V2_THROTTLE_VALVE",
+        "Throttle Valve Actual vs Desired"),
+        ("Engine Load", "V2_ENGINE_LOAD",
+        "Load Percent and Brake Torque")
         
     ],
     SnapType.DCU_V1: [
