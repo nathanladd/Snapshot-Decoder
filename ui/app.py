@@ -377,6 +377,8 @@ class SnapshotDecoderApp(tk.Tk):
             "V2_IMV_CURRENT": quick_charts.V2_show_imv_current_chart,
             "V2_TURBO": quick_charts.V2_show_turbo_chart,
             "V2_MISFIRE": quick_charts.V2_show_misfire_chart,
+            "V2_THROTTLE_VALVE": quick_charts.V2_show_throttle_chart,
+            "V2_ENGINE_LOAD": quick_charts.V2_show_load_chart,
             # add more as needed
         }
 

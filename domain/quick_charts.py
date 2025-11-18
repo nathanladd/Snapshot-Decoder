@@ -276,3 +276,25 @@ def V2_show_misfire_chart(main_app, snaptype: SnapType):
 
     )
 
+def V2_show_throttle_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_THROTTLE_VALVE",
+        ["ThrVlv_r", "ThrVlv_rAct"],
+        "-5",
+        "140"
+
+    )
+
+def V2_show_load_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_ENGINE_LOAD",
+        ["CoETS_rTrq"],
+        "-100","110",
+        ["PthSet_TrqInrSet"],
+        "0","800"
+    )
+

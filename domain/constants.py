@@ -46,6 +46,10 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Manifold Pressure, Atmospheric Pressure, and Fuel Quantity"),
         ("Misfire", "V2_MISFIRE", 
         "Misfire Count per Cylinder"),
+        ("Throttle Valve", "V2_THROTTLE_VALVE",
+        "Throttle Valve Actual vs Desired"),
+        ("Engine Load", "V2_ENGINE_LOAD",
+        "Load Percent and Brake Torque")
         
     ],
     SnapType.DCU_V1: [
