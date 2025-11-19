@@ -72,6 +72,11 @@ class ChartConfig:
     # PID information (for unit labels)
     pid_info: Optional[Dict[str, Dict]] = None
     
+    # Chain of custody metadata
+    file_name: Optional[str] = None
+    date_time: Optional[str] = None
+    engine_hours: Optional[float] = None
+    
     def get_x_column(self) -> Optional[str]:
         """Determine the X-axis column from data."""
         if self.x_column:

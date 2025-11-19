@@ -63,12 +63,26 @@ class ChartCartPdfExporter:
                 # Set the chart title
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
                 
+                # Add chain of custody metadata at the top
+                metadata_parts = []
+                if config.file_name:
+                    metadata_parts.append(f"File: {config.file_name}")
+                if config.date_time:
+                    metadata_parts.append(f"Date/Time: {config.date_time}")
+                if config.engine_hours is not None and config.engine_hours > 0:
+                    metadata_parts.append(f"Engine Hours: {config.engine_hours}")
+                
+                if metadata_parts:
+                    metadata_text = "  |  ".join(metadata_parts)
+                    fig.text(0.5, 0.98, metadata_text, 
+                            ha='center', va='top', fontsize=8, color='gray', style='italic')
+                
                 # Add page number at the bottom
                 fig.text(0.5, 0.02, f'Page {i} of {len(self.configs)}', 
                         ha='center', va='bottom', fontsize=8, color='gray')
                 
                 # Adjust layout to prevent overlapping
-                fig.tight_layout(rect=[0, 0.03, 1, 0.97])  # Leave space for page number and title
+                fig.tight_layout(rect=[0, 0.03, 1, 0.96])  # Leave space for page number, title, and metadata
                 
                 # Save the figure to the PDF
                 pdf.savefig(fig, dpi=dpi)
@@ -111,9 +125,24 @@ class ChartCartPdfExporter:
                 
                 renderer._apply_formatting(ax_left, ax_right)
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
+                
+                # Add chain of custody metadata at the top
+                metadata_parts = []
+                if config.file_name:
+                    metadata_parts.append(f"File: {config.file_name}")
+                if config.date_time:
+                    metadata_parts.append(f"Date/Time: {config.date_time}")
+                if config.engine_hours is not None and config.engine_hours > 0:
+                    metadata_parts.append(f"Engine Hours: {config.engine_hours}")
+                
+                if metadata_parts:
+                    metadata_text = "  |  ".join(metadata_parts)
+                    fig.text(0.5, 0.98, metadata_text, 
+                            ha='center', va='top', fontsize=8, color='gray', style='italic')
+                
                 fig.text(0.5, 0.02, f'Page {i} of {len(self.configs)}', 
                         ha='center', va='bottom', fontsize=8, color='gray')
-                fig.tight_layout(rect=[0, 0.03, 1, 0.97])
+                fig.tight_layout(rect=[0, 0.03, 1, 0.96])
                 
                 pdf.savefig(fig, dpi=kwargs.get('dpi', 150))
                 fig.clf()

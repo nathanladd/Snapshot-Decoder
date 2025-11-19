@@ -545,7 +545,10 @@ class SnapshotDecoderApp(tk.Tk):
             primary_axis=primary_axis,
             secondary_axis=secondary_axis,
             title=self.ax_left.get_title() if hasattr(self, 'ax_left') else "Chart Area",
-            pid_info=self.engine.pid_info
+            pid_info=self.engine.pid_info,
+            file_name=self.engine.file_name,
+            date_time=self.engine.date_time,
+            engine_hours=self.engine.hours
         )
     
     def _parse_limit(self, s: str):
