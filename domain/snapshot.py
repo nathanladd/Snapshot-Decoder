@@ -23,10 +23,11 @@ class Snapshot:
         self.file_name: str = os.path.basename(path)
         self.raw_snapshot: Optional[pd.DataFrame] = None
         self.snapshot: Optional[pd.DataFrame] = None
-        self.header_info: List[Tuple[str, str]] = []
+        self.date_time: Optional[str] = None
+        self.header_list: List[Tuple[str, str]] = []
         self.pid_info: Dict[str, Dict[str, str]] = {}
         self.snapshot_type: SnapType = SnapType.EMPTY
-        self.engine_hours: float = 0.0
+        self.hours: float = 0.0
         self.mdp_success_rate: float = 0.0
         
     
@@ -56,8 +57,12 @@ class Snapshot:
             raise ValueError("The workbook loaded but no data table was found.")
         
         # Parse header information
-        self.header_info = self.parse_header(self.raw_snapshot, max_rows=5)
+        self.header_list = self.parse_header(self.raw_snapshot, max_rows=5)
         
+        # Extract date/time from header
+        self.date_time = self.find_date_time()
+        print(f"Date/Time: {self.date_time}")
+
         # Find header row and identify snapshot type
         header_row_idx = self.find_pid_names(self.raw_snapshot)
         self.snapshot_type = self.id_snapshot(self.raw_snapshot, header_row_idx)
@@ -69,7 +74,7 @@ class Snapshot:
         self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
         
         # Extract engine hours
-        self.engine_hours = self.find_engine_hours()
+        self.hours = self.find_engine_hours()
         
         # Extract MDP success rate
         self.mdp_success_rate = self.calculate_mdp_success()
@@ -126,6 +131,19 @@ class Snapshot:
             except (ValueError, IndexError, TypeError):
                 return 0.0
 
+    def find_date_time(self) -> str:
+        """
+        Find the date/time value in the header list.
+        
+        Returns:
+            Date/time string if found, empty string otherwise
+        """
+        for label, value in self.header_list:
+            if label == "Date / Time":
+                return value
+        return ""
+        
+
     def calculate_mdp_success(self) -> float:
         """
         Calculate the MDP_SUCCESS value in the snapshot.
@@ -177,44 +195,54 @@ class Snapshot:
         # fall back to original as-is if unknown
         return text.strip()
 
-    def parse_header(self, df: pd.DataFrame, max_rows: int = 5):
+    def parse_header(self, snapshot: pd.DataFrame, max_rows: int = 5):
         """
-        Parse up to the first `max_rows` rows as 2-column key/value pairs.
+        Parse up to the first `max_rows` rows as 2-column label/value pairs.
         - Column 0: label (string)
         - Column 1: value (string)
         - Stops early if Column 0 == 'Frame' (table header reached).
-        Returns: ordered list of (key, value).
+        Returns: ordered list of (label, value).
         """
         results = []
-        if df is None or df.empty:
+        if snapshot is None or snapshot.empty:
             return results
 
-        nrows = min(max_rows, df.shape[0])
+        # Get the number of rows to parse: the smaller of 'max_rows' or total rows in the snapshot
+        nrows = min(max_rows, snapshot.shape[0])
         for r in range(nrows):
-            # Stop if we hit the actual table header row
+            # Stop if we hit the table row containing "frame"
             try:
-                k_raw = str(df.iat[r, 0]).strip()
+                label_raw = str(snapshot.iat[r, 0]).strip()
             except Exception:
-                k_raw = ""
-            if k_raw and k_raw.lower() == "frame":
+                label_raw = ""
+            if label_raw and label_raw.lower() == "frame":
                 break
 
             # Pull the value column
             try:
-                v_raw = str(df.iat[r, 1]).strip()
+                value = str(snapshot.iat[r, 1]).strip()
             except Exception:
-                v_raw = ""
+                value = ""
 
             # Skip truly empty/NaN-ish rows
-            if not k_raw or k_raw.lower() == "nan":
+            if not label_raw or label_raw.lower() == "nan":
                 continue
-            if not v_raw or v_raw.lower() == "nan":
-                # Keep keys without values? For this app, we skip them.
+            if not value or value.lower() == "nan":
+                # Keep labels without values? For this app, we skip them.
                 continue
 
-            key = self._normalize_label(k_raw)
-            value = v_raw
-            results.append((key, value))
+            # Check if "Start Time :" is in the label and split it
+            if "Start Time :" in label_raw:
+                # Split on "Start Time :" to separate label from value
+                parts = label_raw.split("Start Time :", 1)
+                if len(parts) == 2 and parts[1].strip():
+                    # Use the text after "Start Time :" as the value
+                    value = parts[1].strip()
+                    # Remove colon and trim spaces from label
+                    label_raw = "Start Time".strip()
+            
+            label = self._normalize_label(label_raw)
+            results.append((label, value))
 
         return results
 
@@ -254,6 +282,8 @@ class Snapshot:
 
         if header_row_idx is None:
             raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
+
+
 
 def _to_str(cell) -> str:
     """Convert any cell to a cleaned string, treating NaN/None as empty."""
