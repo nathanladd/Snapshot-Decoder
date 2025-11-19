@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 from ui.chart_renderer import ChartRenderer
 from typing import List
 from domain.chart_config import ChartConfig
+from domain.constants import PDF_LOGO_POSITION, PDF_LOGO_ALPHA
 import matplotlib.image as mpimg
 import os
 
@@ -72,8 +73,8 @@ class ChartCartPdfExporter:
                         try:
                             logo = mpimg.imread(logo_path)
                             # Create a small axes for the logo in the top right
-                            logo_ax = fig.add_axes([0.85, 0.92, 0.12, 0.06])  # [left, bottom, width, height]
-                            logo_ax.imshow(logo)
+                            logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
+                            logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA) # alpha controls transparency
                             logo_ax.axis('off')
                         except Exception:
                             pass  # If logo fails to load, continue without it
@@ -148,8 +149,8 @@ class ChartCartPdfExporter:
                         try:
                             logo = mpimg.imread(logo_path)
                             # Create a small axes for the logo in the top right
-                            logo_ax = fig.add_axes([0.85, 0.92, 0.12, 0.06])  # [left, bottom, width, height]
-                            logo_ax.imshow(logo)
+                            logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
+                            logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA) # alpha controls transparency
                             logo_ax.axis('off')
                         except Exception:
                             pass  # If logo fails to load, continue without it

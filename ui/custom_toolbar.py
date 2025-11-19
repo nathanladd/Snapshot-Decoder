@@ -4,6 +4,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from tkinter import filedialog
 import os
 import matplotlib.image as mpimg
+from domain.constants import PDF_LOGO_POSITION, PDF_LOGO_ALPHA
 
 
 class CustomNavigationToolbar(NavigationToolbar2Tk):
@@ -56,8 +57,8 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
                 try:
                     logo = mpimg.imread(logo_path)
                     # Create a small axes for the logo in the top right
-                    logo_ax = fig.add_axes([0.85, 0.92, 0.12, 0.06])  # [left, bottom, width, height]
-                    logo_ax.imshow(logo)
+                    logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
+                    logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA)
                     logo_ax.axis('off')
                 except Exception:
                     pass  # If logo fails to load, continue without it
