@@ -105,14 +105,26 @@ class Snapshot:
         if frame_zero_rows.empty:
             return 0.0
         
-        # Get the engine hours value (in seconds) from Frame == 0
-        try:
-            seconds = float(frame_zero_rows[column_name].iloc[0])
-            # Convert seconds to hours and round to tenth of an hour
-            hours = round(seconds / 3600, 1)
-            return hours
-        except (ValueError, IndexError, TypeError):
-            return 0.0
+        # Get the unit from pid_info to determine if conversion is needed
+        unit = ""
+        if column_name in self.pid_info:
+            unit = self.pid_info[column_name].get("Unit", "").lower()
+        
+        # If unit contains "second", convert from seconds to hours
+        if "second" in unit:
+            try:
+                seconds = float(frame_zero_rows[column_name].iloc[0])
+                # Convert seconds to hours and round to tenth of an hour
+                hours = round(seconds / 3600, 1)
+                return hours
+            except (ValueError, IndexError, TypeError):
+                return 0.0
+        else:
+            # Unit is hours or unknown, return the value directly
+            try:
+                return round(float(frame_zero_rows[column_name].iloc[0]), 1)
+            except (ValueError, IndexError, TypeError):
+                return 0.0
 
     def calculate_mdp_success(self) -> float:
         """
