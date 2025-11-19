@@ -22,7 +22,7 @@ class HeaderPanel(ttk.Frame):
     def _initialize_header(self):
         # Properties
         self._row_start = 1
-        self._rows = []  
+        self._rows = []
         self._snaptype: SnapType | None = None
 
         # Logo graphic to the right side of the header panel
@@ -41,14 +41,10 @@ class HeaderPanel(ttk.Frame):
 
     #Accept SnapType and set correct label information
     def set_header_snaptype(self, snaptype: SnapType):
-        self._snaptype = snaptype
+        if snaptype:
+            self._snaptype = snaptype
 
-        engine_version = ttk.Label(self.snap_info_frame, text="Type:", font=("Segoe UI", 9, "bold"))
-        engine_version.grid(row=1, column=3, sticky="ne", pady=(0, 3))
-        snapshot_type_lbl = ttk.Label(self.snap_info_frame, text=snaptype, justify="left", anchor="w",)
-        snapshot_type_lbl.grid(row=1, column=4, sticky="w", padx=(0, 3), pady=1)
-
-    def build_quick_chart_buttons(self):
+    def build_quick_chart(self):
         if self._snaptype is SnapType.EMPTY:
             return
 
@@ -81,43 +77,21 @@ class HeaderPanel(ttk.Frame):
         if callable(self.on_action):
             self.on_action(action_id, self._snaptype)
 
-    #Accept Engine Hours and set correct label information
-    def set_engine_hours(self, hours: float):
-        self.engine_hours = hours
-        engine_hours = ttk.Label(self.snap_info_frame, text="Engine Hours:", font=("Segoe UI", 9, "bold"))
-        engine_hours.grid(row=2, column=3, sticky="ne", pady=(0, 3))
-        hours_lbl = ttk.Label(self.snap_info_frame, text=hours, justify="left", anchor="w",)
-        hours_lbl.grid(row=2, column=4, sticky="w", padx=(0, 3), pady=1)
-
-    #Accept PID info and fill a rigid layout of labels 
-    def set_pid_info(self, total_pids: str="", frames_found: str=""):
-        '''Number of PIDS, and Frames'''
-        pids_found = ttk.Label(self.snap_info_frame, text="PIDs:", font=("Segoe UI", 9, "bold"))
-        pids_found.grid(row=3, column=3, sticky="ne", pady=(0, 3))
-        pids_lbl = ttk.Label(self.snap_info_frame, text=total_pids, justify="left", anchor="w",)
-        pids_lbl.grid(row=3, column=4, sticky="w", padx=(0, 3), pady=1)
-        self.frames_found = ttk.Label(self.snap_info_frame, text="Frames:", font=("Segoe UI", 9, "bold"))
-        self.frames_found.grid(row=4, column=3, sticky="ne", pady=(0, 3))
-        frames_lbl = ttk.Label(self.snap_info_frame, text=frames_found, justify="left", anchor="w",)
-        frames_lbl.grid(row=4, column=4, sticky="w", padx=(0, 3), pady=1)
-
-    def set_mdp_success_rate(self, mdp_success_rate: float):
-        if mdp_success_rate:
-            mdp_label = ttk.Label(self.snap_info_frame, text="MDP Success Rate:", font=("Segoe UI", 9, "bold"))
-            mdp_label.grid(row=5, column=3, sticky="ne", pady=(0, 3))
-            mdp_success_rate_lbl = ttk.Label(self.snap_info_frame, text=f"{mdp_success_rate} %", justify="left", anchor="w",)
-            mdp_success_rate_lbl.grid(row=5, column=4, sticky="w", padx=(0, 3), pady=1) 
-
-    # Helper function for set_header_info to clear all rows
+    # Helper function for build_quick_header to clear all rows
     def clear(self):
         for w in self._rows:
             w.destroy()
         self._rows.clear()
 
-    # Accept pairs of (key, value) and set them in the header
-    def set_header_info(self, file_name: str, pairs):
+    # Accept pairs of (label, value) and set them in the header
+    def build_quick_header(self, file_name: str, header_list: list[tuple[str, str]], 
+    hours: float, mdp_success_rate: float, total_pids: int, frames_found: int):
         """
-        pairs: iterable of (key, value)
+        header list: iterable of (label, value). 
+        hours: float
+        mdp_success_rate: float
+        total_pids: int
+        frames_found: int
         """
         self.clear()
         r = self._row_start
@@ -128,21 +102,9 @@ class HeaderPanel(ttk.Frame):
         # Snapshot Information Frame
         self.snap_info_frame = ttk.Labelframe(self, labelwidget=label)
         self.snap_info_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,0))
-
-        #Add a 3rd column to make white space between header and PID info
-        self.snap_info_frame.columnconfigure(2,minsize=30)
         
-        # Special case: if only one pair and value is "none", show only the key, not bold
-        if len(pairs) == 1 and pairs[0][1].lower() == "none":
-            k, v = pairs[0]
-            lbl = ttk.Label(self.snap_info_frame, text=k, anchor="w")
-            lbl.grid(row=r, column=0, columnspan=2, sticky="w", padx=(0, 5), pady=1)
-            self._rows.append(lbl)
-            return
-        
-        # Normal case
-        # Show known keys in a friendly order first, then the rest
-        priority = ["Engine Model", "ECU Map Version", "Program SW Version", "Data Logging", "Engine No"]
+        # Show known labels in a friendly order first, then the rest
+        priority = ["Date / Time","Engine Model", "ECU Map Version", "Program SW Version", "Data Logging", "Engine No"]
         used = set()
 
         def add_row(k, v):
@@ -156,11 +118,25 @@ class HeaderPanel(ttk.Frame):
         r_dict = {"r": r}
         # priority pass
         for want in priority:
-            for k, v in pairs:
+            for k, v in header_list:
                 if k == want and (k, v) not in used:
                     add_row(k, v)
                     used.add((k, v))
         # remaining
-        for k, v in pairs:
+        for k, v in header_list:
             if (k, v) not in used:
                 add_row(k, v)
+        
+        # append snapshot type
+        add_row("Snapshot Type", self._snaptype)
+
+        # append other information
+        if total_pids > 0:
+            add_row("Total PIDs", total_pids)
+        if frames_found > 0:
+            add_row("Frames Found", frames_found)
+        if hours > 0:
+            add_row("Engine Hours", hours)
+        if mdp_success_rate > 0:
+            add_row("MDP Success %", mdp_success_rate)
+
