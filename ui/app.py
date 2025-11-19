@@ -584,6 +584,9 @@ class SnapshotDecoderApp(tk.Tk):
         try:
             renderer = ChartRenderer(self.working_config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
+            
+            # Update toolbar with current chart config for PDF export
+            self.toolbar.chart_config = self.working_config
         except Exception as e:
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
 
