@@ -61,34 +61,34 @@ class Snapshot:
             raise ValueError("The workbook loaded but no data table was found.")
         
         # Parse header information
-        self.header_list = self.parse_header(self.raw_table, max_rows=5)
+        self.header_list = self._parse_header(self.raw_table, max_rows=5)
         
         # Extract date/time from header
-        self.date_time = self.find_date_time()
+        self.date_time = self._find_date_time()
         print(f"Date/Time: {self.date_time}")
 
         # Find header row and identify snapshot type
-        header_row_idx = self.find_pid_names(self.raw_table)
-        self.snapshot_type = self.id_snapshot(self.raw_table, header_row_idx)
+        header_row_idx = self._find_pid_names(self.raw_table)
+        self.snapshot_type = self._id_snapshot(self.raw_table, header_row_idx)
         
         # Extract PID descriptions
-        self.pid_info = extract_pid_descriptions(self.raw_table, header_row_idx)
+        self.pid_info = self._extract_pid_descriptions(self.raw_table, header_row_idx)
         
         # Clean the snapshot
-        self.snapshot = scrub_snapshot(self.raw_table, header_row_idx)
+        self.snapshot = self._scrub_snapshot(self.raw_table, header_row_idx)
         
         # Extract engine hours
-        self.hours = self.find_engine_hours()
+        self.hours = self._find_engine_hours()
         
         # Extract MDP success rate
-        self.mdp_success_rate = self.calculate_mdp_success()
+        self.mdp_success_rate = self._calculate_mdp_success()
         
         # Set the unit for SMC_ENGINE_STATE PID if the snapshot is ECU_V1 type
         if self.snapshot_type == SnapType.ECU_V1:
             if "SMC_ENGINE_STATE" in self.pid_info:
                 self.pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off   [1]Cranking   [2]Running   [3]Stalling"
         
-    def find_engine_hours(self) -> float:
+    def _find_engine_hours(self) -> float:
         """
         Find the engine hours in the snapshot by reading specific columns based on snapshot type.
         Gets the value at Frame == 0 and converts from seconds to hours.
@@ -135,7 +135,7 @@ class Snapshot:
             except (ValueError, IndexError, TypeError):
                 return 0.0
 
-    def find_date_time(self) -> str:
+    def _find_date_time(self) -> str:
         """
         Find the date/time value in the header list.
         
@@ -147,8 +147,7 @@ class Snapshot:
                 return value
         return ""
         
-
-    def calculate_mdp_success(self) -> float:
+    def _calculate_mdp_success(self) -> float:
         """
         Calculate the MDP_SUCCESS value in the snapshot.
         
@@ -199,7 +198,7 @@ class Snapshot:
         # fall back to original as-is if unknown
         return text.strip()
 
-    def parse_header(self, snapshot: pd.DataFrame, max_rows: int = 5):
+    def _parse_header(self, snapshot: pd.DataFrame, max_rows: int = 5):
         """
         Parse up to the first `max_rows` rows as 2-column label/value pairs.
         - Column 0: label (string)
@@ -250,7 +249,7 @@ class Snapshot:
 
         return results
 
-    def id_snapshot(self, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
+    def _id_snapshot(self, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
         '''
         ID the snapshot type based on the header row
         '''
@@ -264,7 +263,7 @@ class Snapshot:
         # if pattern not found, return EMPTY
         return SnapType.EMPTY
 
-    def find_pid_names(self, snapshot: pd.DataFrame) -> int:
+    def _find_pid_names(self, snapshot: pd.DataFrame) -> int:
         '''
         Find the header row
         '''
@@ -287,8 +286,88 @@ class Snapshot:
         if header_row_idx is None:
             raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
 
+    def _extract_pid_descriptions(self, df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> Dict[str, Dict[str, str]]:
+        """
+        HORIZONTAL TABLES ONLY
+        Extract the PID description and PID unit of measure for each PID
+        """
+        
+        # Initialize the dictionary to store PID information
+        # Dictionary <PID Name, Dictionary<Description, Unit>>
+        pid_info: Dict[str, Dict[str, str]] = {}
 
+        # Row indices for description and unit (guard if out of bounds)
+        desc_row = header_row_idx - 1 if _within(df, header_row_idx - 1) else None
+        unit_row = header_row_idx + 1 if _within(df, header_row_idx + 1) else None
 
+        for c in range(start_col, len(df.columns)):
+            pid = _to_str(df.iat[header_row_idx, c])
+            if not pid:
+                continue
+
+            description = _to_str(df.iat[desc_row, c]) if desc_row is not None else ""
+            unit = _to_str(df.iat[unit_row, c]) if unit_row is not None else ""
+
+            # Optional: collapse multi-line cells
+            description = " ".join(part.strip() for part in description.splitlines() if part.strip())
+            unit = " ".join(part.strip() for part in unit.splitlines() if part.strip())
+
+            if unit:
+                normalized_unit = UNIT_NORMALIZATION.get(unit.strip().lower())
+                if normalized_unit:
+                    unit = normalized_unit
+
+            pid_info[pid] = {"Description": description, "Unit": unit}
+
+        return pid_info
+
+    def _scrub_snapshot(self, raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFrame:
+        """
+        Process the raw snapshot DataFrame:
+        - Set column headers from the header row.
+        - Normalize column names.
+        - Rename first two columns to 'Frame' and 'Time'.
+        - Trim to start from Frame == 0 if 'Frame' column exists.
+        - Coerce columns to numeric where possible.
+        - Convert time to datetime.
+
+        Returns the processed snapshot.
+        """
+        # Set column header row
+        pid_header = raw_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
+        snapshot = raw_snapshot.iloc[header_row_idx+1:].copy()
+        snapshot.columns = pid_header
+
+        # Normalize column names: strip and preserve original case
+        snapshot.columns = [str(c).strip() for c in snapshot.columns]
+
+        # Try to ensure first two columns are named exactly Frame and Time
+        if len(snapshot.columns) >= 2:
+            new_cols = list(snapshot.columns)  # copy all names
+            new_cols[0] = "Frame"
+            new_cols[1] = "Time"
+            snapshot.columns = new_cols
+
+        # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
+        if "Frame" in snapshot.columns:
+            start_idx = snapshot.index[snapshot["Frame"] == 0]
+            if len(start_idx) > 0:
+                snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
+
+        # Coerce numerics where possible
+        snapshot = snapshot.apply(pd.to_numeric, errors="coerce")
+
+        # Convert time to datetime
+        if "Time" in snapshot.columns:
+            if pd.api.types.is_numeric_dtype(snapshot["Time"]):
+                snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
+                snapshot["Time"] = snapshot["Time"].dt.total_seconds()
+            else:
+                pass  # Leave as is if conversion fails
+
+        return snapshot
+
+# Module-level helper functions
 def _to_str(cell) -> str:
     """Convert any cell to a cleaned string, treating NaN/None as empty."""
     if cell is None:
@@ -301,83 +380,4 @@ def _to_str(cell) -> str:
 def _within(df: pd.DataFrame, r: int) -> bool:
     """True if r is a valid row index for df."""
     return 0 <= r < len(df)
-
-def extract_pid_descriptions(df: pd.DataFrame, header_row_idx: int, start_col: int = 2) -> Dict[str, Dict[str, str]]:
-    """
-    HORIZONTAL TABLES ONLY
-    Extract the PID description and PID unit of measure for each PID
-    """
-    
-    # Initialize the dictionary to store PID information
-    # Dictionary <PID Name, Dictionary<Description, Unit>>
-    pid_info: Dict[str, Dict[str, str]] = {}
-
-    # Row indices for description and unit (guard if out of bounds)
-    desc_row = header_row_idx - 1 if _within(df, header_row_idx - 1) else None
-    unit_row = header_row_idx + 1 if _within(df, header_row_idx + 1) else None
-
-    for c in range(start_col, len(df.columns)):
-        pid = _to_str(df.iat[header_row_idx, c])
-        if not pid:
-            continue
-
-        description = _to_str(df.iat[desc_row, c]) if desc_row is not None else ""
-        unit = _to_str(df.iat[unit_row, c]) if unit_row is not None else ""
-
-        # Optional: collapse multi-line cells
-        description = " ".join(part.strip() for part in description.splitlines() if part.strip())
-        unit = " ".join(part.strip() for part in unit.splitlines() if part.strip())
-
-        if unit:
-            normalized_unit = UNIT_NORMALIZATION.get(unit.strip().lower())
-            if normalized_unit:
-                unit = normalized_unit
-
-        pid_info[pid] = {"Description": description, "Unit": unit}
-
-    return pid_info
-
-def scrub_snapshot(raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFrame:
-    """
-    Process the raw snapshot DataFrame:
-    - Set column headers from the header row.
-    - Normalize column names.
-    - Rename first two columns to 'Frame' and 'Time'.
-    - Trim to start from Frame == 0 if 'Frame' column exists.
-    - Coerce columns to numeric where possible.
-    - Convert time to datetime.
-
-    Returns the processed snapshot.
-    """
-    # Set column header row
-    pid_header = raw_snapshot.iloc[header_row_idx].astype(str).str.strip().tolist()
-    snapshot = raw_snapshot.iloc[header_row_idx+1:].copy()
-    snapshot.columns = pid_header
-
-    # Normalize column names: strip and preserve original case
-    snapshot.columns = [str(c).strip() for c in snapshot.columns]
-
-    # Try to ensure first two columns are named exactly Frame and Time
-    if len(snapshot.columns) >= 2:
-        new_cols = list(snapshot.columns)  # copy all names
-        new_cols[0] = "Frame"
-        new_cols[1] = "Time"
-        snapshot.columns = new_cols
-
-    # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
-    if "Frame" in snapshot.columns:
-        start_idx = snapshot.index[snapshot["Frame"] == 0]
-        if len(start_idx) > 0:
-            snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
-    # Coerce numerics where possible
-    snapshot = snapshot.apply(pd.to_numeric, errors="coerce")
-
-    # Convert time to datetime
-    if "Time" in snapshot.columns:
-        if pd.api.types.is_numeric_dtype(snapshot["Time"]):
-            snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
-            snapshot["Time"] = snapshot["Time"].dt.total_seconds()
-        else:
-            pass  # Leave as is if conversion fails
-    return snapshot
+  
