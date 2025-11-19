@@ -83,7 +83,7 @@ class HeaderPanel(ttk.Frame):
             w.destroy()
         self._rows.clear()
 
-    # Accept pairs of (label, value) and set them in the header
+    # Build the header panel with the given information
     def build_quick_header(self, file_name: str, header_list: list[tuple[str, str]], 
     hours: float, mdp_success_rate: float, total_pids: int, frames_found: int):
         """

@@ -61,15 +61,15 @@ class Snapshot:
             raise ValueError("The workbook loaded but no data table was found.")
         
         # Parse header information
-        self.header_list = self.parse_header(self.raw_table, max_rows=5)
+        self.header_list = self._parse_header(self.raw_table, max_rows=5)
         
         # Extract date/time from header
-        self.date_time = self.find_date_time()
+        self.date_time = self._find_date_time()
         print(f"Date/Time: {self.date_time}")
 
         # Find header row and identify snapshot type
-        header_row_idx = self.find_pid_names(self.raw_table)
-        self.snapshot_type = self.id_snapshot(self.raw_table, header_row_idx)
+        header_row_idx = self._find_pid_names(self.raw_table)
+        self.snapshot_type = self._id_snapshot(self.raw_table, header_row_idx)
         
         # Extract PID descriptions
         self.pid_info = self._extract_pid_descriptions(self.raw_table, header_row_idx)
@@ -78,17 +78,17 @@ class Snapshot:
         self.snapshot = self._scrub_snapshot(self.raw_table, header_row_idx)
         
         # Extract engine hours
-        self.hours = self.find_engine_hours()
+        self.hours = self._find_engine_hours()
         
         # Extract MDP success rate
-        self.mdp_success_rate = self.calculate_mdp_success()
+        self.mdp_success_rate = self._calculate_mdp_success()
         
         # Set the unit for SMC_ENGINE_STATE PID if the snapshot is ECU_V1 type
         if self.snapshot_type == SnapType.ECU_V1:
             if "SMC_ENGINE_STATE" in self.pid_info:
                 self.pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off   [1]Cranking   [2]Running   [3]Stalling"
         
-    def find_engine_hours(self) -> float:
+    def _find_engine_hours(self) -> float:
         """
         Find the engine hours in the snapshot by reading specific columns based on snapshot type.
         Gets the value at Frame == 0 and converts from seconds to hours.
@@ -135,7 +135,7 @@ class Snapshot:
             except (ValueError, IndexError, TypeError):
                 return 0.0
 
-    def find_date_time(self) -> str:
+    def _find_date_time(self) -> str:
         """
         Find the date/time value in the header list.
         
@@ -147,8 +147,7 @@ class Snapshot:
                 return value
         return ""
         
-
-    def calculate_mdp_success(self) -> float:
+    def _calculate_mdp_success(self) -> float:
         """
         Calculate the MDP_SUCCESS value in the snapshot.
         
@@ -199,7 +198,7 @@ class Snapshot:
         # fall back to original as-is if unknown
         return text.strip()
 
-    def parse_header(self, snapshot: pd.DataFrame, max_rows: int = 5):
+    def _parse_header(self, snapshot: pd.DataFrame, max_rows: int = 5):
         """
         Parse up to the first `max_rows` rows as 2-column label/value pairs.
         - Column 0: label (string)
@@ -250,7 +249,7 @@ class Snapshot:
 
         return results
 
-    def id_snapshot(self, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
+    def _id_snapshot(self, snapshot: pd.DataFrame, header_row_idx: int) -> SnapType:
         '''
         ID the snapshot type based on the header row
         '''
@@ -264,7 +263,7 @@ class Snapshot:
         # if pattern not found, return EMPTY
         return SnapType.EMPTY
 
-    def find_pid_names(self, snapshot: pd.DataFrame) -> int:
+    def _find_pid_names(self, snapshot: pd.DataFrame) -> int:
         '''
         Find the header row
         '''
