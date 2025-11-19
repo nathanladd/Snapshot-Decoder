@@ -12,6 +12,17 @@ from domain.chart_config import ChartConfig
 from domain.constants import PDF_LOGO_POSITION, PDF_LOGO_ALPHA
 import matplotlib.image as mpimg
 import os
+import sys
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    # Check if running as PyInstaller bundle
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 class ChartCartPdfExporter:
@@ -68,7 +79,7 @@ class ChartCartPdfExporter:
                 
                 # Add logo to top right on first page only
                 if i == 1:
-                    logo_path = "logo.png"
+                    logo_path = resource_path("logo.png")
                     if os.path.exists(logo_path):
                         try:
                             logo = mpimg.imread(logo_path)
@@ -144,7 +155,7 @@ class ChartCartPdfExporter:
                 
                 # Add logo to top right on first page only
                 if i == 1:
-                    logo_path = "logo.png"
+                    logo_path = resource_path("logo.png")
                     if os.path.exists(logo_path):
                         try:
                             logo = mpimg.imread(logo_path)
