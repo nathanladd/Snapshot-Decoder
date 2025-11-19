@@ -26,7 +26,7 @@ class HeaderPanel(ttk.Frame):
         self._snaptype: SnapType | None = None
 
         # Logo graphic to the right side of the header panel
-        image=Image.open("ui/logo.png")
+        image=Image.open("logo.png")
         photo=ImageTk.PhotoImage(image)
         label=ttk.Label(self, image=photo)
         label.image=photo

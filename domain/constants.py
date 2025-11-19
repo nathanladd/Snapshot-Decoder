@@ -134,3 +134,29 @@ ENGINE_HOURS_COLUMNS = {
     # Add more snapshot types and their column names as needed
     # SnapType.ECU_V2: "column_name_for_v2",
 }
+
+# PDF Logo positioning and size
+# Format: [left, bottom, width, height] in figure coordinates (0.0 to 1.0)
+# left: horizontal position from left edge (0.0 = far left, 1.0 = far right)
+# bottom: vertical position from bottom edge (0.0 = bottom, 1.0 = top)
+# width: logo width as fraction of page width
+# height: logo height as fraction of page height
+PDF_LOGO_POSITION = [0.60, 0.86, 0.24, 0.12]  # Top right, small size
+
+# PDF Logo transparency (0.0 = fully transparent, 1.0 = fully opaque)
+PDF_LOGO_ALPHA = 0.2  
+
+# small
+# PDF_LOGO_POSITION = [0.85, 0.92, 0.12, 0.06]
+
+# Larger logo
+# PDF_LOGO_POSITION = [0.80, 0.90, 0.18, 0.09]
+
+# Much larger logo
+# PDF_LOGO_POSITION = [0.75, 0.88, 0.24, 0.12]
+
+# Smaller logo
+# PDF_LOGO_POSITION = [0.88, 0.94, 0.10, 0.05]
+
+# Move to top left
+# PDF_LOGO_POSITION = [0.02, 0.92, 0.12, 0.06]

@@ -4,13 +4,11 @@ Main Window
 '''
 
 from __future__ import annotations
-import sys
-import os
 import copy
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from typing import List, Optional, Dict, Callable, Tuple
+from typing import List, Optional
 
 import pandas as pd
 
@@ -18,11 +16,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from domain.snaptypes import SnapType
 from domain import quick_charts
-import domain.chart_config
 from domain.chart_config import ChartConfig, AxisConfig
 from ui.chart_renderer import ChartRenderer
 from domain.snapshot import Snapshot
-from domain.constants import APP_TITLE, APP_VERSION, BUTTONS_BY_TYPE
+from domain.constants import APP_TITLE, APP_VERSION
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
@@ -584,6 +581,9 @@ class SnapshotDecoderApp(tk.Tk):
         try:
             renderer = ChartRenderer(self.working_config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
+            
+            # Update toolbar with current chart config for PDF export
+            self.toolbar.chart_config = self.working_config
         except Exception as e:
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
 

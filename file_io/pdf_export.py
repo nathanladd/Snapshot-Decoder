@@ -9,6 +9,9 @@ from matplotlib.figure import Figure
 from ui.chart_renderer import ChartRenderer
 from typing import List
 from domain.chart_config import ChartConfig
+from domain.constants import PDF_LOGO_POSITION, PDF_LOGO_ALPHA
+import matplotlib.image as mpimg
+import os
 
 
 class ChartCartPdfExporter:
@@ -62,6 +65,19 @@ class ChartCartPdfExporter:
                 
                 # Set the chart title
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
+                
+                # Add logo to top right on first page only
+                if i == 1:
+                    logo_path = "logo.png"
+                    if os.path.exists(logo_path):
+                        try:
+                            logo = mpimg.imread(logo_path)
+                            # Create a small axes for the logo in the top right
+                            logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
+                            logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA) # alpha controls transparency
+                            logo_ax.axis('off')
+                        except Exception:
+                            pass  # If logo fails to load, continue without it
                 
                 # Add chain of custody metadata at the top
                 metadata_parts = []
@@ -125,6 +141,19 @@ class ChartCartPdfExporter:
                 
                 renderer._apply_formatting(ax_left, ax_right)
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
+                
+                # Add logo to top right on first page only
+                if i == 1:
+                    logo_path = "logo.png"
+                    if os.path.exists(logo_path):
+                        try:
+                            logo = mpimg.imread(logo_path)
+                            # Create a small axes for the logo in the top right
+                            logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
+                            logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA) # alpha controls transparency
+                            logo_ax.axis('off')
+                        except Exception:
+                            pass  # If logo fails to load, continue without it
                 
                 # Add chain of custody metadata at the top
                 metadata_parts = []
