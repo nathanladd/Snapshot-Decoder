@@ -3,6 +3,7 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from matplotlib.backends.backend_pdf import PdfPages
 from tkinter import filedialog
 import os
+import matplotlib.image as mpimg
 
 
 class CustomNavigationToolbar(NavigationToolbar2Tk):
@@ -49,6 +50,18 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
             # Get the current figure
             fig = self.canvas.figure
             
+            # Add logo to top right
+            logo_path = "logo.png"
+            if os.path.exists(logo_path):
+                try:
+                    logo = mpimg.imread(logo_path)
+                    # Create a small axes for the logo in the top right
+                    logo_ax = fig.add_axes([0.85, 0.92, 0.12, 0.06])  # [left, bottom, width, height]
+                    logo_ax.imshow(logo)
+                    logo_ax.axis('off')
+                except Exception:
+                    pass  # If logo fails to load, continue without it
+            
             # Add chain of custody metadata at the top if available
             if self.chart_config:
                 metadata_parts = []
@@ -71,9 +84,25 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
             # Save to PDF
             pdf.savefig(fig, dpi=150)
             
-            # Remove the metadata text after saving
+            # Remove the metadata text and logo after saving
             if self.chart_config and metadata_parts:
                 # Remove the last added text (metadata)
                 fig.texts[-1].remove()
-                fig.tight_layout()
-                self.canvas.draw()
+            
+            # Remove logo axes if it was added
+            if os.path.exists("logo.png"):
+                try:
+                    # Find and remove the logo axes
+                    for ax in fig.axes:
+                        if not ax.get_xlabel() and not ax.get_ylabel() and not ax.get_visible():
+                            continue
+                        # Check if this is the logo axes (has no labels and is small)
+                        bbox = ax.get_position()
+                        if bbox.width < 0.2 and bbox.height < 0.1:
+                            fig.delaxes(ax)
+                            break
+                except Exception:
+                    pass
+            
+            fig.tight_layout()
+            self.canvas.draw()
