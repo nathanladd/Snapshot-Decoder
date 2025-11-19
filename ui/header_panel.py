@@ -104,7 +104,8 @@ class HeaderPanel(ttk.Frame):
         self.snap_info_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,0))
         
         # Show known labels in a friendly order first, then the rest
-        priority = ["Date / Time","Engine Model", "ECU Map Version", "Program SW Version", "Data Logging", "Engine No"]
+        priority = ["Snapshot Type", "Date / Time", "Engine Model", "ECU Map Version", 
+        "Program SW Version", "Data Logging", "Engine No"]
         used = set()
 
         def add_row(k, v):
@@ -116,6 +117,10 @@ class HeaderPanel(ttk.Frame):
             r_dict["r"] += 1
 
         r_dict = {"r": r}
+
+        # append snapshot type to the top of the list
+        add_row("Snapshot Type", self._snaptype)
+
         # priority pass
         for want in priority:
             for k, v in header_list:
@@ -127,9 +132,6 @@ class HeaderPanel(ttk.Frame):
             if (k, v) not in used:
                 add_row(k, v)
         
-        # append snapshot type
-        add_row("Snapshot Type", self._snaptype)
-
         # append other information
         if total_pids > 0:
             add_row("Total PIDs", total_pids)
