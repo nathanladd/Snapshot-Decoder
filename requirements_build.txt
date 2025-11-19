@@ -1,0 +1,12 @@
+# Requirements for building Snapshot Decoder executable
+# Install with: pip install -r requirements_build.txt
+
+# Core dependencies
+pandas>=2.0.0
+matplotlib>=3.7.0
+openpyxl>=3.1.0
+xlrd>=2.0.0
+Pillow>=10.0.0
+
+# PyInstaller for building executable
+pyinstaller>=6.0.0

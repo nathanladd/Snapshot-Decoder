@@ -5,6 +5,8 @@ Main Window
 
 from __future__ import annotations
 import copy
+import os
+import sys
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -28,6 +30,23 @@ from ui.data_table_window import DataTableWindow
 from ui.custom_toolbar import CustomNavigationToolbar
 from ui.chart_cart import ChartCart
 
+def resource_path(relative_path):
+    """
+    Get absolute path to resource, works for dev and for PyInstaller.
+    
+    When running as a PyInstaller bundle, resources are extracted to a temp folder.
+    This function returns the correct path in both development and bundled modes.
+    """
+    # Check if running as PyInstaller bundle
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    else:
+        # Running in development mode
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
 class SnapshotDecoderApp(tk.Tk):
 
     #__init__ is a special built-in method name in Python. 
@@ -44,7 +63,15 @@ class SnapshotDecoderApp(tk.Tk):
         # your own custom initialization steps.
         super().__init__()
         self.state("zoomed")
-        self.iconbitmap("Snapshot_Decoder_Icon.ico")
+        
+        # Set icon - use resource_path for PyInstaller compatibility
+        try:
+            icon_path = resource_path("Snapshot_Decoder_Icon.ico")
+            if os.path.exists(icon_path):
+                self.iconbitmap(icon_path)
+        except Exception:
+            pass  # If icon fails to load, continue without it
+        
         self._initialize_state()
         self._build_ui()
 

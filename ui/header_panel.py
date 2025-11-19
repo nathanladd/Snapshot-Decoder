@@ -1,10 +1,22 @@
 
 from tkinter import ttk
 from PIL import Image, ImageTk
+import os
+import sys
 
 from domain.snaptypes import SnapType
 from ui.tool_tip import ToolTip
 from domain.constants import BUTTONS_BY_TYPE
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    # Check if running as PyInstaller bundle
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 # Intended to be used as a child of the main window
 # First label frame shows snapshot information
@@ -26,11 +38,16 @@ class HeaderPanel(ttk.Frame):
         self._snaptype: SnapType | None = None
 
         # Logo graphic to the right side of the header panel
-        image=Image.open("logo.png")
-        photo=ImageTk.PhotoImage(image)
-        label=ttk.Label(self, image=photo)
-        label.image=photo
-        label.pack(side="right", padx=(4, 4), pady=(4, 6))
+        try:
+            logo_path = resource_path("logo.png")
+            if os.path.exists(logo_path):
+                image = Image.open(logo_path)
+                photo = ImageTk.PhotoImage(image)
+                label = ttk.Label(self, image=photo)
+                label.image = photo
+                label.pack(side="right", padx=(4, 4), pady=(4, 6))
+        except Exception:
+            pass  # If logo fails to load, continue without it
        
     def clear_header_panel(self):
         """Completely clear the header panel"""
