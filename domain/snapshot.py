@@ -19,17 +19,21 @@ class Snapshot:
     """
     
     def __init__(self, path: str):
+
         self.file_path: str = path
-        self.file_name: str = os.path.basename(path)
-        self.raw_snapshot: Optional[pd.DataFrame] = None
+        self.raw_table: Optional[pd.DataFrame] = None
         self.snapshot: Optional[pd.DataFrame] = None
+
+        # Chain of custody parameters
+        self.file_name: str = os.path.basename(path)
         self.date_time: Optional[str] = None
+        self.hours: float = 0.0
+
         self.header_list: List[Tuple[str, str]] = []
         self.pid_info: Dict[str, Dict[str, str]] = {}
         self.snapshot_type: SnapType = SnapType.EMPTY
-        self.hours: float = 0.0
         self.mdp_success_rate: float = 0.0
-        
+
     
     @classmethod
     def load(cls, path: str) -> Snapshot:
@@ -47,31 +51,31 @@ class Snapshot:
         # Determine file type and load raw data
         ext = os.path.splitext(self.file_path)[1].lower()
         if ext == ".xlsx":
-            self.raw_snapshot = load_xlsx(self.file_path)
+            self.raw_table = load_xlsx(self.file_path)
         elif ext == ".xls":
-            self.raw_snapshot = load_xls(self.file_path)
+            self.raw_table = load_xls(self.file_path)
         else:
             raise ValueError(f"Unsupported file extension: {ext}")
         
-        if self.raw_snapshot is None or self.raw_snapshot.empty:
+        if self.raw_table is None or self.raw_table.empty:
             raise ValueError("The workbook loaded but no data table was found.")
         
         # Parse header information
-        self.header_list = self.parse_header(self.raw_snapshot, max_rows=5)
+        self.header_list = self.parse_header(self.raw_table, max_rows=5)
         
         # Extract date/time from header
         self.date_time = self.find_date_time()
         print(f"Date/Time: {self.date_time}")
 
         # Find header row and identify snapshot type
-        header_row_idx = self.find_pid_names(self.raw_snapshot)
-        self.snapshot_type = self.id_snapshot(self.raw_snapshot, header_row_idx)
+        header_row_idx = self.find_pid_names(self.raw_table)
+        self.snapshot_type = self.id_snapshot(self.raw_table, header_row_idx)
         
         # Extract PID descriptions
-        self.pid_info = extract_pid_descriptions(self.raw_snapshot, header_row_idx)
+        self.pid_info = extract_pid_descriptions(self.raw_table, header_row_idx)
         
         # Clean the snapshot
-        self.snapshot = scrub_snapshot(self.raw_snapshot, header_row_idx)
+        self.snapshot = scrub_snapshot(self.raw_table, header_row_idx)
         
         # Extract engine hours
         self.hours = self.find_engine_hours()
