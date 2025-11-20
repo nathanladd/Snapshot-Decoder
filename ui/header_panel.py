@@ -2,21 +2,11 @@
 from tkinter import ttk
 from PIL import Image, ImageTk
 import os
-import sys
 
 from domain.snaptypes import SnapType
 from ui.tool_tip import ToolTip
 from domain.constants import BUTTONS_BY_TYPE
-
-
-def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller."""
-    # Check if running as PyInstaller bundle
-    if hasattr(sys, '_MEIPASS'):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
+from utils import resource_path
 
 # Intended to be used as a child of the main window
 # First label frame shows snapshot information
@@ -104,7 +94,7 @@ class HeaderPanel(ttk.Frame):
     def build_quick_header(self, file_name: str, header_list: list[tuple[str, str]], 
     hours: float, mdp_success_rate: float, total_pids: int, frames_found: int):
         """
-        header list: iterable of (label, value). 
+        header list: iterable of (key, value). 
         hours: float
         mdp_success_rate: float
         total_pids: int
@@ -120,23 +110,26 @@ class HeaderPanel(ttk.Frame):
         self.snap_info_frame = ttk.Labelframe(self, labelwidget=label)
         self.snap_info_frame.pack(side="left", fill="y", expand=False, pady=(4,6), padx=(4,0))
         
-        # Show known labels in a friendly order first, then the rest
+        # Show known keys in a friendly order first, then the rest
         priority = ["Snapshot Type", "Date / Time", "Engine Model", "ECU Map Version", 
         "Program SW Version", "Data Logging", "Engine No"]
         used = set()
 
-        def add_row(k, v):
-            k_lbl = ttk.Label(self.snap_info_frame, text=f"{k}:", font=("Segoe UI", 9, "bold"))
-            v_lbl = ttk.Label(self.snap_info_frame, text=v, justify="left", anchor="w",)
-            k_lbl.grid(row=r_dict["r"], column=0, sticky="ne", padx=(0, 5), pady=1)
-            v_lbl.grid(row=r_dict["r"], column=1, sticky="w", pady=1)
-            self._rows.extend([k_lbl, v_lbl])
-            r_dict["r"] += 1
+        def add_row(key: str, value: str):
+            key_lbl = ttk.Label(self.snap_info_frame, text=f"{key}:", font=("Segoe UI", 9, "bold"))
+            value_lbl = ttk.Label(self.snap_info_frame, text=value, justify="left", anchor="w",)
+            key_lbl.grid(row=row_dict["r"], column=0, sticky="ne", padx=(0, 5), pady=1)
+            value_lbl.grid(row=row_dict["r"], column=1, sticky="w", pady=1)
+            self._rows.extend([key_lbl, value_lbl])
+            row_dict["r"] += 1
 
-        r_dict = {"r": r}
+        row_dict = {"r": r}
 
-        # append snapshot type to the top of the list
+        # append snapshot type and engine hours to the top of the list
         add_row("Snapshot Type", self._snaptype)
+
+        if hours > 0:
+            add_row("Engine Hours", hours)
 
         # priority pass
         for want in priority:
@@ -154,8 +147,6 @@ class HeaderPanel(ttk.Frame):
             add_row("Total PIDs", total_pids)
         if frames_found > 0:
             add_row("Frames Found", frames_found)
-        if hours > 0:
-            add_row("Engine Hours", hours)
         if mdp_success_rate > 0:
             add_row("MDP Success %", mdp_success_rate)
 

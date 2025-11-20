@@ -50,6 +50,9 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
     # Set custom title if tooltip found
     if tooltip:
         main_app.ax_left.set_title(tooltip)
+        # Update working_config title to match so toolbar has correct title for PDF export
+        if main_app.working_config:
+            main_app.working_config.title = tooltip
         main_app.canvas.draw_idle()
 
 # ----------------------------------------------------------------------------

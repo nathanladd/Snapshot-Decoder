@@ -6,7 +6,6 @@ Main Window
 from __future__ import annotations
 import copy
 import os
-import sys
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -29,23 +28,7 @@ from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
 from ui.custom_toolbar import CustomNavigationToolbar
 from ui.chart_cart import ChartCart
-
-def resource_path(relative_path):
-    """
-    Get absolute path to resource, works for dev and for PyInstaller.
-    
-    When running as a PyInstaller bundle, resources are extracted to a temp folder.
-    This function returns the correct path in both development and bundled modes.
-    """
-    # Check if running as PyInstaller bundle
-    if hasattr(sys, '_MEIPASS'):
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    else:
-        # Running in development mode
-        base_path = os.path.abspath(".")
-    
-    return os.path.join(base_path, relative_path)
+from utils import resource_path
 
 class SnapshotDecoderApp(tk.Tk):
 

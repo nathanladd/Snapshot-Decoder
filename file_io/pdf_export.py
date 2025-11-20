@@ -12,17 +12,8 @@ from domain.chart_config import ChartConfig
 from domain.constants import PDF_LOGO_POSITION, PDF_LOGO_ALPHA
 import matplotlib.image as mpimg
 import os
-import sys
 
-
-def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller."""
-    # Check if running as PyInstaller bundle
-    if hasattr(sys, '_MEIPASS'):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
+from utils import resource_path
 
 
 class ChartCartPdfExporter:

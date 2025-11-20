@@ -9,4 +9,4 @@ The PIDs can be searched, selected, and charted. There are also 'Quick Chart' co
 pre-selected based on troubleshooting succes for common diagnostic tasks avaiolable at a click 
 of a button.
 
-Charts can be saved as graphic files and a complete report .pdf file can be generated.
+Charts can be saved as a single page or multi-page .pdf file.
