@@ -2,7 +2,7 @@ from domain.snaptypes import SnapType
 
 # Application title global
 APP_TITLE = "Snapshot Decoder"
-APP_VERSION = "1.0.0 (Beta)"
+APP_VERSION = "1.0.1 (Beta)"
 
 # Buttons for each snapshot type
 # Button name, COMMAND NAME, tooltip
