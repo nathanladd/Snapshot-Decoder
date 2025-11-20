@@ -40,7 +40,7 @@ hidden_imports = [
 # Build the PyInstaller command
 pyinstaller_args = [
     main_script,
-    '--name=SnapshotDecoder',  # Name of the executable
+    '--name=Snapshot Decoder',  # Name of the executable
     '--onefile',  # Create a single executable file
     '--windowed',  # No console window (GUI app)
     f'--icon={os.path.join(script_dir, "Snapshot_Decoder_Icon.ico")}',  # App icon
@@ -77,7 +77,7 @@ try:
     PyInstaller.__main__.run(pyinstaller_args)
     print("\n" + "=" * 70)
     print("Build completed successfully!")
-    print(f"Executable location: {os.path.join(script_dir, 'dist', 'SnapshotDecoder.exe')}")
+    print(f"Executable location: {os.path.join(script_dir, 'dist', 'Snapshot Decoder.exe')}")
     print("=" * 70)
 except Exception as e:
     print(f"\nBuild failed with error: {e}", file=sys.stderr)
