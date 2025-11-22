@@ -65,8 +65,7 @@ class Snapshot:
         
         # Extract date/time from header
         self.date_time = self._find_date_time()
-        print(f"Date/Time: {self.date_time}")
-
+        
         # Find header row and identify snapshot type
         header_row_idx = self._find_pid_names(self.raw_table)
         self.snapshot_type = self._id_snapshot(self.raw_table, header_row_idx)
@@ -86,7 +85,7 @@ class Snapshot:
         # Set the unit for SMC_ENGINE_STATE PID if the snapshot is ECU_V1 type
         if self.snapshot_type == SnapType.ECU_V1:
             if "SMC_ENGINE_STATE" in self.pid_info:
-                self.pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off   [1]Cranking   [2]Running   [3]Stalling"
+                self._update_pid_unit("SMC_ENGINE_STATE", "[0]Off   [1]Cranking   [2]Running   [3]Stalling")
         
     def _find_engine_hours(self) -> float:
         """
@@ -357,6 +356,27 @@ class Snapshot:
 
         return pid_info
 
+    def _clean_column_apostrophes(self, snapshot: pd.DataFrame, col_name: str) -> None:
+        """
+        Remove leading apostrophes from string values in a specific column.
+        Modifies the DataFrame in-place.
+        """
+        if col_name not in snapshot.columns:
+            return
+            
+        # Only process if column is object/string type
+        if snapshot[col_name].dtype == 'object':
+            snapshot[col_name] = snapshot[col_name].apply(
+                lambda x: x[1:] if isinstance(x, str) and x.startswith("'") else x
+            )
+
+    def _update_pid_unit(self, pid_name: str, new_unit: str) -> None:
+        """
+        Update the unit for a specific PID in the pid_info dictionary.
+        """
+        if pid_name in self.pid_info:
+            self.pid_info[pid_name]["Unit"] = new_unit
+
     def _scrub_snapshot(self, raw_snapshot: pd.DataFrame, header_row_idx: int) -> pd.DataFrame:
         """
         Process the raw snapshot DataFrame:
@@ -377,6 +397,12 @@ class Snapshot:
         # Normalize column names: strip and preserve original case
         snapshot.columns = [str(c).strip() for c in snapshot.columns]
 
+        # If the snapshot contains the Engine Torque Limit Bit Stream PID
+        # it needs to be cleaned and unit updated
+        if "CoETS_stCurrLimActive" in snapshot.columns:
+            self._clean_column_apostrophes(snapshot, "CoETS_stCurrLimActive")
+            self._update_pid_unit("CoETS_stCurrLimActive", "Bit Stream")
+
         # Try to ensure first two columns are named exactly Frame and Time
         if len(snapshot.columns) >= 2:
             new_cols = list(snapshot.columns)  # copy all names
@@ -389,17 +415,13 @@ class Snapshot:
             start_idx = snapshot.index[snapshot["Frame"] == 0]
             if len(start_idx) > 0:
                 snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
-
-        # Coerce numerics where possible
-        snapshot = snapshot.apply(pd.to_numeric, errors="coerce")
-
-        # Convert time to datetime
+            
         if "Time" in snapshot.columns:
-            if pd.api.types.is_numeric_dtype(snapshot["Time"]):
-                snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
-                snapshot["Time"] = snapshot["Time"].dt.total_seconds()
-            else:
-                pass  # Leave as is if conversion fails
+            snapshot["Time"] = pd.to_numeric(snapshot["Time"], errors="coerce")
+            snapshot["Time"] = pd.to_timedelta(snapshot["Time"], unit="s")
+            snapshot["Time"] = snapshot["Time"].dt.total_seconds()
+        else:
+            pass  # Leave as is if conversion fails
 
         return snapshot
 

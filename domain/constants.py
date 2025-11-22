@@ -49,7 +49,9 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         ("Throttle Valve", "V2_THROTTLE_VALVE",
         "Throttle Valve Actual vs Desired"),
         ("Engine Load", "V2_ENGINE_LOAD",
-        "Load Percent and Brake Torque")
+        "Load Percent and Brake Torque"),
+        ("Torque Limits", "V2_ENGINE_TORQUE_LIMITS",
+        "Torque Limits")
         
     ],
     SnapType.DCU_V1: [

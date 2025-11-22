@@ -303,3 +303,10 @@ def V2_show_load_chart(main_app, snaptype: SnapType):
         "0","800"
     )
 
+def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_ENGINE_TORQUE_LIMITS",
+        ["CoETS_stCurrLimActive"]
+    )

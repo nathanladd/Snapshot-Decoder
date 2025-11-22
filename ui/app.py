@@ -386,6 +386,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V2_MISFIRE": quick_charts.V2_show_misfire_chart,
             "V2_THROTTLE_VALVE": quick_charts.V2_show_throttle_chart,
             "V2_ENGINE_LOAD": quick_charts.V2_show_load_chart,
+            "V2_ENGINE_TORQUE_LIMITS": quick_charts.V2_show_engine_torque_limits
             # add more as needed
         }
 
