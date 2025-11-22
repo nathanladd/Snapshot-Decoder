@@ -788,5 +788,3 @@ class SnapshotDecoderApp(tk.Tk):
 
         ok_btn = tk.Button(about_win, text="OK", command=about_win.destroy, bg="white")
         ok_btn.pack(pady=(0, 20))
-
-
