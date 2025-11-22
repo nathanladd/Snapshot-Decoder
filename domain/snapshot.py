@@ -230,19 +230,55 @@ class Snapshot:
             # Skip truly empty/NaN-ish rows
             if not label_raw or label_raw.lower() == "nan":
                 continue
+
+            # Check if ":" is in the label and split it
+            if ":" in label_raw:
+                # Split on first ":" to separate label from value
+                parts = label_raw.split(":", 1)
+                if len(parts) == 2:
+                    potential_value = parts[1].strip()
+                    if potential_value:
+                        # Use the text after ":" as the value
+                        value = potential_value
+                        # Use the text before ":" as the label
+                        label_raw = parts[0].strip()
+
+            # Check for standalone date in label column (value is empty)
+            if (not value or value.lower() == "nan" or value.lower() == "none") and len(label_raw) > 8:
+                is_date = False
+                try:
+                    # 1. Try default parsing
+                    pd.to_datetime(label_raw)
+                    is_date = True
+                except (ValueError, TypeError):
+                    # 2. Try normalizing the string (replace / with space, . with :)
+                    # This handles formats like "Nov 21 2025/13.20.57" -> "Nov 21 2025 13:20:57"
+                    try:
+                        # Only apply replacement if it looks like the specific problem format
+                        # (contains slash and dots in what looks like time)
+                        normalized = label_raw.replace("/", " ").replace(".", ":")
+                        pd.to_datetime(normalized)
+                        is_date = True
+                        # Update the value to the normalized version? Or keep original?
+                        # Usually keeping original is better for data integrity, but normalized is more readable.
+                        # Let's keep original label_raw as value for now, or normalize it if preferred.
+                    except (ValueError, TypeError):
+                         # 3. Try explicit format as fallback
+                        try:
+                            pd.to_datetime(label_raw, format="%b %d %Y/%H.%M.%S")
+                            is_date = True
+                        except (ValueError, TypeError):
+                            pass
+
+                if is_date:
+                    value = label_raw
+                    label_raw = "Date / Time"
+
             if not value or value.lower() == "nan":
                 # Keep labels without values? For this app, we skip them.
                 continue
 
-            # Check if "Start Time :" is in the label and split it
-            if "Start Time :" in label_raw:
-                # Split on "Start Time :" to separate label from value
-                parts = label_raw.split("Start Time :", 1)
-                if len(parts) == 2 and parts[1].strip():
-                    # Use the text after "Start Time :" as the value
-                    value = parts[1].strip()
-                    # Remove colon and trim spaces from label
-                    label_raw = "Start Time".strip()
+            
             
             label = self._normalize_label(label_raw)
             results.append((label, value))
