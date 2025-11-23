@@ -61,6 +61,8 @@ class ChartCartPdfExporter:
                     renderer._render_bar_chart(ax_left, ax_right, config.data)
                 elif config.chart_type == "bubble":
                     renderer._render_bubble_chart(ax_left, ax_right, config.data)
+                elif config.chart_type == "status":
+                    renderer._render_status_chart(ax_left, ax_right, config.data)
                 
                 # Apply formatting (axis labels, limits, grid, legends)
                 renderer._apply_formatting(ax_left, ax_right)
@@ -140,6 +142,8 @@ class ChartCartPdfExporter:
                     renderer._render_bar_chart(ax_left, ax_right, config.data)
                 elif config.chart_type == "bubble":
                     renderer._render_bubble_chart(ax_left, ax_right, config.data)
+                elif config.chart_type == "status":
+                    renderer._render_status_chart(ax_left, ax_right, config.data)
                 
                 renderer._apply_formatting(ax_left, ax_right)
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
