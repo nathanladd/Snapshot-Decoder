@@ -143,10 +143,10 @@ class HeaderPanel(ttk.Frame):
                 add_row(k, v)
         
         # append other information
-        if total_pids > 0:
-            add_row("Total PIDs", total_pids)
-        if frames_found > 0:
-            add_row("Frames Found", frames_found)
+        # if total_pids > 0:
+        #     add_row("Total PIDs", total_pids)
+        # if frames_found > 0:
+        #     add_row("Frames Found", frames_found)
         if mdp_success_rate > 0:
             add_row("MDP Success %", mdp_success_rate)
 

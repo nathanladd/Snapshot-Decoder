@@ -18,6 +18,13 @@ class DataTableWindow:
         container = ttk.Frame(self.win)
         container.pack(fill=tk.BOTH, expand=True)
 
+        # Info frame with stats
+        info_frame = ttk.Frame(container)
+        info_frame.pack(fill=tk.X, pady=(5, 0), padx=10)
+        
+        ttk.Label(info_frame, text=f"Total PIDs: {len(snapshot.columns)}", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 20))
+        ttk.Label(info_frame, text=f"Total Frames: {len(snapshot)}", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT)
+
         # Add progress bar for loading indication
         self.progress_label = ttk.Label(container, text="Preparing to load data...")
         self.progress_label.pack(pady=(10,0))
