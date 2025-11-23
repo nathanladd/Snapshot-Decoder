@@ -411,6 +411,7 @@ class Snapshot:
 
         # Find the start row where Frame == 0 (if Frame exists) and trim before converting time
         if "Frame" in snapshot.columns:
+            snapshot["Frame"] = pd.to_numeric(snapshot["Frame"], errors="coerce")
             start_idx = snapshot.index[snapshot["Frame"] == 0]
             if len(start_idx) > 0:
                 snapshot = snapshot.loc[start_idx[0]:].reset_index(drop=True)
