@@ -141,6 +141,7 @@ def V1_show_turbo_chart(main_app, snaptype: SnapType):
         "-50",
         "6250"
     )
+
 def V1_show_EGR_flow_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
