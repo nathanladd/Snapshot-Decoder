@@ -340,8 +340,8 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
     # Define column names - USER TO MODIFY THESE NAMES
     # Make sure the list length matches the number of digits
     # For now, we generate generic names
-    column_names = ["System Error", "Differential Protection", "Engine Mechanics Protection", "Smoke Limit", "Not Used", 
-    "Overheating", "System Error", " Maximum Gearbox Input Torque", "Injection Quantity Limitation", "High Pressure Pump",
+    column_names = ["System Error Event", "Differential Protection", "Engine Mechanics Protection", "Smoke Limit", "Not Used", 
+    "Overheating", "Limit Travel", " Maximum Gearbox Input Torque", "Injection Quantity Limitation", "High Pressure Pump",
     "Speed Limitation", "Protection From Exessive Torque", "Slow Path Limitation", "Inner Engine Torque", "Engine Protection"]
     
     # Assign names to the split dataframe
