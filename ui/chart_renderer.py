@@ -105,8 +105,12 @@ class ChartRenderer:
             self._render_line_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "bar":
             self._render_bar_chart(ax_left, ax_right, plot_data)
+        elif self.config.chart_type == "step":
+            self._render_step_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "bubble":
             self._render_bubble_chart(ax_left, ax_right, plot_data)
+        elif self.config.chart_type == "status":
+            self._render_status_chart(ax_left, ax_right, plot_data)
         else:
             raise ValueError(f"Unsupported chart type: {self.config.chart_type}")
         
@@ -154,8 +158,12 @@ class ChartRenderer:
             self._render_line_chart(ax_left, ax_right, self.config.data)
         elif self.config.chart_type == "bar":
             self._render_bar_chart(ax_left, ax_right, self.config.data)
+        elif self.config.chart_type == "step":
+            self._render_step_chart(ax_left, ax_right, self.config.data)
         elif self.config.chart_type == "bubble":
             self._render_bubble_chart(ax_left, ax_right, self.config.data)
+        elif self.config.chart_type == "status":
+            self._render_status_chart(ax_left, ax_right, self.config.data)
         
         # Apply formatting (limits, grid, etc.)
         self._apply_formatting(ax_left, ax_right)
@@ -191,6 +199,107 @@ class ChartRenderer:
         
         return fig
     
+    def _render_status_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
+        """Render a status chart (Gantt-style strip)."""
+        df = plot_data
+        x_key = self.config.get_x_column()
+        
+        # We typically only support primary axis for status charts because they stack vertically
+        # But we'll support secondary if requested (it will just overlay, which might be messy)
+        
+        axes = [(ax_left, self.config.primary_axis)]
+        if ax_right:
+            axes.append((ax_right, self.config.secondary_axis))
+            
+        current_offset = 0
+        
+        for ax, axis_config in axes:
+            if not axis_config.series:
+                continue
+                
+            for i, series_name in enumerate(axis_config.series):
+                if series_name in df.columns:
+                    y_vals = pd.to_numeric(df[series_name], errors="coerce").fillna(0)
+                    style = self.config.get_series_style(series_name, is_secondary=(ax == ax_right))
+                    
+                    # Vertical position for this strip
+                    # If we are using custom ticks, we assume the caller handled the Y-positioning logic
+                    # But for "status" chart, usually we want to enforce stacking.
+                    # However, V2_show_engine_torque_limits ALREADY offsets the data!
+                    # If we use fill_between on the data as-is, it will work if data is offset.
+                    # But the user wants "instead of charting value movement".
+                    # If the data is 0/1, we should offset it here.
+                    # If the data is already offset (like in our current quick_chart implementation),
+                    # we just need to fill between base and value.
+                    
+                    # Wait, if we want to change the VISUALIZATION, we should use the raw 0/1 data
+                    # and let the renderer handle the stacking.
+                    # But V2_show_engine_torque_limits is currently producing offset data.
+                    # I will assume for "status" chart, the data coming in is RAW 0/1 (or boolean).
+                    # I will modify V2_show_engine_torque_limits to stop offsetting.
+                    
+                    # Stack index
+                    y_center = i * 1.5 + 0.5
+                    
+                    if x_key:
+                        x = df[x_key]
+                        
+                        # Draw "OFF" blocks (value <= 0.5) - smaller and lighter
+                        # Height: 0.2 (vs 0.8 for ON)
+                        # Color: Light gray or derived from main color but very light
+                        ax.fill_between(
+                            x, 
+                            y_center - 0.1, 
+                            y_center + 0.1, 
+                            where=(y_vals <= 0.5),
+                            step='post',
+                            color='lightgray',
+                            alpha=0.5,
+                            linewidth=0
+                        )
+                        
+                        # Draw "ON" blocks
+                        # We use fill_between to create blocks where y_vals > 0.5 (assuming 0/1 input)
+                        # Top of block: y_center + 0.4
+                        # Bottom of block: y_center - 0.4
+                        
+                        ax.fill_between(
+                            x, 
+                            y_center - 0.4, 
+                            y_center + 0.4, 
+                            where=(y_vals > 0.5),
+                            step='post',
+                            color=style.color,
+                            alpha=style.alpha,
+                            linewidth=0 # No border for blocks usually looks cleaner
+                        )
+                    else:
+                        x = y_vals.index
+                        
+                        # Draw "OFF" blocks
+                        ax.fill_between(
+                            x, 
+                            y_center - 0.1, 
+                            y_center + 0.1, 
+                            where=(y_vals <= 0.5),
+                            step='post',
+                            color='lightgray',
+                            alpha=0.5,
+                            linewidth=0
+                        )
+                        
+                        # Draw "ON" blocks
+                        ax.fill_between(
+                            x, 
+                            y_center - 0.4, 
+                            y_center + 0.4, 
+                            where=(y_vals > 0.5),
+                            step='post',
+                            color=style.color,
+                            alpha=style.alpha,
+                            linewidth=0
+                        )
+
     def _render_line_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
         """Render a line chart."""
         df = plot_data
@@ -249,6 +358,99 @@ class ChartRenderer:
                     else:
                         ax_right.plot(
                             y.index, y, 
+                            label=legend_label,
+                            linestyle=style.linestyle,
+                            linewidth=style.linewidth,
+                            marker=style.marker,
+                            markersize=style.markersize,
+                            color=style.color,
+                            alpha=style.alpha
+                        )
+
+    def _render_step_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
+        """Render a step chart."""
+        df = plot_data
+        x_key = self.config.get_x_column()
+        
+        # Plot primary series
+        if self.config.primary_axis.series:
+            for series_name in self.config.primary_axis.series:
+                if series_name in df.columns:
+                    y = pd.to_numeric(df[series_name], errors="coerce")
+                    style = self.config.get_series_style(series_name, is_secondary=False)
+                    
+                    legend_label = self._get_legend_label(series_name)
+                    if x_key:
+                        # Offset each series by a constant amount to create a "strip" effect
+                        # We can use the loop index (implicitly handled by enumerate in caller or we need to track it)
+                        # Since we don't have the index here easily without changing signature, let's assume 
+                        # the user wants standard step charts for now, or we can try to infer offset.
+                        # However, for "horizontal strip over time", it sounds like a gantt-style or 
+                        # stacked binary plot where each series is offset vertically.
+                        
+                        # Let's modify this to support vertical offsetting if multiple series are present
+                        # We can achieve this by adding an offset to y.
+                        
+                        # But first, let's check if we are in a context where we want this strip behavior.
+                        # The user asked for "horizontal strip over time".
+                        # If the values are 0 and 1, plotting them on top of each other is messy.
+                        # A common technique is to plot: y + offset
+                        
+                        # For now, let's stick to the standard step plot. 
+                        # If the user wants them separated, we should probably handle that in data preparation 
+                        # or add a specific "strip" chart type.
+                        
+                        # Wait, the user explicitly asked for "set plot chart that charts each PID as a horizontal strip over time"
+                        # This implies they want them vertically stacked/separated.
+                        
+                        ax_left.step(
+                            df[x_key], y, 
+                            where='post',
+                            label=legend_label,
+                            linestyle=style.linestyle,
+                            linewidth=style.linewidth,
+                            marker=style.marker,
+                            markersize=style.markersize,
+                            color=style.color,
+                            alpha=style.alpha
+                        )
+                    else:
+                        ax_left.step(
+                            y.index, y, 
+                            where='post',
+                            label=legend_label,
+                            linestyle=style.linestyle,
+                            linewidth=style.linewidth,
+                            marker=style.marker,
+                            markersize=style.markersize,
+                            color=style.color,
+                            alpha=style.alpha
+                        )
+        
+        # Plot secondary series
+        if ax_right and self.config.secondary_axis.series:
+            for series_name in self.config.secondary_axis.series:
+                if series_name in df.columns:
+                    y = pd.to_numeric(df[series_name], errors="coerce")
+                    style = self.config.get_series_style(series_name, is_secondary=True)
+                    
+                    legend_label = self._get_legend_label(series_name)
+                    if x_key:
+                        ax_right.step(
+                            df[x_key], y, 
+                            where='post',
+                            label=legend_label,
+                            linestyle=style.linestyle,
+                            linewidth=style.linewidth,
+                            marker=style.marker,
+                            markersize=style.markersize,
+                            color=style.color,
+                            alpha=style.alpha
+                        )
+                    else:
+                        ax_right.step(
+                            y.index, y, 
+                            where='post',
                             label=legend_label,
                             linestyle=style.linestyle,
                             linewidth=style.linewidth,
@@ -369,10 +571,18 @@ class ChartRenderer:
         """Apply formatting to the axes."""
         # Axis labels
         primary_label = self.config.get_axis_label(self.config.primary_axis)
+        
+        # For status charts, we usually don't want the generic "Value" label on the Y-axis
+        # as the tick labels themselves explain what the rows are.
+        if self.config.chart_type == "status" and primary_label == "Value":
+             primary_label = ""
+             
         ax_left.set_ylabel(primary_label)
         
         if ax_right:
             secondary_label = self.config.get_axis_label(self.config.secondary_axis)
+            if self.config.chart_type == "status" and secondary_label == "Value":
+                secondary_label = ""
             ax_right.set_ylabel(secondary_label)
         
         # X-axis label
@@ -421,3 +631,15 @@ class ChartRenderer:
             ymax = self.config.secondary_axis.max_value
             if ymin is not None or ymax is not None:
                 ax_right.set_ylim(bottom=ymin, top=ymax)
+
+        # Apply custom ticks and labels
+        if self.config.primary_axis.ticks:
+            ax_left.set_yticks(self.config.primary_axis.ticks)
+        if self.config.primary_axis.tick_labels:
+            ax_left.set_yticklabels(self.config.primary_axis.tick_labels)
+            
+        if ax_right:
+            if self.config.secondary_axis.ticks:
+                ax_right.set_yticks(self.config.secondary_axis.ticks)
+            if self.config.secondary_axis.tick_labels:
+                ax_right.set_yticklabels(self.config.secondary_axis.tick_labels)
