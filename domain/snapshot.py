@@ -75,6 +75,9 @@ class Snapshot:
         
         # Clean the snapshot
         self.snapshot = self._scrub_snapshot(self.raw_table, header_row_idx)
+
+        # Remove unsupported PIDs
+        self.snapshot = self._remove_unsupported_pids(self.snapshot)
         
         # Extract engine hours
         self.hours = self._find_engine_hours()
@@ -438,7 +441,47 @@ class Snapshot:
         else:
             pass  # Leave as is if conversion fails
 
+        # Remove columns that contain "Not supported"
+        snapshot = self._remove_unsupported_pids(snapshot)
+
         return snapshot
+
+    def _remove_unsupported_pids(self, snapshot: pd.DataFrame) -> pd.DataFrame:
+        """
+        Remove columns that contain 'Not supported' values.
+        Handles duplicate column names safely.
+        """
+        cols_to_drop = set()
+        # Iterate over unique column names to avoid redundant checks and handle duplicates
+        for col in snapshot.columns.unique():
+            data = snapshot[col]
+            
+            # Handle case where column name is duplicated (returns DataFrame)
+            if isinstance(data, pd.DataFrame):
+                # Check if any column in the duplicate group has "Not supported"
+                obj_cols = data.select_dtypes(include=['object'])
+                if not obj_cols.empty:
+                    # Check if any value in any object column contains the string
+                    mask = obj_cols.astype(str).apply(
+                        lambda x: x.str.contains("Not supported", case=False, regex=False)
+                    )
+                    if mask.any().any():
+                        cols_to_drop.add(col)
+            else:
+                # Handle single column (Series)
+                if data.dtype == 'object':
+                    if data.astype(str).str.contains("Not supported", case=False, regex=False).any():
+                        cols_to_drop.add(col)
+        
+        if cols_to_drop:
+            snapshot = snapshot.drop(columns=list(cols_to_drop))
+            # Also remove from pid_info if present
+            for col in cols_to_drop:
+                self.pid_info.pop(col, None)
+                
+        return snapshot
+
+
 
 # Module-level helper functions
 def _to_str(cell) -> str:

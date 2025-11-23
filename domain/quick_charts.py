@@ -360,7 +360,7 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
         
         # Use a display-specific column name to avoid confusion with raw values
         # Include index to ensure uniqueness even if col_name is duplicated
-        display_col = f"{col_name}_{i}_display"
+        display_col = f"Torque Limit:_{col_name}"
         
         # Get 0/1 values by position
         vals = split_df.iloc[:, i]
