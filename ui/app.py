@@ -6,6 +6,7 @@ Main Window
 from __future__ import annotations
 import copy
 import os
+import webbrowser
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -20,7 +21,7 @@ from domain import quick_charts
 from domain.chart_config import ChartConfig, AxisConfig
 from ui.chart_renderer import ChartRenderer
 from domain.snapshot import Snapshot
-from domain.constants import APP_TITLE, APP_VERSION
+from domain.constants import APP_TITLE, APP_VERSION, HELP_URL
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
@@ -149,6 +150,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=self.show_about)
+        help_menu.add_command(label="Online Help", command=self.open_help_url)
         menubar.add_cascade(label="Help", menu=help_menu)
 
         self.config(menu=menubar)
@@ -784,27 +786,54 @@ class SnapshotDecoderApp(tk.Tk):
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- About Window -------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
-    def show_about(self):
-        """Display a custom About dialog with larger font."""
-        about_win = tk.Toplevel(self)
-        about_win.title(f"{APP_TITLE} {APP_VERSION}")
-        about_win.resizable(False, False)
-        about_win.transient(self)  # Make it modal-like
-        about_win.grab_set()
-        about_win.configure(bg="white")  # Set window background to white
+    def open_help_url(self):
+        """Open the help URL in the default web browser."""
+        webbrowser.open(HELP_URL)
 
-        # Center the window on the screen
-        window_width = 400
-        window_height = 300
+    def show_about(self):
+        """Display a custom About dialog and splash image."""
+        about_win = tk.Toplevel(self)
+        about_win.overrideredirect(True)  # Remove title bar
+        
+        bg_color = "#dcd5bf"  # Matches splash.png background
+        about_win.configure(bg=bg_color)
+
+        # Center the window on the screen - larger size
+        window_width = 650
+        window_height = 750
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         about_win.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
+        # Make sure it appears on top and is modal
+        about_win.lift()
+        about_win.grab_set()
+
+        # Image container
+        try:
+            img_path = resource_path("splash.png")
+            if os.path.exists(img_path):
+                # Keep a reference to prevent garbage collection
+                about_img = tk.PhotoImage(file=img_path)
+                
+                # Auto-scale down if too wide for the window
+                # Assuming a margin of ~50px
+                target_width = window_width - 50
+                if about_img.width() > target_width:
+                    scale_factor = (about_img.width() // target_width) + 1
+                    about_img = about_img.subsample(scale_factor)
+                
+                img_label = tk.Label(about_win, image=about_img, bg=bg_color)
+                img_label.image = about_img  # Keep reference
+                img_label.pack(pady=(20, 10))
+        except Exception as e:
+            print(f"Error loading splash image: {e}")
 
         msg = tk.Label(about_win, text=f"Snapshot Decoder {APP_VERSION}\nWritten by Nathan Ladd\nService Trainer\nBobcat of the Rockies\nnladd@bobcatoftherockies.com", 
-                       font=("Segoe UI", 14), bg="white", anchor="center")
-        msg.pack(expand=True, pady=20)
+                       font=("Segoe UI", 14), bg=bg_color, anchor="center")
+        msg.pack(expand=True, pady=10)
 
         ok_btn = tk.Button(about_win, text="OK", command=about_win.destroy, bg="white")
         ok_btn.pack(pady=(0, 20))
