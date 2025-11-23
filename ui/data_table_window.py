@@ -63,7 +63,7 @@ class DataTableWindow:
         all_data = df_display.astype(str).values.tolist()
 
         self.progress['value'] = 70
-        self.progress_label.config(text="Data converted, creating spreadsheet...")
+        self.progress_label.config(text="Data converted, creating spreadsheet (This may take a moment)...")
         self.win.update()
 
         # Create tksheet table widget with all data (tksheet handles virtual scrolling internally)
