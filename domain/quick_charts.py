@@ -88,7 +88,6 @@ def V1_show_battery_chart(main_app, snaptype: SnapType):
         "4000"
     )
     
-
 def V1_show_rail_pressure_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
@@ -101,7 +100,6 @@ def V1_show_rail_pressure_chart(main_app, snaptype: SnapType):
         "-5",
         "300"
     )
-
 
 def V1_show_rail_gap_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
@@ -244,7 +242,7 @@ def V2_show_battery_chart(main_app, snaptype: SnapType):
         "V2_BATTERY_TEST",
         ["BattU_u"],
         "0",
-        "18000",
+        "18",
         ["Epm_nEng"],
         "-50",
         "3000"
@@ -306,7 +304,6 @@ def V2_show_throttle_chart(main_app, snaptype: SnapType):
         ["ThrVlv_r", "ThrVlv_rAct"],
         "-5",
         "140"
-
     )
 
 def V2_show_load_chart(main_app, snaptype: SnapType):

@@ -86,6 +86,14 @@ class Snapshot:
         if self.snapshot_type == SnapType.ECU_V1:
             if "SMC_ENGINE_STATE" in self.pid_info:
                 self._update_pid_unit("SMC_ENGINE_STATE", "[0]Off   [1]Cranking   [2]Running   [3]Stalling")
+
+        # If the snapshot is ECU_V2, find BattU_u and convert Millivolts to Volts
+        # Update the PID unit to Volts
+        if self.snapshot_type == SnapType.ECU_V2:
+            if "BattU_u" in self.snapshot.columns:
+                self.snapshot["BattU_u"] = pd.to_numeric(self.snapshot["BattU_u"], errors="coerce")
+                self.snapshot["BattU_u"] = self.snapshot["BattU_u"] / 1000
+                self._update_pid_unit("BattU_u", "Volts")
         
     def _find_engine_hours(self) -> float:
         """
@@ -168,8 +176,15 @@ class Snapshot:
         
         # Get the MDP_SUCCESS value from Frame == 0
         try:
+
             mdp_success = int(frame_zero_row["I_C_Mdp_nb_update_success_nvv"].iloc[0])
-            mdp_success_rate = mdp_success / (frame_zero_row["I_C_Mdp_nb_update_failure_nvv"].iloc[0] + frame_zero_row["I_C_Mdp_nb_update_success_nvv"].iloc[0])
+            mdp_failure = int(frame_zero_row["I_C_Mdp_nb_update_failure_nvv"].iloc[0])
+            
+            total_updates = mdp_failure + mdp_success
+            if total_updates == 0:
+                return 0.0
+                
+            mdp_success_rate = mdp_success / total_updates
             return round(mdp_success_rate * 100, 1)
 
         except (ValueError, IndexError, TypeError):
