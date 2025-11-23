@@ -23,6 +23,7 @@ main_script = os.path.join(script_dir, 'main.py')
 datas = [
     (os.path.join(script_dir, 'logo.png'), '.'),  # Logo for PDF exports
     (os.path.join(script_dir, 'Snapshot_Decoder_Icon.ico'), '.'),  # App icon
+    (os.path.join(script_dir, 'splash.png'), '.'),  # Splash image
 ]
 
 # Define hidden imports (modules that PyInstaller might miss)
@@ -41,7 +42,7 @@ hidden_imports = [
 pyinstaller_args = [
     main_script,
     '--name=Snapshot Decoder',  # Name of the executable
-    '--onefile',  # Create a single executable file
+    '--onedir',  # Create a directory with executable and dependencies
     '--windowed',  # No console window (GUI app)
     f'--icon={os.path.join(script_dir, "Snapshot_Decoder_Icon.ico")}',  # App icon
     '--clean',  # Clean PyInstaller cache before building
@@ -77,8 +78,41 @@ try:
     PyInstaller.__main__.run(pyinstaller_args)
     print("\n" + "=" * 70)
     print("Build completed successfully!")
-    print(f"Executable location: {os.path.join(script_dir, 'dist', 'Snapshot Decoder.exe')}")
+    print(f"Output directory: {os.path.join(script_dir, 'dist', 'Snapshot Decoder')}")
     print("=" * 70)
+
+    # Check for Inno Setup Compiler
+    iscc_paths = [
+        r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+        r"C:\Program Files\Inno Setup 6\ISCC.exe",
+    ]
+    
+    iscc_exe = None
+    for path in iscc_paths:
+        if os.path.exists(path):
+            iscc_exe = path
+            break
+            
+    if iscc_exe:
+        print(f"\nFound Inno Setup Compiler at: {iscc_exe}")
+        print("Compiling installer...")
+        import subprocess
+        iss_file = os.path.join(script_dir, 'create_installer.iss')
+        try:
+            subprocess.run([iscc_exe, iss_file], check=True)
+            print("\n" + "=" * 70)
+            print("Installer created successfully!")
+            print(f"Installer location: {os.path.join(script_dir, 'SnapshotDecoder_Setup.exe')}")
+            print("=" * 70)
+        except subprocess.CalledProcessError as e:
+            print(f"Installer compilation failed: {e}")
+    else:
+        print("\nInno Setup Compiler (ISCC.exe) not found.")
+        print("To create the installer with uninstaller:")
+        print("1. Install Inno Setup 6 (https://jrsoftware.org/isinfo.php)")
+        print("2. Open 'create_installer.iss' and compile it")
+        print("   OR add ISCC.exe to the script path check.")
+
 except Exception as e:
     print(f"\nBuild failed with error: {e}", file=sys.stderr)
     sys.exit(1)

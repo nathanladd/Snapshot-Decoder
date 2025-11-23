@@ -105,8 +105,6 @@ class ChartRenderer:
             self._render_line_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "bar":
             self._render_bar_chart(ax_left, ax_right, plot_data)
-        elif self.config.chart_type == "step":
-            self._render_step_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "bubble":
             self._render_bubble_chart(ax_left, ax_right, plot_data)
         elif self.config.chart_type == "status":
@@ -158,8 +156,6 @@ class ChartRenderer:
             self._render_line_chart(ax_left, ax_right, self.config.data)
         elif self.config.chart_type == "bar":
             self._render_bar_chart(ax_left, ax_right, self.config.data)
-        elif self.config.chart_type == "step":
-            self._render_step_chart(ax_left, ax_right, self.config.data)
         elif self.config.chart_type == "bubble":
             self._render_bubble_chart(ax_left, ax_right, self.config.data)
         elif self.config.chart_type == "status":
@@ -367,99 +363,6 @@ class ChartRenderer:
                             alpha=style.alpha
                         )
 
-    def _render_step_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
-        """Render a step chart."""
-        df = plot_data
-        x_key = self.config.get_x_column()
-        
-        # Plot primary series
-        if self.config.primary_axis.series:
-            for series_name in self.config.primary_axis.series:
-                if series_name in df.columns:
-                    y = pd.to_numeric(df[series_name], errors="coerce")
-                    style = self.config.get_series_style(series_name, is_secondary=False)
-                    
-                    legend_label = self._get_legend_label(series_name)
-                    if x_key:
-                        # Offset each series by a constant amount to create a "strip" effect
-                        # We can use the loop index (implicitly handled by enumerate in caller or we need to track it)
-                        # Since we don't have the index here easily without changing signature, let's assume 
-                        # the user wants standard step charts for now, or we can try to infer offset.
-                        # However, for "horizontal strip over time", it sounds like a gantt-style or 
-                        # stacked binary plot where each series is offset vertically.
-                        
-                        # Let's modify this to support vertical offsetting if multiple series are present
-                        # We can achieve this by adding an offset to y.
-                        
-                        # But first, let's check if we are in a context where we want this strip behavior.
-                        # The user asked for "horizontal strip over time".
-                        # If the values are 0 and 1, plotting them on top of each other is messy.
-                        # A common technique is to plot: y + offset
-                        
-                        # For now, let's stick to the standard step plot. 
-                        # If the user wants them separated, we should probably handle that in data preparation 
-                        # or add a specific "strip" chart type.
-                        
-                        # Wait, the user explicitly asked for "set plot chart that charts each PID as a horizontal strip over time"
-                        # This implies they want them vertically stacked/separated.
-                        
-                        ax_left.step(
-                            df[x_key], y, 
-                            where='post',
-                            label=legend_label,
-                            linestyle=style.linestyle,
-                            linewidth=style.linewidth,
-                            marker=style.marker,
-                            markersize=style.markersize,
-                            color=style.color,
-                            alpha=style.alpha
-                        )
-                    else:
-                        ax_left.step(
-                            y.index, y, 
-                            where='post',
-                            label=legend_label,
-                            linestyle=style.linestyle,
-                            linewidth=style.linewidth,
-                            marker=style.marker,
-                            markersize=style.markersize,
-                            color=style.color,
-                            alpha=style.alpha
-                        )
-        
-        # Plot secondary series
-        if ax_right and self.config.secondary_axis.series:
-            for series_name in self.config.secondary_axis.series:
-                if series_name in df.columns:
-                    y = pd.to_numeric(df[series_name], errors="coerce")
-                    style = self.config.get_series_style(series_name, is_secondary=True)
-                    
-                    legend_label = self._get_legend_label(series_name)
-                    if x_key:
-                        ax_right.step(
-                            df[x_key], y, 
-                            where='post',
-                            label=legend_label,
-                            linestyle=style.linestyle,
-                            linewidth=style.linewidth,
-                            marker=style.marker,
-                            markersize=style.markersize,
-                            color=style.color,
-                            alpha=style.alpha
-                        )
-                    else:
-                        ax_right.step(
-                            y.index, y, 
-                            where='post',
-                            label=legend_label,
-                            linestyle=style.linestyle,
-                            linewidth=style.linewidth,
-                            marker=style.marker,
-                            markersize=style.markersize,
-                            color=style.color,
-                            alpha=style.alpha
-                        )
-    
     def _render_bar_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
         """Render a bar chart."""
         df = plot_data
