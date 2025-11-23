@@ -80,6 +80,12 @@ class SnapshotDecoderApp(tk.Tk):
         self.primary_auto = tk.BooleanVar(value=True)
         self.secondary_auto = tk.BooleanVar(value=True)
         
+        self.primary_ticks = None
+        self.primary_tick_labels = None
+        self.secondary_ticks = None
+        self.secondary_tick_labels = None
+        self.show_legend_var = tk.BooleanVar(value=True)
+
         # Chart type selection
         self.chart_type_var = tk.StringVar(value="line")
         
@@ -535,7 +541,9 @@ class SnapshotDecoderApp(tk.Tk):
             series=list(self.primary_series),
             auto_scale=self.primary_auto.get(),
             min_value=self._parse_limit(self.primary_ymin.get()),
-            max_value=self._parse_limit(self.primary_ymax.get())
+            max_value=self._parse_limit(self.primary_ymax.get()),
+            ticks=self.primary_ticks,
+            tick_labels=self.primary_tick_labels
         )
 
         # Configure secondary axis
@@ -543,7 +551,9 @@ class SnapshotDecoderApp(tk.Tk):
             series=list(self.secondary_series),
             auto_scale=self.secondary_auto.get(),
             min_value=self._parse_limit(self.secondary_ymin.get()),
-            max_value=self._parse_limit(self.secondary_ymax.get())
+            max_value=self._parse_limit(self.secondary_ymax.get()),
+            ticks=self.secondary_ticks,
+            tick_labels=self.secondary_tick_labels
         )
 
         # Create/update working configuration
@@ -556,7 +566,8 @@ class SnapshotDecoderApp(tk.Tk):
             pid_info=self.engine.pid_info,
             file_name=self.engine.file_name,
             date_time=self.engine.date_time,
-            engine_hours=self.engine.hours
+            engine_hours=self.engine.hours,
+            show_legend=self.show_legend_var.get()
         )
     
     def _parse_limit(self, s: str):
@@ -627,6 +638,14 @@ class SnapshotDecoderApp(tk.Tk):
         # Clear selected series and listboxes
         self.primary_series = []
         self.secondary_series = []
+        
+        # Clear custom ticks
+        self.primary_ticks = None
+        self.primary_tick_labels = None
+        self.secondary_ticks = None
+        self.secondary_tick_labels = None
+        self.show_legend_var.set(True)
+        
         try:
             self.primary_list.delete(0, tk.END)
             self.secondary_list.delete(0, tk.END)

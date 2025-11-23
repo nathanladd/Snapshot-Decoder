@@ -1,9 +1,12 @@
 from typing import List
+import pandas as pd
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
 
 
-def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str = "", primary_max: str = "", secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str=""):
+def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str = "", 
+primary_max: str = "", secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str="", chart_type: str="line", 
+primary_ticks: List[float]=None, primary_tick_labels: List[str]=None, show_legend: bool=True):
     # Retrieve tooltip for the chart title
     tooltip = None
     if snaptype in BUTTONS_BY_TYPE:
@@ -44,6 +47,19 @@ def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primar
     main_app._toggle_primary_inputs()
     main_app._toggle_secondary_inputs()
     
+    # Set chart type
+    if hasattr(main_app, 'chart_type_var'):
+        main_app.chart_type_var.set(chart_type)
+
+    # Set custom ticks
+    if hasattr(main_app, 'primary_ticks'):
+        main_app.primary_ticks = primary_ticks
+        main_app.primary_tick_labels = primary_tick_labels
+
+    # Set legend visibility
+    if hasattr(main_app, 'show_legend_var'):
+        main_app.show_legend_var.set(show_legend)
+
     # Generate the chart
     main_app.plot_combo_chart()
     
@@ -304,9 +320,83 @@ def V2_show_load_chart(main_app, snaptype: SnapType):
     )
 
 def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
+    col_name = "CoETS_stCurrLimActive"
+    
+    # Check if data exists
+    if not main_app.engine or col_name not in main_app.engine.snapshot.columns:
+        return
+
+    # Parse the string of digits into individual columns
+    # Assuming the column contains strings like "00101"
+    s = main_app.engine.snapshot[col_name].astype(str)
+    
+    # Create a temporary DataFrame where each character is a column
+    # map(list) converts "010" to ['0', '1', '0']
+    split_df = pd.DataFrame(s.map(list).tolist(), index=main_app.engine.snapshot.index)
+    
+    # Convert to numeric (0s and 1s)
+    split_df = split_df.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+    
+    # Define column names - USER TO MODIFY THESE NAMES
+    # Make sure the list length matches the number of digits
+    # For now, we generate generic names
+    column_names = ["System Error", "Differential Protection", "Engine Mechanics Protection", "Smoke Limit", "Not Used", 
+    "Overheating", "System Error", " Maximum Gearbox Input Torque", "Injection Quantity Limitation", "High Pressure Pump",
+    "Speed Limitation", "Protection From Exessive Torque", "Slow Path Limitation", "Inner Engine Torque", "Engine Protection"]
+    
+    # Assign names to the split dataframe
+    # Handle case where actual digits might be fewer/more than expected names
+    # We take the minimum length
+    num_cols = min(len(column_names), split_df.shape[1])
+    split_df = split_df.iloc[:, :num_cols]
+    final_names = column_names[:num_cols]
+    # Do NOT rename split_df columns to avoid issues with duplicate names
+    
+    # Add new columns to the main snapshot DataFrame
+    new_cols_added = []
+    
+    for i, col_name in enumerate(final_names):
+        # Always update the column if it exists to ensure offset is applied correctly for this chart view
+        # We create a new column specific for plotting to avoid modifying original data permanently if we want to keep raw 0/1 elsewhere
+        # But since these are generated columns, it's fine to overwrite or create new display columns
+        
+        # Use a display-specific column name to avoid confusion with raw values
+        # Include index to ensure uniqueness even if col_name is duplicated
+        display_col = f"{col_name}_{i}_display"
+        
+        # Get 0/1 values by position
+        vals = split_df.iloc[:, i]
+        
+        # For status chart, we don't offset the data. The renderer handles stacking.
+        # We just pass the raw 0/1 values.
+        main_app.engine.snapshot[display_col] = vals
+        new_cols_added.append(display_col)
+    
+    # Update the UI PID list so the new columns appear
+    if new_cols_added and hasattr(main_app, 'pid_list'):
+        for col in new_cols_added:
+            if col not in main_app.pid_list.get(0, 'end'):
+                main_app.pid_list.insert('end', col)
+
+    # Calculate appropriate Y-axis limits
+    # The status renderer uses a spacing of 1.5 per series.
+    offset_step = 1.5
+    total_height = (len(final_names) * offset_step) + 0.5
+    
+    # Calculate tick positions and labels
+    # Center ticks in the middle of the strip
+    # Center is base + 0.5 -> i * 1.5 + 0.5
+    tick_positions = [(i * offset_step) + 0.5 for i in range(len(final_names))]
+    
     apply_quick_chart_setup(
         main_app,
         snaptype,
         "V2_ENGINE_TORQUE_LIMITS",
-        ["CoETS_stCurrLimActive"]
+        new_cols_added,
+        primary_min="-0.5",
+        primary_max=str(total_height),
+        chart_type="status",
+        primary_ticks=tick_positions,
+        primary_tick_labels=final_names,
+        show_legend=False
     )

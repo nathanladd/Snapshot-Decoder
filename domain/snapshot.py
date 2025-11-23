@@ -384,7 +384,6 @@ class Snapshot:
         - Normalize column names.
         - Rename first two columns to 'Frame' and 'Time'.
         - Trim to start from Frame == 0 if 'Frame' column exists.
-        - Coerce columns to numeric where possible.
         - Convert time to datetime.
 
         Returns the processed snapshot.

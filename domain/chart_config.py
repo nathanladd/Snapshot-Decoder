@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Literal
 import pandas as pd
 
-ChartType = Literal["line", "bar", "bubble"]
+ChartType = Literal["line", "bar", "bubble", "step", "status"]
 
 
 @dataclass
@@ -19,6 +19,8 @@ class AxisConfig:
     min_value: Optional[float] = None
     max_value: Optional[float] = None
     auto_scale: bool = True
+    ticks: Optional[List[float]] = None
+    tick_labels: Optional[List[str]] = None
 
 
 @dataclass
