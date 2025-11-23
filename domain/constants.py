@@ -4,6 +4,10 @@ from domain.snaptypes import SnapType
 APP_TITLE = "Snapshot Decoder"
 APP_VERSION = "1.0.1 (Beta)"
 
+# Help URL
+HELP_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
+
+
 # Buttons for each snapshot type
 # Button name, COMMAND NAME, tooltip
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
