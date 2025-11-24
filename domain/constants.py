@@ -13,7 +13,7 @@ HELP_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     SnapType.ECU_V1: [
         ("Battery Test", "V1_BATTERY_TEST", 
-        "Battery Voltage vs RPM"),
+        "Battery Voltage vs Engine State"),
         ("Rail Pressure", "V1_RAIL_PRESSURE", 
         "Demand vs Actual Rail Pressure"),
         ("Rail Gap", "V1_RAIL_GAP", 
@@ -29,7 +29,7 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         ("Piston Delta", "V1_PISTON_DELTA", 
         "Piston Delta Speed"),
         ("Cam/Crank", "V1_CAM_CRANK", 
-        "Cam/Crank Condition with Engine State"),
+        "Cam/Crank Condition with Sync"),
         ("Start Aid", "V1_START_AID", 
         "Start Aid Condition with Engine State"),
         ("Air/Fuel Ratio", "V1_AIR_FUEL_RATIO", 
