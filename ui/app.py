@@ -86,6 +86,9 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_ticks = None
         self.secondary_tick_labels = None
         self.show_legend_var = tk.BooleanVar(value=True)
+        
+        # Custom styles for specific series (e.g. from quick charts)
+        self.custom_series_styles = {}
 
         # Chart type selection
         self.chart_type_var = tk.StringVar(value="line")
@@ -569,7 +572,8 @@ class SnapshotDecoderApp(tk.Tk):
             file_name=self.engine.file_name,
             date_time=self.engine.date_time,
             engine_hours=self.engine.hours,
-            show_legend=self.show_legend_var.get()
+            show_legend=self.show_legend_var.get(),
+            series_styles=self.custom_series_styles
         )
     
     def _parse_limit(self, s: str):

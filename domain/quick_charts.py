@@ -83,9 +83,9 @@ def V1_show_battery_chart(main_app, snaptype: SnapType):
         ["P_L_Battery_raw"],
         "0",
         "18",
-        ["IN_Engine_cycle_speed"],
-        "-50",
-        "4000"
+        ["SMC_ENGINE_STATE"],
+        "-10",
+        "15"
     )
     
 def V1_show_rail_pressure_chart(main_app, snaptype: SnapType):
@@ -184,16 +184,29 @@ def V1_show_piston_delta_chart(main_app, snaptype: SnapType):
     )
 
 def V1_show_cam_crank_chart(main_app, snaptype: SnapType):
+    pids = ["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"]
+    
+    # Calculate appropriate Y-axis limits for status chart (1.5 spacing per series)
+    offset_step = 1.5
+    total_height = (len(pids) * offset_step) + 0.5
+    
+    # Calculate tick positions centered on each strip
+    tick_positions = [(i * offset_step) + 0.5 for i in range(len(pids))]
+    
     apply_quick_chart_setup(
         main_app,
         snaptype,
         "V1_CAM_CRANK",
-        ["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"],
-        "-10",
-        "4",
-        ["SMC_ENGINE_STATE"],
-        "-2",
-        "10"
+        pids,
+        primary_min="-0.5",
+        primary_max=str(total_height),
+        secondary_pids=[],
+        secondary_min="",
+        secondary_max="",
+        chart_type="status",
+        primary_ticks=tick_positions,
+        primary_tick_labels=pids,
+        show_legend=True
     )
 
 def V1_show_start_aid_chart(main_app, snaptype: SnapType):
