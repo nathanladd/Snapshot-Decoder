@@ -16,6 +16,7 @@ import pandas as pd
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.widgets import Slider
 from domain.snaptypes import SnapType
 from domain import quick_charts
 from domain.chart_config import ChartConfig, AxisConfig
@@ -106,6 +107,10 @@ class SnapshotDecoderApp(tk.Tk):
         
         # Single working config that's always synced with widgets
         self.working_config: Optional[ChartConfig] = None
+
+        # Slider state
+        self.slider = None
+        self.cursor_line = None
         
     def _build_ui(self):
         self._set_window_title()
@@ -610,10 +615,60 @@ class SnapshotDecoderApp(tk.Tk):
             renderer = ChartRenderer(self.working_config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
             
+            # Add interactive slider
+            self._add_slider_to_chart()
+            
             # Update toolbar with current chart config for PDF export
             self.toolbar.chart_config = self.working_config
         except Exception as e:
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
+
+    def _add_slider_to_chart(self):
+        """Add a time slider to the chart."""
+        if not self.working_config or self.working_config.data.empty:
+            return
+            
+        # Determine X data range
+        df = self.working_config.data.copy()
+        x_col = self.working_config.get_x_column()
+        
+        # Convert timedelta if necessary (matching ChartRenderer logic)
+        if pd.api.types.is_timedelta64_dtype(df.get("Time")):
+            df["Time"] = df["Time"].dt.total_seconds()
+        elif pd.api.types.is_timedelta64_dtype(df.get("Time (MM:SS)")):
+            df["Time (MM:SS)"] = df["Time (MM:SS)"].dt.total_seconds()
+            
+        if x_col and x_col in df.columns:
+            x_data = df[x_col]
+        else:
+            x_data = df.index
+            
+        min_val = float(x_data.min())
+        max_val = float(x_data.max())
+        
+        # Adjust layout to make room for slider at the bottom
+        self.figure.subplots_adjust(bottom=0.2)
+        
+        # Create slider axis [left, bottom, width, height] in figure coordinates
+        ax_slider = self.figure.add_axes([0.15, 0.05, 0.7, 0.03])
+        
+        self.slider = Slider(
+            ax=ax_slider,
+            label=x_col if x_col else "Index",
+            valmin=min_val,
+            valmax=max_val,
+            valinit=min_val,
+        )
+        
+        # Add vertical cursor line
+        self.cursor_line = self.ax_left.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
+        
+        def update(val):
+            # The memory specifically mentions using set_xdata([x, x]) for axvline updates
+            self.cursor_line.set_xdata([val, val])
+            self.canvas.draw_idle()
+            
+        self.slider.on_changed(update)
 
     def open_chart_table(self):
         if not self.engine or self.engine.snapshot.empty:
