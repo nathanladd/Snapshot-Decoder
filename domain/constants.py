@@ -1,9 +1,8 @@
 from domain.snaptypes import SnapType
+from version import APP_VERSION
 
 # Application title global
 APP_TITLE = "Snapshot Decoder"
-APP_VERSION = "1.0.2 (Beta)"
-
 # Help URL
 HELP_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
 

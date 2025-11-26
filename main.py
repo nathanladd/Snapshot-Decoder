@@ -16,25 +16,101 @@ Key bits:
 - Embeds Matplotlib figure inside Tkinter.
 """
 
-# Main entry point
-from ui.app import SnapshotDecoderApp
+# Only lightweight imports here - heavy imports happen AFTER splash is shown
+import os
+import sys
+import tkinter as tk
 
-# The apps 'main' function definition
-# Common convenion for the app starting point
+from version import APP_VERSION
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+def show_splash():
+    """
+    Create and display a splash screen styled like the About window.
+    Returns the splash window so it can be destroyed after loading.
+    """
+    splash = tk.Tk()
+    splash.overrideredirect(True)  # Remove title bar
+    
+    bg_color = "#dcd5bf"  # Matches splash.png background
+    splash.configure(bg=bg_color)
+    
+    # Window size matching About window
+    window_width = 650
+    window_height = 750
+    screen_width = splash.winfo_screenwidth()
+    screen_height = splash.winfo_screenheight()
+    x = (screen_width - window_width) // 2
+    y = (screen_height - window_height) // 2
+    splash.geometry(f"{window_width}x{window_height}+{x}+{y}")
+    
+    # Make sure it appears on top
+    splash.lift()
+    splash.attributes('-topmost', True)
+    
+    # Load splash image
+    try:
+        img_path = resource_path("splash.png")
+        if os.path.exists(img_path):
+            splash_img = tk.PhotoImage(file=img_path)
+            
+            # Auto-scale down if too wide for the window
+            target_width = window_width - 50
+            if splash_img.width() > target_width:
+                scale_factor = (splash_img.width() // target_width) + 1
+                splash_img = splash_img.subsample(scale_factor)
+            
+            img_label = tk.Label(splash, image=splash_img, bg=bg_color)
+            img_label.image = splash_img  # Keep reference
+            img_label.pack(pady=(20, 10))
+    except Exception as e:
+        print(f"Error loading splash image: {e}")
+    
+    # Loading message
+    loading_label = tk.Label(
+        splash, 
+        text=f"Snapshot Decoder {APP_VERSION}\n\nLoading...", 
+        font=("Segoe UI", 14), 
+        bg=bg_color, 
+        anchor="center"
+    )
+    loading_label.pack(expand=True, pady=10)
+    
+    # Store reference to update text later
+    splash.loading_label = loading_label
+    
+    # Force the window to render
+    splash.update()
+    
+    return splash
+
+
 def main():
     """Main entry point for the application"""
-    # Create the main application window
+    # Phase 1: Show splash screen BEFORE heavy imports
+    splash = show_splash()
+    
+    # Phase 2: Import heavy modules (splash is visible during this)
+    splash.loading_label.config(text=f"Snapshot Decoder {APP_VERSION}\n\nLoading libraries...")
+    splash.update()
+    
+    from ui.app import SnapshotDecoderApp
+    
+    # Phase 3: Destroy splash, create and run main app
+    splash.destroy()
+    
     app = SnapshotDecoderApp()
-    # Run the application -
-    # In a GUI app, the window needs to stay open and respond to user actions 
-    # (e.g., clicking buttons, typing in fields). mainloop() keeps the app running 
-    # indefinitely until the user closes the window.
     app.mainloop()
 
+
 if __name__ == "__main__":
-  # If this file is run as the main program, call the main function
-  # __name__ is a special variable in Python that is set to "__main__" 
-  # when the script is run as the main program
-  # and to the name of the module when it is imported as a module in another program
-  # This is a common convention in Python for the app starting point
     main()
