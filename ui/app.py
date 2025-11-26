@@ -117,8 +117,8 @@ class SnapshotDecoderApp(tk.Tk):
         self.mpl_cursor = None
 
         # Interactivity control
-        self.enable_slider = tk.BooleanVar(value=True)
-        self.enable_cursor = tk.BooleanVar(value=True)
+        self.enable_slider = tk.BooleanVar(value=False)
+        self.enable_cursor = tk.BooleanVar(value=False)
         
         # Add traces to update interactivity immediately
         self.enable_slider.trace_add("write", self._on_interactivity_change)

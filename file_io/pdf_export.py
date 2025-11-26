@@ -9,11 +9,7 @@ from matplotlib.figure import Figure
 from ui.chart_renderer import ChartRenderer
 from typing import List
 from domain.chart_config import ChartConfig
-from domain.constants import PDF_LOGO_POSITION, PDF_LOGO_ALPHA
-import matplotlib.image as mpimg
-import os
-
-from utils import resource_path
+from version import APP_VERSION
 
 
 class ChartCartPdfExporter:
@@ -70,19 +66,6 @@ class ChartCartPdfExporter:
                 # Set the chart title
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
                 
-                # Add logo to top right on first page only
-                if i == 1:
-                    logo_path = resource_path("logo.png")
-                    if os.path.exists(logo_path):
-                        try:
-                            logo = mpimg.imread(logo_path)
-                            # Create a small axes for the logo in the top right
-                            logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
-                            logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA) # alpha controls transparency
-                            logo_ax.axis('off')
-                        except Exception:
-                            pass  # If logo fails to load, continue without it
-                
                 # Add chain of custody metadata at the top
                 metadata_parts = []
                 if config.file_name:
@@ -100,6 +83,10 @@ class ChartCartPdfExporter:
                 # Add page number at the bottom
                 fig.text(0.5, 0.02, f'Page {i} of {len(self.configs)}', 
                         ha='center', va='bottom', fontsize=8, color='gray')
+                
+                # Add watermark
+                fig.text(0.99, 0.01, f'Snapshot Decoder {APP_VERSION}', 
+                        ha='right', va='bottom', fontsize=10, color='lightgray', alpha=0.7)
                 
                 # Adjust layout to prevent overlapping
                 fig.tight_layout(rect=[0, 0.03, 1, 0.96])  # Leave space for page number, title, and metadata
@@ -147,20 +134,7 @@ class ChartCartPdfExporter:
                 
                 renderer._apply_formatting(ax_left, ax_right)
                 ax_left.set_title(config.title, fontsize=14, fontweight='bold', pad=15)
-                
-                # Add logo to top right on first page only
-                if i == 1:
-                    logo_path = resource_path("logo.png")
-                    if os.path.exists(logo_path):
-                        try:
-                            logo = mpimg.imread(logo_path)
-                            # Create a small axes for the logo in the top right
-                            logo_ax = fig.add_axes(PDF_LOGO_POSITION)  # [left, bottom, width, height]
-                            logo_ax.imshow(logo, alpha=PDF_LOGO_ALPHA) # alpha controls transparency
-                            logo_ax.axis('off')
-                        except Exception:
-                            pass  # If logo fails to load, continue without it
-                
+                                
                 # Add chain of custody metadata at the top
                 metadata_parts = []
                 if config.file_name:
@@ -177,6 +151,11 @@ class ChartCartPdfExporter:
                 
                 fig.text(0.5, 0.02, f'Page {i} of {len(self.configs)}', 
                         ha='center', va='bottom', fontsize=8, color='gray')
+                
+                # Add watermark
+                fig.text(0.99, 0.01, f'Snapshot Decoder {APP_VERSION}', 
+                        ha='right', va='bottom', fontsize=10, color='lightgray', alpha=0.7)
+                
                 fig.tight_layout(rect=[0, 0.03, 1, 0.96])
                 
                 pdf.savefig(fig, dpi=kwargs.get('dpi', 150))
