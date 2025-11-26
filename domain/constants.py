@@ -13,7 +13,7 @@ HELP_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     SnapType.ECU_V1: [
         ("Battery Test", "V1_BATTERY_TEST", 
-        "Battery Voltage vs Engine State"),
+        "Battery Voltage vs RPM"),
         ("Rail Pressure", "V1_RAIL_PRESSURE", 
         "Demand vs Actual Rail Pressure"),
         ("Rail Gap", "V1_RAIL_GAP", 

@@ -83,9 +83,9 @@ def V1_show_battery_chart(main_app, snaptype: SnapType):
         ["P_L_Battery_raw"],
         "0",
         "18",
-        ["SMC_ENGINE_STATE"],
-        "-10",
-        "15"
+        ["IN_Engine_cycle_speed"],
+        "-50",
+        "6250"
     )
     
 def V1_show_rail_pressure_chart(main_app, snaptype: SnapType):
