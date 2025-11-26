@@ -1,7 +1,7 @@
 """
 Chart Configuration Data Classes
 
-Defines data classes for configuring different types of charts (line, bar, bubble).
+Defines data classes for configuring different types of charts (line, bar, bubble, status).
 """
 
 from dataclasses import dataclass, field
