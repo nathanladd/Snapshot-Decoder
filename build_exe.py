@@ -1,5 +1,5 @@
 """
-Build script for creating a single-file executable of Snapshot Decoder using PyInstaller.
+Build script for creating a multi-file (single directory) executable of Snapshot Decoder using PyInstaller.
 
 Usage:
     python build_exe.py
@@ -11,6 +11,24 @@ Requirements:
 import PyInstaller.__main__
 import os
 import sys
+
+import re
+
+# Read version from version.py
+with open('version.py', 'r') as f:
+    content = f.read()
+match = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', content)
+if match:
+    version = match.group(1)
+else:
+    raise ValueError("APP_VERSION not found in version.py")
+
+# Update the version number in create_installer.iss
+with open('create_installer.iss', 'r') as f:
+    iss_content = f.read()
+iss_content = re.sub(r'#define MyAppVersion ".*?"', f'#define MyAppVersion "{version}"', iss_content)
+with open('create_installer.iss', 'w') as f:
+    f.write(iss_content)
 
 # Get the directory where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Snapshot Decoder"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.0.4 (Beta)"
 #define MyAppPublisher "Nathan Ladd"
 #define MyAppURL "https://github.com/nathanladd/Snapshot-Decoder"
 #define MyAppExeName "Snapshot Decoder.exe"
@@ -10,7 +10,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{A8D9E2F1-7B3C-4D5E-9F0A-1B2C3D4E5F6A}
+AppId={{A8D9E2F1-7B3C-4D5E-9F0A-1B2C3D4E5F6A}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}

@@ -23,7 +23,11 @@ import tkinter as tk
 
 from version import APP_VERSION
 
-
+# This code checks if the script is running from a PyInstaller-packaged executable. 
+# sys._MEIPASS is an attribute PyInstaller sets to the temporary directory containing 
+# bundled files. If it exists, the function uses that as the base path for resources; 
+# otherwise, it falls back to the current working directory. This ensures resource paths
+# work in both development and bundled environments.
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller."""
     if hasattr(sys, '_MEIPASS'):
@@ -32,7 +36,7 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-
+# This function creates and displays a splash screen styled like the About window.
 def show_splash():
     """
     Create and display a splash screen styled like the About window.
@@ -111,6 +115,7 @@ def main():
     app = SnapshotDecoderApp()
     app.mainloop()
 
-
+# This dunder method checks if the script is being run as the 
+# main program (not imported as a module)
 if __name__ == "__main__":
     main()
