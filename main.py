@@ -21,8 +21,7 @@ import os
 import sys
 import tkinter as tk
 
-# Constants duplicated here to avoid importing heavy modules
-APP_VERSION = "1.0.2 (Beta)"
+from version import APP_VERSION
 
 
 def resource_path(relative_path):
