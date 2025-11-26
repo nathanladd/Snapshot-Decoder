@@ -16,6 +16,8 @@ import pandas as pd
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.widgets import Slider
+import mplcursors
 from domain.snaptypes import SnapType
 from domain import quick_charts
 from domain.chart_config import ChartConfig, AxisConfig
@@ -106,6 +108,21 @@ class SnapshotDecoderApp(tk.Tk):
         
         # Single working config that's always synced with widgets
         self.working_config: Optional[ChartConfig] = None
+
+        # Slider state
+        self.slider = None
+        self.cursor_line = None
+
+        # Cursor state
+        self.mpl_cursor = None
+
+        # Interactivity control
+        self.enable_slider = tk.BooleanVar(value=True)
+        self.enable_cursor = tk.BooleanVar(value=True)
+        
+        # Add traces to update interactivity immediately
+        self.enable_slider.trace_add("write", self._on_interactivity_change)
+        self.enable_cursor.trace_add("write", self._on_interactivity_change)
         
     def _build_ui(self):
         self._set_window_title()
@@ -264,9 +281,15 @@ class SnapshotDecoderApp(tk.Tk):
         axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
         axis.grid(row=5, column=0, sticky="ew", pady=(8,6))
 
-        # Plot and clear buttons - row 6
+        # Interaction options - row 6
+        interact_frame = ttk.Frame(left_border)
+        interact_frame.grid(row=6, column=0, sticky="ew", pady=(0,6))
+        ttk.Checkbutton(interact_frame, text="Show Cursor", variable=self.enable_slider).pack(side=tk.LEFT, padx=(0,10))
+        ttk.Checkbutton(interact_frame, text="Show Values", variable=self.enable_cursor).pack(side=tk.LEFT)
+
+        # Plot and clear buttons - row 7
         plot_btns = ttk.Frame(left_border)
-        plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
+        plot_btns.grid(row=7, column=0, sticky="ew", pady=(0,8))
         ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
         ttk.Button(plot_btns, text="Add to Cart", command=self.add_current_to_cart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
         ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
@@ -610,10 +633,144 @@ class SnapshotDecoderApp(tk.Tk):
             renderer = ChartRenderer(self.working_config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
             
+            # Add interactive slider and cursors
+            self._add_interactivity()
+            
             # Update toolbar with current chart config for PDF export
             self.toolbar.chart_config = self.working_config
         except Exception as e:
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
+
+    def _on_interactivity_change(self, *args):
+        """Callback when interactivity options change."""
+        # Check if chart is active
+        if not self.working_config:
+            return
+            
+        self._clear_interactivity()
+        self._add_interactivity()
+        self.canvas.draw_idle()
+
+    def _clear_interactivity(self):
+        """Remove slider and cursor from the chart."""
+        # Clear slider
+        if self.slider:
+            # Removing axes is tricky in matplotlib embedded
+            # Best approach is to remove the ax from figure
+            try:
+                self.figure.delaxes(self.slider.ax)
+            except Exception:
+                pass
+            self.slider = None
+            
+        if self.cursor_line:
+            try:
+                self.cursor_line.remove()
+            except Exception:
+                pass
+            self.cursor_line = None
+            
+        # Reset subplot adjustment
+        self.figure.subplots_adjust(bottom=0.1)
+
+        # Clear mplcursors
+        if self.mpl_cursor:
+            try:
+                self.mpl_cursor.remove()
+            except Exception:
+                pass
+            self.mpl_cursor = None
+
+    def _add_interactivity(self):
+        """Add a time slider and hover cursors to the chart."""
+        if not self.working_config or self.working_config.data.empty:
+            return
+            
+        # --- Add Hover Cursors ---
+        if self.enable_cursor.get():
+            # We target all lines/bars/collections in the axes
+            artists = []
+            if self.ax_left:
+                artists.extend(self.ax_left.lines)
+                artists.extend(self.ax_left.containers) # For bars
+                artists.extend(self.ax_left.collections) # For scatter/bubble
+                
+            if self.ax_right:
+                artists.extend(self.ax_right.lines)
+                artists.extend(self.ax_right.containers)
+                artists.extend(self.ax_right.collections)
+                
+            if artists:
+                self.mpl_cursor = mplcursors.cursor(artists, hover=True)
+                
+                @self.mpl_cursor.connect("add")
+                def on_add(sel):
+                    # Customize tooltip text
+                    # sel.target is the (x, y) point
+                    # sel.artist.get_label() gets the series name
+                    try:
+                        label = sel.artist.get_label()
+                        x, y = sel.target
+                        
+                        # Format x if it's time
+                        x_col = self.working_config.get_x_column()
+                        if x_col in ["Time", "Time (MM:SS)"]:
+                            minutes = int(x // 60)
+                            seconds = int(x % 60)
+                            x_str = f"{minutes:02d}:{seconds:02d}"
+                        else:
+                            x_str = f"{x:.2f}"
+                            
+                        sel.annotation.set_text(f"{label}\ntime: {x_str}\nvalue: {y:.2f}")
+                        
+                        # Style the annotation box
+                        sel.annotation.get_bbox_patch().set(fc="white", alpha=0.9)
+                    except Exception:
+                        pass
+
+        # --- Add Time Slider ---
+        if self.enable_slider.get():
+            # Determine X data range
+            df = self.working_config.data.copy()
+            x_col = self.working_config.get_x_column()
+            
+            # Convert timedelta if necessary (matching ChartRenderer logic)
+            if pd.api.types.is_timedelta64_dtype(df.get("Time")):
+                df["Time"] = df["Time"].dt.total_seconds()
+            elif pd.api.types.is_timedelta64_dtype(df.get("Time (MM:SS)")):
+                df["Time (MM:SS)"] = df["Time (MM:SS)"].dt.total_seconds()
+                
+            if x_col and x_col in df.columns:
+                x_data = df[x_col]
+            else:
+                x_data = df.index
+                
+            min_val = float(x_data.min())
+            max_val = float(x_data.max())
+            
+            # Adjust layout to make room for slider at the bottom
+            self.figure.subplots_adjust(bottom=0.2)
+            
+            # Create slider axis [left, bottom, width, height] in figure coordinates
+            ax_slider = self.figure.add_axes([0.15, 0.05, 0.7, 0.03])
+            
+            self.slider = Slider(
+                ax=ax_slider,
+                label=x_col if x_col else "Index",
+                valmin=min_val,
+                valmax=max_val,
+                valinit=min_val,
+            )
+            
+            # Add vertical cursor line
+            self.cursor_line = self.ax_left.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
+            
+            def update(val):
+                # The memory specifically mentions using set_xdata([x, x]) for axvline updates
+                self.cursor_line.set_xdata([val, val])
+                self.canvas.draw_idle()
+                
+            self.slider.on_changed(update)
 
     def open_chart_table(self):
         if not self.engine or self.engine.snapshot.empty:
