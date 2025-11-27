@@ -186,26 +186,13 @@ def V1_show_piston_delta_chart(main_app, snaptype: SnapType):
 def V1_show_cam_crank_chart(main_app, snaptype: SnapType):
     pids = ["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"]
     
-    # Calculate appropriate Y-axis limits for status chart (1.5 spacing per series)
-    offset_step = 1.5
-    total_height = (len(pids) * offset_step) + 0.5
-    
-    # Calculate tick positions centered on each strip
-    tick_positions = [(i * offset_step) + 0.5 for i in range(len(pids))]
-    
+    # Y-axis limits and tick positions are auto-calculated by the chart renderer
     apply_quick_chart_setup(
         main_app,
         snaptype,
         "V1_CAM_CRANK",
         pids,
-        primary_min="-0.5",
-        primary_max=str(total_height),
-        secondary_pids=[],
-        secondary_min="",
-        secondary_max="",
         chart_type="status",
-        primary_ticks=tick_positions,
-        primary_tick_labels=pids,
         show_legend=True
     )
 
@@ -388,25 +375,13 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
             if col not in main_app.pid_list.get(0, 'end'):
                 main_app.pid_list.insert('end', col)
 
-    # Calculate appropriate Y-axis limits
-    # The status renderer uses a spacing of 1.5 per series.
-    offset_step = 1.5
-    total_height = (len(final_names) * offset_step) + 0.5
-    
-    # Calculate tick positions and labels
-    # Center ticks in the middle of the strip
-    # Center is base + 0.5 -> i * 1.5 + 0.5
-    tick_positions = [(i * offset_step) + 0.5 for i in range(len(final_names))]
-    
+    # Y-axis limits and tick positions are auto-calculated by the chart renderer
+    # based on the number of series (1.5 spacing per series)
     apply_quick_chart_setup(
         main_app,
         snaptype,
         "V2_ENGINE_TORQUE_LIMITS",
         new_cols_added,
-        primary_min="-0.5",
-        primary_max=str(total_height),
         chart_type="status",
-        primary_ticks=tick_positions,
-        primary_tick_labels=final_names,
         show_legend=False
     )

@@ -217,23 +217,7 @@ class ChartRenderer:
                 if series_name in df.columns:
                     y_vals = pd.to_numeric(df[series_name], errors="coerce").fillna(0)
                     style = self.config.get_series_style(series_name, is_secondary=(ax == ax_right))
-                    
-                    # Vertical position for this strip
-                    # If we are using custom ticks, we assume the caller handled the Y-positioning logic
-                    # But for "status" chart, usually we want to enforce stacking.
-                    # However, V2_show_engine_torque_limits ALREADY offsets the data!
-                    # If we use fill_between on the data as-is, it will work if data is offset.
-                    # But the user wants "instead of charting value movement".
-                    # If the data is 0/1, we should offset it here.
-                    # If the data is already offset (like in our current quick_chart implementation),
-                    # we just need to fill between base and value.
-                    
-                    # Wait, if we want to change the VISUALIZATION, we should use the raw 0/1 data
-                    # and let the renderer handle the stacking.
-                    # But V2_show_engine_torque_limits is currently producing offset data.
-                    # I will assume for "status" chart, the data coming in is RAW 0/1 (or boolean).
-                    # I will modify V2_show_engine_torque_limits to stop offsetting.
-                    
+                                       
                     # Stack index
                     y_center = i * 1.5 + 0.5
                     
@@ -472,6 +456,12 @@ class ChartRenderer:
     
     def _apply_formatting(self, ax_left: Axes, ax_right: Optional[Axes]):
         """Apply formatting to the axes."""
+        
+        # For status charts, auto-calculate Y-axis limits and tick positions
+        # based on the number of series (using 1.5 spacing per series)
+        if self.config.chart_type == "status":
+            self._apply_status_chart_formatting(ax_left)
+        
         # Axis labels
         primary_label = self.config.get_axis_label(self.config.primary_axis)
         
@@ -546,3 +536,34 @@ class ChartRenderer:
                 ax_right.set_yticks(self.config.secondary_axis.ticks)
             if self.config.secondary_axis.tick_labels:
                 ax_right.set_yticklabels(self.config.secondary_axis.tick_labels)
+    
+    def _apply_status_chart_formatting(self, ax: Axes):
+        """
+        Auto-calculate and apply Y-axis limits and tick positions for status charts.
+        Uses 1.5 spacing per series, with ticks centered at each strip.
+        """
+        num_series = len(self.config.primary_axis.series)
+        if num_series == 0:
+            return
+        
+        offset_step = 1.5
+        total_height = (num_series * offset_step) + 0.5
+        
+        # Set Y-axis limits
+        ax.set_ylim(bottom=-0.5, top=total_height)
+        
+        # Calculate tick positions (centered on each strip)
+        tick_positions = [(i * offset_step) + 0.5 for i in range(num_series)]
+        ax.set_yticks(tick_positions)
+        
+        # Use series names as tick labels (strip prefix if present)
+        tick_labels = []
+        for name in self.config.primary_axis.series:
+            # Remove category prefix (e.g., "Torque Limit:_" -> just the name after)
+            if ":_" in name:
+                label = name.split(":_", 1)[1]
+            else:
+                label = name
+            tick_labels.append(label)
+        
+        ax.set_yticklabels(tick_labels)
