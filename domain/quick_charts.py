@@ -348,9 +348,8 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
     # Convert to numeric (0s and 1s)
     split_df = split_df.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
     
-    # Define column names - USER TO MODIFY THESE NAMES
-    # Make sure the list length matches the number of digits
-    # For now, we generate generic names
+    # Define column names
+    # this list must exactly match the number of digits in the column 
     column_names = ["System Error Event", "Differential Protection", "Engine Mechanics Protection", "Smoke Limit", "Not Used", 
     "Overheating", "Limit Travel", " Maximum Gearbox Input Torque", "Injection Quantity Limitation", "High Pressure Pump",
     "Speed Limitation", "Protection From Exessive Torque", "Slow Path Limitation", "Inner Engine Torque", "Engine Protection"]
@@ -372,7 +371,7 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
         # But since these are generated columns, it's fine to overwrite or create new display columns
         
         # Use a display-specific column name to avoid confusion with raw values
-        # Include index to ensure uniqueness even if col_name is duplicated
+        # Include category name to ensure uniqueness even if col_name is duplicated
         display_col = f"Torque Limit:_{col_name}"
         
         # Get 0/1 values by position

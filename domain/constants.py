@@ -7,7 +7,7 @@ APP_TITLE = "Snapshot Decoder"
 HELP_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
 
 
-# Buttons for each snapshot type
+# Buttons for each V1 snapshot type
 # Button name, COMMAND NAME, tooltip
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     SnapType.ECU_V1: [
@@ -36,6 +36,9 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         ("Torque Control", "V1_TORQUE_CONTROL", 
         "Actual Brake Torque vs Torque Limit"),
     ],
+    
+# Buttons for each V2 snapshot type
+# Button name, COMMAND NAME, tooltip
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", 
         "Battery Voltage vs RPM"),
