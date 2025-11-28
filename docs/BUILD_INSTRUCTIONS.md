@@ -2,6 +2,9 @@
 
 This guide explains how to build a single-file executable (.exe) for the Snapshot Decoder application.
 
+I have changed this script to build a single directory installed instead. 
+Inno Setup 6 is required. Look for 'SnapshotDecoder_Seteup.exe' in the main directory.
+
 ## Prerequisites
 
 1. **Python 3.8 or higher** installed
@@ -87,14 +90,14 @@ If the executable fails with "ModuleNotFoundError":
 ### Logo Not Found
 
 If the logo doesn't appear in PDFs:
-1. Ensure `logo.png` exists in the project root
+1. Ensure `data/images/logo.png` exists in the project root
 2. Check that it's listed in the `datas` section of `build_exe.py`
 3. Rebuild the executable
 
 ### Icon Not Applied
 
 If the executable doesn't have the correct icon:
-1. Ensure `Snapshot_Decoder_Icon.ico` exists
+1. Ensure `data/images/Snapshot_Decoder_Icon.ico` exists
 2. Verify the path in `build_exe.py`
 3. Rebuild the executable
 
@@ -122,7 +125,7 @@ Edit `build_exe.py` to:
 
 After building:
 1. Navigate to `dist/` folder
-2. Double-click `SnapshotDecoder.exe`
+2. Double-click `SnapshotDecoder_setup.exe`
 3. Test all features:
    - Opening snapshot files
    - Creating charts
@@ -144,8 +147,7 @@ python build_exe.py
 
 ## Version Information
 
-The executable will use the version defined in `domain/constants.py`:
-- `APP_TITLE = "Snapshot Decoder"`
-- `APP_VERSION = "1.0.0 (Beta)"`
+The executable will use the version defined in `version.py`:
+
 
 Update these values before building a release version.
