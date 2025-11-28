@@ -3,7 +3,8 @@ import pandas as pd
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
 
-
+# Quick Charts do not pass a chart config data class. I want this method to update all the 
+# controlls on the main ui, then use 'plot chart' to update a chart config.
 def apply_quick_chart_setup(
     main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str = "", 
 primary_max: str = "", secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str="",
