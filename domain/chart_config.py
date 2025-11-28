@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Literal
 import pandas as pd
 
-ChartType = Literal["line", "bar", "bubble", "step", "status"]
+ChartType = Literal["line", "bar", "bubble", "status"]
 
 
 @dataclass
@@ -40,7 +40,7 @@ class ChartConfig:
     Configuration for creating charts with primary and secondary axes.
     
     This dataclass encapsulates all parameters needed to create different types
-    of charts (line, bar, bubble) for use in various contexts (main window,
+    of charts (line, status, bar, bubble) for use in various contexts (main window,
     separate window, or PDF export).
     """
     # Data
