@@ -91,8 +91,10 @@ class HeaderPanel(ttk.Frame):
         self._rows.clear()
 
     # Build the header panel with the given information
-    def build_quick_header(self, file_name: str, header_list: list[tuple[str, str]], 
-    hours: float, mdp_success_rate: float, total_pids: int, frames_found: int):
+    def build_quick_header(
+        self, file_name: str, header_list: list[tuple[str, str]],
+        hours: float, mdp_success_rate: float=0.0
+        ):
         """
         header list: iterable of (key, value). 
         hours: float
@@ -142,11 +144,6 @@ class HeaderPanel(ttk.Frame):
             if (k, v) not in used:
                 add_row(k, v)
         
-        # append other information
-        # if total_pids > 0:
-        #     add_row("Total PIDs", total_pids)
-        # if frames_found > 0:
-        #     add_row("Frames Found", frames_found)
         if mdp_success_rate > 0:
             add_row("MDP Success %", mdp_success_rate)
 

@@ -375,8 +375,12 @@ class SnapshotDecoderApp(tk.Tk):
         
         # Build the header info panel
         if self.engine.header_list:
-            self.header_panel.build_quick_header(self.engine.file_name,self.engine.header_list,self.engine.hours,self.engine.mdp_success_rate,
-            len(self.engine.snapshot.columns),len(self.engine.snapshot))
+            self.header_panel.build_quick_header(
+                self.engine.file_name,
+                self.engine.header_list,
+                self.engine.hours,
+                self.engine.mdp_success_rate
+           )
         else:
             self.header_panel.build_quick_header(self.engine.file_name,[("Header", "No header info present")],0,0,0,0)
       
