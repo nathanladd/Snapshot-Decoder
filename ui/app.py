@@ -104,7 +104,6 @@ class SnapshotDecoderApp(tk.Tk):
         self.secondary_auto.trace_add("write", self._on_axis_setting_change)
         self.chart_type_var.trace_add("write", self._on_chart_type_change)
         
-        # Manage a list of chart configs
         self.chart_cart = ChartCart()
         
         # Single working config that's always synced with widgets
@@ -639,7 +638,6 @@ class SnapshotDecoderApp(tk.Tk):
             
             # Update toolbar with current chart config for PDF export
             self.toolbar.chart_config = self.working_config
-
         except Exception as e:
             messagebox.showerror("Chart Error", f"Failed to render chart: {str(e)}")
 
