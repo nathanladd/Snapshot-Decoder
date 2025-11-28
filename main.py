@@ -63,7 +63,7 @@ def show_splash():
     
     # Load splash image
     try:
-        img_path = resource_path("splash.png")
+        img_path = resource_path("data/images/splash.png")
         if os.path.exists(img_path):
             splash_img = tk.PhotoImage(file=img_path)
             

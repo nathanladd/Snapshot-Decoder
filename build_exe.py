@@ -39,9 +39,9 @@ main_script = os.path.join(script_dir, 'main.py')
 # Define data files to include (format: 'source:destination')
 # These files will be bundled with the executable
 datas = [
-    (os.path.join(script_dir, 'logo.png'), '.'),  # Logo for PDF exports
-    (os.path.join(script_dir, 'Snapshot_Decoder_Icon.ico'), '.'),  # App icon
-    (os.path.join(script_dir, 'splash.png'), '.'),  # Splash image
+    (os.path.join(script_dir, 'data/images/logo.png'), '.'),  # Logo for PDF exports
+    (os.path.join(script_dir, 'data/images/Snapshot_Decoder_Icon.ico'), '.'),  # App icon
+    (os.path.join(script_dir, 'data/images/splash.png'), '.'),  # Splash image
 ]
 
 # Define hidden imports (modules that PyInstaller might miss)

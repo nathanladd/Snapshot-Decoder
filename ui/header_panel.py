@@ -29,7 +29,7 @@ class HeaderPanel(ttk.Frame):
 
         # Logo graphic to the right side of the header panel
         try:
-            logo_path = resource_path("logo.png")
+            logo_path = resource_path("data/images/logo.png")
             if os.path.exists(logo_path):
                 image = Image.open(logo_path)
                 photo = ImageTk.PhotoImage(image)

@@ -52,7 +52,7 @@ class SnapshotDecoderApp(tk.Tk):
         
         # Set icon - use resource_path for PyInstaller compatibility
         try:
-            icon_path = resource_path("Snapshot_Decoder_Icon.ico")
+            icon_path = resource_path("data/images/Snapshot_Decoder_Icon.ico")
             if os.path.exists(icon_path):
                 self.iconbitmap(icon_path)
         except Exception:
