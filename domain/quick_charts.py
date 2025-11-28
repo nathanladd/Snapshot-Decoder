@@ -4,9 +4,12 @@ from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
 
 
-def apply_quick_chart_setup(main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str = "", 
-primary_max: str = "", secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str="", chart_type: str="line", 
-primary_ticks: List[float]=None, primary_tick_labels: List[str]=None, show_legend: bool=True):
+def apply_quick_chart_setup(
+    main_app, snaptype: SnapType, action_id: str, primary_pids: List[str], primary_min: str = "", 
+primary_max: str = "", secondary_pids: List[str]=[], secondary_min: str="", secondary_max: str="",
+chart_type: str="line", primary_ticks: List[float]=None, primary_tick_labels: List[str]=None, 
+show_legend: bool=True):
+
     # Retrieve tooltip for the chart title
     tooltip = None
     if snaptype in BUTTONS_BY_TYPE:
