@@ -31,6 +31,7 @@ from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
 from ui.custom_toolbar import CustomNavigationToolbar
 from ui.chart_cart import ChartCart
+
 from ui.chart_popup import ChartPopupWindow
 from utils import resource_path
 
@@ -382,10 +383,12 @@ class SnapshotDecoderApp(tk.Tk):
                 self.engine.file_name,
                 self.engine.header_list,
                 self.engine.hours,
-                self.engine.mdp_success_rate
-           )
+                self.engine.mdp_success_rate)
         else:
-            self.header_panel.build_quick_header(self.engine.file_name,[("Header", "No header info present")],0,0,0,0)
+            self.header_panel.build_quick_header(
+                self.engine.file_name,
+                [("Header", "No header info present")],
+                0,0,0,0)
       
         # Build the quick chart panel
         self.header_panel.build_quick_chart()  
