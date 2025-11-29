@@ -31,6 +31,7 @@ from ui.pid_info_window import PidInfoWindow
 from ui.data_table_window import DataTableWindow
 from ui.custom_toolbar import CustomNavigationToolbar
 from ui.chart_cart import ChartCart
+from ui.chart_popup import ChartPopupWindow
 from utils import resource_path
 
 class SnapshotDecoderApp(tk.Tk):
@@ -164,6 +165,7 @@ class SnapshotDecoderApp(tk.Tk):
         chart_menu = tk.Menu(menubar, tearoff=0)
         chart_menu.add_command(label="Plot Selected PIDs", command=self.plot_combo_chart)
         chart_menu.add_command(label="Add to Cart", command=self.add_current_to_cart)
+        chart_menu.add_command(label="Pop Out Chart", command=self.pop_out_chart)
         chart_menu.add_command(label="Chart Table", command=self.open_chart_table)
         chart_menu.add_command(label="Clear Chart", command=self.clear_chart)
         chart_menu.add_separator()
@@ -332,7 +334,8 @@ class SnapshotDecoderApp(tk.Tk):
         self.toolbar = CustomNavigationToolbar(
             self.canvas, self.right, pack_toolbar=False,
             cursor_var=self.enable_slider, values_var=self.enable_cursor,
-            add_to_cart_callback=self.add_current_to_cart
+            add_to_cart_callback=self.add_current_to_cart,
+            pop_out_callback=self.pop_out_chart
         )
         self.toolbar.update()
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
@@ -882,6 +885,30 @@ class SnapshotDecoderApp(tk.Tk):
             self.chart_cart.add_config(config_copy)
         else:
             messagebox.showinfo("No chart", "Configure a chart first to add it to the cart.")
+
+    def pop_out_chart(self):
+        """Open the current chart in a separate window."""
+        self._sync_working_config()
+        
+        if not self.working_config:
+            messagebox.showinfo("No chart", "Configure a chart first to pop it out.")
+            return
+        
+        # Capture current axis limits from the chart (after pan/zoom)
+        if hasattr(self, 'ax_left') and self.ax_left:
+            ymin_primary, ymax_primary = self.ax_left.get_ylim()
+            self.working_config.primary_axis.min_value = ymin_primary
+            self.working_config.primary_axis.max_value = ymax_primary
+            self.working_config.primary_axis.auto_scale = False
+        
+        if hasattr(self, 'ax_right') and self.ax_right:
+            ymin_secondary, ymax_secondary = self.ax_right.get_ylim()
+            self.working_config.secondary_axis.min_value = ymin_secondary
+            self.working_config.secondary_axis.max_value = ymax_secondary
+            self.working_config.secondary_axis.auto_scale = False
+        
+        # Open pop-out window with current config and cart
+        ChartPopupWindow(self, self.working_config, chart_cart=self.chart_cart)
 
 #------------------------------------------------------------------------------------------------------------------------------
 # ------------------------------------ Build a new window with a data table ---------------------------------------------------

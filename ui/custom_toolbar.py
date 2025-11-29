@@ -13,20 +13,22 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
     """Custom navigation toolbar that saves charts as PDF with metadata."""
 
     def __init__(self, canvas, window, *, pack_toolbar=True, chart_config=None,
-                 cursor_var=None, values_var=None, add_to_cart_callback=None):
+                 cursor_var=None, values_var=None, add_to_cart_callback=None,
+                 pop_out_callback=None):
         self.chart_config = chart_config
         self._cursor_var = cursor_var
         self._values_var = values_var
         self._add_to_cart_callback = add_to_cart_callback
+        self._pop_out_callback = pop_out_callback
         super().__init__(canvas, window, pack_toolbar=pack_toolbar)
         
         # Add toggle buttons for cursor and values after toolbar is built
-        if self._cursor_var is not None or self._values_var is not None or self._add_to_cart_callback is not None:
+        if self._cursor_var is not None or self._values_var is not None or self._add_to_cart_callback is not None or self._pop_out_callback is not None:
             # Get toolbar background color and create matching styles
             bg_color = self.cget('background')
             style = ttk.Style()
             style.configure("Toolbar.TCheckbutton", font=("TkDefaultFont", 14), background=bg_color)
-            style.configure("Toolbar.TButton", font=("TkDefaultFont", 12), background=bg_color)
+            style.configure("Toolbar.TButton", font=("TkDefaultFont", 16), background=bg_color, borderwidth=0, relief="flat")
             
             # Add a separator
             sep = ttk.Separator(self, orient=tk.VERTICAL)
@@ -45,6 +47,12 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
             btn_cart = ttk.Button(self, text="🛒", width=3, style="Toolbar.TButton",
                                   command=self._add_to_cart_callback)
             btn_cart.pack(side=tk.LEFT, padx=2)
+        
+        # Add "Pop Out" button
+        if self._pop_out_callback is not None:
+            btn_popout = ttk.Button(self, text="⧉", width=3, style="Toolbar.TButton",
+                                    command=self._pop_out_callback)
+            btn_popout.pack(side=tk.LEFT, padx=2)
 
     # Override toolitems to exclude the Subplots button
     toolitems = [
