@@ -166,6 +166,9 @@ class SnapshotDecoderApp(tk.Tk):
         chart_menu.add_command(label="Add to Cart", command=self.add_current_to_cart)
         chart_menu.add_command(label="Chart Table", command=self.open_chart_table)
         chart_menu.add_command(label="Clear Chart", command=self.clear_chart)
+        chart_menu.add_separator()
+        chart_menu.add_checkbutton(label="Show Cursor", variable=self.enable_slider)
+        chart_menu.add_checkbutton(label="Show Values", variable=self.enable_cursor)
         menubar.add_cascade(label="Chart", menu=chart_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -285,7 +288,6 @@ class SnapshotDecoderApp(tk.Tk):
         plot_btns = ttk.Frame(left_border)
         plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
         ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
-        ttk.Button(plot_btns, text="Add to Cart", command=self.add_current_to_cart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
         ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
 
         # Primary axis controls
@@ -329,7 +331,8 @@ class SnapshotDecoderApp(tk.Tk):
         # Add matplotlib toolbar for zoom, pan, save, etc.
         self.toolbar = CustomNavigationToolbar(
             self.canvas, self.right, pack_toolbar=False,
-            cursor_var=self.enable_slider, values_var=self.enable_cursor
+            cursor_var=self.enable_slider, values_var=self.enable_cursor,
+            add_to_cart_callback=self.add_current_to_cart
         )
         self.toolbar.update()
         self.toolbar.pack(side=tk.TOP, fill=tk.X)

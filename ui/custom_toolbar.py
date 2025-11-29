@@ -13,17 +13,20 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
     """Custom navigation toolbar that saves charts as PDF with metadata."""
 
     def __init__(self, canvas, window, *, pack_toolbar=True, chart_config=None,
-                 cursor_var=None, values_var=None):
+                 cursor_var=None, values_var=None, add_to_cart_callback=None):
         self.chart_config = chart_config
         self._cursor_var = cursor_var
         self._values_var = values_var
+        self._add_to_cart_callback = add_to_cart_callback
         super().__init__(canvas, window, pack_toolbar=pack_toolbar)
         
         # Add toggle buttons for cursor and values after toolbar is built
-        if self._cursor_var is not None or self._values_var is not None:
-            # Create style for larger font checkbuttons
+        if self._cursor_var is not None or self._values_var is not None or self._add_to_cart_callback is not None:
+            # Get toolbar background color and create matching styles
+            bg_color = self.cget('background')
             style = ttk.Style()
-            style.configure("Toolbar.TCheckbutton", font=("TkDefaultFont", 14))
+            style.configure("Toolbar.TCheckbutton", font=("TkDefaultFont", 14), background=bg_color)
+            style.configure("Toolbar.TButton", font=("TkDefaultFont", 12), background=bg_color)
             
             # Add a separator
             sep = ttk.Separator(self, orient=tk.VERTICAL)
@@ -34,6 +37,14 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
         if self._values_var is not None:
             cb_values = ttk.Checkbutton(self, text="#", variable=self._values_var, style="Toolbar.TCheckbutton")
             cb_values.pack(side=tk.LEFT, padx=2)
+        
+        # Add "Add to Cart" button
+        if self._add_to_cart_callback is not None:
+            sep2 = ttk.Separator(self, orient=tk.VERTICAL)
+            sep2.pack(side=tk.LEFT, fill=tk.Y, padx=4, pady=2)
+            btn_cart = ttk.Button(self, text="🛒", width=3, style="Toolbar.TButton",
+                                  command=self._add_to_cart_callback)
+            btn_cart.pack(side=tk.LEFT, padx=2)
 
     # Override toolitems to exclude the Subplots button
     toolitems = [
