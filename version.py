@@ -1,3 +1,3 @@
 """Single source of truth for application version."""
 
-APP_VERSION = "1.0.4 (Beta)"
+APP_VERSION = "1.0.5 (Beta)"
