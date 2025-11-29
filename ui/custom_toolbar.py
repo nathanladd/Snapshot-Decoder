@@ -2,6 +2,8 @@
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from matplotlib.backends.backend_pdf import PdfPages
 from tkinter import filedialog
+import tkinter as tk
+from tkinter import ttk
 import os
 
 from version import APP_VERSION
@@ -10,9 +12,28 @@ from version import APP_VERSION
 class CustomNavigationToolbar(NavigationToolbar2Tk):
     """Custom navigation toolbar that saves charts as PDF with metadata."""
 
-    def __init__(self, canvas, window, *, pack_toolbar=True, chart_config=None):
+    def __init__(self, canvas, window, *, pack_toolbar=True, chart_config=None,
+                 cursor_var=None, values_var=None):
         self.chart_config = chart_config
+        self._cursor_var = cursor_var
+        self._values_var = values_var
         super().__init__(canvas, window, pack_toolbar=pack_toolbar)
+        
+        # Add toggle buttons for cursor and values after toolbar is built
+        if self._cursor_var is not None or self._values_var is not None:
+            # Create style for larger font checkbuttons
+            style = ttk.Style()
+            style.configure("Toolbar.TCheckbutton", font=("TkDefaultFont", 14))
+            
+            # Add a separator
+            sep = ttk.Separator(self, orient=tk.VERTICAL)
+            sep.pack(side=tk.LEFT, fill=tk.Y, padx=4, pady=2)
+        if self._cursor_var is not None:
+            cb_cursor = ttk.Checkbutton(self, text="│", variable=self._cursor_var, style="Toolbar.TCheckbutton")
+            cb_cursor.pack(side=tk.LEFT, padx=2)
+        if self._values_var is not None:
+            cb_values = ttk.Checkbutton(self, text="#", variable=self._values_var, style="Toolbar.TCheckbutton")
+            cb_values.pack(side=tk.LEFT, padx=2)
 
     # Override toolitems to exclude the Subplots button
     toolitems = [

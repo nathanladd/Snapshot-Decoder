@@ -281,15 +281,9 @@ class SnapshotDecoderApp(tk.Tk):
         axis = ttk.Labelframe(left_border, text="Axis ranges (optional)")
         axis.grid(row=5, column=0, sticky="ew", pady=(8,6))
 
-        # Interaction options - row 6
-        interact_frame = ttk.Frame(left_border)
-        interact_frame.grid(row=6, column=0, sticky="ew", pady=(0,6))
-        ttk.Checkbutton(interact_frame, text="Show Cursor", variable=self.enable_slider).pack(side=tk.LEFT, padx=(0,10))
-        ttk.Checkbutton(interact_frame, text="Show Values", variable=self.enable_cursor).pack(side=tk.LEFT)
-
-        # Plot and clear buttons - row 7
+        # Plot and clear buttons - row 6
         plot_btns = ttk.Frame(left_border)
-        plot_btns.grid(row=7, column=0, sticky="ew", pady=(0,8))
+        plot_btns.grid(row=6, column=0, sticky="ew", pady=(0,8))
         ttk.Button(plot_btns, text="Plot Chart", command=self.plot_combo_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0,2))
         ttk.Button(plot_btns, text="Add to Cart", command=self.add_current_to_cart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,2))
         ttk.Button(plot_btns, text="Clear Chart", command=self.clear_chart).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2,0))
@@ -333,7 +327,10 @@ class SnapshotDecoderApp(tk.Tk):
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.right)
         
         # Add matplotlib toolbar for zoom, pan, save, etc.
-        self.toolbar = CustomNavigationToolbar(self.canvas, self.right, pack_toolbar=False)
+        self.toolbar = CustomNavigationToolbar(
+            self.canvas, self.right, pack_toolbar=False,
+            cursor_var=self.enable_slider, values_var=self.enable_cursor
+        )
         self.toolbar.update()
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
         
