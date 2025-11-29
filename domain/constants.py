@@ -64,7 +64,7 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         
     ],
     SnapType.EUD_V1: [
-        
+        ("Speed/Load", "V1EUD_SPEED_V_LOAD", "Speed vs Load"),
     ],
     SnapType.EUD_V2: [
         

@@ -50,6 +50,10 @@ class ChartRenderer:
         if self.config.data is None or self.config.data.empty:
             raise ValueError("ChartConfig must have non-empty data")
         
+        # Skip series validation for sized bubble charts (they use bubble_size_column instead)
+        if self.config.bubble_size_column:
+            return
+        
         if not self.config.primary_axis.series and not self.config.secondary_axis.series:
             raise ValueError("At least one series must be specified in primary or secondary axis")
     
@@ -95,6 +99,9 @@ class ChartRenderer:
             plot_data["Time"] = plot_data["Time"].dt.total_seconds()
         elif pd.api.types.is_timedelta64_dtype(plot_data.get("Time (MM:SS)")):
             plot_data["Time (MM:SS)"] = plot_data["Time (MM:SS)"].dt.total_seconds()
+        
+        # Store figure reference for colorbar support in bubble charts
+        self._figure = figure
         
         # Create axes
         ax_left = figure.add_subplot(111)
@@ -144,6 +151,9 @@ class ChartRenderer:
     def render_thumbnail(self, figsize=(4, 2), dpi=50):
         """Render a small thumbnail of the chart."""
         fig = Figure(figsize=figsize, dpi=dpi)
+        
+        # Store figure reference for colorbar support
+        self._figure = fig
         
         # Create axes
         ax_left = fig.add_subplot(111)
@@ -407,7 +417,12 @@ class ChartRenderer:
         df = plot_data
         x_key = self.config.get_x_column()
         
-        # For bubble charts, we'll use scatter plots
+        # Check if this is a size-column bubble chart (e.g., Speed vs Load)
+        if self.config.bubble_size_column and self.config.bubble_size_column in df.columns:
+            self._render_sized_bubble_chart(ax_left, df)
+            return
+        
+        # For standard bubble charts, we'll use scatter plots
         # The marker size can be controlled via series_styles
         
         # Plot primary series
@@ -453,6 +468,56 @@ class ChartRenderer:
                         color=style.color,
                         alpha=style.alpha
                     )
+    
+    def _render_sized_bubble_chart(self, ax: Axes, df: pd.DataFrame):
+        """Render a bubble chart where bubble size comes from a data column."""
+        x_col = self.config.get_x_column()
+        size_col = self.config.bubble_size_column
+        
+        # Get y column from primary_axis.series or infer from data
+        if self.config.primary_axis.series:
+            y_col = self.config.primary_axis.series[0]
+        else:
+            # Infer y_col: first column that isn't x_col or size_col
+            for col in df.columns:
+                if col != x_col and col != size_col:
+                    y_col = col
+                    break
+            else:
+                y_col = None
+        
+        if not x_col or not y_col or not size_col:
+            return
+        
+        x = pd.to_numeric(df[x_col], errors="coerce")
+        y = pd.to_numeric(df[y_col], errors="coerce")
+        
+        # Scale bubble sizes based on figure size (reference: thumbnail at 4x2 = 8 sq inches)
+        base_scale = self.config.bubble_size_scale
+        if hasattr(self, '_figure') and self._figure:
+            fig_width, fig_height = self._figure.get_size_inches()
+            fig_area = fig_width * fig_height
+            thumbnail_area = 4 * 2  # 8 sq inches
+            # Scale up sizes for larger figures to maintain visual proportion
+            area_ratio = fig_area / thumbnail_area
+            base_scale = self.config.bubble_size_scale * area_ratio
+        
+        sizes = pd.to_numeric(df[size_col], errors="coerce") * base_scale
+        
+        scatter = ax.scatter(
+            x, y,
+            s=sizes,
+            alpha=0.6,
+            c=df[size_col],
+            cmap='viridis',
+            edgecolors='black',
+            linewidth=0.5
+        )
+        
+        # Add colorbar
+        if hasattr(self, '_figure') and self._figure:
+            cbar = self._figure.colorbar(scatter, ax=ax)
+            cbar.set_label(f'{size_col}')
     
     def _apply_formatting(self, ax_left: Axes, ax_right: Optional[Axes]):
         """Apply formatting to the axes."""

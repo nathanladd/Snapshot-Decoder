@@ -422,6 +422,8 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_AIR_FUEL_RATIO": quick_charts.V1_show_air_fuel_ratio_chart,
             "V1_TORQUE_CONTROL": quick_charts.V1_show_torque_control_chart,
 
+            "V1EUD_SPEED_V_LOAD": quick_charts.V1EUD_show_speed_load_chart,
+
             "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
             "V2_RAIL_PRESSURE": quick_charts.V2_show_rail_pressure_chart,
             "V2_RAIL_GAP": quick_charts.V2_show_rail_gap_chart,
@@ -431,6 +433,8 @@ class SnapshotDecoderApp(tk.Tk):
             "V2_THROTTLE_VALVE": quick_charts.V2_show_throttle_chart,
             "V2_ENGINE_LOAD": quick_charts.V2_show_load_chart,
             "V2_ENGINE_TORQUE_LIMITS": quick_charts.V2_show_engine_torque_limits
+
+
             # add more as needed
         }
 
@@ -866,8 +870,9 @@ class SnapshotDecoderApp(tk.Tk):
 
     def add_current_to_cart(self):
         """Add a deep copy of the working config to the cart."""
-        # Sync to capture any uncommitted widget changes
-        self._sync_working_config()
+        # Only sync if not a custom bubble chart (which has its own config)
+        if not (self.working_config and self.working_config.bubble_size_column):
+            self._sync_working_config()
         
         if self.working_config:
             # Capture current axis limits from the chart (after pan/zoom)
@@ -891,7 +896,9 @@ class SnapshotDecoderApp(tk.Tk):
 
     def pop_out_chart(self):
         """Open the current chart in a separate window."""
-        self._sync_working_config()
+        # Only sync if not a custom bubble chart (which has its own config)
+        if not (self.working_config and self.working_config.bubble_size_column):
+            self._sync_working_config()
         
         if not self.working_config:
             messagebox.showinfo("No chart", "Configure a chart first to pop it out.")

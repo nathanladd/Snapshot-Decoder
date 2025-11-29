@@ -79,6 +79,10 @@ class ChartConfig:
     date_time: Optional[str] = None
     engine_hours: Optional[float] = None
     
+    # Bubble chart specific: column to use for bubble size
+    bubble_size_column: Optional[str] = None
+    bubble_size_scale: float = 50.0  # Multiplier for bubble sizes
+    
     def get_x_column(self) -> Optional[str]:
         """Determine the X-axis column from data."""
         if self.x_column:

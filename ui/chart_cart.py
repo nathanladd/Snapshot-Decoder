@@ -65,13 +65,23 @@ class ChartCart:
         """Add a single item to the UI."""
         # Import here to avoid circular imports
         from ui.chart_renderer import ChartRenderer
+        from matplotlib.figure import Figure
         
         item_frame = ttk.Frame(self.scrollable_frame, relief="raised", borderwidth=1)
         item_frame.pack(fill=tk.X, padx=2, pady=2)
 
-        # Thumbnail
-        renderer = ChartRenderer(config)
-        fig = renderer.render_thumbnail()
+        # Thumbnail - with fallback for special chart types
+        try:
+            renderer = ChartRenderer(config)
+            fig = renderer.render_thumbnail()
+        except ValueError:
+            # Fallback for charts that can't render normally (e.g., custom bubble charts)
+            fig = Figure(figsize=(4, 2), dpi=50)
+            ax = fig.add_subplot(111)
+            ax.text(0.5, 0.5, config.title or "Chart", ha='center', va='center', fontsize=8)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            
         canvas = FigureCanvasTkAgg(fig, master=item_frame)
         canvas_widget = canvas.get_tk_widget()
         canvas_widget.pack(side=tk.TOP, padx=2, pady=2)

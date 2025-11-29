@@ -394,3 +394,108 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
 # ---------------------------------- EUD_V1 ----------------------------------
 # ----------------------------------------------------------------------------
 
+def V1EUD_show_speed_load_chart(main_app, snaptype: SnapType):
+    """Build a speed vs load bubble chart from EUD timer data."""
+    
+    # Get total engine run time in seconds (convert to float in case it's stored as string)
+    engine_run_time = float(main_app.engine.snapshot['EUD_Engine_run_time_total_nvv'].iloc[0])
+    
+    # Speed mapping: index -> RPM (0=900, 1=1100, 2=1300, etc.)
+    speed_map = {i: 900 + (i * 200) for i in range(16)}  # Adjust range as needed
+    
+    # Load mapping: index -> percent (0=5%, 1=15%, 2=25%, etc.)
+    load_map = {i: 5 + (i * 10) for i in range(11)}  # Adjust range as needed
+    
+    # Build the DataFrame by looping through all EUD_Spdload_blm_timer_nvv[*,*] columns
+    rows = []
+    snapshot = main_app.engine.snapshot
+    
+    for col in snapshot.columns:
+        if col.startswith('EUD_Spdload_blm_timer_nvv['):
+            # Parse indices from column name like "EUD_Spdload_blm_timer_nvv[0,0]"
+            try:
+                indices = col.split('[')[1].rstrip(']').split(',')
+                speed_idx = int(indices[0])
+                load_idx = int(indices[1])
+                
+                # Get the timer value (seconds at this speed/load)
+                timer_value = float(snapshot[col].iloc[0])
+                
+                # Calculate percent of total run time
+                if engine_run_time > 0:
+                    percent = (timer_value / engine_run_time) * 100
+                else:
+                    percent = 0
+                
+                # Map indices to actual speed and load values
+                speed = speed_map.get(speed_idx, speed_idx)
+                load = load_map.get(load_idx, load_idx)
+                
+                rows.append({
+                    'Speed': speed,
+                    'Load': load,
+                    'Percent': percent
+                })
+            except (IndexError, ValueError):
+                continue
+    
+    # Create DataFrame
+    speed_load_df = pd.DataFrame(rows)
+    
+    # Filter out zero-percent entries for cleaner visualization
+    speed_load_df = speed_load_df[speed_load_df['Percent'] > 0]
+    
+    # Clear and set up the chart axes
+    main_app.figure.clear()
+    ax = main_app.figure.add_subplot(111)
+    
+    # Create scatter plot with size based on Percent
+    # Scale the sizes based on figure area (reference: thumbnail at 4x2 = 8 sq inches)
+    fig_width, fig_height = main_app.figure.get_size_inches()
+    fig_area = fig_width * fig_height
+    thumbnail_area = 4 * 2  # 8 sq inches
+    area_ratio = fig_area / thumbnail_area
+    base_scale = 50.0 * area_ratio
+    sizes = speed_load_df['Percent'] * base_scale
+    
+    scatter = ax.scatter(
+        speed_load_df['Speed'],
+        speed_load_df['Load'],
+        s=sizes,
+        alpha=0.6,
+        c=speed_load_df['Percent'],  # Color by percent too
+        cmap='viridis',
+        edgecolors='black',
+        linewidth=0.5
+    )
+    
+    # Add colorbar to show percent scale
+    cbar = main_app.figure.colorbar(scatter, ax=ax)
+    cbar.set_label('% of Run Time')
+    
+    # Labels and title
+    ax.set_xlabel('Engine Speed (RPM)')
+    ax.set_ylabel('Load (%)')
+    ax.set_title('Speed vs Load Distribution')
+    ax.grid(True, alpha=0.3)
+    
+    # Store axes reference
+    main_app.ax_left = ax
+    main_app.ax_right = None
+    
+    # Update canvas
+    main_app.canvas.draw()
+    
+    # Update working_config for consistency (with custom data)
+    from domain.chart_config import ChartConfig, AxisConfig
+    main_app.working_config = ChartConfig(
+        data=speed_load_df,
+        chart_type="bubble",
+        primary_axis=AxisConfig(series=['Load'], auto_scale=True),
+        secondary_axis=AxisConfig(series=[], auto_scale=True),
+        title="Speed vs Load Distribution",
+        x_column="Speed",
+        bubble_size_column="Percent",
+        bubble_size_scale=50.0
+    )
+    
