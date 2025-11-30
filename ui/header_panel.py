@@ -93,7 +93,7 @@ class HeaderPanel(ttk.Frame):
     # Build the header panel with the given information
     def build_quick_header(
         self, file_name: str, header_list: list[tuple[str, str]],
-        hours: float, mdp_success_rate: float=0.0
+        hours: float, mdp_success_rate: float=0.0, idle_time: float=0.0
         ):
         """
         header list: iterable of (key, value). 
@@ -133,6 +133,10 @@ class HeaderPanel(ttk.Frame):
         if hours > 0:
             add_row("Engine Hours", hours)
 
+        print(f"Idle time in header_panel: {idle_time}")    
+        if idle_time > 0:
+            add_row("Idle Time", idle_time)
+
         # priority pass
         for want in priority:
             for k, v in header_list:
@@ -146,4 +150,6 @@ class HeaderPanel(ttk.Frame):
         
         if mdp_success_rate > 0:
             add_row("MDP Success %", mdp_success_rate)
+        
+        
 

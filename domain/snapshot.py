@@ -33,6 +33,7 @@ class Snapshot:
         self.pid_info: Dict[str, Dict[str, str]] = {}
         self.snapshot_type: SnapType = SnapType.EMPTY
         self.mdp_success_rate: float = 0.0
+        self.idle_time: float = 0.0
 
     
     @classmethod
@@ -81,6 +82,9 @@ class Snapshot:
         
         # Extract engine hours
         self.hours = self._find_engine_hours()
+
+        # Extract engine idle time
+        self.idle_time = self._find_idle_time()
         
         # Extract MDP success rate
         self.mdp_success_rate = self._calculate_mdp_success()
@@ -135,6 +139,51 @@ class Snapshot:
                 seconds = float(frame_zero_rows[column_name].iloc[0])
                 # Convert seconds to hours and round to tenth of an hour
                 hours = round(seconds / 3600, 1)
+                return hours
+            except (ValueError, IndexError, TypeError):
+                return 0.0
+        else:
+            # Unit is hours or unknown, return the value directly
+            try:
+                return round(float(frame_zero_rows[column_name].iloc[0]), 1)
+            except (ValueError, IndexError, TypeError):
+                return 0.0
+
+    def _find_idle_time(self) -> float:
+        """
+        Find the idle time in the snapshot by reading the EUD_Engine_idle_time_nvv column.
+        Gets the value at Frame == 0.
+        
+        Returns:
+            Idle time as float rounded to tenth, or 0.0 if not found
+        """
+        column_name = "EUD_Engine_idle_time_nvv"
+        
+        # Check if column exists in the snapshot
+        if column_name not in self.snapshot.columns:
+            return 0.0
+        
+        # Check if Frame column exists
+        if "Frame" not in self.snapshot.columns:
+            return 0.0
+        
+        # Get the row where Frame == 0
+        frame_zero_rows = self.snapshot[self.snapshot["Frame"] == 0]
+        if frame_zero_rows.empty:
+            return 0.0
+        
+        # Get the unit from pid_info to determine if conversion is needed
+        unit = ""
+        if column_name in self.pid_info:
+            unit = self.pid_info[column_name].get("Unit", "").lower()
+        
+        # If unit contains "second", convert from seconds to hours
+        if "second" in unit:
+            try:
+                seconds = float(frame_zero_rows[column_name].iloc[0])
+                # Convert seconds to hours and round to tenth of an hour
+                hours = round(seconds / 3600, 1)
+                print(f"Engine Idle Time: {hours}")
                 return hours
             except (ValueError, IndexError, TypeError):
                 return 0.0

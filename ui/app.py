@@ -383,7 +383,8 @@ class SnapshotDecoderApp(tk.Tk):
                 self.engine.file_name,
                 self.engine.header_list,
                 self.engine.hours,
-                self.engine.mdp_success_rate)
+                self.engine.mdp_success_rate,
+                self.engine.idle_time)
         else:
             self.header_panel.build_quick_header(
                 self.engine.file_name,
