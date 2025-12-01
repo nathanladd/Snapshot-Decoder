@@ -499,3 +499,207 @@ def V1EUD_show_speed_load_chart(main_app, snaptype: SnapType):
         bubble_size_scale=50.0
     )
     
+def V1EUD_show_speed_band_chart(main_app, snaptype: SnapType):
+    """
+    Build a bar chart showing speed band run times from Frame 0 values.
+    Converts seconds to hours for display.
+    """
+    from domain.chart_config import ChartConfig, AxisConfig
+    from ui.chart_renderer import ChartRenderer
+    
+    # Column names for speed bands
+    columns = [
+        "EUD_Engine_run_time_spdbnd1_nvv",
+        "EUD_Engine_run_time_spdbnd2_nvv",
+        "EUD_Engine_run_time_spdbnd3_nvv",
+        "EUD_Engine_run_time_spdbnd4_nvv",
+        "EUD_Engine_run_time_spdbnd5_nvv"
+    ]
+    
+    # Display labels for the bars
+    labels = ["< 1250", "1250-1600", "1600-2000", "2000-2400", "> 2400"]
+    
+    df = main_app.engine.snapshot
+    
+    # Get Frame 0 row
+    frame_zero = df[df["Frame"] == 0]
+    if frame_zero.empty:
+        return
+    
+    # Extract values at Frame 0 and convert seconds to hours
+    values = []
+    for col in columns:
+        if col in frame_zero.columns:
+            try:
+                seconds = float(frame_zero[col].iloc[0])
+                hours = round(seconds / 3600, 2)
+                values.append(hours)
+            except (ValueError, IndexError, TypeError):
+                values.append(0.0)
+        else:
+            values.append(0.0)
+    
+    # Create DataFrame for bar chart
+    chart_data = pd.DataFrame({
+        "Speed Band": labels,
+        "Hours": values
+    })
+    
+    # Create chart config
+    config = ChartConfig(
+        data=chart_data,
+        chart_type="bar",
+        primary_axis=AxisConfig(series=["Hours"], auto_scale=True),
+        secondary_axis=AxisConfig(series=[], auto_scale=True),
+        title="Speed Band Run Time",
+        x_column="Speed Band",
+        x_label="Speed Band",
+        pid_info=main_app.engine.pid_info,
+        file_name=main_app.engine.file_name,
+        date_time=main_app.engine.date_time,
+        engine_hours=main_app.engine.hours
+    )
+    
+    # Render the chart
+    main_app.working_config = config
+    renderer = ChartRenderer(config)
+    main_app.ax_left, main_app.ax_right = renderer.render(main_app.figure, main_app.canvas)
+    main_app.toolbar.chart_config = config
+
+def V1EUD_show_elevation_chart(main_app, snaptype: SnapType):
+    """
+    Build a bar chart showing atmospheric pressure PIDs converted to elevation.
+    """
+    from domain.chart_config import ChartConfig, AxisConfig
+    from ui.chart_renderer import ChartRenderer
+    
+    # Column names for speed bands
+    columns = [
+        "EUD_Atmos_pres_timer_nvv[7]",
+        "EUD_Atmos_pres_timer_nvv[6]",
+        "EUD_Atmos_pres_timer_nvv[5]",
+        "EUD_Atmos_pres_timer_nvv[4]",
+        "EUD_Atmos_pres_timer_nvv[3]",
+        "EUD_Atmos_pres_timer_nvv[2]",
+        "EUD_Atmos_pres_timer_nvv[1]",
+        "EUD_Atmos_pres_timer_nvv[0]"
+    ]
+    
+    # Display labels for the bars
+    labels = ["< Sea Level", "0-1,640 Ft", "1,640-3,280 Ft", "3,280-4,920 Ft", "4,920-6,560 Ft", "6,560-9,850 Ft", "9,850-13,120 Ft", ">13,120 Ft"]
+    
+    df = main_app.engine.snapshot
+    
+    # Get Frame 0 row
+    frame_zero = df[df["Frame"] == 0]
+    if frame_zero.empty:
+        return
+    
+    # Extract values at Frame 0 and convert seconds to hours
+    values = []
+    for col in columns:
+        if col in frame_zero.columns:
+            try:
+                seconds = float(frame_zero[col].iloc[0])
+                hours = round(seconds / 3600, 2)
+                values.append(hours)
+            except (ValueError, IndexError, TypeError):
+                values.append(0.0)
+        else:
+            values.append(0.0)
+    
+    # Create DataFrame for bar chart
+    chart_data = pd.DataFrame({
+        "Elevation": labels,
+        "Hours": values
+    })
+    
+    # Create chart config
+    config = ChartConfig(
+        data=chart_data,
+        chart_type="bar",
+        primary_axis=AxisConfig(series=["Hours"], auto_scale=True),
+        secondary_axis=AxisConfig(series=[], auto_scale=True),
+        title="Time at Elevation",
+        x_column="Elevation",
+        x_label="Elevation",
+        pid_info=main_app.engine.pid_info,
+        file_name=main_app.engine.file_name,
+        date_time=main_app.engine.date_time,
+        engine_hours=main_app.engine.hours
+    )
+    
+    # Render the chart
+    main_app.working_config = config
+    renderer = ChartRenderer(config)
+    main_app.ax_left, main_app.ax_right = renderer.render(main_app.figure, main_app.canvas)
+    main_app.toolbar.chart_config = config
+
+def V1EUD_show_EGT_chart(main_app, snaptype: SnapType):
+    """
+    Build a bar chart showing EGT hours.
+    """
+    from domain.chart_config import ChartConfig, AxisConfig
+    from ui.chart_renderer import ChartRenderer
+    
+    # Column names for speed bands
+    columns = [
+        "EUD_Turbine_in_temp_timer_nvv[0]",
+        "EUD_Turbine_in_temp_timer_nvv[1]",
+        "EUD_Turbine_in_temp_timer_nvv[2]",
+        "EUD_Turbine_in_temp_timer_nvv[3]",
+        "EUD_Turbine_in_temp_timer_nvv[4]",
+        "EUD_Turbine_in_temp_timer_nvv[5]",
+        "EUD_Turbine_in_temp_timer_nvv[6]",
+        "EUD_Turbine_in_temp_timer_nvv[7]"
+    ]
+    
+    # Display labels for the bars
+    labels = ["< 32F", "0-212F", "212-392F", "392-752F", "752-1112F", "1112-1292F", "1292-1382F", "1382-1562F"]
+    
+    df = main_app.engine.snapshot
+    
+    # Get Frame 0 row
+    frame_zero = df[df["Frame"] == 0]
+    if frame_zero.empty:
+        return
+    
+    # Extract values at Frame 0
+    values = []
+    for col in columns:
+        if col in frame_zero.columns:
+            try:
+                seconds = float(frame_zero[col].iloc[0])
+                hours = round(seconds / 3600, 2)
+                values.append(hours)
+            except (ValueError, IndexError, TypeError):
+                values.append(0.0)
+        else:
+            values.append(0.0)
+    
+    # Create DataFrame for bar chart
+    chart_data = pd.DataFrame({
+        "EGT": labels,
+        "Hours": values
+    })
+    
+    # Create chart config
+    config = ChartConfig(
+        data=chart_data,
+        chart_type="bar",
+        primary_axis=AxisConfig(series=["Hours"], auto_scale=True),
+        secondary_axis=AxisConfig(series=[], auto_scale=True),
+        title="Time at EGT",
+        x_column="EGT",
+        x_label="EGT",
+        pid_info=main_app.engine.pid_info,
+        file_name=main_app.engine.file_name,
+        date_time=main_app.engine.date_time,
+        engine_hours=main_app.engine.hours
+    )
+    
+    # Render the chart
+    main_app.working_config = config
+    renderer = ChartRenderer(config)
+    main_app.ax_left, main_app.ax_right = renderer.render(main_app.figure, main_app.canvas)
+    main_app.toolbar.chart_config = config

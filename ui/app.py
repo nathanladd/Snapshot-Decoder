@@ -361,8 +361,7 @@ class SnapshotDecoderApp(tk.Tk):
         # Use an Open File diaglog box to get the file path
         path = filedialog.askopenfilename(
             title="Open Bobcat Snapshot File",
-            filetypes=[("Fake .xls", ".xls"), ("Converted Excel", "*.xlsx"), ("All files", "*.*")]
-        )
+            filetypes=[("Fake .xls", ".xls"), ("Converted Excel", "*.xlsx"), ("All files", "*.*")])
 
         if not path:
             return
@@ -424,6 +423,9 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_TORQUE_CONTROL": quick_charts.V1_show_torque_control_chart,
 
             "V1EUD_SPEED_V_LOAD": quick_charts.V1EUD_show_speed_load_chart,
+            "V1EUD_SPEED_BAND": quick_charts.V1EUD_show_speed_band_chart,
+            "V1EUD_ELEVATION": quick_charts.V1EUD_show_elevation_chart,
+            "V1EUD_EGT": quick_charts.V1EUD_show_EGT_chart,
 
             "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
             "V2_RAIL_PRESSURE": quick_charts.V2_show_rail_pressure_chart,
@@ -871,8 +873,8 @@ class SnapshotDecoderApp(tk.Tk):
 
     def add_current_to_cart(self):
         """Add a deep copy of the working config to the cart."""
-        # Only sync if not a custom bubble chart (which has its own config)
-        if not (self.working_config and self.working_config.bubble_size_column):
+        # Only sync if not a custom chart (bubble or bar with custom data)
+        if not (self.working_config and (self.working_config.bubble_size_column or self.working_config.chart_type == "bar")):
             self._sync_working_config()
         
         if self.working_config:
@@ -897,8 +899,8 @@ class SnapshotDecoderApp(tk.Tk):
 
     def pop_out_chart(self):
         """Open the current chart in a separate window."""
-        # Only sync if not a custom bubble chart (which has its own config)
-        if not (self.working_config and self.working_config.bubble_size_column):
+        # Only sync if not a custom chart (bubble or bar with custom data)
+        if not (self.working_config and (self.working_config.bubble_size_column or self.working_config.chart_type == "bar")):
             self._sync_working_config()
         
         if not self.working_config:

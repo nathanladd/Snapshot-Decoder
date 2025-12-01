@@ -7,6 +7,7 @@ separate windows, or PDF export.
 """
 
 from typing import Optional, Tuple
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -362,6 +363,22 @@ class ChartRenderer:
         df = plot_data
         x_key = self.config.get_x_column()
         
+        # Get x values and check if categorical (strings)
+        if x_key and x_key in df.columns:
+            x_raw = df[x_key]
+            is_categorical = not pd.api.types.is_numeric_dtype(x_raw)
+        else:
+            x_raw = df.index
+            is_categorical = False
+        
+        # For categorical data, use numeric positions
+        if is_categorical:
+            x_positions = np.arange(len(x_raw))
+            x_labels = x_raw.tolist()
+        else:
+            x_positions = x_raw
+            x_labels = None
+        
         # Calculate bar width and positions
         num_primary = len(self.config.primary_axis.series)
         num_secondary = len(self.config.secondary_axis.series) if ax_right else 0
@@ -375,20 +392,25 @@ class ChartRenderer:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=False)
                     
-                    if x_key:
-                        x = df[x_key]
-                    else:
-                        x = y.index
-                    
-                    offset = (i - num_primary / 2) * bar_width
+                    offset = (i - num_primary / 2 + 0.5) * bar_width
                     legend_label = self._get_legend_label(series_name)
-                    ax_left.bar(
-                        x + offset, y,
+                    bars = ax_left.bar(
+                        x_positions + offset, y,
                         width=bar_width,
                         label=legend_label,
                         color=style.color,
                         alpha=style.alpha
                     )
+                    # Add value labels on top of bars
+                    for bar, val in zip(bars, y):
+                        if pd.notna(val) and val != 0:
+                            ax_left.text(
+                                bar.get_x() + bar.get_width() / 2,
+                                bar.get_height(),
+                                f'{val:.2f}',
+                                ha='center', va='bottom',
+                                fontsize=8
+                            )
         
         # Plot secondary series
         if ax_right and self.config.secondary_axis.series:
@@ -397,20 +419,30 @@ class ChartRenderer:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=True)
                     
-                    if x_key:
-                        x = df[x_key]
-                    else:
-                        x = y.index
-                    
-                    offset = ((i + num_primary) - total_bars / 2) * bar_width
+                    offset = ((i + num_primary) - total_bars / 2 + 0.5) * bar_width
                     legend_label = self._get_legend_label(series_name)
-                    ax_right.bar(
-                        x + offset, y,
+                    bars = ax_right.bar(
+                        x_positions + offset, y,
                         width=bar_width,
                         label=legend_label,
                         color=style.color,
                         alpha=style.alpha
                     )
+                    # Add value labels on top of bars
+                    for bar, val in zip(bars, y):
+                        if pd.notna(val) and val != 0:
+                            ax_right.text(
+                                bar.get_x() + bar.get_width() / 2,
+                                bar.get_height(),
+                                f'{val:.2f}',
+                                ha='center', va='bottom',
+                                fontsize=8
+                            )
+        
+        # Set categorical tick labels if needed
+        if is_categorical and x_labels:
+            ax_left.set_xticks(x_positions)
+            ax_left.set_xticklabels(x_labels)
     
     def _render_bubble_chart(self, ax_left: Axes, ax_right: Optional[Axes], plot_data: pd.DataFrame):
         """Render a bubble chart (scatter plot with variable size)."""
