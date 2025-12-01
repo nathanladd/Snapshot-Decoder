@@ -1018,7 +1018,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Image container
         try:
-            img_path = resource_path("splash.png")
+            img_path = resource_path("data/images/splash.png")
             if os.path.exists(img_path):
                 # Keep a reference to prevent garbage collection
                 about_img = tk.PhotoImage(file=img_path)

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Snapshot Decoder"
-#define MyAppVersion "1.0.4 (Beta)"
+#define MyAppVersion "1.0.6 (Beta)"
 #define MyAppPublisher "Nathan Ladd"
 #define MyAppURL "https://github.com/nathanladd/Snapshot-Decoder"
 #define MyAppExeName "Snapshot Decoder.exe"
@@ -24,7 +24,7 @@ DisableProgramGroupPage=yes
 ;PrivilegesRequired=lowest
 OutputDir=.
 OutputBaseFilename=SnapshotDecoder_Setup
-SetupIconFile=Snapshot_Decoder_Icon.ico
+SetupIconFile=data/images/Snapshot_Decoder_Icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
