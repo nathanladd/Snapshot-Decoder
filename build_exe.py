@@ -54,6 +54,7 @@ hidden_imports = [
     'matplotlib.backends.backend_tkagg',
     'openpyxl',  # For reading .xlsx files
     'xlrd',  # For reading .xls files
+    'python_calamine',  # For reading Excel files with calamine
 ]
 
 # Build the PyInstaller command
