@@ -1,9 +1,9 @@
 import pandas as pd
 
-# Use the Pandas Calamine engine to read the Excel file
+# Use the Pandas openpyxl engine to read the Excel file
 def load_xlsx(path: str) -> pd.DataFrame:
     '''Read the file as XLSX and return a DataFrame'''
-    return pd.read_excel(path, header=None, engine="calamine")
+    return pd.read_excel(path, header=None, engine="openpyxl")
 
 
 # Read the file as UTF-16 and return a DataFrame
