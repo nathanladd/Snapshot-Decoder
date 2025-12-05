@@ -152,10 +152,10 @@ class SnapshotDecoderApp(tk.Tk):
         menubar = tk.Menu(self)
 
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Open Snapshot…", command=self.open_file)
-        file_menu.add_command(label="Close Snapshot", command=self._clear_ui)
+        file_menu.add_command(label="Open Snapshot…", command=self.open_file, accelerator="Ctrl+O")
+        file_menu.add_command(label="Close Snapshot", command=self._clear_ui, accelerator="Ctrl+W")
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.destroy)
+        file_menu.add_command(label="Exit", command=self.destroy, accelerator="Alt+F4")
         menubar.add_cascade(label="File", menu=file_menu)
 
         data_menu = tk.Menu(menubar, tearoff=0)
@@ -182,8 +182,11 @@ class SnapshotDecoderApp(tk.Tk):
         help_menu.add_command(label="Check for Updates", command=self.open_update_url)
         menubar.add_cascade(label="Help", menu=help_menu)
         
-        # Bind F1 key to help
+        # Bind keyboard shortcuts
+        self.bind("<Control-o>", lambda e: self.open_file())
+        self.bind("<Control-w>", lambda e: self._clear_ui())
         self.bind("<F1>", lambda e: self.show_help())
+        # Note: Alt+F4 is handled automatically by Windows
 
         self.config(menu=menubar)
 
