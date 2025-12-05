@@ -1,0 +1,64 @@
+[
+    {
+        "title": "Welcome",
+        "page": "index.html"
+    },
+    {
+        "title": "Getting Started",
+        "page": "getting_started.html",
+        "children": [
+            {
+                "title": "Installation",
+                "page": "installation.html"
+            },
+            {
+                "title": "First Steps",
+                "page": "first_steps.html"
+            }
+        ]
+    },
+    {
+        "title": "Working with Snapshots",
+        "page": "snapshots.html",
+        "children": [
+            {
+                "title": "Opening Files",
+                "page": "opening_files.html"
+            },
+            {
+                "title": "Snapshot Types",
+                "page": "snapshot_types.html"
+            },
+            {
+                "title": "Data Tables",
+                "page": "data_tables.html"
+            }
+        ]
+    },
+    {
+        "title": "Using Charts",
+        "page": "using_charts.html",
+        "children": [
+            {
+                "title": "Quick Charts",
+                "page": "quick_charts.html"
+            },
+            {
+                "title": "Custom Charts",
+                "page": "custom_charts.html"
+            },
+            {
+                "title": "Chart Controls",
+                "page": "chart_controls.html"
+            }
+        ]
+    },
+    {
+        "title": "Keyboard Shortcuts",
+        "page": "shortcuts.html"
+    },
+    {
+        "title": "Troubleshooting",
+        "page": "troubleshooting.html"
+    }
+]

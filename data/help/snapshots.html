@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        h1 { color: #2c5282; border-bottom: 2px solid #2c5282; padding-bottom: 10px; }
+        h2 { color: #2d3748; margin-top: 20px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 5px 0; }
+        .info { background-color: #ebf8ff; padding: 15px; border-left: 4px solid #4299e1; margin: 15px 0; }
+        code { background-color: #edf2f7; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; }
+    </style>
+</head>
+<body>
+    <h1>Working with Snapshots</h1>
+    
+    <p>Snapshot Decoder supports multiple snapshot formats from different ECU generations and diagnostic tools.</p>
+    
+    <h2>Supported Snapshot Types</h2>
+    
+    <h3>ECU V1 Snapshots</h3>
+    <p>First-generation ECU snapshots with comprehensive engine diagnostic data. These include PIDs for:</p>
+    <ul>
+        <li>Engine speed and load</li>
+        <li>Fuel system (rail pressure, IMV current)</li>
+        <li>Air system (turbo, EGR, mass air flow)</li>
+        <li>Electrical (battery, sensors)</li>
+    </ul>
+    
+    <h3>ECU V2 Snapshots</h3>
+    <p>Second-generation ECU snapshots with extended diagnostic capabilities and additional parameters.</p>
+    
+    <h3>ECU2 Snapshots</h3>
+    <p>Latest generation snapshots with the most comprehensive data set available.</p>
+    
+    <div class="info">
+        <strong>Auto-Detection:</strong> Snapshot Decoder automatically detects the snapshot type when 
+        you open a file and configures the available quick charts accordingly.
+    </div>
+    
+    <h2>File Formats</h2>
+    <p>The following file formats are supported:</p>
+    <ul>
+        <li><strong>.xlsx</strong> - Excel workbook (recommended)</li>
+        <li><strong>.csv</strong> - Comma-separated values</li>
+    </ul>
+    
+    <h2>Opening Snapshots</h2>
+    <ol>
+        <li>Click <code>File → Open Snapshot</code> or press <code>Ctrl+O</code></li>
+        <li>Navigate to your snapshot file</li>
+        <li>Select the file and click Open</li>
+        <li>The application will load and analyze the data</li>
+    </ol>
+    
+    <p>Once loaded, the header panel shows key information about the snapshot including:</p>
+    <ul>
+        <li>Equipment serial number</li>
+        <li>Date and time of capture</li>
+        <li>Snapshot type detected</li>
+        <li>Number of data points</li>
+    </ul>
+    
+    <h2>Viewing Raw Data</h2>
+    <p>To see the underlying data:</p>
+    <ul>
+        <li><strong>Raw Data</strong> - <code>Data → Raw Data</code> shows the original imported data</li>
+        <li><strong>Clean Table</strong> - <code>Data → Clean Table</code> shows processed data with units</li>
+        <li><strong>PID Descriptions</strong> - <code>Data → PID Descriptions</code> explains each parameter</li>
+    </ul>
+</body>
+</html>

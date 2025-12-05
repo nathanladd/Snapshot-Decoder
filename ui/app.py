@@ -33,6 +33,7 @@ from ui.custom_toolbar import CustomNavigationToolbar
 from ui.chart_cart import ChartCart
 
 from ui.chart_popup import ChartPopupWindow
+from ui.help_window import HelpWindow
 from utils import resource_path
 
 class SnapshotDecoderApp(tk.Tk):
@@ -175,9 +176,14 @@ class SnapshotDecoderApp(tk.Tk):
         menubar.add_cascade(label="Chart", menu=chart_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="Help Contents", command=self.show_help, accelerator="F1")
+        help_menu.add_separator()
         help_menu.add_command(label="About", command=self.show_about)
-        help_menu.add_command(label="Update", command=self.open_update_url)
+        help_menu.add_command(label="Check for Updates", command=self.open_update_url)
         menubar.add_cascade(label="Help", menu=help_menu)
+        
+        # Bind F1 key to help
+        self.bind("<F1>", lambda e: self.show_help())
 
         self.config(menu=menubar)
 
@@ -989,8 +995,13 @@ class SnapshotDecoderApp(tk.Tk):
             messagebox.showerror("Export Failed", f"Failed to export PDF:\n{str(e)}")
 
 #------------------------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------- About Window -------------------------------------------------------------
+#---------------------------------------------------- Help & About -------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
+    def show_help(self):
+        """Open the Help window with table of contents and HTML viewer."""
+        help_win = HelpWindow(self)
+        help_win.focus_set()
+    
     def open_update_url(self):
         """Open the help URL in the default web browser."""
         webbrowser.open(UPDATE_URL)

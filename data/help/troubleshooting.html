@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        h1 { color: #2c5282; border-bottom: 2px solid #2c5282; padding-bottom: 10px; }
+        h2 { color: #2d3748; margin-top: 20px; }
+        h3 { color: #4a5568; margin-top: 15px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 5px 0; }
+        .problem { background-color: #fed7d7; padding: 15px; border-left: 4px solid #f56565; margin: 15px 0 5px 0; }
+        .solution { background-color: #c6f6d5; padding: 15px; border-left: 4px solid #48bb78; margin: 5px 0 15px 0; }
+        code { background-color: #edf2f7; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; }
+    </style>
+</head>
+<body>
+    <h1>Troubleshooting</h1>
+    
+    <p>Solutions to common issues you may encounter while using Snapshot Decoder.</p>
+    
+    <h2>File Loading Issues</h2>
+    
+    <div class="problem">
+        <strong>Problem:</strong> "Unknown snapshot type" error when opening a file
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> The file may not be a valid snapshot export or may be corrupted. 
+        Ensure you're opening a snapshot file exported from a Bobcat diagnostic tool. 
+        Try re-exporting the snapshot if possible.
+    </div>
+    
+    <div class="problem">
+        <strong>Problem:</strong> File opens but no data appears
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Check that the snapshot file contains actual data rows. 
+        Use <code>Data → Raw Data</code> to view what was imported. 
+        Empty snapshots may occur if the capture was interrupted.
+    </div>
+    
+    <h2>Chart Issues</h2>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Quick chart buttons are grayed out
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Quick charts are only enabled when the required PIDs are present 
+        in the snapshot. If buttons are disabled, the necessary data wasn't captured in this snapshot.
+    </div>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Chart appears blank or shows a flat line
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> This typically means the parameter had no variation during capture. 
+        Try zooming in to see small changes, or check if the sensor was active during the snapshot.
+    </div>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Chart zoom is not working properly
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Click the Home button in the toolbar to reset the view. 
+        If zoom behavior seems erratic, try clicking the zoom tool again to re-select it.
+    </div>
+    
+    <h2>Display Issues</h2>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Text or buttons appear cut off
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Try maximizing the window or increasing screen resolution. 
+        The application works best at 1280x720 or higher resolution.
+    </div>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Charts look blurry or pixelated
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> On high-DPI displays, ensure Windows display scaling is set 
+        to a standard percentage (100%, 125%, or 150%). Unusual scaling values may affect rendering.
+    </div>
+    
+    <h2>Getting More Help</h2>
+    <p>If you continue to experience issues:</p>
+    <ul>
+        <li>Check for application updates via <code>Help → Update</code></li>
+        <li>Contact support with details about the issue and steps to reproduce</li>
+        <li>Include the snapshot file if possible when reporting issues</li>
+    </ul>
+</body>
+</html>

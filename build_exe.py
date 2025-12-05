@@ -42,6 +42,7 @@ datas = [
     (os.path.join(script_dir, 'data/images/logo.png'), 'data/images'),  # Logo for PDF exports
     (os.path.join(script_dir, 'data/images/Snapshot_Decoder_Icon.ico'), 'data/images'),  # App icon
     (os.path.join(script_dir, 'data/images/splash.png'), 'data/images'),  # Splash image
+    (os.path.join(script_dir, 'data/help'), 'data/help'),  # Help files
 ]
 
 # Define hidden imports (modules that PyInstaller might miss)

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        h1 { color: #2c5282; border-bottom: 2px solid #2c5282; padding-bottom: 10px; }
+        h2 { color: #2d3748; margin-top: 20px; }
+        h3 { color: #4a5568; margin-top: 15px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 5px 0; }
+        .tip { background-color: #f0fff4; padding: 15px; border-left: 4px solid #48bb78; margin: 15px 0; }
+        .note { background-color: #fefcbf; padding: 15px; border-left: 4px solid #ecc94b; margin: 15px 0; }
+        code { background-color: #edf2f7; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+        th { background-color: #f7fafc; }
+    </style>
+</head>
+<body>
+    <h1>Using Charts</h1>
+    
+    <p>Snapshot Decoder provides powerful charting capabilities to visualize diagnostic data over time.</p>
+    
+    <h2>Quick Charts</h2>
+    <p>Quick charts are pre-configured visualizations designed for common diagnostic scenarios. 
+    After loading a snapshot, relevant quick chart buttons appear based on the snapshot type.</p>
+    
+    <p>Simply click a quick chart button to instantly generate the visualization. Examples include:</p>
+    <ul>
+        <li><strong>Battery Test</strong> - Battery voltage vs RPM</li>
+        <li><strong>Rail Pressure</strong> - Demand vs actual rail pressure</li>
+        <li><strong>Turbo</strong> - Manifold and atmospheric pressure with RPM</li>
+        <li><strong>EGR Position</strong> - EGR position vs demand percentage</li>
+    </ul>
+    
+    <h2>Custom Charts</h2>
+    <p>Create custom charts by selecting PIDs from the dropdown menus:</p>
+    <ol>
+        <li>Select a primary PID from the left dropdown</li>
+        <li>Optionally select additional PIDs for comparison</li>
+        <li>Click <code>Chart → Plot Selected PIDs</code> or use the plot button</li>
+    </ol>
+    
+    <h2>Chart Controls</h2>
+    
+    <h3>Toolbar</h3>
+    <table>
+        <tr><th>Tool</th><th>Function</th></tr>
+        <tr><td>Home</td><td>Reset to original view</td></tr>
+        <tr><td>Pan</td><td>Click and drag to move the view</td></tr>
+        <tr><td>Zoom</td><td>Draw a rectangle to zoom into an area</td></tr>
+        <tr><td>Save</td><td>Export the chart as an image</td></tr>
+    </table>
+    
+    <h3>Cursor Options</h3>
+    <p>Enable cursors from the Chart menu:</p>
+    <ul>
+        <li><strong>Show Cursor</strong> - Displays a vertical line you can drag across the chart</li>
+        <li><strong>Show Values</strong> - Shows exact values when hovering over data points</li>
+    </ul>
+    
+    <div class="tip">
+        <strong>Tip:</strong> Use <code>Chart → Pop Out Chart</code> to open the current chart in a 
+        separate resizable window for detailed analysis or presentations.
+    </div>
+    
+    <h2>Chart Cart</h2>
+    <p>Save frequently used chart configurations to the chart cart:</p>
+    <ol>
+        <li>Create a custom chart with your desired PIDs</li>
+        <li>Click <code>Chart → Add to Cart</code></li>
+        <li>Access saved charts from the Cart panel on the right side</li>
+    </ol>
+    
+    <div class="note">
+        <strong>Note:</strong> Chart cart items are saved between sessions, so your favorite 
+        configurations are always available.
+    </div>
+</body>
+</html>
