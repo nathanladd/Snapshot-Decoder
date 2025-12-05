@@ -23,7 +23,7 @@ from domain import quick_charts
 from domain.chart_config import ChartConfig, AxisConfig
 from ui.chart_renderer import ChartRenderer
 from domain.snapshot import Snapshot
-from domain.constants import APP_TITLE, APP_VERSION, HELP_URL
+from domain.constants import APP_TITLE, APP_VERSION, UPDATE_URL
 
 # Class to manage Snapshot header information
 from ui.header_panel import HeaderPanel
@@ -176,7 +176,7 @@ class SnapshotDecoderApp(tk.Tk):
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=self.show_about)
-        help_menu.add_command(label="Online Help", command=self.open_help_url)
+        help_menu.add_command(label="Update", command=self.open_update_url)
         menubar.add_cascade(label="Help", menu=help_menu)
 
         self.config(menu=menubar)
@@ -991,9 +991,9 @@ class SnapshotDecoderApp(tk.Tk):
 #------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------- About Window -------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------------------
-    def open_help_url(self):
+    def open_update_url(self):
         """Open the help URL in the default web browser."""
-        webbrowser.open(HELP_URL)
+        webbrowser.open(UPDATE_URL)
 
     def show_about(self):
         """Display a custom About dialog and splash image."""

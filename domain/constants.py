@@ -4,7 +4,7 @@ from version import APP_VERSION
 # Application title global
 APP_TITLE = "Snapshot Decoder"
 # Help URL
-HELP_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
+UPDATE_URL = "https://berrycompanies.sharepoint.com/sites/SnapshotDecoder"
 
 
 # Buttons for each V1 snapshot type
