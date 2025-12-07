@@ -11,3 +11,28 @@ on troubleshooting success for common diagnostic tasks available at a click of a
 Multiple charts can be broken out into separate windows for comparison. 
 
 Charts can be saved as a single page or multi-page .pdf file.
+
+
+This project is dual-licensed.
+
+## Licensing Options
+
+### 1. Open-Source License
+The project is available under the open-source license found in the file:
+
+**LICENSE**
+
+You may use, modify, and distribute the software under the terms of that license.
+
+### 2. Commercial License
+If you would like to use this project under different terms—such as
+including it in proprietary software or using it without the conditions
+of the open-source license—you may obtain a commercial license.
+
+Contact:
+Nathan Ladd
+nathan_ladd@comcast.net
+
+## Contributions
+By submitting a pull request, you agree that your contribution may be
+licensed under both the open-source license and the commercial license.
