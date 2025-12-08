@@ -26,8 +26,8 @@
                 "page": "opening_files.html"
             },
             {
-                "title": "Snapshot Types",
-                "page": "snapshot_types.html"
+                "title": "Snapshot Header",
+                "page": "snapshot_header.html"
             },
             {
                 "title": "Data Tables",
