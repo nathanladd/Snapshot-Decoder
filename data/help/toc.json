@@ -12,6 +12,10 @@
                 "page": "installation.html"
             },
             {
+                "title": "Updating",
+                "page": "updating.html"
+            },
+            {
                 "title": "First Steps",
                 "page": "first_steps.html"
             }
@@ -30,8 +34,12 @@
                 "page": "snapshot_header.html"
             },
             {
-                "title": "Data Tables",
-                "page": "data_tables.html"
+                "title": "Raw Data Table",
+                "page": "raw_data_table.html"
+            },
+            {
+                "title": "Cleaned Data Table",
+                "page": "cleaned_data_table.html"
             }
         ]
     },
