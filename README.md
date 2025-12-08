@@ -18,6 +18,8 @@ This project is dual-licensed.
 ## Licensing Options
 
 ### 1. Open-Source License
+[![License: MIT/GPL-3.0](https://img.shields.io/badge/License-MIT%20or%20GPL--3.0-blue.svg)](#license)
+
 The project is available under the open-source license found in the file:
 
 **LICENSE**
