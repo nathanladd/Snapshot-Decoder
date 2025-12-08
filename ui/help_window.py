@@ -31,6 +31,8 @@ class SimpleHTMLParser(HTMLParser):
         if tag == 'style':
             self.in_style = True
         elif tag in ('h1', 'h2', 'h3'):
+            # Add newline before headings to ensure they start on a new line
+            self.segments.append(('\n', []))
             self.current_tags.append(tag)
         elif tag == 'strong' or tag == 'b':
             self.current_tags.append('bold')
