@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snapshot Decoder – Download</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #F5F5F5;
+      padding: 40px;
+      margin: 0;
+      text-align: center;
+      color: #1A1A1A;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #FFFFFF;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      border-top: 12px solid #FF5A1F; /* Bobcat orange */
+    }
+
+    .logo {
+      width: 65%;
+      max-width: 380px;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin: 0;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #1A1A1A;
+    }
+
+    #version {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.5;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    a.download-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 18px 40px;
+      font-size: 22px;
+      font-weight: bold;
+      text-decoration: none;
+      color: white;
+      background: #FF5A1F;
+      border-radius: 10px;
+      transition: 0.25s;
+    }
+
+    a.download-btn:hover {
+      background: #CC4719;
+    }
+
+    .note {
+      margin-top: 25px;
+      font-size: 14px;
+      color: #777;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- Snapshot Decoder Logo -->
+    <img src="./splash.png" alt="Snapshot Decoder Logo" class="logo">
+
+    <h1>Snapshot Decoder</h1>
+    <div id="version">Loading version…</div>
+
+    <p>Download the latest installer for Snapshot Decoder below.</p>
+
+    <!-- Download Button -->
+    <a id="downloadBtn" class="download-btn" href="#">
+      Download Setup.exe
+    </a>
+
+    <p class="note">
+      This download comes directly from the official GitHub release.
+    </p>
+  </div>
+
+  <!-- Auto-fetch latest release tag + file link -->
+  <script>
+    const apiURL = "https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO/releases/latest";
+
+    fetch(apiURL)
+      .then(response => response.json())
+      .then(data => {
+        const version = data.tag_name || "Unknown";
+        const assets = data.assets || [];
+        const setupFile = assets.find(a => a.name.toLowerCase().includes("setup") && a.name.endsWith(".exe"));
+
+        document.getElementById("version").innerText = "Version: " + version;
+
+        if (setupFile) {
+          document.getElementById("downloadBtn").href = setupFile.browser_download_url;
+        } else {
+          document.getElementById("downloadBtn").innerText = "Installer Not Found";
+          document.getElementById("downloadBtn").style.background = "#888";
+        }
+      })
+      .catch(err => {
+        document.getElementById("version").innerText = "Version: unavailable";
+      });
+  </script>
+
+</body>
+</html>
