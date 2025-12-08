@@ -28,6 +28,7 @@ SetupIconFile=data/images/Snapshot_Decoder_Icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+LicenseFile=LICENSE
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -39,6 +40,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; The executable and all files in the directory
 Source: "dist\Snapshot Decoder\Snapshot Decoder.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\Snapshot Decoder\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; License files
+Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "License-Commercial"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
