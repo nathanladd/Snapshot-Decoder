@@ -10,8 +10,6 @@ The PIDs can be searched, selected, and charted. There are also 'Quick Chart' co
 on troubleshooting success for common diagnostic tasks available at a click of a button. Charts can be zoomed and paned.
 Multiple charts can be broken out into separate windows for comparison. 
 
-Charts can be saved as a single page or multi-page .pdf file.
-
 <h2>Key Features</h2>
     <ul>
         <li><strong>Multi-format Support</strong> - Load V1 ECU, V1 Engine Use Data, and ECU V2 snapshot formats</li>
