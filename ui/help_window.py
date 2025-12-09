@@ -30,8 +30,12 @@ class SimpleHTMLParser(HTMLParser):
         tag = tag.lower()
         if tag == 'style':
             self.in_style = True
-        elif tag in ('h1', 'h2', 'h3'):
-            # Add newline before headings to ensure they start on a new line
+        elif tag in ('h1', 'h2'):
+            # Add 2x newline before headings to ensure they start on a new line with a little space above
+            self.segments.append(('\n\n', []))
+            self.current_tags.append(tag)
+        elif tag in ('h3'):
+            # Olny add 1x newline before headings to ensure they start on a new line with a little space above
             self.segments.append(('\n', []))
             self.current_tags.append(tag)
         elif tag == 'strong' or tag == 'b':
@@ -74,7 +78,7 @@ class SimpleHTMLParser(HTMLParser):
                 self.current_tags.append('info')
             self.segments.append(('\n', []))
         elif tag == 'table':
-            self.segments.append(('\n', []))
+            #self.segments.append(('\n', []))
             self.current_tags.append('table')
         elif tag == 'th':
             self.current_tags.append('bold')
@@ -87,10 +91,13 @@ class SimpleHTMLParser(HTMLParser):
         tag = tag.lower()
         if tag == 'style':
             self.in_style = False
-        elif tag in ('h1', 'h2', 'h3'):
+        elif tag in ('h1'):
             if tag in self.current_tags:
                 self.current_tags.remove(tag)
-            self.segments.append(('\n\n', []))
+            self.segments.append(('\n', []))
+        elif tag in ('h2','h3'):
+            if tag in self.current_tags:
+                self.current_tags.remove(tag)
         elif tag == 'strong' or tag == 'b':
             if 'bold' in self.current_tags:
                 self.current_tags.remove('bold')
@@ -101,7 +108,7 @@ class SimpleHTMLParser(HTMLParser):
             if 'code' in self.current_tags:
                 self.current_tags.remove('code')
         elif tag == 'p':
-            self.segments.append(('\n\n', []))
+            self.segments.append(('\n', []))
         elif tag in ('ul', 'ol'):
             self.in_list = False
             self.segments.append(('\n', []))
@@ -112,7 +119,7 @@ class SimpleHTMLParser(HTMLParser):
                 if t in self.current_tags:
                     self.current_tags.remove(t)
                     break
-            self.segments.append(('\n', []))
+            #self.segments.append(('\n', []))
         elif tag == 'table':
             if 'table' in self.current_tags:
                 self.current_tags.remove('table')
