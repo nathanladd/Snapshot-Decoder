@@ -15,35 +15,53 @@
 <body>
     <h1>Working with Snapshots</h1>
     
-    <p>Snapshot Decoder supports multiple snapshot formats from different ECU generations and diagnostic tools.</p>
+    <p>Snapshot Decoder supports multiple snapshot formats from different ECU generations.
+        It is certainly possible to add support for more engines in the future.
+        Please contact me if you have any questions or suggestions.
+        Check for updates often to see if additional snapshot types become supported.
+    </p>
     
-    <h2>Supported Snapshot Types</h2>
-    
-    <h3>ECU V1 Snapshots</h3>
-    <p>First-generation ECU snapshots with comprehensive engine diagnostic data. These include PIDs for:</p>
-    <ul>
-        <li>Engine speed and load</li>
-        <li>Fuel system (rail pressure, IMV current)</li>
-        <li>Air system (turbo, EGR, mass air flow)</li>
-        <li>Electrical (battery, sensors)</li>
-    </ul>
-    
-    <h3>ECU V2 Snapshots</h3>
-    <p>Second-generation ECU snapshots with extended diagnostic capabilities and additional parameters.</p>
-    
-    <h3>ECU2 Snapshots</h3>
-    <p>Latest generation snapshots with the most comprehensive data set available.</p>
+    <h2>Currently Supported Snapshot Types</h2>
     
     <div class="info">
         <strong>Auto-Detection:</strong> Snapshot Decoder automatically detects the snapshot type when 
         you open a file and configures the available quick charts accordingly.
     </div>
+
+    <h3>V1 ECU Snapshots</h3>
+    <p>1.8L, 2.4L, and 3.4L Bobcat Engine with Delphi ECU. </p>
+    <ul>
+        <li>All available Snapshot header information is pulled and displayed</li>
+        <li>Engine hours are extracted and converted from seconds if necessary</li>
+        <li>MDP success rate is calculated and displayed</li>
+        <li>Currently 12 Quick Charts are available</li>
+        <li>Easily search PID descriptions and build custom line charts</li>
+    </ul>
+    
+    <h3>V1 Engine Use Data (EUD) Snapshots</h3>
+    <p>1.8L, 2.4L, and 3.4L Bobcat Engine with Delphi ECU. </p>
+    <ul>
+        <li>All available Snapshot header information is pulled and displayed</li>
+        <li>Total engine hours and idle time are extracted, converted from seconds if necessary, and displayed seporately</li>
+        <li>MDP Success rate is calculated</li>
+        <li>Currently 4 Quick Charts are available</li>
+        <li>Easily search PID descriptions and build custom line charts</li>
+    </ul>
+
+    <h3>V2 ECU Snapshots</h3>
+    <p>1.8L, 2.4L, and 3.4L Second-generation Bobcat engines with Bosch ECU.</p>
+    <ul>
+        <li>All available Snapshot header information is pulled and displayed</li>
+        <li>Engine hours are extracted and converted from seconds if necessary</li>
+        <li>Currently 9 Quick Charts are available</li>
+        <li>Easily search PID descriptions and build custom line charts</li>
+    </ul>
     
     <h2>File Formats</h2>
     <p>The following file formats are supported:</p>
     <ul>
-        <li><strong>.xlsx</strong> - Excel workbook (recommended)</li>
-        <li><strong>.csv</strong> - Comma-separated values</li>
+        <li><strong>.xls</strong> - Excel workbook (the default format from Bobcat Engine Analyzer)</li>
+        <li><strong>.xlsx</strong> - If you happen to have saved the snapshot as an .xlsx file</li>
     </ul>
     
     <h2>Opening Snapshots</h2>
@@ -54,19 +72,11 @@
         <li>The application will load and analyze the data</li>
     </ol>
     
-    <p>Once loaded, the header panel shows key information about the snapshot including:</p>
-    <ul>
-        <li>Equipment serial number</li>
-        <li>Date and time of capture</li>
-        <li>Snapshot type detected</li>
-        <li>Number of data points</li>
-    </ul>
-    
     <h2>Viewing Raw Data</h2>
-    <p>To see the underlying data:</p>
+    <p>To see the underlying data may be useful if you get unexpected results:</p>
     <ul>
         <li><strong>Raw Data</strong> - <code>Data → Raw Data</code> shows the original imported data</li>
-        <li><strong>Clean Table</strong> - <code>Data → Clean Table</code> shows processed data with units</li>
+        <li><strong>Clean Table</strong> - <code>Data → Clean Table</code> shows processed data</li>
         <li><strong>PID Descriptions</strong> - <code>Data → PID Descriptions</code> explains each parameter</li>
     </ul>
 </body>
