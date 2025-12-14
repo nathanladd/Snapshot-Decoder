@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        h1 { color: #2c5282; border-bottom: 2px solid #2c5282; padding-bottom: 10px; }
+        h2 { color: #2d3748; margin-top: 20px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 5px 0; }
+        .info { background-color: #ebf8ff; padding: 15px; border-left: 4px solid #4299e1; margin: 15px 0; }
+        code { background-color: #edf2f7; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; }
+    </style>
+</head>
+<body>
+    <h1>Snapshot Header Information</h1>
+    
+    <p>When you open a snapshot file, Snapshot Decoder extracts and displays important header information and Quick Charts from the snapshot.</p>
+    
+    <h2>Header Panel</h2>
+    <p>The header panel appears at the top of the main window and shows key information extracted from the snapshot:</p>
+    
+    <img src="../images/header.png" alt="Snapshot header panel" style="max-width: 1000px;">
+    
+    <h2>File Name Display</h2>
+    <p>The currently loaded file name is displayed prominently so you always know which snapshot you're analyzing:</p>
+    
+    <img src="../images/header_file_name.png" alt="Header file name display" style="max-width: 700px;">
+    
+    <h2>Header Information Details</h2>
+    <p>The header information section displays extracted data from the snapshot file:</p>
+    
+    <img src="../images/header_information.png" alt="Header information details" style="max-width: 700px;">
+    
+    <div class="info">
+        <strong>Tip:</strong> The information displayed in the header varies depending on the snapshot type 
+        (V1 ECU, V1 EUD, or V2 ECU). Snapshot Decoder automatically detects the type and displays the 
+        relevant fields.
+    </div>
+    
+    <h2>Common Header Fields</h2>
+    <ul>
+        <li><strong>Engine Hours</strong> - Total operating hours of the engine</li>
+        <li><strong>Serial Number</strong> - Engine or ECU serial number</li>
+        <li><strong>Software Version</strong> - ECU software version</li>
+        <li><strong>Snapshot Date</strong> - When the snapshot was captured</li>
+        <li><strong>MDP Success Rate</strong> - Injector performance (V1 snapshots)</li>
+    </ul>
+</body>
+</html>
