@@ -11,20 +11,22 @@ import json
 import os
 import re
 from html.parser import HTMLParser
+from PIL import Image, ImageTk
 from utils import resource_path
 
 
 class SimpleHTMLParser(HTMLParser):
     """Simple HTML parser that converts HTML to styled text segments."""
     
-    def __init__(self):
+    def __init__(self, help_dir=None):
         super().__init__()
-        self.segments = []  # List of (text, tags) tuples
+        self.segments = []  # List of (text, tags) tuples or ('__IMAGE__', image_path)
         self.current_tags = []
         self.in_style = False
         self.in_list = False
         self.list_counter = 0
         self.is_ordered_list = False
+        self.help_dir = help_dir
         
     def handle_starttag(self, tag, attrs):
         tag = tag.lower()
@@ -86,6 +88,27 @@ class SimpleHTMLParser(HTMLParser):
             self.segments.append(('  ', []))
         elif tag == 'tr':
             self.segments.append(('\n', []))
+        elif tag == 'img':
+            # Handle image tags
+            attrs_dict = dict(attrs)
+            src = attrs_dict.get('src', '')
+            if src and self.help_dir:
+                # Resolve relative path from help directory
+                if src.startswith('../'):
+                    img_path = os.path.normpath(os.path.join(self.help_dir, src))
+                else:
+                    img_path = os.path.join(self.help_dir, src)
+                # Parse max-width from style if present
+                style = attrs_dict.get('style', '')
+                max_width = None
+                if 'max-width' in style:
+                    import re
+                    match = re.search(r'max-width:\s*(\d+)px', style)
+                    if match:
+                        max_width = int(match.group(1))
+                self.segments.append(('\n', []))
+                self.segments.append(('__IMAGE__', img_path, max_width))
+                self.segments.append(('\n', []))
             
     def handle_endtag(self, tag):
         tag = tag.lower()
@@ -341,19 +364,40 @@ class HelpWindow(tk.Toplevel):
             html_content: HTML string to render
         """
         # Parse HTML
-        parser = SimpleHTMLParser()
+        parser = SimpleHTMLParser(self.help_dir)
         parser.feed(html_content)
+        
+        # Keep references to images to prevent garbage collection
+        self._images = []
         
         # Enable editing
         self.text_widget.config(state=tk.NORMAL)
         self.text_widget.delete("1.0", tk.END)
         
         # Insert styled segments
-        for text, tags in parser.segments:
-            if tags:
-                self.text_widget.insert(tk.END, text, tuple(tags))
+        for segment in parser.segments:
+            if len(segment) == 3 and segment[0] == '__IMAGE__':
+                # Handle image
+                _, img_path, max_width = segment
+                try:
+                    if os.path.exists(img_path):
+                        img = Image.open(img_path)
+                        # Resize if max_width specified
+                        if max_width and img.width > max_width:
+                            ratio = max_width / img.width
+                            new_height = int(img.height * ratio)
+                            img = img.resize((max_width, new_height), Image.LANCZOS)
+                        photo = ImageTk.PhotoImage(img)
+                        self._images.append(photo)  # Keep reference
+                        self.text_widget.image_create(tk.END, image=photo)
+                except Exception as e:
+                    self.text_widget.insert(tk.END, f"[Image: {img_path}]")
             else:
-                self.text_widget.insert(tk.END, text)
+                text, tags = segment[0], segment[1] if len(segment) > 1 else []
+                if tags:
+                    self.text_widget.insert(tk.END, text, tuple(tags))
+                else:
+                    self.text_widget.insert(tk.END, text)
         
         # Disable editing and scroll to top
         self.text_widget.config(state=tk.DISABLED)
