@@ -8,16 +8,12 @@
         "page": "getting_started.html",
         "children": [
             {
-                "title": "Installation",
-                "page": "installation.html"
+                "title": "First Steps",
+                "page": "first_steps.html"
             },
             {
                 "title": "Updating",
                 "page": "updating.html"
-            },
-            {
-                "title": "First Steps",
-                "page": "first_steps.html"
             }
         ]
     },

@@ -348,7 +348,7 @@ class HelpWindow(tk.Toplevel):
                 html_content = f"""
                 <h1>Page Not Found</h1>
                 <p>The help page <code>{page_name}</code> could not be found.</p>
-                <p>Please ensure help files are installed in the data/help directory.</p>
+                <p>Help files are under contruction.</p>
                 """
             
             self._render_html(html_content)
