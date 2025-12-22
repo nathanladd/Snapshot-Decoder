@@ -54,5 +54,10 @@ kbd { background-color: #edf2f7; border: 1px solid #cbd5e0; border-radius: 4px; 
 /* Ordered lists */
 ol { margin: 10px 0 10px 20px; }
 
-/* Images */
-img { max-width: 100%; height: auto; }
+/* Images - prevent scaling beyond natural size to avoid pixelation */
+img { 
+    max-width: 100%; 
+    height: auto; 
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}

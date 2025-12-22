@@ -9,8 +9,13 @@ import tkinter as tk
 from tkinter import ttk
 import json
 import os
+import urllib.request
+import threading
+import webbrowser
 from tkinterweb import HtmlFrame
 from utils import resource_path
+from version import APP_VERSION
+from domain.constants import UPDATE_URL
 
 
 class HelpWindow(tk.Toplevel):
@@ -86,9 +91,11 @@ class HelpWindow(tk.Toplevel):
     
     def _on_link_click(self, url):
         """Handle link clicks within the HTML content."""
-        # Only allow navigation to local help files
-        if url.endswith('.html') and not url.startswith(('http://', 'https://')):
-            # Extract just the filename
+        # Open external links in system browser
+        if url.startswith(('http://', 'https://')):
+            webbrowser.open(url)
+        # Navigate to local help files
+        elif url.endswith('.html'):
             page_name = os.path.basename(url)
             self._load_page(page_name)
     
@@ -153,6 +160,11 @@ class HelpWindow(tk.Toplevel):
         Args:
             page_name: Name of the HTML file to load from help directory
         """
+        # Special handling for updating page - inject version info
+        if page_name == "updating.html":
+            self._load_updating_page()
+            return
+        
         page_path = os.path.join(self.help_dir, page_name)
         
         try:
@@ -171,3 +183,123 @@ class HelpWindow(tk.Toplevel):
             
         except Exception as e:
             self.html_frame.load_html(f"<html><body><h1>Error</h1><p>Failed to load page: {e}</p></body></html>")
+    
+    def _load_updating_page(self):
+        """Load the updating page with dynamic version information."""
+        # Load the base HTML
+        page_path = os.path.join(self.help_dir, "updating.html")
+        css_path = os.path.join(self.help_dir, "styles.css")
+        
+        # Read CSS for inline use
+        css_content = ""
+        try:
+            with open(css_path, "r", encoding="utf-8") as f:
+                css_content = f.read()
+        except:
+            pass
+        
+        # Show initial content with "checking..." status
+        html = self._build_updating_html(css_content, APP_VERSION, "Checking...", None)
+        self.html_frame.load_html(html)
+        
+        # Fetch latest version in background thread
+        thread = threading.Thread(target=self._fetch_latest_version, args=(css_content,), daemon=True)
+        thread.start()
+    
+    def _fetch_latest_version(self, css_content):
+        """Fetch the latest version from GitHub releases API."""
+        latest_version = None
+        download_url = UPDATE_URL
+        
+        try:
+            url = "https://api.github.com/repos/nathanladd/Snapshot-Decoder/releases/latest"
+            req = urllib.request.Request(url, headers={"User-Agent": "Snapshot-Decoder"})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode())
+                latest_version = data.get("tag_name", "").lstrip("v")
+                # Get direct download URL from release assets if available
+                assets = data.get("assets", [])
+                if assets:
+                    download_url = assets[0].get("browser_download_url", download_url)
+        except Exception as e:
+            latest_version = "Unable to check"
+        
+        # Update UI on main thread
+        self.after(0, lambda: self._update_version_display(css_content, latest_version, download_url))
+    
+    def _update_version_display(self, css_content, latest_version, download_url):
+        """Update the updating page with fetched version info."""
+        html = self._build_updating_html(css_content, APP_VERSION, latest_version, download_url)
+        self.html_frame.load_html(html)
+    
+    def _build_updating_html(self, css_content, current_version, latest_version, download_url):
+        """Build the updating page HTML with version information."""
+        # Determine update status
+        if latest_version == "Checking...":
+            status_class = "info"
+            status_msg = "Checking for updates..."
+        elif latest_version == "Unable to check":
+            status_class = "note"
+            status_msg = "Unable to check for updates. Please visit the download page manually."
+        elif latest_version and current_version:
+            try:
+                # Simple version comparison
+                current_parts = [int(x) for x in current_version.split(".")]
+                latest_parts = [int(x) for x in latest_version.split(".")]
+                if latest_parts > current_parts:
+                    status_class = "tip"
+                    status_msg = f"A new version is available! ({latest_version})"
+                else:
+                    status_class = "tip"
+                    status_msg = "You are running the latest version."
+            except:
+                status_class = "info"
+                status_msg = f"Latest version: {latest_version}"
+        else:
+            status_class = "info"
+            status_msg = ""
+        
+        download_link = download_url or UPDATE_URL
+        
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+    <style>{css_content}</style>
+</head>
+<body>
+    <h1>Updating Snapshot Decoder</h1>
+    
+    <p>Keep Snapshot Decoder up to date to get the latest features, bug fixes, and support for new snapshot types.</p>
+    
+    <h2>Version Information</h2>
+    <table>
+        <tr><th>Location</th><th>Version</th></tr>
+        <tr><td><strong>Your Software Version</strong></td><td>{current_version}</td></tr>
+        <tr><td><strong>Latest Official Version</strong></td><td>{latest_version}</td></tr>
+    </table>
+    
+    <div class="{status_class}">
+        <strong>{status_msg}</strong>
+    </div>
+    
+    <h2>Download</h2>
+    <p>Visit the official download page to get the latest version:</p>
+    <p><a href="{download_link}" target="_blank"><strong>{download_link}</strong></a></p>
+    
+    <h2>How to Update</h2>
+    <ol>
+        <li>Download the latest version from the link above</li>
+        <li>Close Snapshot Decoder if it is currently running</li>
+        <li>Run the new installer</li>
+        <li>When prompted, install to the same location as your existing installation</li>
+        <li>The new version will replace the old files automatically</li>
+        <li>Launch Snapshot Decoder to verify the update</li>
+    </ol>
+    
+    <div class="info">
+        <strong>Tip:</strong> Your settings and preferences are preserved when updating. 
+        You do not need to uninstall the old version first.
+    </div>
+</body>
+</html>
+"""

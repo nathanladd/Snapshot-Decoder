@@ -179,7 +179,7 @@ class SnapshotDecoderApp(tk.Tk):
         help_menu.add_command(label="Help Contents", command=self.show_help, accelerator="F1")
         help_menu.add_separator()
         help_menu.add_command(label="About", command=self.show_about)
-        help_menu.add_command(label="Check for Updates", command=self.open_update_url)
+        help_menu.add_command(label="Official Download Page", command=self.open_update_url)
         menubar.add_cascade(label="Help", menu=help_menu)
         
         # Bind keyboard shortcuts
