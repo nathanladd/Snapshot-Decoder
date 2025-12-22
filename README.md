@@ -20,6 +20,8 @@ Multiple charts can be broken out into separate windows for comparison.
     </ul>
 This project is dual-licensed.
 
+![Total Downloads](https://img.shields.io/github/downloads/nathanladd/Snapshot-Decoder/total)
+
 ## Licensing Options
 
 ### 1. Open-Source License
