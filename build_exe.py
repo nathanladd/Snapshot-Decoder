@@ -55,6 +55,8 @@ hidden_imports = [
     'matplotlib.backends.backend_tkagg',
     'openpyxl',  # For reading .xlsx files
     'xlrd',  # For reading .xls files
+    'tkinterweb',  # HTML viewer for help window
+    'tkinterweb.bindings',  # Required binding module for tkinterweb
 ]
 
 # Build the PyInstaller command
@@ -83,6 +85,7 @@ for module in hidden_imports:
 pyinstaller_args.extend([
     '--collect-all=matplotlib',  # Collect all matplotlib data files
     '--collect-all=pandas',  # Collect all pandas data files
+    '--collect-all=tkinterweb',  # Collect all tkinterweb data files and submodules
 ])
 
 print("=" * 70)
