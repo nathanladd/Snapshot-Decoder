@@ -1,4 +1,4 @@
-# Snapshot-Decoder [![License: MIT/GPL-3.0](https://img.shields.io/badge/License-%20GPL--3.0-blue.svg)](#License)
+# Snapshot-Decoder [![License: MIT/GPL-3.0](https://img.shields.io/badge/License-%20GPL--3.0-blue.svg)](#License)![Total Downloads](https://img.shields.io/github/downloads/nathanladd/Snapshot-Decoder/total)
 
 Windows desktop app to interpret engine data saved in a Bobcat Engine Analyzer Snapshot. 
 This app can open specific .xls and .xlsx files previously saved by Bobcat Engine Analyzer, parse the Snapshot data 
@@ -19,8 +19,6 @@ Multiple charts can be broken out into separate windows for comparison.
         <li><strong>Chart Cart</strong> - Export single or multiple charts to pdf for documentation</li>
     </ul>
 This project is dual-licensed.
-
-![Total Downloads](https://img.shields.io/github/downloads/nathanladd/Snapshot-Decoder/total)
 
 ## Licensing Options
 
