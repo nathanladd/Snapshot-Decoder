@@ -19,5 +19,6 @@ pyparsing==3.2.5
 python-dateutil==2.9.0.post0
 pytz==2025.2
 six==1.17.0
+tkinterweb==3.24.8
 tksheet==7.5.19
 tzdata==2025.2
