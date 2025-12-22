@@ -39,9 +39,7 @@ main_script = os.path.join(script_dir, 'main.py')
 # Define data files to include (format: 'source:destination')
 # These files will be bundled with the executable
 datas = [
-    (os.path.join(script_dir, 'data/images/logo.png'), 'data/images'),  # Logo for PDF exports
-    (os.path.join(script_dir, 'data/images/Snapshot_Decoder_Icon.ico'), 'data/images'),  # App icon
-    (os.path.join(script_dir, 'data/images/splash.png'), 'data/images'),  # Splash image
+    (os.path.join(script_dir, 'data/images'), 'data/images'),  # All images (logo, icons, help screenshots)
     (os.path.join(script_dir, 'data/help'), 'data/help'),  # Help files
 ]
 
