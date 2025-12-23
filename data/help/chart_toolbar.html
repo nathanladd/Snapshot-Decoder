@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Chart Toolbar</h1>
+    
+    <p>The chart toolbar provides quick access to common chart operations. It appears at the bottom of every chart window.</p>
+    
+    <img src="../images/chart_toolbar.png" alt="Chart toolbar" style="max-width: 800px;">
+    
+    <h2>Toolbar Buttons</h2>
+    <p>From left to right, the toolbar contains the following buttons:</p>
+    
+    <ul>
+        <li><strong>Home</strong> <em>(house icon)</em> - Resets the chart view to show all data. Use this to return to the original view after panning or zooming.</li>
+        
+        <li><strong>Back</strong> <em>(left arrow)</em> - Returns to the previous view in the navigation history. Useful for undoing a zoom or pan operation.</li>
+        
+        <li><strong>Forward</strong> <em>(right arrow)</em> - Moves forward in the navigation history after using the Back button.</li>
+        
+        <li><strong>Pan</strong> <em>(four-way arrows)</em> - Activates pan mode. Click and drag on the chart to move the visible area. Right-click and drag to zoom in on a specific area.</li>
+        
+        <li><strong>Zoom</strong> <em>(magnifying glass)</em> - Activates zoom mode. Click and drag to draw a rectangle around the area you want to zoom into.</li>
+        
+        <li><strong>Vertical Cursor</strong> <em>(vertical line icon)</em> - Displays a vertical line that follows your mouse position across the chart. This helps you align and compare values at the same point in time across multiple data series.</li>
+        
+        <li><strong>Values</strong> <em>(hashtag icon)</em> - Shows the actual data values at the current cursor position. When enabled, you can see the exact values of each plotted series as you move across the chart.</li>
+        
+        <li><strong>Add to Cart</strong> <em>(shopping cart icon)</em> - Adds the current chart configuration to the chart cart. This allows you to save multiple chart setups and view them together or export them later.</li>
+        
+        <li><strong>Pop-Out</strong> <em>(two boxes icon)</em> - Opens the chart in a separate, resizable window. This is useful when you want to view the chart at a larger size or compare it side-by-side with other windows.</li>
+        
+        <li><strong>Save</strong> <em>(floppy disk icon)</em> - Saves the chart as a single-page PDF file. The saved PDF includes chart metadata automatically attached from the snapshot file, such as engine serial number, engine hours, and snapshot date. This makes it easy to identify the source of the chart data when reviewing saved charts later.</li>
+    </ul>
+    
+    <h2>Using the Toolbar</h2>
+    <p>The toolbar buttons toggle between different interaction modes:</p>
+    <ul>
+        <li>Only one mode (Pan or Zoom) can be active at a time</li>
+        <li>Click the active button again to deactivate it and return to normal pointer mode</li>
+        <li>Use the mouse scroll wheel to zoom in and out at any time</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Tip:</strong> When saving a chart as PDF, the file will contain metadata from the original snapshot. 
+        This information helps you track which engine and snapshot the chart came from, even if the filename doesn't indicate it.
+    </div>
+</body>
+</html>

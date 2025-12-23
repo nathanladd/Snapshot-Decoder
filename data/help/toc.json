@@ -72,7 +72,14 @@
             },
             {
                 "title": "Chart Controls",
-                "page": "chart_controls.html"
+                "page": "chart_controls.html",
+                "expanded": false,
+                "children":[
+                    {
+                        "title": "Toolbar",
+                        "page": "chart_toolbar.html"
+                    }
+                ]
             }
         ]
     },
