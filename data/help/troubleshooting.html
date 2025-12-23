@@ -16,7 +16,9 @@
     <div class="solution">
         <strong>Solution:</strong> The file may not be a valid snapshot export or may be corrupted. 
         Ensure you're opening a snapshot file exported from a Bobcat diagnostic tool. 
-        Try re-exporting the snapshot if possible.
+        Try re-exporting the snapshot if possible.<br>
+        Be sure to capture all the engien PIDs when creating a Snapshot. 
+        Do not choose any of the diagnostic sub-categories of PIDs in Bobcat Engine Analyzer.
     </div>
     
     <div class="problem">
@@ -31,11 +33,13 @@
     <h2>Chart Issues</h2>
     
     <div class="problem">
-        <strong>Problem:</strong> Quick chart buttons are grayed out
+        <strong>Problem:</strong> A Quick Chart button does nothing when clicked
     </div>
     <div class="solution">
         <strong>Solution:</strong> Quick charts are only enabled when the required PIDs are present 
-        in the snapshot. If buttons are disabled, the necessary data wasn't captured in this snapshot.
+        in the snapshot.<br>
+        For example, if the engine is not equipted with an intake throttle valve, 
+        clicking the air throttle Quick Chart button will do nothing.
     </div>
     
     <div class="problem">
@@ -61,8 +65,9 @@
     </div>
     <div class="solution">
         <strong>Solution:</strong> Try maximizing the window or increasing screen resolution. 
-        The application works best at 1280x720 or higher resolution.
-        Right-click your Desktop and choose Display Settings. Under Scale & Layout make sure Scale is 100%.
+        The application works best at 1280x720 or higher resolution.<br>
+        Right-click your Desktop and choose Display Settings. 
+        Under Scale & Layout make sure Scale is 100%.
     </div>
     
     <div class="problem">
