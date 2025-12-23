@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Rail Pressure Chart</h1>
+    
+    <p>The Rail Pressure quick chart displays both actual (raw) and demanded rail pressure throughout the snapshot. This chart is essential for diagnosing fuel system performance and identifying pressure control issues.</p>
+    
+    <img src="../images/rail_pressure.png" alt="Rail Pressure chart" style="max-width: 1000px;">
+    
+    <h2>Understanding Rail Pressure</h2>
+    
+    <h3>Actual (Raw) Rail Pressure</h3>
+    <p>This is the measured fuel pressure in the common rail, as reported by the rail pressure sensor. It represents the real-time pressure available for fuel injection.</p>
+    
+    <h3>Demanded Rail Pressure</h3>
+    <p>This is the target fuel pressure calculated by the ECU based on engine operating conditions such as speed, load, and temperature. The ECU adjusts the fuel pump to achieve this target pressure.</p>
+    
+    <h2>Critical Pressure Thresholds</h2>
+    
+    <div class="info">
+        <strong>Important for Bobcat V1 Engines:</strong> Rail pressure must reach <strong>1450 psi</strong> before fuel delivery begins. 
+        Additionally, the difference between actual (raw) and demanded rail pressure must be within <strong>2176 psi</strong> for proper operation.
+    </div>
+    
+    <h3>Normal Operating Range</h3>
+    <ul>
+        <li><strong>Idle</strong> - Typically 3,000 - 5,000 psi</li>
+        <li><strong>Under Load</strong> - Can reach 20,000+ psi depending on demand</li>
+        <li><strong>Cranking</strong> - Must reach at least 1450 psi for fuel delivery to start</li>
+    </ul>
+    
+    <h2>Analyzing Rail Pressure During Steady State</h2>
+    
+    <p>Rail pressure performance should be evaluated while the engine is in a <strong>steady state</strong> condition. This means analyzing periods where operating conditions are stable and consistent.</p>
+    
+    <h3>Why Steady State Matters</h3>
+    <p>When fuel delivery is changing rapidly (such as during acceleration or deceleration), both actual and demanded rail pressure will fluctuate as the system responds to changing load conditions. These transient periods make it difficult to assess the fuel system's ability to maintain proper pressure control.</p>
+    
+    <h3>How to Identify Steady State</h3>
+    <p>Look for periods in the chart where <strong>Total Fuel Delivery is not changing</strong>. During these periods:</p>
+    <ul>
+        <li>Engine speed should be relatively constant</li>
+        <li>Load should be stable</li>
+        <li>Total fuel delivery should show a flat or consistent pattern</li>
+        <li>Both actual and demanded rail pressure should track closely together</li>
+    </ul>
+    
+    <h2>Identifying Problems</h2>
+    <p>Use the chart to spot these common fuel system issues:</p>
+    <ul>
+        <li><strong>Large gap between actual and demanded</strong> - Fuel supply, IMV or high pressure pump issue, injectors leaking or blocked</li>
+        <li><strong>Actual pressure above demanded during steady state</strong> - IMV or IMV circuit, blocked injector(s) issue</li>
+        
+    </ul>
+    
+    <h2>Tips</h2>
+    <ul>
+        <li>Use the <strong>Vertical Cursor</strong> to compare actual vs. demanded pressure at specific points</li>
+        <li>Use the <strong>Values</strong> tool to see exact pressure readings and calculate the difference</li>
+        <li>Zoom into steady-state periods for detailed pressure control analysis</li>
+        <li>Compare rail pressure with total fuel delivery to identify steady-state operating periods</li>
+    </ul>
+</body>
+</html>
