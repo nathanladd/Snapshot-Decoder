@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Engine Use Data: Speed/Load Distribution</h1>
+    
+    <p>The Speed/Load Distribution chart visualizes how much time the engine has spent operating at various combinations of engine speed (RPM) and load percentage.</p>
+    
+    <img src="../images/speed_load_distribution.png" alt="Speed/Load Distribution Chart" style="max-width: 800px; border: 1px solid #e2e8f0; border-radius: 4px;">
+    
+    <h2>Understanding the Chart</h2>
+    <p>This scatter plot displays engine operating time distributed across a grid of speed and load combinations:</p>
+    <ul>
+        <li><strong>Horizontal X-Axis (Engine Speed)</strong> - Engine RPM, typically ranging from idle to maximum rated speed</li>
+        <li><strong>Verticle Y-Axis (Engine Load)</strong> - Percentage of maximum engine load capacity (0-100%)</li>
+        <li><strong>Bubble Size</strong> - Larger bubbles indicate more time spent at that operating point</li>
+    </ul>
+    
+    <p>The chart helps identify the engine's typical operating patterns and reveals whether the engine is being used efficiently or is frequently operating in suboptimal conditions.</p>
+    
+    <h2>Low Load Operation Concerns</h2>
+    <p>Operating a diesel engine at low load for extended periods can cause several problems:</p>
+    
+    <table>
+        <tr><th>Issue</th><th>Description</th></tr>
+        <tr><td><strong>Wet Stacking</strong></td><td>Unburned fuel and soot accumulate in the exhaust system when combustion temperatures are too low to fully burn the fuel charge.</td></tr>
+        <tr><td><strong>Carbon Buildup</strong></td><td>Incomplete combustion leads to carbon deposits on injector tips, valves, and piston rings, reducing engine efficiency and performance.</td></tr>
+        <tr><td><strong>Cylinder Glazing</strong></td><td>Low combustion pressure prevents piston rings from seating properly, causing the cylinder walls to become polished (glazed) and reducing oil control.</td></tr>
+        <tr><td><strong>Oil Dilution</strong></td><td>Unburned fuel can wash past the piston rings and contaminate the crankcase oil, reducing lubrication effectiveness.</td></tr>
+        <tr><td><strong>Increased Emissions</strong></td><td>DPF and aftertreatment systems may not reach proper operating temperatures, leading to incomplete regeneration cycles and increased emissions.</td></tr>
+    </table>
+    
+    <div class="note">
+        <strong>Note:</strong> Most diesel engine manufacturers recommend operating at a minimum of 30-40% load to maintain proper combustion temperatures and engine health.
+    </div>
+    
+    <h2>Analyzing Operating Patterns</h2>
+    <p>When reviewing the Speed/Load Distribution chart, look for:</p>
+    <ul>
+        <li><strong>Clustering at low load</strong> - Indicates the engine may be oversized for the application or frequently idling</li>
+        <li><strong>Even distribution</strong> - Suggests varied operating conditions typical of on-highway applications</li>
+        <li><strong>High-load concentration</strong> - Common in heavy-duty applications like construction or mining</li>
+        <li><strong>Idle time accumulation</strong> - Large bubble at low RPM/low load indicates excessive idling</li>
+    </ul>
+    
+    <h2>Reference: Engine Hours and Idle Time</h2>
+    <p>For a complete picture of engine utilization, compare the Speed/Load Distribution with the header information:</p>
+    <ol>
+        <li>Check the <strong>Snapshot Header</strong> panel at the top of the main window</li>
+        <li>Locate <strong>Engine Hours</strong> to see total operating time</li>
+        <li>Find <strong>Idle Hours</strong> or <strong>Idle Time</strong> to see time spent at idle</li>
+        <li>Calculate the idle percentage: <code>Idle Hours ÷ Engine Hours × 100</code></li>
+    </ol>
+    
+    <div class="tip">
+        <strong>Tip:</strong> An idle percentage above 30-40% may indicate opportunities to reduce fuel consumption and engine wear through operational changes or automatic idle shutdown systems.
+    </div>
+    
+    <div class="info">
+        <strong>See Also:</strong> <a href="snapshot_header.html">Snapshot Header</a> for more information on interpreting header data fields.
+    </div>
+</body>
+</html>

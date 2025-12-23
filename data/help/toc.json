@@ -45,7 +45,14 @@
         "children": [
             {
                 "title": "Quick Charts",
-                "page": "quick_charts.html"
+                "page": "quick_charts.html",
+                "expanded": false,
+                "children":[
+                    {
+                        "title": "Engine Use Data: Speed/Load",
+                        "page": "eud_speed_load.html"
+                    }
+                ]
             },
             {
                 "title": "Custom Charts",

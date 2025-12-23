@@ -127,13 +127,14 @@ class HelpWindow(tk.Toplevel):
         Recursively populate the TOC tree.
         
         Args:
-            items: List of TOC items, each with 'title', 'page', and optional 'children'
+            items: List of TOC items, each with 'title', 'page', and optional 'children', 'expanded'
             parent: Parent node ID for insertion
         """
         for item in items:
             title = item.get("title", "Untitled")
             page = item.get("page", "")
             children = item.get("children", [])
+            expanded = item.get("expanded", True)  # Default to expanded for backward compatibility
             
             # Insert node with page as value
             node_id = self.toc_tree.insert(parent, "end", text=title, values=(page,))
@@ -141,8 +142,8 @@ class HelpWindow(tk.Toplevel):
             # Recursively add children
             if children:
                 self._populate_toc(children, node_id)
-                # Expand parent nodes
-                self.toc_tree.item(node_id, open=True)
+                # Expand parent nodes based on expanded flag
+                self.toc_tree.item(node_id, open=expanded)
     
     def _on_toc_select(self, event):
         """Handle TOC tree selection."""
