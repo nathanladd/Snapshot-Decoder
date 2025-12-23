@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Engine Use Data: Exhaust Gas Temperature</h1>
+    
+    <p>The Time at EGT chart displays the distribution of engine operating hours across different exhaust gas temperature ranges, revealing thermal operating patterns that directly impact engine health and emissions system performance.</p>
+    
+    <img src="../images/time_at_egt.png" alt="Time at EGT Chart" style="max-width: 800px; border: 1px solid #e2e8f0; border-radius: 4px;">
+    
+    <h2>Reading the Chart</h2>
+    <p>This bar chart shows accumulated run time for each temperature band:</p>
+    <ul>
+        <li><strong>Horizontal X-Axis (Temperature Band)</strong> - EGT ranges grouped into bands (e.g., 200-400°F, 400-600°F, etc.)</li>
+        <li><strong>Vertical Y-Axis (Hours)</strong> - Total hours the engine operated within each temperature band</li>
+        <li><strong>Bar Height</strong> - Taller bars indicate more time spent in that temperature range</li>
+    </ul>
+    
+    <p>A healthy operating pattern typically shows the majority of time concentrated in the mid-to-upper temperature ranges, with minimal time in the lowest bands.</p>
+    
+    <h2>Optimal Exhaust Gas Temperature</h2>
+    <p>For most diesel engines, the ideal EGT operating range depends on load conditions:</p>
+    
+    <table>
+        <tr><th>Operating Condition</th><th>Typical EGT Range</th><th>Notes</th></tr>
+        <tr><td><strong>Idle</strong></td><td>300-480°F</td><td>Lower temps expected; prolonged idle is harmful</td></tr>
+        <tr><td><strong>Light Load</strong></td><td>480-660°F</td><td>Acceptable for short periods</td></tr>
+        <tr><td><strong>Normal Operation</strong></td><td>660-930°F</td><td>Ideal range for engine and aftertreatment health</td></tr>
+        <tr><td><strong>Heavy Load</strong></td><td>930-1200°F</td><td>Normal under high demand; enables passive DPF regen</td></tr>
+        <tr><td><strong>Maximum</strong></td><td>1200-1380°F</td><td>Safe limit; sustained operation may indicate issues</td></tr>
+    </table>
+    
+    <div class="tip">
+        <strong>Tip:</strong> The 660-930°F range is generally the "sweet spot" where the engine runs efficiently and aftertreatment systems function optimally.
+    </div>
+    
+    <h2>Problems Caused by Cold Exhaust Temperatures</h2>
+    <p>Extended operation with low exhaust gas temperatures causes significant harm to diesel engines and emissions systems:</p>
+    
+    <table>
+        <tr><th>Issue</th><th>Description</th></tr>
+        <tr><td><strong>DPF Clogging</strong></td><td>Diesel Particulate Filters require temperatures above 930°F for passive regeneration. Low EGTs cause soot accumulation, triggering frequent active regenerations or eventual filter failure.</td></tr>
+        <tr><td><strong>Wet Stacking</strong></td><td>Unburned fuel and soot condense in the exhaust system when combustion temperatures are too low, leading to black residue buildup, increased emissions, and potential engine damage.</td></tr>
+        <tr><td><strong>DEF Crystallization</strong></td><td>Diesel Exhaust Fluid can crystallize in the SCR injector and catalyst when temperatures are insufficient, reducing NOx conversion and causing component damage.</td></tr>
+        <tr><td><strong>Carbon Deposits</strong></td><td>Incomplete combustion leads to carbon buildup on injector tips, valves, turbocharger, and EGR components, reducing efficiency and causing premature wear.</td></tr>
+        <tr><td><strong>Turbocharger Coking</strong></td><td>Oil residue bakes onto turbo bearings and seals when not reaching proper operating temperature, leading to shaft wear and seal failure.</td></tr>
+        <tr><td><strong>Cylinder Glazing</strong></td><td>Low combustion pressure and temperature prevent piston rings from seating properly, polishing cylinder walls and reducing oil control.</td></tr>
+        <tr><td><strong>Acid Formation</strong></td><td>When EGTs drop below the dew point, sulfur compounds in the exhaust combine with moisture to form corrosive sulfuric acid that attacks exhaust components.</td></tr>
+    </table>
+    
+    <div class="note">
+        <strong>Note:</strong> Extended operation below 400°F EGT is particularly harmful to modern emissions-equipped diesel engines.
+    </div>
+    
+    <h2>Analyzing EGT Distribution</h2>
+    <p>When reviewing this chart, look for:</p>
+    <ul>
+        <li><strong>Heavy low-temperature concentration</strong> - Indicates excessive idling or light-load operation; expect aftertreatment issues</li>
+        <li><strong>Mid-range peaks (570-840°F)</strong> - Normal operating range for moderate load conditions</li>
+        <li><strong>Upper-range time (840-1020°F)</strong> - Indicates productive, loaded operation beneficial for engine health</li>
+        <li><strong>Extreme high temps (1200°F+)</strong> - Brief periods are normal; sustained time may indicate overloading or cooling issues</li>
+    </ul>
+    
+    <div class="tip">
+        <strong>Tip:</strong> Compare the EGT distribution with the <a href="eud_speed_load.html">Speed/Load Distribution</a> chart to understand if low temperatures correlate with low-load operating conditions.
+    </div>
+</body>
+</html>

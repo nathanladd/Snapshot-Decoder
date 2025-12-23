@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Engine Use Data: Time at Elevation</h1>
+    
+    <p>The Time at Elevation chart displays the distribution of engine operating hours across different altitude ranges, revealing the typical operating environment of the vehicle.</p>
+    
+    <img src="../images/time_at_elevation.png" alt="Time at Elevation Chart" style="max-width: 800px; border: 1px solid #e2e8f0; border-radius: 4px;">
+    
+    <h2>Understanding the Chart</h2>
+    <p>This bar chart shows accumulated run time for each elevation band:</p>
+    <ul>
+        <li><strong>Horizontal X-Axis (Elevation Band)</strong> - Altitude ranges grouped into bands (e.g., 0-1000 ft, 1000-2000 ft, etc.)</li>
+        <li><strong>Vertical Y-Axis (Hours)</strong> - Total hours the engine operated within each elevation band</li>
+        <li><strong>Bar Height</strong> - Taller bars indicate more time spent at that altitude range</li>
+    </ul>
+    
+    <h2>How Elevation is Measured</h2>
+    <p>The engine's ECU calculates elevation using an <strong>atmospheric pressure sensor</strong> (also called a barometric pressure sensor). This sensor measures the ambient air pressure surrounding the vehicle.</p>
+    
+    <p>As altitude increases, atmospheric pressure decreases in a predictable relationship:</p>
+    <ul>
+        <li><strong>Sea level</strong> - Approximately 14.7 psi (101.3 kPa)</li>
+        <li><strong>5,000 ft (1,524 m)</strong> - Approximately 12.2 psi (84.3 kPa)</li>
+        <li><strong>10,000 ft (3,048 m)</strong> - Approximately 10.1 psi (69.7 kPa)</li>
+    </ul>
+    
+    <p>The ECU converts the measured pressure to an estimated elevation value. This data is logged over time to create the elevation histogram.</p>
+    
+    <div class="note">
+        <strong>Note:</strong> Weather conditions can affect barometric pressure readings. High or low pressure weather systems may cause minor variations in the calculated elevation.
+    </div>
+    
+    <h2>Challenges of High-Altitude Operation</h2>
+    <p>Diesel engines face several challenges when operating at higher elevations due to reduced air density:</p>
+    
+    <table>
+        <tr><th>Challenge</th><th>Description</th></tr>
+        <tr><td><strong>Reduced Air Density</strong></td><td>Less oxygen per cubic foot of air means less oxygen available for combustion. At 10,000 ft, air contains roughly 30% less oxygen than at sea level.</td></tr>
+        <tr><td><strong>Power Loss</strong></td><td>Naturally aspirated engines lose approximately 3% power per 1,000 ft of elevation. Turbocharged engines compensate partially but still experience derating at extreme altitudes.</td></tr>
+        <tr><td><strong>Turbocharger Stress</strong></td><td>The turbo must spin faster to compress the thinner air to the required boost pressure, increasing shaft speed, heat, and bearing wear.</td></tr>
+        <tr><td><strong>Incomplete Combustion</strong></td><td>Reduced oxygen availability can lead to incomplete fuel burn, causing increased soot production, higher exhaust temperatures, and elevated emissions.</td></tr>
+        <tr><td><strong>DPF Loading</strong></td><td>Increased soot from incomplete combustion accelerates DPF loading, potentially triggering more frequent regeneration cycles.</td></tr>
+    </table>
+    
+    <h2>ECU Altitude Compensation</h2>
+    <p>Modern diesel ECUs use barometric pressure data to adjust engine operation:</p>
+    <ul>
+        <li><strong>Fuel injection timing</strong> - Adjusted to optimize combustion with reduced oxygen</li>
+        <li><strong>Boost pressure targets</strong> - Modified to maintain power while protecting the turbocharger</li>
+        <li><strong>EGR rates</strong> - Reduced at altitude to preserve available oxygen for combustion</li>
+        <li><strong>Power derating</strong> - Gradual reduction in available torque to prevent damage at extreme elevations</li>
+    </ul>
+    
+    <div class="tip">
+        <strong>Tip:</strong> If a vehicle frequently operates at high elevation, consider this when diagnosing power complaints, turbo issues, or excessive DPF regeneration events.
+    </div>
+    
+    <h2>Analyzing Elevation Distribution</h2>
+    <p>When reviewing this chart, consider:</p>
+    <ul>
+        <li><strong>Single elevation peak</strong> - Vehicle operates primarily in one geographic region</li>
+        <li><strong>Wide distribution</strong> - Vehicle travels across varying terrain</li>
+        <li><strong>High-altitude concentration</strong> - May explain increased wear on turbo, DPF issues, or startability issues</li>
+        <li><strong>Comparison to complaints</strong> - Correlate elevation data with reported performance issues</li>
+    </ul>
+    
+    <div class="info">
+        <strong>North Dakota Factory Time:</strong> Most machines are assembled and tested in North Dakota, which sits at approximately 1,500-2,000 ft elevation. You may notice a small amount of run time logged at this elevation even if the machine operates elsewhere. This is normal and represents factory testing and initial run-in time before the machine was shipped to its final destination.
+    </div>
+</body>
+</html>
