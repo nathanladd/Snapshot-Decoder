@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Raw Data Table</h1>
+    
+    <p>The Raw Data Table displays the complete, unprocessed snapshot data in a spreadsheet-like view. This allows you to examine all PIDs and their values across every frame captured in the snapshot.</p>
+    
+    <img src="../images/raw_data_table.png" alt="Raw Data Table window" style="max-width: 1000px;">
+    
+    <div class="info">
+        <strong>Important:</strong> The data shown in this table is a copy of the original snapshot data. 
+        While you can edit cells within the table window, these changes do not modify the original snapshot file. 
+        Any edits you make are temporary and will be lost when the window is closed.
+    </div>
+    
+    <h2>Table Information</h2>
+    <p>The top of the window displays summary information about the snapshot:</p>
+    <ul>
+        <li><strong>Total PIDs</strong> - The number of parameters (columns) in the snapshot</li>
+        <li><strong>Total Frames</strong> - The number of data samples (rows) captured</li>
+        <li><strong>Rows Loaded</strong> - Shows how many rows are currently loaded in the table</li>
+    </ul>
+    
+    <h2>Loading Rows</h2>
+    <p>For faster performance, the table initially loads only the first 200 rows. Use the loading buttons to view more data:</p>
+    <ul>
+        <li><strong>Load More Rows</strong> - Loads the next batch of 200 rows into the table</li>
+        <li><strong>Load All</strong> - Loads all remaining rows at once (may take a moment for large snapshots)</li>
+    </ul>
+    
+    <h2>Search Function</h2>
+    <p>The search box allows you to find specific text within the table:</p>
+    <ul>
+        <li><strong>Search Box</strong> - Enter your search term here. Press Enter or click Find to search.</li>
+        <li><strong>Find</strong> - Searches the column headers and loaded data for matching text</li>
+        <li><strong>&#9650; / &#9660;</strong> - Navigate to the previous or next match</li>
+        <li><strong>Clear</strong> - Clears the search highlighting and resets the search</li>
+    </ul>
+    <p>Matching cells and headers are highlighted in yellow. The search is case-insensitive and searches both column headers and cell values.</p>
+    
+    <h2>Table Interactions</h2>
+    <p>The table supports several interactions:</p>
+    <ul>
+        <li><strong>Cell Selection</strong> - Click to select individual cells.</li>
+        <li><strong>Row/Column Selection</strong> - Click row numbers or column headers to select entire rows or columns</li>
+        <li><strong>Column Resizing</strong> - Drag column borders to adjust width</li>
+        <li><strong>Copy/Paste</strong> - Use Ctrl+C to copy selected data and Ctrl+V to paste</li>
+        <li><strong>Right-Click Menu</strong> - Access additional options like copy, paste, and undo</li>
+        <li><strong>Arrow Keys</strong> - Navigate between cells using keyboard arrows. Hold the shift key to select mutiple cells</li>
+    </ul>
+    
+    <h2>Opening the Raw Data Table</h2>
+    <p>To open the Raw Data Table, go to the <strong>View</strong> menu and select <strong>Raw Data Table</strong>, or use the keyboard shortcut if available.</p>
+</body>
+</html>
