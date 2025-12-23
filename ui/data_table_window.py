@@ -4,6 +4,10 @@ import pandas as pd
 import tksheet
 import threading
 
+# Lazy loading constants
+INITIAL_ROW_BATCH = 200  # Number of rows to load initially
+ROW_LOAD_BATCH = 200     # Number of rows to load when scrolling
+
 
 class DataTableWindow:
     def __init__(self, parent, snapshot: pd.DataFrame, snapshot_path: str, window_name: str):
@@ -16,6 +20,11 @@ class DataTableWindow:
         self._prepared_data = None
         self._prepared_cols = None
         self._loading_cancelled = False
+        
+        # Lazy loading state
+        self._all_data = None  # Full dataset
+        self._rows_loaded = 0  # Number of rows currently in sheet
+        self._loading_more = False  # Prevent concurrent loads
         
         # Search state
         self._search_matches = []  # List of (row, col) tuples
@@ -34,7 +43,17 @@ class DataTableWindow:
         info_frame.pack(fill=tk.X, pady=(5, 0), padx=10)
         
         ttk.Label(info_frame, text=f"Total PIDs: {len(snapshot.columns)}", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 20))
-        ttk.Label(info_frame, text=f"Total Frames: {len(snapshot)}", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT)
+        ttk.Label(info_frame, text=f"Total Frames: {len(snapshot)}", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 20))
+        
+        # Rows loaded indicator and Load More button
+        self.rows_loaded_label = ttk.Label(info_frame, text="", font=("Segoe UI", 9))
+        self.rows_loaded_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        self.load_more_btn = ttk.Button(info_frame, text="Load More Rows", command=self._load_more_rows)
+        self.load_more_btn.pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.load_all_btn = ttk.Button(info_frame, text="Load All", command=self._load_all_remaining_rows)
+        self.load_all_btn.pack(side=tk.LEFT)
         
         # Search frame
         search_frame = ttk.Frame(self.container)
@@ -126,10 +145,19 @@ class DataTableWindow:
         self.progress['value'] = 50
         self.win.update_idletasks()
 
-        # Create tksheet table widget with all data (tksheet handles virtual scrolling internally)
+        # Store full data for lazy loading
+        self._all_data = self._prepared_data
+        total_rows = len(self._all_data)
+        
+        # Load only initial batch of rows
+        initial_rows = min(INITIAL_ROW_BATCH, total_rows)
+        initial_data = self._all_data[:initial_rows]
+        self._rows_loaded = initial_rows
+
+        # Create tksheet table widget with initial batch only
         self.sheet = tksheet.Sheet(
             self.container,
-            data=self._prepared_data,
+            data=initial_data,
             headers=self._prepared_cols,
             height=24,
             width=None,
@@ -165,7 +193,10 @@ class DataTableWindow:
         self.progress.pack_forget()
         self.progress_label.pack_forget()
         
-        # Clear references to free memory
+        # Update rows loaded label and button visibility
+        self._update_rows_loaded_label()
+        
+        # Clear prepared data reference (but keep _all_data for lazy loading)
         self._prepared_data = None
         self._prepared_cols = None
 
@@ -175,6 +206,55 @@ class DataTableWindow:
         self.progress.pack_forget()
         self.progress_label.config(text=f"Error loading data: {message}")
         self.progress_label.config(foreground="red")
+
+    def _update_rows_loaded_label(self):
+        """Update the label showing how many rows are loaded."""
+        if self._all_data is None:
+            return
+        total = len(self._all_data)
+        if self._rows_loaded >= total:
+            self.rows_loaded_label.config(text="(All rows loaded)")
+            self.load_more_btn.config(state="disabled")
+            self.load_all_btn.config(state="disabled")
+        else:
+            self.rows_loaded_label.config(text=f"(Showing {self._rows_loaded} of {total} rows)")
+            self.load_more_btn.config(state="normal")
+            self.load_all_btn.config(state="normal")
+
+    def _load_more_rows(self):
+        """Load the next batch of rows into the sheet."""
+        if self._loading_more or self._all_data is None:
+            return
+        if self._rows_loaded >= len(self._all_data):
+            return
+        
+        self._loading_more = True
+        
+        try:
+            total = len(self._all_data)
+            start_row = self._rows_loaded
+            end_row = min(start_row + ROW_LOAD_BATCH, total)
+            
+            # Get the new rows to add
+            new_rows = self._all_data[start_row:end_row]
+            
+            # Append rows to sheet
+            for row in new_rows:
+                self.sheet.insert_row(row)
+            
+            self._rows_loaded = end_row
+            self._update_rows_loaded_label()
+            self.sheet.refresh()
+            
+        finally:
+            self._loading_more = False
+    
+    def _load_all_remaining_rows(self):
+        """Load all remaining rows (used before search)."""
+        if self._all_data is None:
+            return
+        while self._rows_loaded < len(self._all_data):
+            self._load_more_rows()
 
     def _do_search(self):
         """Search all cells and headers for the search term and highlight matches."""
@@ -198,7 +278,7 @@ class DataTableWindow:
             if search_term in str(header).lower():
                 self._header_matches.append(col_idx)
         
-        # Search through all data
+        # Search through loaded data only
         data = self.sheet.get_sheet_data()
         for row_idx, row in enumerate(data):
             for col_idx, cell in enumerate(row):
