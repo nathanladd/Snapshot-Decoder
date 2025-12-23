@@ -51,6 +51,18 @@
                     {
                         "title": "Engine Use Data: Speed/Load",
                         "page": "eud_speed_load.html"
+                    },
+                    {
+                        "title": "Engine Use Data: Speed Band",
+                        "page": "eud_speed_band.html"
+                    },
+                    {
+                        "title": "Engine Use Data: Elevation",
+                        "page": "eud_elevation.html"
+                    },
+                    {
+                        "title": "Engine Use Data: EGT",
+                        "page": "eud_egt.html"
                     }
                 ]
             },

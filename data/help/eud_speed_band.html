@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Engine Use Data: Speed Band Run Time</h1>
+    
+    <p>The Speed Band Run Time chart displays the distribution of engine operating hours across different RPM ranges, helping identify how the engine is typically used.</p>
+    
+    <img src="../images/speed_band_run_time.png" alt="Speed Band Run Time Chart" style="max-width: 800px; border: 1px solid #e2e8f0; border-radius: 4px;">
+    
+    <h2>Understanding the Chart</h2>
+    <p>This bar chart shows accumulated run time for each speed band:</p>
+    <ul>
+        <li><strong>Horizontal X-Axis (Speed Band)</strong> - RPM ranges grouped into bands (e.g., 600-800, 800-1000, etc.)</li>
+        <li><strong>Vertical Y-Axis (Hours)</strong> - Total hours the engine operated within each speed band</li>
+        <li><strong>Bar Height</strong> - Taller bars indicate more time spent in that RPM range</li>
+    </ul>
+    
+    <h2>Exhaust Gas Temperature and Engine Speed</h2>
+    <p>Engine speed directly affects exhaust gas temperature (EGT). Higher RPM operation generally produces higher EGTs, which is beneficial for diesel engine health and emissions systems.</p>
+    
+    <h3>Benefits of Higher Exhaust Temperatures</h3>
+    <table>
+        <tr><th>Benefit</th><th>Description</th></tr>
+        <tr><td><strong>Complete Combustion</strong></td><td>Higher temperatures ensure thorough burning of the fuel charge, maximizing power output and fuel efficiency.</td></tr>
+        <tr><td><strong>DPF Regeneration</strong></td><td>Diesel Particulate Filters require temperatures above 500°C (932°F) for passive regeneration. Higher EGTs allow continuous soot burn-off without active regeneration cycles.</td></tr>
+        <tr><td><strong>SCR Efficiency</strong></td><td>Selective Catalytic Reduction systems operate most efficiently at elevated temperatures, maximizing NOx conversion rates.</td></tr>
+        <tr><td><strong>Reduced Carbon Deposits</strong></td><td>Hot exhaust gases help burn off carbon buildup in the exhaust manifold, turbocharger, and EGR system.</td></tr>
+        <tr><td><strong>Moisture Elimination</strong></td><td>Higher temperatures vaporize condensation in the exhaust system, preventing corrosion and acid formation.</td></tr>
+    </table>
+    
+    <h3>Negative Effects of Low Exhaust Temperatures</h3>
+    <table>
+        <tr><th>Issue</th><th>Description</th></tr>
+        <tr><td><strong>DPF Clogging</strong></td><td>Insufficient temperatures prevent passive regeneration, causing soot accumulation that triggers frequent active regenerations or eventual filter failure.</td></tr>
+        <tr><td><strong>DEF Crystallization</strong></td><td>Low EGTs can cause Diesel Exhaust Fluid to crystallize in the SCR injector and catalyst, reducing effectiveness and causing damage.</td></tr>
+        <tr><td><strong>Wet Stacking</strong></td><td>Unburned fuel and soot condense in the exhaust system, leading to black residue, increased emissions, and potential engine damage.</td></tr>
+        <tr><td><strong>Turbocharger Coking</strong></td><td>Oil residue bakes onto turbo bearings and seals when not reaching proper operating temperature, causing premature wear.</td></tr>
+        <tr><td><strong>Sulfuric Acid Formation</strong></td><td>When EGTs drop below the dew point, sulfur in the exhaust combines with moisture to form corrosive sulfuric acid.</td></tr>
+    </table>
+    
+    <div class="note">
+        <strong>Note:</strong> Extended operation below 200°C (392°F) EGT is particularly harmful to modern emissions-equipped diesel engines.
+    </div>
+    
+    <h2>Analyzing Speed Band Distribution</h2>
+    <p>When reviewing this chart, consider:</p>
+    <ul>
+        <li><strong>Heavy idle concentration</strong> - Large time in lowest speed bands suggests excessive idling and low EGT conditions</li>
+        <li><strong>Mid-range peaks</strong> - Normal for highway applications where cruise RPM dominates</li>
+        <li><strong>High-RPM usage</strong> - Common in vocational applications requiring frequent acceleration or PTO operation</li>
+        <li><strong>Bimodal distribution</strong> - Two peaks (idle and cruise) typical of long-haul trucking with delivery stops</li>
+    </ul>
+    
+    <div class="tip">
+        <strong>Tip:</strong> Compare the Speed Band distribution with the <a href="eud_speed_load.html">Speed/Load Distribution</a> chart to understand if low-speed operation also coincides with low-load conditions.
+    </div>
+</body>
+</html>
