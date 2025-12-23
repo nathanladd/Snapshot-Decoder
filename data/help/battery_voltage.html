@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Battery Voltage Chart</h1>
+    
+    <p>The Battery Voltage quick chart displays voltage levels throughout the snapshot, making it easy to identify potential electrical issues during different engine operating states.</p>
+    
+    <img src="../images/battery_voltage.png" alt="Battery Voltage chart" style="max-width: 1000px;">
+    
+    <h2>Reading the Chart</h2>
+    <p>The battery voltage chart shows voltage on the Y-axis and time (frames) on the X-axis. Look for distinct voltage levels that correspond to different engine states:</p>
+    
+    <h3>Engine Off</h3>
+    <p>When the engine is off, battery voltage should be stable at the resting voltage level. A healthy battery typically shows:</p>
+    <ul>
+        <li><strong>12.4V - 12.8V</strong> - Fully charged battery at rest</li>
+        <li><strong>Below 12.0V</strong> - Battery may be discharged or weak</li>
+    </ul>
+    
+    <h3>Cranking</h3>
+    <p>During engine cranking, voltage drops significantly as the starter motor draws heavy current. This is visible as a sharp dip in the chart.</p>
+    <ul>
+        <li><strong>9.0V - 10.5V</strong> - Normal cranking voltage range</li>
+        <li><strong>Below 9.0V</strong> - Voltage too low during cranking</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Important:</strong> Bobcat machines do not tolerate battery voltage falling below 9 volts during cranking. 
+        If the chart shows voltage dropping below 9V during the cranking period, this may indicate a weak battery, 
+        poor connections, or excessive starter draw that could cause starting problems or ECU issues.
+    </div>
+    
+    <h3>Idle / Running</h3>
+    <p>Once the engine is running, the alternator charges the battery and voltage should rise and stabilize:</p>
+    <ul>
+        <li><strong>13.5V - 14.5V</strong> - Normal charging voltage while running</li>
+        <li><strong>Below 13.0V</strong> - Alternator may not be charging properly</li>
+        <li><strong>Above 15.0V</strong> - Possible overcharging condition</li>
+    </ul>
+    
+    <h2>Identifying Problems</h2>
+    <p>Use the chart to spot these common issues:</p>
+    <ul>
+        <li><strong>Deep voltage dip during cranking</strong> - Weak battery or high resistance connections</li>
+        <li><strong>Low voltage while running</strong> - Alternator or charging system issue</li>
+        <li><strong>Voltage fluctuations</strong> - Loose connections or intermittent electrical problems</li>
+        <li><strong>Gradual voltage decline</strong> - Battery not holding charge or parasitic drain</li>
+    </ul>
+    
+    <h2>Tips</h2>
+    <ul>
+        <li>Use the <strong>Vertical Cursor</strong> tool to align readings across the cranking event</li>
+        <li>Use the <strong>Values</strong> tool to see exact voltage readings at any point</li>
+        <li>Zoom into the cranking period to get a detailed view of the voltage dip</li>
+    </ul>
+</body>
+</html>
