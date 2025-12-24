@@ -30,6 +30,82 @@
         Empty snapshots may occur if the capture was interrupted.
     </div>
     
+    <h2>Snapshot Quality Issues</h2>
+    
+    <p>Sometimes snapshots may contain unexpected data or produce unusual chart results. Use the Data menu to inspect the snapshot quality and diagnose issues.</p>
+    
+    <h3>Using Raw Data Table to Diagnose Issues</h3>
+    
+    <p>The <strong>Raw Data Table</strong> (<code>Data → Raw Data</code>) shows the original data exactly as it was imported from the snapshot file, before any processing or cleaning.</p>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Charts show unexpected values or missing data
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Open the Raw Data Table to check the original snapshot data:
+        <ul>
+            <li><strong>Missing columns</strong> - If expected PIDs are missing, the snapshot may not have been captured with all engine PIDs selected in Bobcat Engine Analyzer</li>
+            <li><strong>Empty cells or zeros</strong> - Indicates the sensor was not active or not reporting during capture</li>
+            <li><strong>Text instead of numbers</strong> - Some cells may contain error codes or status text instead of numeric values</li>
+            <li><strong>Inconsistent data</strong> - Look for sudden jumps, repeated values, or obvious errors that indicate capture problems</li>
+            <li><strong>Short snapshots</strong> - Check the number of rows to ensure the snapshot captured enough data for meaningful analysis</li>
+        </ul>
+    </div>
+    
+    <h3>Using Clean Data Table to Verify Processing</h3>
+    
+    <p>The <strong>Clean Data Table</strong> (<code>Data → Clean Table</code>) shows the processed data after Snapshot Decoder has cleaned and converted the raw data. This is the data used for all charts.</p>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Charts don't match expectations or show gaps
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Compare the Clean Data Table with the Raw Data Table:
+        <ul>
+            <li><strong>Missing rows</strong> - Some rows may have been removed if they contained invalid data</li>
+            <li><strong>Converted values</strong> - Check that unit conversions were applied correctly (e.g., temperature, pressure)</li>
+            <li><strong>Calculated columns</strong> - Some PIDs may be calculated from other values; verify the source data is present</li>
+            <li><strong>Time or Frame column</strong> - Ensure the time/frame column is present and sequential</li>
+        </ul>
+    </div>
+    
+    <h3>Common Snapshot Quality Problems</h3>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Snapshot was captured with diagnostic sub-categories instead of all engine PIDs
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> When creating snapshots in Bobcat Engine Analyzer, always select <strong>All Engine PIDs</strong>, not diagnostic sub-categories. 
+        Sub-category snapshots may be missing critical PIDs needed for Quick Charts and analysis. 
+        Check the Raw Data Table to see which PIDs are present, then re-capture the snapshot if necessary.
+    </div>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Snapshot capture was interrupted or too short
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Open the Clean Data Table and check the number of data rows. 
+        Short snapshots (fewer than 50-100 rows) may not capture enough information for meaningful analysis. 
+        For events like cranking or acceleration, ensure the snapshot capture spans the entire event plus some time before and after.
+    </div>
+    
+    <div class="problem">
+        <strong>Problem:</strong> Data shows flat lines or no variation
+    </div>
+    <div class="solution">
+        <strong>Solution:</strong> Use the Clean Data Table to verify the PID values:
+        <ul>
+            <li>If all values are identical, the sensor may not have been active during capture</li>
+            <li>If values are all zero, check the Raw Data Table to see if this is the original data or a conversion issue</li>
+            <li>Some parameters only change under specific conditions (e.g., EGR only operates when engine is warm)</li>
+        </ul>
+    </div>
+    
+    <div class="info">
+        <strong>Best Practice:</strong> Before analyzing a snapshot, quickly review both the Raw Data Table and Clean Data Table to verify data quality. 
+        This helps identify capture issues early and saves time troubleshooting unexpected chart results.
+    </div>
+    
     <h2>Chart Issues</h2>
     
     <div class="problem">
@@ -48,6 +124,7 @@
     <div class="solution">
         <strong>Solution:</strong> This typically means the parameter had no variation during capture. 
         Try zooming in to see small changes, or check if the sensor was active during the snapshot.
+        Use <code>Data → Clean Table</code> to verify the actual PID values.
     </div>
     
     <div class="problem">

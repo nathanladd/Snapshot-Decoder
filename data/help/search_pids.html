@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Search PIDs</h1>
+    
+    <p>The Search PIDs panel is located in the left side of the main window and provides a powerful way to find and select PIDs from your snapshot.</p>
+    
+    <img src="../images/search_pids.png" alt="Search PIDs panel" style="max-width: 600px;">
+    
+    <h2>Understanding PID Names</h2>
+    
+    <p>The PID list box displays all available parameters from the loaded snapshot. PID names can appear cryptic at first, but they follow consistent naming conventions that make them easier to identify:</p>
+    
+    <h3>Common PID Naming Prefixes</h3>
+    <ul>
+        <li><strong>P_L</strong> - Physical Layer parameters (raw sensor values)</li>
+        <li><strong>IN</strong> - Calculated Values (Internal)</li>
+        <li><strong>ACM</strong> - Air Charge Management</li>
+        <li><strong>SMC</strong> - System Mode Control</li>
+        <li><strong>I_C</strong> - Injection Control</li>
+        <li><strong>P_T</strong> - Post Treatment</li>
+        <li><strong>AFC</strong> - Air Fuel Control</li>
+        <li><strong>EUD</strong> - Engine Use Data</li>
+        <li><strong>FQD</strong> - Fuel Quantity Demand</li>
+        <li><strong>ICI</strong> - Instrument Cluster Interface</li>
+        <li><strong>ICV</strong> - Input Cross Validation</li>
+        <li><strong>P_T</strong> - Post Treatment</li>
+        <li><strong>ITD</strong> - Injection Timing Demand</li>
+        <li><strong>PSE</strong> - Pressure State Estimate</li>
+        <li><strong>RPC</strong> - Rail Pressure Control</li>
+        <li><strong>SAC</strong> - Start Aid Control</li>
+        <li><strong>SMC</strong> - System Mode Control</li>
+        <li><strong>T_D</strong> - Torque Demand</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Example:</strong> PIDs starting with <code>P_L</code> represent Physical Layer data. 
+        Searching for "P_L" will show all raw sensor values like <code>P_L_Battery_raw</code>, <code>P_L_Atmosp_raw</code>, and <code>P_L_Fuel_temp_raw</code>.
+    </div>
+    
+    <h2>Live Filtering Search</h2>
+    
+    <p>The search box provides <strong>live filtering</strong> that updates the PID list as you type:</p>
+    
+    <h3>How It Works</h3>
+    <ul>
+        <li><strong>Type to filter</strong> - Start typing any part of a PID name in the search box</li>
+        <li><strong>Instant results</strong> - The list automatically filters to show only matching PIDs</li>
+        <li><strong>Case-insensitive</strong> - Search works regardless of capitalization</li>
+        <li><strong>Partial matching</strong> - Matches any PID containing your search term</li>
+        <li><strong>Clear to reset</strong> - Delete the search text to show all PIDs again</li>
+    </ul>
+    
+    <h3>Search Strategies</h3>
+    
+    <p>Use these search techniques to quickly find the PIDs you need:</p>
+    
+    <ul>
+        <li><strong>Search by prefix</strong> - Type "P_L_" to see all Physical Layer parameters</li>
+        <li><strong>Search by type</strong> - Type "temp" to find all temperature-related PIDs</li>
+        <li><strong>Search by system</strong> - Type "egr" to find all EGR-related parameters</li>
+        <li><strong>Search by function</strong> - Type "pressure" to find all pressure sensors</li>
+        <li><strong>Search by component</strong> - Type "fuel" to find all fuel system PIDs</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Tip:</strong> The live filtering search is especially useful when you know the general category of PIDs you need but don't remember the exact names. For example, searching "speed" will show engine speed, vehicle speed, and any other speed-related parameters.
+    </div>
+    
+    <h2>Multi-Select Capability</h2>
+    
+    <p>The PID list box supports multiple selection methods, making it easy to add groups of related PIDs to your chart:</p>
+    
+    <h3>Selection Methods</h3>
+    <ul>
+        <li><strong>Single click</strong> - Select one PID</li>
+        <li><strong>Ctrl + Click</strong> - Add individual PIDs to your selection</li>
+        <li><strong>Shift + Click</strong> - Select a range of PIDs from the first click to the second</li>
+        <li><strong>Ctrl + A</strong> - Select all visible PIDs (useful after filtering)</li>
+    </ul>
+    
+    <h2>Adding Groups of PIDs at Once</h2>
+    
+    <p>The combination of live filtering and multi-select makes it easy to add entire groups of related PIDs to your chart in one operation:</p>
+    
+    <h3>Workflow Example</h3>
+    <ol>
+        <li><strong>Filter the list</strong> - Type "P_L_" to show only Physical Layer parameters</li>
+        <li><strong>Select multiple PIDs</strong> - Use Ctrl+Click or Shift+Click to select the ones you want</li>
+        <li><strong>Add to axis</strong> - Click <strong>➕ Add to Primary</strong> or <strong>➕ Add to Secondary</strong></li>
+        <li><strong>All selected PIDs are added</strong> - They appear in the axis list box and on the chart</li>
+    </ol>
+    
+    <div class="info">
+        <strong>Practical Example:</strong> To chart all temperature sensors together:
+        <ol>
+            <li>Type "temp" in the search box</li>
+            <li>Press Ctrl+A to select all temperature PIDs</li>
+            <li>Click <strong>➕ Add to Primary</strong></li>
+            <li>All temperature parameters are now on your chart</li>
+        </ol>
+    </div>
+    
+    <h2>Add to Primary and Secondary Buttons</h2>
+    
+    <p>After selecting PIDs, use these buttons to assign them to chart axes:</p>
+    
+    <h3>➕ Add to Primary</h3>
+    <p>Adds selected PIDs to the <strong>Primary axis (left)</strong>. These PIDs will be plotted against the left Y-axis of the chart. Use this for your main parameters of interest or PIDs with similar value ranges.</p>
+    
+    <h3>➕ Add to Secondary</h3>
+    <p>Adds selected PIDs to the <strong>Secondary axis (right)</strong>. These PIDs will be plotted against the right Y-axis of the chart. Use this for parameters with different units or scales that you want to overlay on the same chart.</p>
+    
+    <div class="info">
+        <strong>Note:</strong> The chart updates automatically when you add PIDs to either axis. You don't need to click a separate "Plot" button unless you're also changing axis ranges.
+    </div>
+    
+    <h2>PID Descriptions Button</h2>
+    
+    <p>The book icon button in the upper-right corner of the Search PIDs panel opens the <a href="pid_descriptions.html">PID Descriptions window</a>. This window shows detailed information about each PID, including:</p>
+    <ul>
+        <li>Full PID names and descriptions</li>
+        <li>Units of measure</li>
+        <li>Additional context about what each parameter represents</li>
+    </ul>
+    
+    <h2>Tips for Effective PID Searching</h2>
+    
+    <ul>
+        <li><strong>Learn the prefixes</strong> - Familiarize yourself with common prefixes like P_L_, IN_, and ACM_ to quickly identify parameter types</li>
+        <li><strong>Use broad searches first</strong> - Start with general terms like "pressure" or "temp" to see what's available</li>
+        <li><strong>Combine search with multi-select</strong> - Filter to a category, then select multiple PIDs to add them all at once</li>
+        <li><strong>Group related PIDs</strong> - Add related parameters to the same axis for easier comparison</li>
+        <li><strong>Experiment with searches</strong> - Try different search terms to discover PIDs you might not have known existed</li>
+        <li><strong>Clear between searches</strong> - Clear the search box between different searches to avoid confusion</li>
+    </ul>
+    
+    <h2>Common Search Examples</h2>
+    
+    <table>
+        <tr>
+            <th>Search Term</th>
+            <th>What It Finds</th>
+        </tr>
+        <tr>
+            <td><code>P_L_</code></td>
+            <td>All Physical Layer (raw sensor) values</td>
+        </tr>
+        <tr>
+            <td><code>temp</code></td>
+            <td>All temperature-related PIDs</td>
+        </tr>
+        <tr>
+            <td><code>pressure</code></td>
+            <td>All pressure sensors and parameters</td>
+        </tr>
+        <tr>
+            <td><code>egr</code></td>
+            <td>All EGR system parameters</td>
+        </tr>
+        <tr>
+            <td><code>fuel</code></td>
+            <td>All fuel system PIDs</td>
+        </tr>
+        <tr>
+            <td><code>rail</code></td>
+            <td>Rail pressure and related parameters</td>
+        </tr>
+        <tr>
+            <td><code>speed</code></td>
+            <td>Engine speed, vehicle speed, and related PIDs</td>
+        </tr>
+        <tr>
+            <td><code>battery</code></td>
+            <td>Battery voltage and electrical system PIDs</td>
+        </tr>
+    </table>
+    
+    <h2>Related Topics</h2>
+    <ul>
+        <li><a href="pid_descriptions.html">PID Descriptions</a> - Detailed information about PIDs and their meanings</li>
+        <li><a href="axis_controls.html">Axis Controls</a> - Managing PIDs on primary and secondary axes</li>
+        <li><a href="custom_charts.html">Custom Charts</a> - Creating custom chart configurations</li>
+    </ul>
+</body>
+</html>

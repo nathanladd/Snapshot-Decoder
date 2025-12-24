@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Axis Controls</h1>
+    
+    <p>The axis controls allow you to organize PIDs into primary and secondary axes and customize the chart display. These controls are located in the left panel below the PID search box.</p>
+    
+    <img src="../images/axis_controls.png" alt="Axis controls" style="max-width: 600px;">
+    
+    <h2>Primary and Secondary Axis List Boxes</h2>
+    
+    <p>The axis controls contain two list boxes that display which PIDs are assigned to each axis:</p>
+    
+    <h3>Primary Axis (Left)</h3>
+    <p>PIDs in the <strong>Primary axis (left)</strong> list box are plotted against the left Y-axis of the chart. This axis is typically used for the main parameter you want to analyze.</p>
+    
+    <h3>Secondary Axis (Right)</h3>
+    <p>PIDs in the <strong>Secondary axis (right)</strong> list box are plotted against the right Y-axis of the chart. This axis allows you to overlay additional data with different scales or units on the same chart.</p>
+    
+    <div class="info">
+        <strong>Why Two Axes?</strong> Different PIDs often have vastly different value ranges. For example, manifold pressure might range from 10-30 PSI while engine speed ranges from 0-3000 RPM. Using separate axes allows both to be clearly visible on the same chart.
+    </div>
+    
+    <h2>Control Buttons</h2>
+    
+    <p>Each axis list box has three control buttons on the right side:</p>
+    
+    <h3>▲ Move Up Button</h3>
+    <p>Moves the selected PID up in the list order. The order of PIDs in the list determines their display order on the chart.</p>
+    
+    <h3>▼ Move Down Button</h3>
+    <p>Moves the selected PID down in the list order.</p>
+    
+    <h3>🗑 Delete Button</h3>
+    <p>Removes the selected PID from the axis. The PID remains available in the main PID search list and can be re-added at any time.</p>
+    
+    <h2>How PID Order Affects Chart Display</h2>
+    
+    <p>The order of PIDs in each list box directly affects how they appear on the chart:</p>
+    
+    <h3>Legend Order</h3>
+    <p>PIDs appear in the chart legend in the same order they appear in the list boxes. Primary axis PIDs are listed first, followed by secondary axis PIDs.</p>
+    
+    <h3>Line Drawing Order (Z-Order)</h3>
+    <p>PIDs at the top of the list are drawn first, and PIDs at the bottom are drawn last. This means:</p>
+    <ul>
+        <li><strong>PIDs at the bottom of the list appear on top</strong> of other lines when they overlap</li>
+        <li><strong>PIDs at the top of the list may be hidden</strong> behind other lines if their values overlap</li>
+        <li>Rearrange PIDs using the ▲ and ▼ buttons to bring important data to the front</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Tip:</strong> If an important PID is being hidden by other lines on the chart, move it toward the bottom of the list so it draws on top of the other data.
+    </div>
+    
+    <h3>Color Assignment</h3>
+    <p>The chart automatically assigns colors to each PID based on their position in the list. While you cannot directly control the colors, you can influence which PID gets which color by changing the order.</p>
+    
+    <h2>Axis Ranges (Optional)</h2>
+    
+    <p>The <strong>Axis ranges (optional)</strong> section allows you to manually set the minimum and maximum values for each axis.</p>
+    
+    <h3>Auto Scaling Checkboxes</h3>
+    
+    <p><strong>Primary auto</strong> and <strong>Secondary auto</strong> checkboxes control automatic scaling:</p>
+    <ul>
+        <li><strong>Checked (default)</strong> - The axis automatically scales to fit all data values. The min and max entry boxes are disabled.</li>
+        <li><strong>Unchecked</strong> - Manual scaling is enabled. You can enter specific min and max values to control the axis range.</li>
+    </ul>
+    
+    <h3>Min and Max Entry Boxes</h3>
+    
+    <p>When auto scaling is disabled, you can enter custom values:</p>
+    <ul>
+        <li><strong>min</strong> - Sets the minimum value displayed on the axis</li>
+        <li><strong>max</strong> - Sets the maximum value displayed on the axis</li>
+    </ul>
+    
+    <h3>When to Use Manual Scaling</h3>
+    
+    <p>Manual axis scaling is useful when:</p>
+    <ul>
+        <li><strong>Comparing multiple snapshots</strong> - Use the same axis ranges across different snapshots to make visual comparison easier</li>
+        <li><strong>Focusing on a specific range</strong> - Zoom in on a particular value range to see small variations more clearly</li>
+        <li><strong>Excluding outliers</strong> - Set limits that exclude extreme values to better see the typical operating range</li>
+        <li><strong>Standardizing charts</strong> - Create consistent chart scales for documentation or reporting</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Example:</strong> When analyzing turbo performance across multiple snapshots, you might set the primary axis (manifold pressure) to always display 10-30 PSI and the secondary axis (engine speed) to 0-3000 RPM. This makes it easy to compare performance between different snapshots.
+    </div>
+    
+    <h2>Plot Chart and Clear Chart Buttons</h2>
+    
+    <h3>Plot Chart Button</h3>
+    <p>Generates or updates the chart based on the current axis configuration. The chart automatically updates when you:</p>
+    <ul>
+        <li>Add or remove PIDs from either axis</li>
+        <li>Reorder PIDs using the ▲ or ▼ buttons</li>
+        <li>Change axis range settings</li>
+    </ul>
+    
+    <p>You can also manually click <strong>Plot Chart</strong> to refresh the display.</p>
+    
+    <h3>Clear Chart Button</h3>
+    <p>Removes all PIDs from both axes and clears the chart display. This resets the axis controls to their default state, allowing you to start fresh with a new chart configuration.</p>
+    
+    <div class="info">
+        <strong>Note:</strong> Clearing the chart does not close the snapshot file. All PID data remains available in the search list and can be re-added to create new charts.
+    </div>
+    
+    <h2>Workflow Example</h2>
+    
+    <p>Here's a typical workflow for creating a custom chart:</p>
+    <ol>
+        <li>Search for and select PIDs in the main PID list</li>
+        <li>Click <strong>➕ Add to Primary</strong> or <strong>➕ Add to Secondary</strong> to assign them to an axis</li>
+        <li>Use the ▲ and ▼ buttons to arrange PIDs in the desired order</li>
+        <li>Optionally, uncheck the auto scaling boxes and set custom min/max values</li>
+        <li>The chart updates automatically, or click <strong>Plot Chart</strong> to refresh</li>
+        <li>Use the <a href="chart_toolbar.html">Chart Toolbar</a> to zoom, pan, or save the chart</li>
+    </ol>
+    
+    <h2>Related Topics</h2>
+    <ul>
+        <li><a href="custom_charts.html">Custom Charts</a> - Learn more about creating custom chart configurations</li>
+        <li><a href="chart_toolbar.html">Chart Toolbar</a> - Explore chart interaction and export options</li>
+        <li><a href="pid_descriptions.html">PID Descriptions</a> - View detailed information about available PIDs</li>
+    </ul>
+</body>
+</html>

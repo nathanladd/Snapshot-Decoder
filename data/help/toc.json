@@ -30,6 +30,10 @@
                 "page": "snapshot_header.html"
             },
             {
+                "title": "Search PIDs",
+                "page": "search_pids.html"
+            },
+            {
                 "title": "PID Descriptions",
                 "page": "pid_descriptions.html"
             },
@@ -91,6 +95,10 @@
                 "page": "chart_controls.html",
                 "expanded": false,
                 "children":[
+                    {
+                        "title": "Axis Controls",
+                        "page": "axis_controls.html"
+                    },
                     {
                         "title": "Toolbar",
                         "page": "chart_toolbar.html"

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Chart Controls</h1>
+    
+    <p>Snapshot Decoder provides comprehensive chart controls that allow you to customize and interact with your diagnostic charts. The chart controls are divided into two main areas: the axis controls in the left panel and the toolbar at the top of each chart.</p>
+    
+    <h2>Overview</h2>
+    
+    <p>The chart controls give you complete flexibility to:</p>
+    <ul>
+        <li>Select which PIDs to display on primary and secondary axes</li>
+        <li>Arrange the display order of PIDs</li>
+        <li>Set custom axis ranges for precise analysis</li>
+        <li>Navigate, zoom, and interact with chart data</li>
+        <li>Export charts for documentation and reporting</li>
+    </ul>
+    
+    <h2>Live Chart Updates</h2>
+    
+    <p>Most chart controls have a <strong>live effect</strong> on the current chart, meaning changes are applied immediately without requiring additional action:</p>
+    
+    <h3>Controls with Live Updates</h3>
+    <ul>
+        <li><strong>Adding PIDs</strong> - Charts update automatically when you add PIDs to either axis</li>
+        <li><strong>Removing PIDs</strong> - Deleting a PID from an axis immediately removes it from the chart</li>
+        <li><strong>Reordering PIDs</strong> - Moving PIDs up or down with the ▲ and ▼ buttons instantly changes the display order and z-order</li>
+        <li><strong>Toolbar interactions</strong> - Zoom, pan, cursor, and values tools activate immediately when clicked</li>
+    </ul>
+    
+    <h3>Axis Range Changes Require Plot Chart</h3>
+    
+    <div class="info">
+        <strong>Important:</strong> When you change the <strong>min</strong> or <strong>max</strong> values for axis ranges, you must click the <strong>Plot Chart</strong> button to apply the changes. This is the only chart control that does not update live.
+    </div>
+    
+    <p>This design allows you to adjust both primary and secondary axis ranges together before regenerating the chart, avoiding multiple unnecessary redraws.</p>
+    
+    <h2>Chart Control Components</h2>
+    
+    <h3>Axis Controls</h3>
+    <p>The axis controls are located in the left panel and manage which PIDs are displayed and how they are scaled.</p>
+    
+    <p>Key features include:</p>
+    <ul>
+        <li>Primary and secondary axis list boxes</li>
+        <li>PID reordering buttons (▲ ▼)</li>
+        <li>PID removal button (🗑)</li>
+        <li>Automatic and manual axis scaling options</li>
+        <li>Custom min/max range entry boxes</li>
+    </ul>
+    
+    <p><a href="axis_controls.html">Learn more about Axis Controls →</a></p>
+    
+    <h3>Chart Toolbar</h3>
+    <p>The toolbar appears at the top of every chart and provides navigation, interaction, and export tools.</p>
+    
+    <p>Key features include:</p>
+    <ul>
+        <li>Home, back, and forward navigation</li>
+        <li>Pan and zoom tools</li>
+        <li>Vertical cursor for time alignment</li>
+        <li>Values display for precise measurements</li>
+        <li>Add to cart and pop-out options</li>
+        <li>PDF export with embedded metadata</li>
+    </ul>
+    
+    <p><a href="chart_toolbar.html">Learn more about the Chart Toolbar →</a></p>
+    
+    <h2>Typical Workflow</h2>
+    
+    <p>Here's how the chart controls work together in a typical analysis session:</p>
+    
+    <ol>
+        <li><strong>Select PIDs</strong> - Search and add PIDs to primary or secondary axes (live update)</li>
+        <li><strong>Arrange display</strong> - Use ▲ and ▼ buttons to order PIDs (live update)</li>
+        <li><strong>Set axis ranges</strong> - Optionally uncheck auto scaling and enter min/max values</li>
+        <li><strong>Click Plot Chart</strong> - Apply axis range changes if you made any</li>
+        <li><strong>Interact with chart</strong> - Use toolbar to zoom, pan, and measure values (live)</li>
+        <li><strong>Export or save</strong> - Add to cart or save as PDF using toolbar buttons (live)</li>
+    </ol>
+    
+    <h2>Tips for Effective Chart Control</h2>
+    
+    <ul>
+        <li><strong>Start with auto scaling</strong> - Let the chart automatically determine the best axis ranges, then adjust manually if needed</li>
+        <li><strong>Use consistent ranges</strong> - When comparing multiple snapshots, set the same axis ranges to make visual comparison easier</li>
+        <li><strong>Reorder for visibility</strong> - If important data is hidden behind other lines, move it to the bottom of the list to draw on top</li>
+        <li><strong>Combine axes strategically</strong> - Group PIDs with similar ranges on the same axis for clearer visualization</li>
+        <li><strong>Remember to click Plot Chart</strong> - After changing axis min/max values, don't forget to click Plot Chart to see the changes</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Quick Tip:</strong> You can quickly reset your chart by clicking the <strong>Clear Chart</strong> button, which removes all PIDs from both axes and returns the controls to their default state.
+    </div>
+    
+    <h2>Related Topics</h2>
+    <ul>
+        <li><a href="axis_controls.html">Axis Controls</a> - Detailed guide to axis configuration and PID management</li>
+        <li><a href="chart_toolbar.html">Chart Toolbar</a> - Complete reference for toolbar buttons and interactions</li>
+        <li><a href="custom_charts.html">Custom Charts</a> - Learn how to create custom chart configurations</li>
+        <li><a href="quick_charts.html">Quick Charts</a> - Pre-configured charts for common diagnostic scenarios</li>
+    </ul>
+</body>
+</html>
