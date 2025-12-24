@@ -30,6 +30,10 @@
                 "page": "snapshot_header.html"
             },
             {
+                "title": "PID Descriptions",
+                "page": "pid_descriptions.html"
+            },
+            {
                 "title": "Raw Data Table",
                 "page": "raw_data_table.html"
             },

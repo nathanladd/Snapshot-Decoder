@@ -65,10 +65,20 @@ class DataTableWindow:
         self.search_entry.pack(side=tk.LEFT, padx=(5, 5))
         self.search_entry.bind("<Return>", lambda e: self._do_search())
         
-        ttk.Button(search_frame, text="Find", command=self._do_search, width=6).pack(side=tk.LEFT, padx=2)
-        ttk.Button(search_frame, text="▲", command=self._prev_match, width=3).pack(side=tk.LEFT, padx=2)
-        ttk.Button(search_frame, text="▼", command=self._next_match, width=3).pack(side=tk.LEFT, padx=2)
+        self.find_btn = ttk.Button(search_frame, text="Find", command=self._do_search, width=6)
+        self.find_btn.pack(side=tk.LEFT, padx=2)
+        
+        self.prev_btn = ttk.Button(search_frame, text="▲", command=self._prev_match, width=3)
+        self.prev_btn.pack(side=tk.LEFT, padx=2)
+        
+        self.next_btn = ttk.Button(search_frame, text="▼", command=self._next_match, width=3)
+        self.next_btn.pack(side=tk.LEFT, padx=2)
+        
         ttk.Button(search_frame, text="Clear", command=self._clear_search, width=6).pack(side=tk.LEFT, padx=2)
+        
+        # Bind arrow keys to navigation buttons
+        self.win.bind("<Up>", lambda e: self._prev_match())
+        self.win.bind("<Down>", lambda e: self._next_match())
         
         self.search_result_label = ttk.Label(search_frame, text="")
         self.search_result_label.pack(side=tk.LEFT, padx=(10, 0))

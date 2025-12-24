@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>PID Descriptions Panel</h1>
+    
+    <p>The PID Descriptions panel displays all available parameters (PIDs) from the loaded snapshot. This panel makes it easy to search for specific parameters and add them to custom charts.</p>
+    
+    <img src="../images/pid_descriptions.png" alt="PID Descriptions panel" style="max-width: 1000px;">
+    
+    <h2>Understanding the PID List</h2>
+    <p>Each entry in the list shows:</p>
+    <ul>
+        <li><strong>PID Name</strong> - The parameter identifier or description</li>
+        <li><strong>Unit of Measure</strong> - The measurement unit (e.g., RPM, PSI, °F)</li>
+    </ul>
+    <p>The list displays all PIDs extracted from the snapshot, making it easy to see what data is available for charting and analysis.</p>
+    
+    <h2>Search Function</h2>
+    <p>The search box at the top of the panel allows you to quickly find specific PIDs:</p>
+    <ul>
+        <li>Type any part of a PID description into the search box</li>
+        <li>The list automatically filters to show only matching PIDs</li>
+        <li>Search is not case-sensitive</li>
+        <li>Clear the search box to show all PIDs again</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Tip:</strong> Use the search function to quickly locate parameters like "pressure", "temp", or "speed" 
+        without scrolling through the entire list.
+    </div>
+    
+    <h2>Adding PIDs to Charts</h2>
+    <p>You can create custom charts by selecting PIDs and adding them to either the primary or secondary axis:</p>
+    
+    <h3>Selecting PIDs</h3>
+    <ul>
+        <li><strong>Single Selection</strong> - Click on a PID to select it</li>
+        <li><strong>Add to chart</strong> - Double click PID to bring up the add to chart window</li>
+        <li><strong>Range Selection</strong> - Hold Shift and click to select a range of PIDs</li>
+    </ul>
+    
+    <h3>Primary Axis</h3>
+    <p>After double-clicking a PID, click the <strong>Add to Primary Axis</strong> button. 
+        PIDs on the primary axis will be plotted on the left Y-axis of the chart. 
+        Use the primary axis for your main parameters of interest.</p>
+    
+    <h3>Secondary Axis</h3>
+    <p>After double-clicking a PID, click the <strong>Add to Secondary Axis</strong> button. 
+        PIDs on the secondary axis will be plotted on the right Y-axis of the chart. 
+        Use the secondary axis for parameters with different units or scales that you want to 
+        compare with the primary data.</p>
+    
+    <h2>Creating the Chart</h2>
+    <p>PIDs will be plotted on the axis of your choice as you add them:</p>
+    <ol>
+        <li>Review your selections in the axis lists and the chart window</li>
+        <li>The PID Descriptions window can remain open while you modify the chart as needed</li>
+        <li>Adjust axis ranges as needed</li>
+    </ol>
+    
+    <h2>Tips</h2>
+    <ul>
+        <li>Group related parameters on the same axis for easier comparison</li>
+        <li>Use the secondary axis for parameters with very different scales (e.g., temperature vs. pressure)</li>
+        <li>You can add multiple PIDs to each axis to compare several parameters at once</li>
+        <li>Use the search function to find related parameters quickly (e.g., search "fuel" to see all fuel-related PIDs)</li>
+    </ul>
+</body>
+</html>
