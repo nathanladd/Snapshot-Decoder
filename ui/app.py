@@ -178,8 +178,9 @@ class SnapshotDecoderApp(tk.Tk):
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="Help Contents", command=self.show_help, accelerator="F1")
         help_menu.add_separator()
+        help_menu.add_command(label="Check for Updates", command=self.open_update_url)
+        help_menu.add_separator()
         help_menu.add_command(label="About", command=self.show_about)
-        help_menu.add_command(label="Official Download Page", command=self.open_update_url)
         menubar.add_cascade(label="Help", menu=help_menu)
         
         # Bind keyboard shortcuts
@@ -1006,9 +1007,10 @@ class SnapshotDecoderApp(tk.Tk):
         help_win.focus_set()
     
     def open_update_url(self):
-        """Open the help URL in the default web browser."""
-        webbrowser.open(UPDATE_URL)
-
+        """Open the Help window to the updating page."""
+        help_win = HelpWindow(self, initial_page="updating.html")
+        help_win.focus_set()
+    
     def show_about(self):
         """Display a custom About dialog and splash image."""
         about_win = tk.Toplevel(self)

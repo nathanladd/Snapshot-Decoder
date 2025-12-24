@@ -26,7 +26,7 @@ class HelpWindow(tk.Toplevel):
     Right pane: Styled text widget displaying help content
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent, initial_page="index.html"):
         super().__init__(parent)
         self.title("Snapshot Decoder Help")
         self.geometry("950x650")
@@ -50,7 +50,7 @@ class HelpWindow(tk.Toplevel):
         self._load_toc()
         
         # Load initial page
-        self._load_page("index.html")
+        self._load_page(initial_page)
     
     def _build_ui(self):
         """Build the help window UI with paned layout."""
