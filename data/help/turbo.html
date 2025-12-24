@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Turbo Chart</h1>
+    
+    <p>The Turbo Quick Chart displays intake manifold pressure, atmosphere pressure, 
+        and engine speed throughout the snapshot. 
+        This chart is essential for evaluating turbocharger performance, particularly for detecting 
+        turbo drag during engine cranking.</p>
+    
+    <img src="../images/turbo.png" alt="Turbo chart" style="max-width: 1000px;">
+    
+    <h2>Capturing Turbo Data</h2>
+    
+    <div class="info">
+        <strong>Important:</strong> To properly evaluate turbo performance during cranking, 
+        start your snapshot capture 
+        with the key on and engine off. This ensures you capture the manifold pressure behavior 
+        during the entire cranking event.
+    </div>
+    
+    <p>Proper snapshot capture procedure:</p>
+    <ol>
+        <li>Turn the key to the ON position (do not start the engine)</li>
+        <li>Start the snapshot capture in Bobcat Engine Analyzer</li>
+        <li>Crank and start the engine</li>
+        <li>Allow the engine to run and capture data as needed</li>
+        <li>Stop the snapshot capture</li>
+    </ol>
+    
+    <h2>Reading the Chart</h2>
+    <p>The chart displays intake manifold pressure on the Y-axis and time on the X-axis. 
+        Look for these key indicators:</p>
+    
+    <h3>Atmospheric Pressure Baseline</h3>
+    <p>Before cranking, with the key on and engine off, 
+        manifold pressure should be at atmospheric pressure (approximately 11.3 to 12.3 PSI at Colorado Front Range elevations).</p>
+    
+    <h3>Cranking Period</h3>
+    <p>During cranking, the engine acts as an air pump. A healthy turbo allows air to flow freely, resulting in a slight vacuum (negative gauge pressure) in the intake manifold.</p>
+    
+    <h2>Detecting Turbo Drag</h2>
+    <p>Turbo drag occurs when the turbocharger bearings or compressor wheel have excessive resistance, restricting airflow during cranking.</p>
+    
+    <h3>This is the same chart as above, but zoomed in on the cranking period</h3>
+    <img src="../images/turbo_drag.png" alt="Turbo drag comparison" style="max-width: 1000px;">
+    
+    <p>The example above shows an engine cranking at 317 RPM with intake manifold pressure pulling <strong>0.3 PSI below atmospheric pressure</strong>. This indicates a healthy turbo with minimal drag.</p>
+    
+    <ul>
+        <li><strong>Good Turbo</strong> - Manifold pressure drops less than 0.9 PSI below atmospheric during cranking</li>
+        <li><strong>Typical Range</strong> - 0.2 to 0.5 PSI vacuum during normal cranking</li>
+    </ul>
+    
+    <h3>Turbo Drag Condition</h3>
+    <p>If the intake manifold pressure pulls <strong>0.9 PSI or more below atmospheric pressure</strong> during cranking, this indicates a dragging turbo.</p>
+    
+    <ul>
+        <li><strong>Dragging Turbo</strong> - Manifold pressure drops 0.9 PSI or more below atmospheric</li>
+        <li><strong>Severe Drag</strong> - Manifold pressure drops 1.5 PSI or more below atmospheric</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Diagnostic Note:</strong> A dragging turbo restricts airflow into the engine, making it harder to start 
+        and reducing performance. This condition typically indicates worn turbo bearings or compressor wheel damage that 
+        requires turbocharger service or replacement.
+    </div>
+    
+    <h2>Running Engine Analysis</h2>
+    <p>The Turbo chart also shows manifold pressure during engine operation:</p>
+    
+    <h3>Idle</h3>
+    <p>At idle and light loads, manifold pressure will rise only slightly above atmospheric pressure.</p>
+    
+    <h3>Boost Conditions</h3>
+    <p>Under load, the turbocharger compresses intake air, creating the highest manifold pressure (boost). 
+        Higher loads result in higher boost pressure.<br>
+        <strong>At Colorado elevations</strong>, 2.4L boost pressure will be around 25 PSI at full load.
+        A 3.4L will be around 30 PSI at full load.<br>
+        </p>
+    
+    <h2>Related Engine Use Data</h2>
+    <p>For comprehensive turbo and engine performance analysis, also review:</p>
+    <ul>
+        <li><a href="eud_speed_load.html">Engine Use Data: Speed/Load</a> - Analyze operating conditions including cold starts and light load operation</li>
+        <li><a href="eud_speed_band.html">Engine Use Data: Speed Band</a> - Review engine speed distribution</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Note:</strong> When diagnosing turbo drag, pay particular attention to engine operation when running cold, slow, and unloaded, as these conditions can reveal performance issues not apparent under normal operating conditions.
+    </div>
+    
+    <h2>Tips</h2>
+    <ul>
+        <li>Use the <strong>Vertical Cursor</strong> to align cranking speed with manifold pressure readings</li>
+        <li>Use the <strong>Values</strong> tool to measure exact pressure drop during cranking</li>
+        <li>Zoom into the cranking period for detailed pressure analysis</li>
+        <li>Compare multiple snapshots to track turbo condition over time</li>
+    </ul>
+</body>
+</html>

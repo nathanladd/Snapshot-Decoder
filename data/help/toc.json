@@ -61,6 +61,10 @@
                         "page": "rail_pressure.html"
                     },
                     {
+                        "title": "Turbo",
+                        "page": "turbo.html"
+                    },
+                    {
                         "title": "Engine Use Data: Speed/Load",
                         "page": "eud_speed_load.html"
                     },
