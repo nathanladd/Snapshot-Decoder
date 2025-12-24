@@ -15,26 +15,32 @@
     <p>The PID list box displays all available parameters from the loaded snapshot. PID names can appear cryptic at first, but they follow consistent naming conventions that make them easier to identify:</p>
     
     <h3>Common PID Naming Prefixes</h3>
-    <ul>
-        <li><strong>P_L</strong> - Physical Layer parameters (raw sensor values)</li>
-        <li><strong>IN</strong> - Calculated Values (Internal)</li>
-        <li><strong>ACM</strong> - Air Charge Management</li>
-        <li><strong>SMC</strong> - System Mode Control</li>
-        <li><strong>I_C</strong> - Injection Control</li>
-        <li><strong>P_T</strong> - Post Treatment</li>
-        <li><strong>AFC</strong> - Air Fuel Control</li>
-        <li><strong>EUD</strong> - Engine Use Data</li>
-        <li><strong>FQD</strong> - Fuel Quantity Demand</li>
-        <li><strong>ICI</strong> - Instrument Cluster Interface</li>
-        <li><strong>ICV</strong> - Input Cross Validation</li>
-        <li><strong>P_T</strong> - Post Treatment</li>
-        <li><strong>ITD</strong> - Injection Timing Demand</li>
-        <li><strong>PSE</strong> - Pressure State Estimate</li>
-        <li><strong>RPC</strong> - Rail Pressure Control</li>
-        <li><strong>SAC</strong> - Start Aid Control</li>
-        <li><strong>SMC</strong> - System Mode Control</li>
-        <li><strong>T_D</strong> - Torque Demand</li>
-    </ul>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;">
+        <div>
+            <ul style="margin: 0;">
+                <li><strong>P_L</strong> - Physical Layer parameters (raw sensor values)</li>
+                <li><strong>IN</strong> - Calculated Values (Internal)</li>
+                <li><strong>ACM</strong> - Air Charge Management</li>
+                <li><strong>SMC</strong> - System Mode Control</li>
+                <li><strong>I_C</strong> - Injection Control</li>
+                <li><strong>P_T</strong> - Post Treatment</li>
+                <li><strong>AFC</strong> - Air Fuel Control</li>
+                <li><strong>EUD</strong> - Engine Use Data</li>
+                <li><strong>FQD</strong> - Fuel Quantity Demand</li>
+            </ul>
+        </div>
+        <div>
+            <ul style="margin: 0;">
+                <li><strong>ICI</strong> - Instrument Cluster Interface</li>
+                <li><strong>ICV</strong> - Input Cross Validation</li>
+                <li><strong>ITD</strong> - Injection Timing Demand</li>
+                <li><strong>PSE</strong> - Pressure State Estimate</li>
+                <li><strong>RPC</strong> - Rail Pressure Control</li>
+                <li><strong>SAC</strong> - Start Aid Control</li>
+                <li><strong>T_D</strong> - Torque Demand</li>
+            </ul>
+        </div>
+    </div>
     
     <div class="info">
         <strong>Example:</strong> PIDs starting with <code>P_L</code> represent Physical Layer data. 
