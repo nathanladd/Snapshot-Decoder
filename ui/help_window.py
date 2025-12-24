@@ -30,7 +30,7 @@ class HelpWindow(tk.Toplevel):
         super().__init__(parent)
         self.title("Snapshot Decoder Help")
         self.geometry("950x650")
-        self.minsize(700, 400)
+        self.minsize(1100, 900)
         
         # Center window on screen
         self.update_idletasks()
