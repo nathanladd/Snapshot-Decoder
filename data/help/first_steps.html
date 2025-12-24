@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>First Steps with Snapshot Decoder</h1>
+    
+    <p>This guide walks you through a typical workflow for analyzing a snapshot file, from opening the file to creating a diagnostic report. Follow these steps to get started quickly.</p>
+    
+    <h2>Step 1: Open a Snapshot File</h2>
+    <p>Begin by loading your snapshot file into Snapshot Decoder:</p>
+    <ol>
+        <li>Go to <strong>File → Open Snapshot</strong> in the menu</li>
+        <li>Browse to your snapshot file (.xls or .xlsx format)</li>
+        <li>Select the file and click <strong>Open</strong></li>
+    </ol>
+    
+    <p>Snapshot Decoder will automatically:</p>
+    <ul>
+        <li>Detect the snapshot type (V1 ECU, V1 EUD, or V2 ECU)</li>
+        <li>Load and parse the raw snapshot data</li>
+        <li>Display header information including engine hours, serial number, and snapshot date</li>
+        <li>Configure the available Quick Charts for your snapshot type</li>
+    </ul>
+    
+    <p>See <a href="opening_files.html">Opening Files</a> for more details.</p>
+    
+    <h2>Step 2: Review Snapshot Header Information</h2>
+    <p>After loading the snapshot, review the header information displayed at the top of the main window. This shows important details about the engine and when the snapshot was captured.</p>
+    
+    <p>See <a href="snapshot_header.html">Snapshot Header</a> for information about the displayed fields.</p>
+    
+    <h2>Step 3: Open Quick Charts</h2>
+    <p>Quick Charts provide instant access to the most important diagnostic views. Start your analysis by reviewing relevant Quick Charts:</p>
+    
+    <h3>Recommended Starting Points</h3>
+    <ul>
+        <li><strong>Battery Voltage</strong> - Check electrical system health during cranking and running</li>
+        <li><strong>Rail Pressure</strong> - Verify fuel system pressure control and performance</li>
+        <li><strong>Engine Use Data</strong> - Review operating conditions and history</li>
+    </ul>
+    
+    <p>To open a Quick Chart:</p>
+    <ol>
+        <li>Locate the Quick Charts panel at the top of the main window</li>
+        <li>Click on any Quick Chart button</li>
+        <li>The chart opens immediately with pre-configured parameters</li>
+    </ol>
+    
+    <p>See <a href="quick_charts.html">Quick Charts</a> for more information about available charts.</p>
+    
+    <h2>Step 4: Analyze Chart Data</h2>
+    <p>Use the chart toolbar to interact with and analyze your data:</p>
+    <ul>
+        <li><strong>Zoom</strong> - Click and drag to zoom into specific areas of interest</li>
+        <li><strong>Pan</strong> - Move around the chart to view different sections</li>
+        <li><strong>Vertical Cursor</strong> - Align readings across multiple parameters</li>
+        <li><strong>Values</strong> - View exact data values at any point</li>
+    </ul>
+    
+    <p>See <a href="chart_toolbar.html">Chart Toolbar</a> for detailed information about chart controls.</p>
+    
+    <h2>Step 5: Add Charts to Cart</h2>
+    <p>As you review different Quick Charts, add the important ones to your Chart Cart for later export:</p>
+    <ol>
+        <li>With a chart open, click the <strong>Add to Cart</strong> button (shopping cart icon) in the chart toolbar</li>
+        <li>The chart configuration is saved to your cart</li>
+        <li>Open additional Quick Charts and add them to the cart as well</li>
+        <li>Repeat for all charts you want to include in your diagnostic report</li>
+    </ol>
+    
+    <div class="info">
+        <strong>Tip:</strong> Add charts to the cart in the order you want them to appear in your final PDF report. 
+        This creates a logical flow for reviewing the diagnostic data.
+    </div>
+    
+    <h2>Step 6: Export Charts as PDF</h2>
+    <p>Once you've added all relevant charts to the cart, export them as a single PDF file:</p>
+    <ol>
+        <li>Access the Chart Cart from the main window</li>
+        <li>Review the charts in your cart to ensure you have everything needed</li>
+        <li>Click the <strong>Export</strong> or <strong>Save All</strong> button</li>
+        <li>Choose a location and filename for your PDF report</li>
+        <li>The PDF is created with all charts and embedded snapshot metadata</li>
+    </ol>
+    
+    <p>The exported PDF includes:</p>
+    <ul>
+        <li>All charts from your cart in a single document</li>
+        <li>Snapshot metadata (engine serial number, engine hours, snapshot date) on each page</li>
+        <li>Professional formatting suitable for diagnostic reports</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Workflow Tip:</strong> This PDF can be attached to repair orders, shared with colleagues, or kept as 
+        documentation of the diagnostic work performed. The embedded metadata ensures traceability back to the original snapshot.
+    </div>
+    
+    <h2>Next Steps</h2>
+    <p>After mastering this basic workflow, you can explore more advanced features:</p>
+    <ul>
+        <li><a href="custom_charts.html">Custom Charts</a> - Create your own parameter combinations for deeper analysis</li>
+        <li><a href="raw_data_table.html">Raw Data Table</a> - View and search the complete snapshot data</li>
+        <li><a href="cleaned_data_table.html">Cleaned Data Table</a> - Work with processed data optimized for charting</li>
+    </ul>
+    
+    <h2>Related Topics</h2>
+    <ul>
+        <li><a href="opening_files.html">Opening Files</a> - Detailed information about loading snapshots</li>
+        <li><a href="snapshot_header.html">Snapshot Header</a> - Understanding header information</li>
+        <li><a href="quick_charts.html">Quick Charts</a> - Pre-configured diagnostic charts</li>
+        <li><a href="chart_toolbar.html">Chart Toolbar</a> - Chart interaction and export tools</li>
+        <li><a href="custom_charts.html">Custom Charts</a> - Creating custom parameter views</li>
+    </ul>
+</body>
+</html>

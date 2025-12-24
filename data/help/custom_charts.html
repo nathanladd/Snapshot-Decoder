@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Custom Charts</h1>
+    
+    <p>Custom charts allow you to create your own parameter combinations and visualizations beyond the pre-configured Quick Charts. This gives you complete flexibility to analyze any combination of PIDs from your snapshot data.</p>
+    
+    <h2>Creating a Custom Chart</h2>
+    <p>To create a custom chart, you'll use the PID Descriptions window to select and add parameters to your chart axes.</p>
+    
+    <h3>Step 1: Open the PID Descriptions Window</h3>
+    <p>Access the PID Descriptions window from the <strong>View</strong> menu. This window displays all available parameters from your loaded snapshot.</p>
+    <p>See <a href="pid_descriptions.html">PID Descriptions Window</a> for detailed information.</p>
+    
+    <h3>Step 2: Search for PIDs</h3>
+    <p>Use the search box at the top of the PID Descriptions window to quickly find parameters:</p>
+    <ul>
+        <li>Type any part of a PID description (e.g., "pressure", "temp", "fuel")</li>
+        <li>The list automatically filters to show only matching PIDs</li>
+        <li>Search is not case-sensitive</li>
+        <li>Clear the search to see all PIDs again</li>
+    </ul>
+    
+    <h3>Step 3: Add PIDs to Chart Axes</h3>
+    <p>Once you've found the parameters you want to chart:</p>
+    <ol>
+        <li>Double-click a PID in the list to open the add-to-chart dialog</li>
+        <li>Choose <strong>Add to Primary Axis</strong> or <strong>Add to Secondary Axis</strong></li>
+        <li>The PID is immediately plotted on the selected axis</li>
+        <li>Repeat for additional parameters</li>
+    </ol>
+    
+    <div class="info">
+        <strong>Tip:</strong> Use the primary axis for your main parameters of interest, and the secondary axis for 
+        parameters with different units or scales that you want to compare.
+    </div>
+    
+    <h2>Modifying Axis Ranges</h2>
+    <p>After adding PIDs to your chart, you can adjust the Y-axis ranges to focus on specific value ranges or improve readability.</p>
+    
+    <h3>Using Axis Range Controls</h3>
+    <p>The main window provides controls for adjusting axis ranges:</p>
+    <ul>
+        <li>Locate the axis range controls in the main window</li>
+        <li>Enter minimum and maximum values for the primary (left) Y-axis</li>
+        <li>Enter minimum and maximum values for the secondary (right) Y-axis if used</li>
+        <li>The chart updates automatically to reflect your changes</li>
+    </ul>
+    
+    <p>Adjusting axis ranges helps you:</p>
+    <ul>
+        <li>Zoom in on specific value ranges of interest</li>
+        <li>Remove outliers or noise from the view</li>
+        <li>Align multiple parameters for easier comparison</li>
+        <li>Create consistent scales across multiple charts</li>
+    </ul>
+    
+    <h2>Exporting and Saving Charts</h2>
+    <p>Once you've created a custom chart, you have two options for saving your work:</p>
+    
+    <h3>Save Individual Chart as PDF</h3>
+    <p>Use the <strong>Save</strong> button in the chart toolbar to export a single chart:</p>
+    <ul>
+        <li>Click the Save button (floppy disk icon) in the chart toolbar</li>
+        <li>The chart is saved as a single-page PDF file</li>
+        <li>Snapshot metadata (serial number, engine hours, date) is automatically embedded in the PDF</li>
+        <li>Choose a location and filename for your PDF</li>
+    </ul>
+    <p>See <a href="chart_toolbar.html">Chart Toolbar</a> for more information about toolbar functions.</p>
+    
+    <h3>Add Multiple Charts to Cart</h3>
+    <p>Use the <strong>Add to Cart</strong> button to collect multiple charts for batch export:</p>
+    <ul>
+        <li>Click the Add to Cart button (shopping cart icon) in the chart toolbar</li>
+        <li>The current chart configuration is added to your cart</li>
+        <li>Create additional custom charts and add them to the cart as well</li>
+        <li>Access the chart cart to review all saved chart configurations</li>
+        <li>Export all charts at once or manage individual cart items</li>
+    </ul>
+    
+    <div class="info">
+        <strong>Workflow Tip:</strong> Use the chart cart when you need to create a set of diagnostic charts 
+        that you want to review or export as a single pdf file. This is especially useful for creating consistent diagnostic reports that you can attach to your repair order.
+    </div>
+    
+    <h2>Tips for Effective Custom Charts</h2>
+    <ul>
+        <li><strong>Group related parameters</strong> - Put similar measurements on the same axis for easier comparison</li>
+        <li><strong>Use descriptive searches</strong> - Search for terms like "fuel", "air", "temp" to find related PIDs quickly</li>
+        <li><strong>Adjust ranges strategically</strong> - Set axis ranges to highlight the data that matters most</li>
+        <li><strong>Save frequently used combinations</strong> - Add common chart configurations to the cart for quick access</li>
+        <li><strong>Start with Quick Charts</strong> - Use Quick Charts for initial diagnostics, then create custom charts to investigate specific issues</li>
+    </ul>
+    
+    <h2>Related Topics</h2>
+    <ul>
+        <li><a href="pid_descriptions.html">PID Descriptions Window</a> - Learn more about searching and selecting PIDs</li>
+        <li><a href="quick_charts.html">Quick Charts</a> - Pre-configured diagnostic charts</li>
+        <li><a href="chart_toolbar.html">Chart Toolbar</a> - Chart interaction and export tools</li>
+    </ul>
+</body>
+</html>
