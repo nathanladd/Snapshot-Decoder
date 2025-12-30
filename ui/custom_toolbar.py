@@ -14,16 +14,17 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
 
     def __init__(self, canvas, window, *, pack_toolbar=True, chart_config=None,
                  cursor_var=None, values_var=None, add_to_cart_callback=None,
-                 pop_out_callback=None):
+                 pop_out_callback=None, help_callback=None):
         self.chart_config = chart_config
         self._cursor_var = cursor_var
         self._values_var = values_var
         self._add_to_cart_callback = add_to_cart_callback
         self._pop_out_callback = pop_out_callback
+        self._help_callback = help_callback
         super().__init__(canvas, window, pack_toolbar=pack_toolbar)
         
         # Add toggle buttons for cursor and values after toolbar is built
-        if self._cursor_var is not None or self._values_var is not None or self._add_to_cart_callback is not None or self._pop_out_callback is not None:
+        if self._cursor_var is not None or self._values_var is not None or self._add_to_cart_callback is not None or self._pop_out_callback is not None or self._help_callback is not None:
             # Get toolbar background color and create matching styles
             bg_color = self.cget('background')
             style = ttk.Style()
@@ -53,6 +54,12 @@ class CustomNavigationToolbar(NavigationToolbar2Tk):
             btn_popout = ttk.Button(self, text="⧉", width=3, style="Toolbar.TButton",
                                     command=self._pop_out_callback)
             btn_popout.pack(side=tk.LEFT, padx=2)
+        
+        # Add "Help" button
+        if self._help_callback is not None:
+            btn_help = ttk.Button(self, text="?", width=3, style="Toolbar.TButton",
+                                 command=self._help_callback)
+            btn_help.pack(side=tk.LEFT, padx=2)
 
     # Override toolitems to exclude the Subplots button
     toolitems = [

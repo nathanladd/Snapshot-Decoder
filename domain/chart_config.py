@@ -83,6 +83,9 @@ class ChartConfig:
     bubble_size_column: Optional[str] = None
     bubble_size_scale: float = 50.0  # Multiplier for bubble sizes
     
+    # Quick chart tracking: which quick chart command created this chart
+    quick_chart_action_id: Optional[str] = None
+    
     def get_x_column(self) -> Optional[str]:
         """Determine the X-axis column from data."""
         if self.x_column:

@@ -73,6 +73,7 @@ show_legend: bool=True):
         # Update working_config title to match so toolbar has correct title for PDF export
         if main_app.working_config:
             main_app.working_config.title = tooltip
+            main_app.working_config.quick_chart_action_id = action_id
         main_app.canvas.draw_idle()
 
 # ----------------------------------------------------------------------------
@@ -496,7 +497,8 @@ def V1EUD_show_speed_load_chart(main_app, snaptype: SnapType):
         title="Speed vs Load Distribution",
         x_column="Speed",
         bubble_size_column="Percent",
-        bubble_size_scale=50.0
+        bubble_size_scale=50.0,
+        quick_chart_action_id="V1EUD_SPEED_V_LOAD"
     )
     
 def V1EUD_show_speed_band_chart(main_app, snaptype: SnapType):
@@ -557,7 +559,8 @@ def V1EUD_show_speed_band_chart(main_app, snaptype: SnapType):
         pid_info=main_app.engine.pid_info,
         file_name=main_app.engine.file_name,
         date_time=main_app.engine.date_time,
-        engine_hours=main_app.engine.hours
+        engine_hours=main_app.engine.hours,
+        quick_chart_action_id="V1EUD_SPEED_BAND"
     )
     
     # Render the chart
@@ -626,7 +629,8 @@ def V1EUD_show_elevation_chart(main_app, snaptype: SnapType):
         pid_info=main_app.engine.pid_info,
         file_name=main_app.engine.file_name,
         date_time=main_app.engine.date_time,
-        engine_hours=main_app.engine.hours
+        engine_hours=main_app.engine.hours,
+        quick_chart_action_id="V1EUD_ELEVATION"
     )
     
     # Render the chart
@@ -695,7 +699,8 @@ def V1EUD_show_EGT_chart(main_app, snaptype: SnapType):
         pid_info=main_app.engine.pid_info,
         file_name=main_app.engine.file_name,
         date_time=main_app.engine.date_time,
-        engine_hours=main_app.engine.hours
+        engine_hours=main_app.engine.hours,
+        quick_chart_action_id="V1EUD_EGT"
     )
     
     # Render the chart
