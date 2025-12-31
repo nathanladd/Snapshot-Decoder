@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,7 +7,8 @@
 <body>
     <h1>Fuel/Coolant Temperature Chart</h1>
     
-    <p>This chart displays both fuel temperature and coolant temperature readings from the engine management system. Understanding the relationship between these temperatures and their sensor voltage readings is crucial for accurate diagnostics of temperature-related fault codes.</p>
+    <p>This chart displays both fuel temperature and coolant temperature readings. 
+        V2 Bosch  system allowed me to also add the sensor voltage for each sensor.</p>
     
     <img src="../images/fuel_coolant_temp.png" alt="Fuel/Coolant Temperature Chart" style="max-width: 1000px;">
     
@@ -17,10 +19,10 @@
         <li><strong>Fuel Temperature</strong> - Shows the temperature of the fuel as measured by the fuel temperature sensor</li>
         <li><strong>Coolant Temperature</strong> - Shows the engine coolant temperature as measured by the coolant temperature sensor</li>
         <li>Both temperatures are displayed in degrees Fahrenheit (°F)</li>
-        <li>Normal operating range is typically 140-212°F for coolant and 68-140°F for fuel</li>
+        <li>Be sure to set your Bobcat Engine Analyzer software to U.S. customary units.</li>
     </ul>
     
-    <h3>Secondary Axis (Right)</h3>
+    <h3>Secondary Axis (V2 only) (Right)</h3>
     <ul>
         <li><strong>Sensor Input Voltage</strong> - Shows the raw voltage signal from the temperature sensors to the ECU</li>
         <li>Voltage readings help distinguish between actual temperature issues and sensor electrical problems</li>
@@ -56,14 +58,13 @@
     <p>These codes indicate the ECU believes the temperature is actually too high or too low:</p>
     <ul>
         <li><strong>Coolant Temperature High</strong> - ECU sees genuine overheating condition</li>
-        <li><strong>Fuel Temperature High</strong> - Fuel is actually overheating (rare but possible)</li>
-        <li><strong>Temperature Low</strong> - ECU sees genuine cold condition (possible thermostat stuck open)</li>
+        <li><strong>Fuel Temperature High</strong> - Fuel is actually overheating</li>
     </ul>
     
     <h3>Sensor Voltage Fault Codes</h3>
     <p>These codes indicate electrical problems with the sensor circuit:</p>
     <ul>
-        <li><strong>Sensor Voltage High</strong> - Circuit open, sensor disconnected, or wiring shorted to power</li>
+        <li><strong>Sensor Voltage High</strong> - Circuit open, sensor disconnected, or terminal issues</li>
         <li><strong>Sensor Voltage Low</strong> - Circuit shorted to ground, sensor failed internally</li>
         <li><strong>Sensor Rationality</strong> - Temperature doesn't make sense compared to other engine parameters</li>
     </ul>
@@ -73,8 +74,7 @@
     <h3>Air Flow Effects</h3>
     <p>Air flow across the radiator/cooler is critical for heat dissipation:</p>
     <ul>
-        <li><strong>Vehicle Speed</strong> - Higher speed = more ram air = better cooling</li>
-        <li><strong>Cooling Fans</strong> - Provide air flow at low speeds or when stationary</li>
+        <li><strong>Cooling Fans</strong> - Provide air flow</li>
         <li><strong>Debris Blockage</strong> - Dirt, bugs, or debris reduces air flow efficiency</li>
         <li><strong>Ambient Temperature</strong> - Hot outside air reduces cooling efficiency</li>
     </ul>
@@ -82,18 +82,17 @@
     <h3>Fluid Flow Effects</h3>
     <p>Coolant flow through the system determines heat transfer rate:</p>
     <ul>
-        <li><strong>Water Pump</strong> - Creates pressure to move coolant through system</li>
-        <li><strong>Radiator Flow</strong> - Coolant must pass through radiator tubes for heat exchange</li>
+        <li><strong>Water Pump</strong> - Creates flow to move coolant through system at a very specific GPM</li>
+        <li><strong>Radiator Flow</strong> - Coolant must pass through radiator tubes for heat exchange. Too much flow or too little flow are both bad.</li>
         <li><strong>Thermostat</strong> - Controls flow rate based on temperature</li>
-        <li><strong>System Restrictions</strong> - Blockages or kinks reduce flow and cause overheating</li>
     </ul>
     
     <h3>Heat Transfer Relationship</h3>
     <div class="warning">
         <p><strong>Key Principle:</strong> Heat transfer requires both fluid flow AND air flow. If either is restricted, temperatures will rise abnormally.</p>
         <ul>
-            <li>Poor air flow + good fluid flow = Overheating at high speeds, OK at idle</li>
-            <li>Good air flow + poor fluid flow = Overheating at all speeds</li>
+            <li>Poor air flow + good fluid flow = Low temperature drop across cooler. Overheating under load</li>
+            <li>Good air flow + poor fluid flow = Excessively high temperature drop across cooler. Overheating at all speeds</li>
             <li>Poor air flow + poor fluid flow = Severe overheating in all conditions</li>
         </ul>
     </div>
@@ -105,7 +104,6 @@
         <li><strong>Check Air Flow</strong> - Inspect radiator for debris, verify fan operation</li>
         <li><strong>Check Fluid Flow</strong> - Verify water pump operation, thermostat function</li>
         <li><strong>Electrical Testing</strong> - If voltage is implausible, test sensor wiring and resistance</li>
-        <li><strong>Compare Parameters</strong> - Cross-reference with engine load, vehicle speed, ambient conditions</li>
     </ol>
     
     <h2>Common Failure Patterns</h2>
@@ -114,7 +112,7 @@
     <ul>
         <li>Rapid coolant temperature rise</li>
         <li>Normal sensor voltage behavior</li>
-        <li>No heat from cabin heater</li>
+        <li>No heat from cab heater</li>
         <li>Temperature drops quickly when engine is shut off</li>
     </ul>
     
