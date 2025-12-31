@@ -167,6 +167,7 @@ QUICK_CHART_HELP_FILES = {
     #"V1_START_AID": "troubleshooting.html",  # Build new help file
     #"V1_AIR_FUEL_RATIO": "troubleshooting.html",  # Build new help file
     #"V1_TORQUE_CONTROL": "troubleshooting.html",  # Build new help file
+    "V1_FUEL_COOLANT_TEMP": "fuel_coolant_temp.html",
     
     # V2 Charts  
     "V2_BATTERY_TEST": "battery_voltage.html",
@@ -178,6 +179,7 @@ QUICK_CHART_HELP_FILES = {
     #"V2_THROTTLE_VALVE": "troubleshooting.html",
     #"V2_ENGINE_LOAD": "troubleshooting.html",
     #"V2_ENGINE_TORQUE_LIMITS": "troubleshooting.html",
+    "V2_FUEL_COOLANT_TEMP": "fuel_coolant_temp.html",
     
     # EUD Charts
     "V1EUD_SPEED_V_LOAD": "eud_speed_load.html",
