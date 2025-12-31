@@ -1,5 +1,6 @@
 from typing import List
 import pandas as pd
+from pandas.core import apply
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
 
@@ -236,6 +237,16 @@ def V1_show_torque_control_chart(main_app, snaptype: SnapType):
         
     )
 
+def V1_show_fuel_coolant_temp_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V1_FUEL_COOLANT_TEMP",
+        ["P_L_Fuel_temp_raw", "P_L_Coolant_temperature"],
+        "-40",
+        "290"
+    )
+
 # ----------------------------------------------------------------------------
 # ----------------------------------V2 Charts----------------------------------
 # ----------------------------------------------------------------------------
@@ -251,6 +262,19 @@ def V2_show_battery_chart(main_app, snaptype: SnapType):
         ["Epm_nEng"],
         "-50",
         "3000"
+    )
+
+def V2_show_fuel_coolant_temp_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_FUEL_COOLANT_TEMP",
+        ["CEngDsT_t", "FuelT_t"],
+        "-40",
+        "290",
+        ["CEngDsT_uRaw", "FuelT_uRaw"],
+        "0",
+        "5000"
     )
 
 def V2_show_rail_pressure_chart(main_app, snaptype: SnapType):

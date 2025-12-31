@@ -432,6 +432,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V1_START_AID": quick_charts.V1_show_start_aid_chart,
             "V1_AIR_FUEL_RATIO": quick_charts.V1_show_air_fuel_ratio_chart,
             "V1_TORQUE_CONTROL": quick_charts.V1_show_torque_control_chart,
+            "V1_FUEL_COOLANT_TEMP": quick_charts.V1_show_fuel_coolant_temp_chart,
 
             "V1EUD_SPEED_V_LOAD": quick_charts.V1EUD_show_speed_load_chart,
             "V1EUD_SPEED_BAND": quick_charts.V1EUD_show_speed_band_chart,
@@ -439,6 +440,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V1EUD_EGT": quick_charts.V1EUD_show_EGT_chart,
 
             "V2_BATTERY_TEST": quick_charts.V2_show_battery_chart,
+            "V2_FUEL_COOLANT_TEMP": quick_charts.V2_show_fuel_coolant_temp_chart,
             "V2_RAIL_PRESSURE": quick_charts.V2_show_rail_pressure_chart,
             "V2_RAIL_GAP": quick_charts.V2_show_rail_gap_chart,
             "V2_IMV_CURRENT": quick_charts.V2_show_imv_current_chart,

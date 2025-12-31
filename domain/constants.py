@@ -35,6 +35,8 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Air/Fuel Ratio and Smoke Limit Control"),
         ("Torque Control", "V1_TORQUE_CONTROL", 
         "Actual Brake Torque vs Torque Limit"),
+        ("Fuel/Coolant Temp", "V1_FUEL_COOLANT_TEMP", 
+        "Fuel/Coolant Temperature")
     ],
     
 # Buttons for each V2 snapshot type
@@ -57,7 +59,9 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         ("Engine Load", "V2_ENGINE_LOAD",
         "Load Percent and Brake Torque"),
         ("Torque Limits", "V2_ENGINE_TORQUE_LIMITS",
-        "Torque Limits")
+        "Torque Limits"),
+        ("Fuel/Coolant Temp", "V2_FUEL_COOLANT_TEMP", 
+        "Fuel/Coolant Temperature")
         
     ],
     SnapType.DCU_V1: [
