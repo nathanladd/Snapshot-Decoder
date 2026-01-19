@@ -1,6 +1,6 @@
 # Version 2 Planning Document
 
-> **Target:** PyQt6-only UI with clean architecture separation  
+> **Target:** PySide6-only UI with clean architecture separation  
 > **Branch:** `version_two`  
 > **Approach:** Build domain/controllers first, add UI last, test incrementally
 
@@ -47,13 +47,13 @@
 
 ---
 
-## V2 Architecture (PyQt6-Only)
+## V2 Architecture (PySide6-Only)
 
 ### Layer Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    UI Layer (PyQt6)                     │
+│                    UI Layer (PySide6)                     │
 │  - QMainWindow, QWidgets                                │
 │  - Connects to controller via Qt signals/slots          │
 │  - No business logic                                    │
@@ -478,8 +478,8 @@ from typing import Dict
 from domain.snaptypes import SnapType
 from domain.constants import ENGINE_HOURS_COLUMNS
 
-class DerivedValues:
-    """Calculates derived values from snapshot data."""
+class ValueExtractor:
+    """Finds and/or calculates derived values from snapshot data."""
     
     @staticmethod
     def find_engine_hours(df: pd.DataFrame, snap_type: SnapType, pid_info: Dict) -> float:
@@ -521,7 +521,7 @@ from domain.snapshot.header_parser import HeaderParser
 from domain.snapshot.type_detector import TypeDetector
 from domain.snapshot.pid_extractor import PidExtractor
 from domain.snapshot.data_cleaner import DataCleaner
-from domain.snapshot.derived_values import DerivedValues
+from domain.snapshot.derived_values import ValueExtractor
 from file_io.reader_excel import load_xls, load_xlsx
 
 class Snapshot:
@@ -576,9 +576,9 @@ class Snapshot:
         self.snapshot = DataCleaner.scrub(self.raw_table, header_row_idx)
         self.snapshot = DataCleaner.remove_unsupported_pids(self.snapshot, self.pid_info)
         
-        self.hours = DerivedValues.find_engine_hours(self.snapshot, self.snapshot_type, self.pid_info)
-        self.idle_time = DerivedValues.find_idle_time(self.snapshot, self.pid_info)
-        self.mdp_success_rate = DerivedValues.calculate_mdp_success(self.snapshot)
+        self.hours = ValueExtractor.find_engine_hours(self.snapshot, self.snapshot_type, self.pid_info)
+        self.idle_time = ValueExtractor.find_idle_time(self.snapshot, self.pid_info)
+        self.mdp_success_rate = ValueExtractor.calculate_mdp_success(self.snapshot)
         
         # Type-specific adjustments
         self._apply_type_specific_fixes()
@@ -710,11 +710,551 @@ def load_xls(path: str) -> pd.DataFrame:
 
 **Goal:** UI-agnostic orchestration using Qt signals for communication.
 
-### 2.1 AppController
+### 2.1 SnapshotLoader (QThread with Progress)
+
+**Problem:** Large snapshot files can take several seconds to load, freezing the UI
+
+**Solution:** Load snapshots in a dedicated `QThread` with progress signals
+
+```python
+# controllers/snapshot_loader.py
+from PySide6.QtCore import QThread, Signal
+from domain.snapshot import Snapshot
+
+class SnapshotLoader(QThread):
+    """Background thread for loading snapshots with progress updates."""
+    
+    # Signals
+    progress = Signal(int, str)      # (percent, message)
+    finished = Signal(object)         # Snapshot on success
+    error = Signal(str)               # Error message on failure
+    
+    def __init__(self, file_path: str):
+        super().__init__()
+        self.file_path = file_path
+        self._cancelled = False
+    
+    def cancel(self):
+        """Request cancellation (checked between phases)."""
+        self._cancelled = True
+    
+    def run(self):
+        try:
+            self.progress.emit(5, "Reading file...")
+            # Phase 1: Load raw data
+            raw_df = self._load_raw_file()
+            if self._cancelled:
+                return
+            
+            self.progress.emit(20, "Detecting layout...")
+            # Phase 2: Normalize layout (transpose if needed)
+            normalized_df = normalize_layout(raw_df)
+            if self._cancelled:
+                return
+            
+            self.progress.emit(35, "Parsing headers...")
+            # Phase 3: Parse header info
+            header_list = HeaderParser.parse(normalized_df)
+            if self._cancelled:
+                return
+            
+            self.progress.emit(50, "Identifying snapshot type...")
+            # Phase 4: Detect type
+            header_row = TypeDetector.find_header_row(normalized_df)
+            snap_type, confidence = TypeDetector.identify_type(normalized_df, header_row)
+            if self._cancelled:
+                return
+            
+            self.progress.emit(65, "Extracting PID metadata...")
+            # Phase 5: Extract PIDs
+            pid_info = PidExtractor.extract(normalized_df, header_row)
+            if self._cancelled:
+                return
+            
+            self.progress.emit(80, "Cleaning data...")
+            # Phase 6: Scrub DataFrame
+            cleaned_df = DataCleaner.scrub(normalized_df, header_row)
+            cleaned_df = DataCleaner.remove_unsupported_pids(cleaned_df, pid_info)
+            if self._cancelled:
+                return
+            
+            self.progress.emit(90, "Calculating derived values...")
+            # Phase 7: Derived values
+            hours = ValueExtractor.find_engine_hours(cleaned_df, snap_type, pid_info)
+            idle_time = ValueExtractor.find_idle_time(cleaned_df, pid_info)
+            mdp_rate = ValueExtractor.calculate_mdp_success(cleaned_df)
+            
+            self.progress.emit(100, "Complete")
+            
+            # Build and emit Snapshot object
+            snapshot = self._build_snapshot(
+                cleaned_df, header_list, pid_info, snap_type, hours, idle_time, mdp_rate
+            )
+            self.finished.emit(snapshot)
+            
+        except Exception as e:
+            self.error.emit(str(e))
+```
+
+**UI Integration:**
+
+```python
+# In MainWindow or AppController
+def load_snapshot(self, file_path: str):
+    """Start background snapshot loading with progress dialog."""
+    self.loader = SnapshotLoader(file_path)
+    
+    # Create progress dialog
+    self.progress_dialog = QProgressDialog(
+        "Loading snapshot...", "Cancel", 0, 100, self
+    )
+    self.progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+    self.progress_dialog.setAutoClose(True)
+    
+    # Connect signals
+    self.loader.progress.connect(self._on_load_progress)
+    self.loader.finished.connect(self._on_load_finished)
+    self.loader.error.connect(self._on_load_error)
+    self.progress_dialog.canceled.connect(self.loader.cancel)
+    
+    # Start loading
+    self.loader.start()
+
+def _on_load_progress(self, percent: int, message: str):
+    self.progress_dialog.setValue(percent)
+    self.progress_dialog.setLabelText(message)
+
+def _on_load_finished(self, snapshot: Snapshot):
+    self.snapshot = snapshot
+    self.snapshot_loaded.emit(snapshot)
+
+def _on_load_error(self, error_msg: str):
+    self.progress_dialog.close()
+    QMessageBox.critical(self, "Load Error", error_msg)
+```
+
+**Benefits:**
+- UI remains responsive during load
+- User sees meaningful progress phases
+- Cancel button allows aborting long loads
+- Error handling with user feedback
+
+**Test checkpoint:** Unit test loader emits correct progress sequence; integration test with real file.
+
+---
+
+### 2.2 Logging Infrastructure
+
+**Goals:**
+- Chain of custody records for loaded snapshots
+- Diagnostic logging for troubleshooting
+- Toggleable verbose mode for detailed debugging
+- Rotating log files in app data folder
+
+#### 2.2.1 Log Configuration
+
+```python
+# infrastructure/logging_config.py
+import os
+import logging
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+# App data folder location
+def get_log_directory() -> Path:
+    """Get or create the log directory in user's app data."""
+    if os.name == 'nt':  # Windows
+        app_data = Path(os.environ.get('APPDATA', Path.home()))
+    else:  # macOS/Linux
+        app_data = Path.home() / '.config'
+    
+    log_dir = app_data / 'Snapshot Decoder' / 'logs'
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
+
+# Log levels
+NORMAL_LEVEL = logging.INFO
+VERBOSE_LEVEL = logging.DEBUG
+
+# Rotating file configuration
+MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB per file
+BACKUP_COUNT = 10               # Keep last 10 log files
+
+def setup_logging(verbose: bool = False) -> logging.Logger:
+    """
+    Configure application logging.
+    
+    Args:
+        verbose: If True, enable DEBUG level logging with extra details
+    
+    Returns:
+        Configured logger instance
+    """
+    logger = logging.getLogger('snapshot_decoder')
+    logger.setLevel(logging.DEBUG)  # Capture all, filter at handler level
+    
+    # Clear existing handlers
+    logger.handlers.clear()
+    
+    # File handler with rotation
+    log_file = get_log_directory() / 'snapshot_decoder.log'
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=MAX_LOG_SIZE,
+        backupCount=BACKUP_COUNT,
+        encoding='utf-8'
+    )
+    file_handler.setLevel(VERBOSE_LEVEL if verbose else NORMAL_LEVEL)
+    
+    # Format
+    formatter = logging.Formatter(
+        '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    return logger
+
+def set_verbose_mode(logger: logging.Logger, verbose: bool):
+    """Toggle verbose logging at runtime."""
+    level = VERBOSE_LEVEL if verbose else NORMAL_LEVEL
+    for handler in logger.handlers:
+        if isinstance(handler, RotatingFileHandler):
+            handler.setLevel(level)
+```
+
+#### 2.2.2 What Gets Logged
+
+**Chain of Custody (always logged at INFO level):**
+
+```python
+# Example log entries for a snapshot load
+logger.info(f"=== Loading snapshot: {file_path} ===")
+logger.info(f"File size: {file_size_kb:.1f} KB")
+logger.info(f"Snapshot type detected: {snap_type.name} (confidence: {match_count} PIDs)")
+logger.info(f"Date/Time from file: {date_time}")
+logger.info(f"Engine hours: {hours:.1f}")
+logger.info(f"Idle time: {idle_time:.1f}")
+logger.info(f"MDP success rate: {mdp_rate:.1f}%")
+logger.info(f"Total PIDs loaded: {len(pid_info)}")
+logger.info(f"=== Load complete ===")
+```
+
+**Verbose/Debug Details (only when verbose=True):**
+
+```python
+# DataFrame shapes
+logger.debug(f"Raw DataFrame shape: {raw_df.shape}")
+logger.debug(f"Cleaned DataFrame shape: {cleaned_df.shape}")
+
+# PID names
+logger.debug(f"PID names: {list(pid_info.keys())}")
+
+# Layout detection
+logger.debug(f"Layout detected: {layout} at index {index}")
+logger.debug(f"Header row found at index: {header_row_idx}")
+
+# Type detection details
+logger.debug(f"PID signature matches: {matches}")
+
+# Parsing phases
+logger.debug(f"Header parsing found {len(header_list)} entries")
+logger.debug(f"Removed {removed_count} unsupported PIDs")
+
+# Errors/warnings
+logger.warning(f"Could not parse engine hours from column: {col_name}")
+logger.error(f"Failed to load file: {error_message}")
+```
+
+#### 2.2.3 Integration with SnapshotLoader
+
+```python
+# controllers/snapshot_loader.py
+from infrastructure.logging_config import logging
+
+class SnapshotLoader(QThread):
+    def __init__(self, file_path: str):
+        super().__init__()
+        self.file_path = file_path
+        self.logger = logging.getLogger('snapshot_decoder.loader')
+    
+    def run(self):
+        self.logger.info(f"=== Loading snapshot: {self.file_path} ===")
+        file_size = os.path.getsize(self.file_path) / 1024
+        self.logger.info(f"File size: {file_size:.1f} KB")
+        
+        try:
+            # Phase 1
+            self.progress.emit(5, "Reading file...")
+            raw_df = self._load_raw_file()
+            self.logger.debug(f"Raw DataFrame shape: {raw_df.shape}")
+            
+            # ... (each phase logs its activity)
+            
+            self.logger.info(f"Snapshot type: {snap_type.name} (confidence: {confidence})")
+            self.logger.info(f"Engine hours: {hours:.1f}")
+            self.logger.info(f"Total PIDs: {len(pid_info)}")
+            self.logger.debug(f"PID names: {list(pid_info.keys())}")
+            self.logger.info(f"=== Load complete ===")
+            
+        except Exception as e:
+            self.logger.error(f"Load failed: {e}", exc_info=True)
+            self.error.emit(str(e))
+```
+
+#### 2.2.4 UI Toggle for Verbose Mode
+
+```python
+# In settings or menu
+class MainWindow(QMainWindow):
+    def __init__(self):
+        # ...
+        self.verbose_logging = False
+        self.logger = logging.getLogger('snapshot_decoder')
+    
+    def toggle_verbose_logging(self, enabled: bool):
+        """Menu action to toggle verbose logging."""
+        self.verbose_logging = enabled
+        set_verbose_mode(self.logger, enabled)
+        self.logger.info(f"Verbose logging {'enabled' if enabled else 'disabled'}")
+```
+
+**Log file location:** `%APPDATA%/Snapshot Decoder/logs/snapshot_decoder.log`
+
+**Rotation:** 10 files × 5 MB = 50 MB max disk usage
+
+**Test checkpoint:** Unit test log file creation, rotation, and verbose toggle.
+
+---
+
+### 2.3 Console Panel (Live Log Viewer)
+
+**Goals:**
+- Display log messages in real-time within the UI
+- Support overwritable progress lines for batch operations
+- Color-code messages by severity level
+- Toggle visibility via View menu
+
+#### 2.3.1 Log Console Widget
+
+```python
+# ui/log_console.py
+from PySide6.QtWidgets import QPlainTextEdit, QWidget, QVBoxLayout
+from PySide6.QtGui import QTextCursor, QColor, QTextCharFormat
+from PySide6.QtCore import Slot
+
+class LogConsole(QPlainTextEdit):
+    """
+    Live log viewer with overwrite support for progress updates.
+    
+    Features:
+    - Color-coded log levels
+    - Overwritable lines for batch progress (e.g., "Processing 3/50...")
+    - Auto-scroll to bottom
+    - Memory-limited buffer
+    """
+    
+    COLORS = {
+        'DEBUG': '#888888',    # Gray
+        'INFO': '#ffffff',     # White
+        'WARNING': '#ffcc00',  # Yellow
+        'ERROR': '#ff4444',    # Red
+        'CRITICAL': '#ff0000', # Bright red
+    }
+    
+    def __init__(self, max_lines: int = 1000):
+        super().__init__()
+        self.setReadOnly(True)
+        self.setMaximumBlockCount(max_lines)
+        self._last_was_progress = False
+        
+        # Dark background for console look
+        self.setStyleSheet("""
+            QPlainTextEdit {
+                background-color: #1e1e1e;
+                color: #ffffff;
+                font-family: 'Consolas', 'Courier New', monospace;
+                font-size: 10pt;
+            }
+        """)
+    
+    @Slot(str, str, bool)
+    def log(self, level: str, message: str, overwrite: bool = False):
+        """
+        Append a log message, optionally overwriting the last line.
+        
+        Args:
+            level: Log level (DEBUG, INFO, WARNING, ERROR)
+            message: The log message text
+            overwrite: If True, replace the last line (for progress updates)
+        """
+        if overwrite and self._last_was_progress:
+            self._remove_last_line()
+        
+        # Format with color
+        color = self.COLORS.get(level, '#ffffff')
+        formatted = f'<span style="color:{color}">{message}</span>'
+        self.appendHtml(formatted)
+        
+        self._last_was_progress = overwrite
+        self._scroll_to_bottom()
+    
+    def _remove_last_line(self):
+        """Remove the last line of text."""
+        cursor = self.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        cursor.select(QTextCursor.SelectionType.BlockUnderCursor)
+        cursor.removeSelectedText()
+        cursor.deletePreviousChar()  # Remove trailing newline
+    
+    def _scroll_to_bottom(self):
+        """Auto-scroll to show latest message."""
+        scrollbar = self.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+    
+    def clear_console(self):
+        """Clear all log messages."""
+        self.clear()
+        self._last_was_progress = False
+```
+
+#### 2.3.2 Qt Log Handler (Bridge to Python Logging)
+
+```python
+# infrastructure/logging_config.py (addition)
+import logging
+from PySide6.QtCore import QObject, Signal
+
+class QtLogHandler(logging.Handler, QObject):
+    """
+    Routes Python logging messages to a Qt signal.
+    
+    This allows log messages from any thread to safely update the UI
+    via Qt's signal/slot mechanism.
+    """
+    
+    # Signal: (level_name, formatted_message, is_progress)
+    log_emitted = Signal(str, str, bool)
+    
+    def __init__(self):
+        logging.Handler.__init__(self)
+        QObject.__init__(self)
+        self._progress_prefix = None
+    
+    def set_progress_prefix(self, prefix: str | None):
+        """
+        Set a prefix that identifies progress messages (overwritable).
+        
+        Example: set_progress_prefix("Processing file")
+        Then any message starting with "Processing file" will overwrite.
+        """
+        self._progress_prefix = prefix
+    
+    def emit(self, record: logging.LogRecord):
+        """Emit log record as Qt signal."""
+        msg = self.format(record)
+        is_progress = (
+            self._progress_prefix is not None 
+            and msg.startswith(self._progress_prefix)
+        )
+        self.log_emitted.emit(record.levelname, msg, is_progress)
+```
+
+#### 2.3.3 Integration with MainWindow
+
+```python
+# ui/main_window.py
+from ui.log_console import LogConsole
+from infrastructure.logging_config import setup_logging, QtLogHandler
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self._setup_logging()
+        self._setup_ui()
+    
+    def _setup_logging(self):
+        """Configure logging with both file and UI handlers."""
+        self.logger = setup_logging(verbose=False)
+        
+        # Add Qt handler for UI console
+        self.qt_handler = QtLogHandler()
+        self.qt_handler.setFormatter(logging.Formatter(
+            '%(asctime)s | %(levelname)-8s | %(message)s',
+            datefmt='%H:%M:%S'
+        ))
+        self.logger.addHandler(self.qt_handler)
+    
+    def _setup_ui(self):
+        # ... other UI setup ...
+        
+        # Console as dockable panel
+        self.log_console = LogConsole()
+        self.console_dock = QDockWidget("Console", self)
+        self.console_dock.setWidget(self.log_console)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.console_dock)
+        
+        # Connect Qt handler signal to console
+        self.qt_handler.log_emitted.connect(self.log_console.log)
+        
+        # View menu toggle
+        self.view_menu.addAction(self.console_dock.toggleViewAction())
+```
+
+#### 2.3.4 Batch Processing with Progress Overwrite
+
+```python
+# Example: Processing multiple snapshot files
+class BatchProcessor:
+    def __init__(self, logger: logging.Logger, qt_handler: QtLogHandler):
+        self.logger = logger
+        self.qt_handler = qt_handler
+    
+    def process_files(self, file_paths: list[str]):
+        total = len(file_paths)
+        
+        # Enable progress line overwriting
+        self.qt_handler.set_progress_prefix("Processing file")
+        
+        for i, path in enumerate(file_paths, 1):
+            # This line will overwrite the previous one
+            self.logger.info(f"Processing file {i}/{total}: {Path(path).name}")
+            
+            # Do the actual work...
+            snapshot = Snapshot(path)
+        
+        # Disable overwriting, log final result normally
+        self.qt_handler.set_progress_prefix(None)
+        self.logger.info(f"Batch complete: {total} files processed")
+```
+
+**Console output during batch:**
+```
+10:30:15 | INFO     | Processing file 47/50: snapshot_047.xlsx  <- overwrites in place
+```
+
+**After batch completes:**
+```
+10:30:15 | INFO     | Processing file 50/50: snapshot_050.xlsx
+10:30:16 | INFO     | Batch complete: 50 files processed
+```
+
+**Benefits:**
+- Real-time visibility into application activity
+- Clean progress display without log spam
+- Dockable/hideable for user preference
+- Thread-safe via Qt signals
+
+**Test checkpoint:** Unit test log console append and overwrite behavior.
+
+---
+
+### 2.4 AppController
 
 ```python
 # controllers/app_controller.py
-from PyQt6.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 from domain.snapshot import Snapshot
 from domain.chart_state import ChartState
 from domain.quick_charts.definitions import QUICK_CHART_REGISTRY
@@ -724,9 +1264,9 @@ class AppController(QObject):
     """Main application controller - orchestrates all app actions."""
     
     # Signals for UI to connect to
-    snapshot_loaded = pyqtSignal(object)  # emits Snapshot
-    chart_updated = pyqtSignal(object)    # emits ChartConfig
-    error_occurred = pyqtSignal(str)      # emits error message
+    snapshot_loaded = Signal(object)  # emits Snapshot
+    chart_updated = Signal(object)    # emits ChartConfig
+    error_occurred = Signal(str)      # emits error message
     
     def __init__(self):
         super().__init__()
@@ -812,16 +1352,16 @@ class ChartController:
 
 ---
 
-## Phase 3: UI Layer (PyQt6)
+## Phase 3: UI Layer (PySide6)
 
-**Goal:** Build PyQt6 UI that connects to controllers via signals/slots.
+**Goal:** Build PySide6 UI that connects to controllers via signals/slots.
 
 ### 3.1 Main Window Structure
 
 ```python
 # ui/main_window.py
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
-from PyQt6.QtCore import Qt
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
@@ -869,6 +1409,582 @@ class MainWindow(QMainWindow):
 | Chart Cart | `ui/chart_cart.py` | Multi-chart collection for PDF |
 | Toolbar | `ui/toolbar.py` | Zoom, pan, export buttons |
 
+### 3.3 Secondary Windows
+
+Secondary windows share the same `AppController` instance to access snapshot data consistently.
+
+#### 3.3.1 Chart Popup Window
+
+```python
+# ui/chart_popup.py
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton
+from PySide6.QtCore import Qt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+
+from controllers.app_controller import AppController
+from controllers.chart_controller import ChartController
+from domain.chart_config import ChartConfig
+
+class ChartPopup(QDialog):
+    """
+    Enlarged chart view in a separate window.
+    
+    Features:
+    - Larger canvas for detailed viewing
+    - Edit chart configuration
+    - Add to chart cart
+    - Export single chart
+    """
+    
+    def __init__(self, app_controller: AppController, config: ChartConfig, parent=None):
+        super().__init__(parent)
+        self.app_controller = app_controller
+        self.chart_controller = ChartController()
+        self.config = config
+        
+        self.setWindowTitle(f"Chart: {config.title}")
+        self.resize(900, 700)
+        self._setup_ui()
+        self._render_chart()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Chart canvas
+        self.figure = Figure(figsize=(10, 8))
+        self.canvas = FigureCanvasQTAgg(self.figure)
+        layout.addWidget(self.canvas)
+        
+        # Button bar
+        btn_layout = QHBoxLayout()
+        
+        self.edit_btn = QPushButton("Edit")
+        self.edit_btn.clicked.connect(self._on_edit)
+        btn_layout.addWidget(self.edit_btn)
+        
+        self.add_to_cart_btn = QPushButton("Add to Cart")
+        self.add_to_cart_btn.clicked.connect(self._on_add_to_cart)
+        btn_layout.addWidget(self.add_to_cart_btn)
+        
+        self.export_btn = QPushButton("Export")
+        self.export_btn.clicked.connect(self._on_export)
+        btn_layout.addWidget(self.export_btn)
+        
+        btn_layout.addStretch()
+        layout.addLayout(btn_layout)
+    
+    def _render_chart(self):
+        """Render the chart using current config."""
+        self.figure.clear()
+        self.chart_controller.render(
+            self.config, 
+            self.figure, 
+            self.app_controller.snapshot
+        )
+        self.canvas.draw()
+    
+    def _on_edit(self):
+        """Open chart editor dialog."""
+        # TODO: Open ChartConfigEditor dialog
+        pass
+    
+    def _on_add_to_cart(self):
+        """Add current chart to the cart."""
+        self.app_controller.add_to_cart(self.config)
+    
+    def _on_export(self):
+        """Export this single chart."""
+        # TODO: File dialog + export
+        pass
+```
+
+#### 3.3.2 Data Table Window
+
+```python
+# ui/data_table.py
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QTableView, QLineEdit, 
+    QHeaderView, QAbstractItemView
+)
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel
+import pandas as pd
+
+from controllers.app_controller import AppController
+
+class DataFrameModel(QAbstractTableModel):
+    """Qt model wrapper for pandas DataFrame."""
+    
+    def __init__(self, df: pd.DataFrame):
+        super().__init__()
+        self._df = df
+    
+    def rowCount(self, parent=None):
+        return len(self._df)
+    
+    def columnCount(self, parent=None):
+        return len(self._df.columns)
+    
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if role == Qt.ItemDataRole.DisplayRole:
+            value = self._df.iloc[index.row(), index.column()]
+            return str(value)
+        return None
+    
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return str(self._df.columns[section])
+            else:
+                return str(self._df.index[section])
+        return None
+
+
+class DataTableWindow(QDialog):
+    """
+    Raw DataFrame viewer with search and sort.
+    
+    Features:
+    - View all snapshot data in tabular format
+    - Search/filter by column name or value
+    - Sortable columns
+    - Copy selection to clipboard
+    """
+    
+    def __init__(self, app_controller: AppController, parent=None):
+        super().__init__(parent)
+        self.app_controller = app_controller
+        
+        self.setWindowTitle("Data Table")
+        self.resize(1000, 600)
+        self._setup_ui()
+        self._connect_signals()
+        self._load_data()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Search box
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText("Filter columns...")
+        layout.addWidget(self.search_box)
+        
+        # Table view
+        self.table_view = QTableView()
+        self.table_view.setSortingEnabled(True)
+        self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        layout.addWidget(self.table_view)
+    
+    def _connect_signals(self):
+        self.search_box.textChanged.connect(self._on_filter_changed)
+        self.app_controller.snapshot_loaded.connect(self._load_data)
+    
+    def _load_data(self):
+        """Load DataFrame into table model."""
+        if self.app_controller.snapshot is None:
+            return
+        
+        df = self.app_controller.snapshot.snapshot
+        self.model = DataFrameModel(df)
+        
+        # Proxy for filtering
+        self.proxy = QSortFilterProxyModel()
+        self.proxy.setSourceModel(self.model)
+        self.proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        
+        self.table_view.setModel(self.proxy)
+    
+    def _on_filter_changed(self, text: str):
+        """Filter columns by search text."""
+        self.proxy.setFilterKeyColumn(-1)  # Search all columns
+        self.proxy.setFilterFixedString(text)
+```
+
+#### 3.3.3 PID Info Window
+
+```python
+# ui/pid_info.py
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QTableWidget, QTableWidgetItem,
+    QLineEdit, QHeaderView
+)
+from PySide6.QtCore import Qt
+from typing import Dict
+
+from controllers.app_controller import AppController
+
+class PidInfoWindow(QDialog):
+    """
+    PID metadata display window.
+    
+    Features:
+    - Shows all PIDs with their units, min, max, descriptions
+    - Searchable
+    - Click to select PID in main window
+    """
+    
+    def __init__(self, app_controller: AppController, parent=None):
+        super().__init__(parent)
+        self.app_controller = app_controller
+        
+        self.setWindowTitle("PID Information")
+        self.resize(700, 500)
+        self._setup_ui()
+        self._connect_signals()
+        self._load_pid_info()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Search box
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText("Search PIDs...")
+        layout.addWidget(self.search_box)
+        
+        # PID table
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["PID Name", "Unit", "Min", "Max"])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSortingEnabled(True)
+        layout.addWidget(self.table)
+    
+    def _connect_signals(self):
+        self.search_box.textChanged.connect(self._on_search)
+        self.table.cellDoubleClicked.connect(self._on_pid_selected)
+        self.app_controller.snapshot_loaded.connect(self._load_pid_info)
+    
+    def _load_pid_info(self):
+        """Populate table with PID metadata."""
+        if self.app_controller.snapshot is None:
+            return
+        
+        pid_info: Dict = self.app_controller.snapshot.pid_info
+        self.table.setRowCount(len(pid_info))
+        
+        for row, (pid_name, info) in enumerate(pid_info.items()):
+            self.table.setItem(row, 0, QTableWidgetItem(pid_name))
+            self.table.setItem(row, 1, QTableWidgetItem(str(info.get('unit', ''))))
+            self.table.setItem(row, 2, QTableWidgetItem(str(info.get('min', ''))))
+            self.table.setItem(row, 3, QTableWidgetItem(str(info.get('max', ''))))
+    
+    def _on_search(self, text: str):
+        """Filter visible rows by search text."""
+        text_lower = text.lower()
+        for row in range(self.table.rowCount()):
+            pid_name = self.table.item(row, 0).text().lower()
+            self.table.setRowHidden(row, text_lower not in pid_name)
+    
+    def _on_pid_selected(self, row: int, column: int):
+        """Notify main window to select this PID."""
+        pid_name = self.table.item(row, 0).text()
+        self.app_controller.select_pid(pid_name)
+```
+
+#### 3.3.4 Opening Secondary Windows from MainWindow
+
+```python
+# ui/main_window.py (additions)
+from ui.chart_popup import ChartPopup
+from ui.data_table import DataTableWindow
+from ui.pid_info import PidInfoWindow
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        # ... existing init ...
+        self.data_table_window: Optional[DataTableWindow] = None
+        self.pid_info_window: Optional[PidInfoWindow] = None
+    
+    def _setup_menus(self):
+        # View menu
+        view_menu = self.menuBar().addMenu("View")
+        view_menu.addAction("Data Table", self._show_data_table)
+        view_menu.addAction("PID Info", self._show_pid_info)
+    
+    def _show_data_table(self):
+        """Open or focus the data table window."""
+        if self.data_table_window is None:
+            self.data_table_window = DataTableWindow(self.app_controller, self)
+        self.data_table_window.show()
+        self.data_table_window.raise_()
+    
+    def _show_pid_info(self):
+        """Open or focus the PID info window."""
+        if self.pid_info_window is None:
+            self.pid_info_window = PidInfoWindow(self.app_controller, self)
+        self.pid_info_window.show()
+        self.pid_info_window.raise_()
+    
+    def _open_chart_popup(self, config: ChartConfig):
+        """Open a chart in a popup window."""
+        popup = ChartPopup(self.app_controller, config, self)
+        popup.show()
+```
+
+**Key Points:**
+- All secondary windows receive the same `AppController` instance
+- Windows connect to `snapshot_loaded` signal to refresh when data changes
+- `ChartPopup` is created per-chart (multiple can be open)
+- `DataTableWindow` and `PidInfoWindow` are singletons (one instance, show/hide)
+
+**Test checkpoint:** Manual test: open each window, verify data updates when new snapshot loads.
+
+---
+
+### 3.4 Help Window
+
+Split-pane help viewer: JSON-based TOC on the left, HTML content via `QTextBrowser` on the right.
+
+```python
+# ui/help_window.py
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QSplitter, QTextBrowser, 
+    QTreeWidget, QTreeWidgetItem, QLineEdit, QToolBar
+)
+from PySide6.QtCore import QUrl, Qt
+from PySide6.QtGui import QAction
+from pathlib import Path
+import json
+
+class HelpWindow(QDialog):
+    """
+    Split-pane help viewer.
+    
+    Features:
+    - Left pane: Table of Contents from JSON file (tree structure)
+    - Right pane: HTML content via QTextBrowser
+    - Back/forward navigation
+    - Search within content
+    """
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Help")
+        self.resize(900, 650)
+        self._setup_ui()
+        self._load_toc()
+        self._load_home()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Navigation toolbar
+        toolbar = QToolBar()
+        
+        self.back_action = QAction("◀ Back", self)
+        self.back_action.triggered.connect(self._go_back)
+        toolbar.addAction(self.back_action)
+        
+        self.forward_action = QAction("Forward ▶", self)
+        self.forward_action.triggered.connect(self._go_forward)
+        toolbar.addAction(self.forward_action)
+        
+        toolbar.addSeparator()
+        
+        # Search box
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText("Search...")
+        self.search_box.setMaximumWidth(200)
+        self.search_box.returnPressed.connect(self._search)
+        toolbar.addWidget(self.search_box)
+        
+        layout.addWidget(toolbar)
+        
+        # Splitter: TOC on left, content on right
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        
+        # Left pane: Table of Contents (tree)
+        self.toc_tree = QTreeWidget()
+        self.toc_tree.setHeaderLabel("Contents")
+        self.toc_tree.setMinimumWidth(200)
+        self.toc_tree.itemClicked.connect(self._on_toc_clicked)
+        splitter.addWidget(self.toc_tree)
+        
+        # Right pane: HTML content
+        self.browser = QTextBrowser()
+        self.browser.setOpenExternalLinks(True)
+        self.browser.backwardAvailable.connect(self.back_action.setEnabled)
+        self.browser.forwardAvailable.connect(self.forward_action.setEnabled)
+        splitter.addWidget(self.browser)
+        
+        # Set splitter proportions (30% TOC, 70% content)
+        splitter.setSizes([270, 630])
+        layout.addWidget(splitter)
+        
+        # Initial button states
+        self.back_action.setEnabled(False)
+        self.forward_action.setEnabled(False)
+    
+    def _get_help_path(self) -> Path:
+        """Get path to help files directory."""
+        return Path(__file__).parent.parent / "help"
+    
+    def _load_toc(self):
+        """Load table of contents from JSON file."""
+        toc_path = self._get_help_path() / "toc.json"
+        if not toc_path.exists():
+            return
+        
+        with open(toc_path, 'r', encoding='utf-8') as f:
+            toc_data = json.load(f)
+        
+        self._populate_toc(toc_data, self.toc_tree.invisibleRootItem())
+    
+    def _populate_toc(self, items: list, parent: QTreeWidgetItem):
+        """Recursively populate TOC tree from JSON structure."""
+        for item in items:
+            tree_item = QTreeWidgetItem(parent)
+            tree_item.setText(0, item.get('title', ''))
+            tree_item.setData(0, Qt.ItemDataRole.UserRole, item.get('file', ''))
+            
+            # Recurse for children
+            if 'children' in item:
+                self._populate_toc(item['children'], tree_item)
+        
+        # Expand top-level items
+        if parent == self.toc_tree.invisibleRootItem():
+            self.toc_tree.expandAll()
+    
+    def _on_toc_clicked(self, item: QTreeWidgetItem, column: int):
+        """Handle TOC item click - load corresponding HTML file."""
+        file_name = item.data(0, Qt.ItemDataRole.UserRole)
+        if file_name:
+            self._load_topic(file_name)
+    
+    def _load_home(self):
+        """Load the default/home help page."""
+        # Try to load intro or first topic
+        help_path = self._get_help_path() / "index.html"
+        if help_path.exists():
+            self.browser.setSource(QUrl.fromLocalFile(str(help_path)))
+        else:
+            self.browser.setHtml("""
+                <h1>Help</h1>
+                <p>Select a topic from the table of contents.</p>
+            """)
+    
+    def _load_topic(self, file_name: str):
+        """Load a specific HTML help file."""
+        help_path = self._get_help_path() / file_name
+        if help_path.exists():
+            self.browser.setSource(QUrl.fromLocalFile(str(help_path)))
+    
+    def _go_back(self):
+        self.browser.backward()
+    
+    def _go_forward(self):
+        self.browser.forward()
+    
+    def _search(self):
+        """Search for text in current document."""
+        text = self.search_box.text()
+        if text:
+            found = self.browser.find(text)
+            if not found:
+                # Wrap to beginning
+                self.browser.moveCursor(self.browser.textCursor().Start)
+                self.browser.find(text)
+    
+    def show_topic(self, topic: str):
+        """Navigate directly to a specific help topic."""
+        self._load_topic(f"{topic}.html")
+        self.show()
+        self.raise_()
+```
+
+#### 3.4.1 TOC JSON Format
+
+```json
+// help/toc.json
+[
+    {
+        "title": "Getting Started",
+        "file": "getting_started.html",
+        "children": [
+            {"title": "Installation", "file": "installation.html"},
+            {"title": "First Steps", "file": "first_steps.html"}
+        ]
+    },
+    {
+        "title": "Loading Files",
+        "file": "loading_files.html",
+        "children": [
+            {"title": "Excel Files", "file": "excel_files.html"},
+            {"title": "Supported Formats", "file": "formats.html"}
+        ]
+    },
+    {
+        "title": "Charts",
+        "file": "charts.html",
+        "children": [
+            {"title": "Quick Charts", "file": "quick_charts.html"},
+            {"title": "Custom Charts", "file": "custom_charts.html"},
+            {"title": "Chart Types", "file": "chart_types.html"}
+        ]
+    },
+    {
+        "title": "Exporting",
+        "file": "exporting.html"
+    }
+]
+```
+
+#### 3.4.2 Opening Help from MainWindow
+
+```python
+# ui/main_window.py (additions)
+from ui.help_window import HelpWindow
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        # ... existing init ...
+        self.help_window: Optional[HelpWindow] = None
+    
+    def _setup_menus(self):
+        # Help menu
+        help_menu = self.menuBar().addMenu("Help")
+        help_menu.addAction("Help Contents", self._show_help)
+        help_menu.addAction("About", self._show_about)
+    
+    def _show_help(self):
+        """Open or focus the help window."""
+        if self.help_window is None:
+            self.help_window = HelpWindow(self)
+        self.help_window.show()
+        self.help_window.raise_()
+    
+    def _show_context_help(self, topic: str):
+        """Open help to a specific topic (for F1 context help)."""
+        if self.help_window is None:
+            self.help_window = HelpWindow(self)
+        self.help_window.show_topic(topic)
+```
+
+**Expected help file structure:**
+```
+help/
+├── toc.json            # Table of contents structure
+├── index.html          # Default/home page
+├── getting_started.html
+├── loading_files.html
+├── charts.html
+├── quick_charts.html
+├── exporting.html
+└── images/
+    └── screenshot.png
+```
+
+**QTextBrowser HTML support:**
+- Headings, paragraphs, lists, tables
+- Links (`<a href="...">`), including anchors (`#section`)
+- Images (`<img src="images/...">`)
+- Inline CSS (`style="..."`)
+- Basic formatting (bold, italic, code)
+
+**Test checkpoint:** Manual test: TOC loads from JSON, clicking items loads HTML, navigation works.
+
 ---
 
 ## Implementation Order & Test Points
@@ -892,8 +2008,11 @@ class MainWindow(QMainWindow):
 | 1.9 | `rendering/bar_renderer.py` | Unit: renders correctly | ✓ |
 | 1.10 | `rendering/bubble_renderer.py` | Unit: renders correctly | ✓ |
 | **Phase 2** |
-| 2.1 | `controllers/app_controller.py` | Unit: signals emitted | ✓ |
-| 2.2 | `controllers/chart_controller.py` | Unit: delegates to renderer | ✓ |
+| 2.1 | `controllers/snapshot_loader.py` | Unit: progress signals emitted | ✓ |
+| 2.2 | `infrastructure/logging_config.py` | Unit: log creation, rotation, toggle | ✓ |
+| 2.3 | `ui/log_console.py` | Unit: append, overwrite, colors | ✓ |
+| 2.4 | `controllers/app_controller.py` | Unit: signals emitted | ✓ |
+| 2.5 | `controllers/chart_controller.py` | Unit: delegates to renderer | ✓ |
 | **Phase 3** |
 | 3.1 | `ui/main_window.py` (skeleton) | Manual: window opens | ✓ |
 | 3.2 | `ui/pid_list.py` | Manual: shows PIDs | ✓ |
@@ -901,7 +2020,12 @@ class MainWindow(QMainWindow):
 | 3.4 | `ui/header_panel.py` | Manual: shows info | ✓ |
 | 3.5 | `ui/axis_panel.py` | Manual: controls work | ✓ |
 | 3.6 | `ui/chart_cart.py` | Manual: cart works | ✓ |
-| 3.7 | Full integration | E2E: load → chart → export | ✓ |
+| 3.7 | `ui/log_console.py` integration | Manual: console shows logs | ✓ |
+| 3.8 | `ui/chart_popup.py` | Manual: popup opens, renders | ✓ |
+| 3.9 | `ui/data_table.py` | Manual: table shows data | ✓ |
+| 3.10 | `ui/pid_info.py` | Manual: PID info displays | ✓ |
+| 3.11 | `ui/help_window.py` | Manual: help opens, navigation works | ✓ |
+| 3.12 | Full integration | E2E: load → chart → export | ✓ |
 
 ---
 
@@ -912,6 +2036,7 @@ Snapshot-Decoder/
 ├── main.py                      # Entry point
 ├── controllers/
 │   ├── __init__.py
+│   ├── snapshot_loader.py       # QThread with progress signals
 │   ├── app_controller.py        # Main orchestration (QObject)
 │   └── chart_controller.py      # Chart rendering orchestration
 ├── domain/
@@ -942,7 +2067,7 @@ Snapshot-Decoder/
 │   ├── bar_renderer.py
 │   ├── bubble_renderer.py
 │   └── status_renderer.py
-├── ui/                          # PyQt6 UI
+├── ui/                          # PySide6 UI
 │   ├── __init__.py
 │   ├── main_window.py           # QMainWindow
 │   ├── header_panel.py          # File info + quick charts
@@ -950,11 +2075,19 @@ Snapshot-Decoder/
 │   ├── axis_panel.py            # Axis range controls
 │   ├── chart_canvas.py          # Matplotlib canvas
 │   ├── chart_cart.py            # Multi-chart collection
+│   ├── chart_popup.py           # Enlarged chart dialog
+│   ├── data_table.py            # DataFrame viewer
+│   ├── pid_info.py              # PID metadata window
+│   ├── help_window.py           # HTML help viewer
+│   ├── log_console.py           # Live log viewer with overwrite
 │   └── toolbar.py               # Navigation toolbar
 ├── file_io/
 │   ├── __init__.py
 │   ├── reader_excel.py          # UPGRADED - layout detection
 │   └── pdf_export.py            # Existing
+├── infrastructure/
+│   ├── __init__.py
+│   └── logging_config.py        # Rotating file logs, verbose toggle
 └── tests/
     ├── __init__.py
     ├── test_quick_chart_definitions.py
@@ -967,6 +2100,9 @@ Snapshot-Decoder/
     ├── test_data_cleaner.py
     ├── test_derived_values.py
     ├── test_snapshot_integration.py
+    ├── test_snapshot_loader.py
+    ├── test_logging_config.py
+    ├── test_log_console.py
     ├── test_line_renderer.py
     ├── test_status_renderer.py
     ├── test_bar_renderer.py
@@ -980,7 +2116,7 @@ Snapshot-Decoder/
 
 ```txt
 # requirements.txt additions for V2
-PyQt6>=6.4.0
+PySide6>=6.4.0
 matplotlib>=3.7.0  # Already present, verify Qt backend support
 ```
 
@@ -1006,5 +2142,10 @@ matplotlib>=3.7.0  # Already present, verify Qt backend support
 | Declarative quick charts | `QuickChartDef` dataclass, no UI refs |
 | Break up snapshot.py | `domain/snapshot/` package with 6 focused modules |
 | Handle both file layouts | `LayoutDetector` scans for known PIDs, transposes if needed |
+| Progress feedback | `SnapshotLoader` QThread + `QProgressDialog` |
+| Diagnostic logging | Rotating file logs with verbose toggle |
+| Live console panel | `LogConsole` with color-coded, overwritable lines |
+| Secondary windows | `ChartPopup`, `DataTableWindow`, `PidInfoWindow` share controller |
+| Chain of custody | Log file path, type, hours, PIDs for each load |
 | Easier maintenance | Smaller, focused files |
 | Build incrementally | Phase 1 → 2 → 3, test at each step |
