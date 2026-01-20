@@ -69,6 +69,10 @@
                         "page": "turbo.html"
                     },
                     {
+                        "title": "Boost Leak",
+                        "page": "boost_leak.html"
+                    },
+                    {
                         "title": "Fuel/Coolant Temperature",
                         "page": "fuel_coolant_temp.html"
                     },

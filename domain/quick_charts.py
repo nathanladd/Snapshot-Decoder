@@ -316,6 +316,19 @@ def V2_show_turbo_chart(main_app, snaptype: SnapType):
         "200"
     )
 
+def V2_show_boost_leak_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_BOOST_LEAK",
+        ["AirMod_mfGasIntkVlv_f", "AFS_dm"],
+        "0",
+        "400",
+        ["EGRVlv_rAct"],
+        "-5",
+        "200"
+    )
+
 def V2_show_misfire_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,

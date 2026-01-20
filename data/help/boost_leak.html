@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Boost Leak Chart</h1>
+    
+    <p>The Boost Leak Quick Chart compares modeled air flow against measured Mass Air Flow (MAF) 
+        to detect intake system leaks between the MAF sensor and the intake manifold. 
+        This chart also displays EGR valve position to help distinguish between normal air flow 
+        differences resulting from the displacement of fresh air in the cylinder by exhaust gas.</p>
+    
+    
+    
+    <h2>Understanding the PIDs</h2>
+    
+    <h3>AirMod_mfGasIntkVlv_f (Modeled Air Flow - Fresh + EGR)</h3>
+    <p>This is the ECU's <strong>calculated estimate</strong> of how much air should be entering the engine 
+        based on engine speed, throttle position, manifold pressure, and other operating conditions. 
+        The ECU uses this value for fuel injection calculations.</p>
+    
+    <h3>AFS_dm (Mass Air Flow Sensor)</h3>
+    <p>This is the <strong>actual measured</strong> air flow from the Mass Air Flow sensor, 
+        located between the air filter and the turbocharger inlet. 
+        The MAF sensor directly measures air entering the intake system.</p>
+    
+    <h3>EGRVlv_rAct (EGR Valve Position)</h3>
+    <p>The Exhaust Gas Recirculation valve position, shown as a percentage. 
+        When open, the EGR valve allows exhaust gas to flow into the intake manifold, 
+        which affects the relationship between MAF and modeled air flow.</p>
+    
+    <img src="../images/v2_egr_flow.png" alt="EGR Flow diagram" style="max-width: 1000px;">
+    
+    <h2>Why MAF and Modeled Air Flow Differ</h2>
+    
+    <p>Under normal operation, MAF and modeled air flow should track closely together. 
+        However, when the EGR valve opens, a predictable difference appears:</p>
+    
+    <h3>Normal EGR Operation</h3>
+    <p>When the EGR valve opens, exhaust gas flows into the intake manifold. This gas:</p>
+    <ul>
+        <li>Enters the intake manifold <strong>downstream</strong> of the MAF sensor</li>
+        <li>Takes up space in the cylinder that would otherwise be filled with fresh air</li>
+        <li>Causes the <strong>MAF air flow to drop below Modeled Air Flow</strong></li>
+    </ul>
+    
+    <div class="info">
+        <strong>Key Point:</strong> During normal EGR operation, 
+        <strong>MAF Air Flow &lt; Modeled Air Flow</strong> because the EGR gas displaces fresh air in the cylinder.
+    </div>
+    
+    <h2>Detecting Boost Leaks</h2>
+    
+    <p>A boost leak occurs when pressurized air escapes the intake system between the 
+        turbocharger compressor outlet and the intake manifold. Common leak points include:</p>
+    <ul>
+        <li>Charge air cooler (CAC) hose connections</li>
+        <li>Charge air cooler core damage</li>
+        <li>Intake manifold gaskets</li>
+        <li>Intake pipes, hoses, and fittings</li>
+    </ul>
+    
+    <h3>How a Boost Leak Appears on the Chart</h3>
+    <p>When a boost leak is present:</p>
+    <ol>
+        <li>The MAF sensor measures all the air entering the system at the turbo inlet</li>
+        <li>Some of that air <strong>leaks out</strong> before reaching the intake manifold</li>
+        <li>Less air actually enters the engine than the MAF measured</li>
+        <li>The ECU's modeled air flow reflects what's actually in the cylinder</li>
+        <li>Result: <strong>MAF reads higher than modeled air flow</strong></li>
+    </ol>
+    
+    <img src="../images/v2_boost_leak.png" alt="Boost Leak chart" style="max-width: 1000px;">
+
+    <div class="info">
+        <strong>What's Normal:</strong> When the EGR valve is closed, I have noticed many machines 
+        where MAF flow is slightly greater than modeled air flow. 
+        This is normal and expected.
+    </div>
+    
+    <h2>Reading the Chart</h2>
+    
+    <h3>Normal Conditions (No Leak)</h3>
+    <ul>
+        <li>With EGR closed: MAF ≈ Modeled Air Flow</li>
+        <li>With EGR open: Modeled Air Flow &gt; MAF (normal, expected)</li>
+    </ul>
+    
+    <h3>Boost Leak Conditions</h3>
+    <ul>
+        <li>Engine under load: Modeled Air Flow &lt; MAF (abnormal - indicates leak)</li>
+        <li>The gap increases with higher boost pressure</li>
+        <li>Leak is most visible under load when boost pressure is highest</li>
+    </ul>
+    
+    <h2>Diagnostic Procedure</h2>
+    <ol>
+        <li>Capture a snapshot during loaded operation (higher boost = more obvious leak)</li>
+        <li>Open the Boost Leak quick chart</li>
+        <li>Compare MAF to modeled air flow when engine boost should be high</li>
+        <li>If MAF is consistently higher than modeled, investigate for boost leaks</li>
+    </ol>
+    
+    <h2>Tips</h2>
+    <ul>
+        <li>Focus on high-load conditions where boost pressure amplifies any leaks</li>
+        <li>Small differences may be within normal sensor tolerance</li>
+        <li>Check charge air cooler hoses and connections first - most common leak points</li>
+    </ul>
+    
+
+</body>
+</html>
