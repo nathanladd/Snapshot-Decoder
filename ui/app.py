@@ -224,9 +224,9 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Configure the style for larger font
         style = ttk.Style()
-        style.configure("Book.TButton", font=("Helvetica", 22), padding=0, relief="flat", anchor="s")
+        style.configure("Book.TButton", font=("Helvetica", 10), padding=2, relief="raised", anchor="s")
         style.configure("Plus.TButton", font=("Helvetica", 16, "bold"))
-        
+
         # Configure left_border to use grid layout for better control over shrinking
         left_border.columnconfigure(0, weight=1)
         left_border.rowconfigure(2, weight=1)  # PID listbox row gets all the shrinking weight
@@ -234,8 +234,9 @@ class SnapshotDecoderApp(tk.Tk):
         # Search box label and button - row 0
         search_label_frame = ttk.Frame(left_border)
         search_label_frame.grid(row=0, column=0, sticky="ew", pady=(0,0), padx=(8,8))
-        ttk.Label(search_label_frame, text="Search PIDs", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
-        book_btn = ttk.Button(search_label_frame, text="📖", width=0, style="Book.TButton", command=self.show_pid_info)
+        ttk.Label(search_label_frame, text="Search PIDs:", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
+        book_btn = ttk.Button(search_label_frame, text="Search PID Descriptions", width=0, style="Book.TButton", command=self.show_pid_info)
+        # book_btn = ttk.Button(search_label_frame, text="📖", width=0, style="Book.TButton", command=self.show_pid_info)
         book_btn.pack(side=tk.RIGHT)
 
         # Chart Cart in right pane
@@ -250,14 +251,19 @@ class SnapshotDecoderApp(tk.Tk):
         search_frame = ttk.Frame(left_border)
         search_frame.grid(row=1, column=0, sticky="ew", pady=(0, 8), padx=(8,8))
         self.search_var = tk.StringVar()
-        search = ttk.Entry(search_frame, textvariable=self.search_var)
+        # Add label to the left of the entry
+        ttk.Label(search_frame, text="PID Name:", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 5))
+        # Replace ttk.Entry with tk.Entry
+        search = tk.Entry(search_frame, textvariable=self.search_var, font=("Segoe UI", 12))
+        # search = ttk.Entry(search_frame, textvariable=self.search_var, style="Search.TEntry")
+        # search = ttk.Entry(search_frame, textvariable=self.search_var)
         search.pack(side=tk.LEFT, fill=tk.X, expand=True)
         search.bind("<KeyRelease>", lambda e: self._filter_pids())
 
         # All PID Names listbox (multi-select) - row 2 (gets all shrinking priority)
         pid_list_frame = ttk.Frame(left_border)
-        pid_list_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 8))
-        self.pid_list = tk.Listbox(pid_list_frame, selectmode=tk.EXTENDED, exportselection=False, height=22, width=43)
+        pid_list_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 8), padx=(8,8))
+        self.pid_list = tk.Listbox(pid_list_frame, selectmode=tk.EXTENDED, exportselection=False, height=22, width=40)
         self.pid_list.pack(fill=tk.BOTH, expand=True)
 
         # Buttons to add to primary/secondary - row 3
