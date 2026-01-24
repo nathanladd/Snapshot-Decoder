@@ -251,6 +251,9 @@ def V1_show_fuel_coolant_temp_chart(main_app, snaptype: SnapType):
 # ----------------------------------V2 Charts----------------------------------
 # ----------------------------------------------------------------------------
 
+def V2_show_all_reference_charts(main_app, snaptype: SnapType):
+    pass
+
 def V2_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
@@ -338,7 +341,7 @@ def V2_show_misfire_chart(main_app, snaptype: SnapType):
         "-20","150"
     )
 
-def V2_show_throttle_chart(main_app, snaptype: SnapType):
+def V2_show_intake_throttle_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
         snaptype,
@@ -348,18 +351,26 @@ def V2_show_throttle_chart(main_app, snaptype: SnapType):
         "140"
     )
 
-def V2_show_load_chart(main_app, snaptype: SnapType):
+def V2_show_engine_torque_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
         snaptype,
-        "V2_ENGINE_LOAD",
+        "V2_ENGINE_TORQUE",
         ["CoETS_rTrq"],
         "-100","110",
         ["PthSet_TrqInrSet"],
-        "0","800"
+        "-10","800"
     )
 
-def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
+def V2_show_crank_cam_sync_chart(main_app, snaptype: SnapType):
+    apply_quick_chart_setup(
+        main_app,
+        snaptype,
+        "V2_CRANK_CAM_SYNC",
+        ["Epm_stSync"],
+    )
+
+def V2_show_engine_derates(main_app, snaptype: SnapType):
     col_name = "CoETS_stCurrLimActive"
     
     # Check if data exists
