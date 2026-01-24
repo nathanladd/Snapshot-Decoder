@@ -453,9 +453,12 @@ class SnapshotDecoderApp(tk.Tk):
             "V2_BOOST_LEAK": quick_charts.V2_show_boost_leak_chart,
             "V2_TURBO": quick_charts.V2_show_turbo_chart,
             "V2_MISFIRE": quick_charts.V2_show_misfire_chart,
-            "V2_THROTTLE_VALVE": quick_charts.V2_show_throttle_chart,
-            "V2_ENGINE_LOAD": quick_charts.V2_show_load_chart,
-            "V2_ENGINE_TORQUE_LIMITS": quick_charts.V2_show_engine_torque_limits
+            "V2_INTAKE_THROTTLE": quick_charts.V2_show_intake_throttle_chart,
+            "V2_ENGINE_TORQUE": quick_charts.V2_show_engine_torque_chart,
+            "V2_ENGINE_DERATES": quick_charts.V2_show_engine_derates,
+            "V2_CRANK_CAM_SYNC": quick_charts.V2_show_crank_cam_sync_chart,
+            "V2_ALL_REFERENCE": quick_charts.V2_show_all_reference_charts
+
 
 
             # add more as needed
