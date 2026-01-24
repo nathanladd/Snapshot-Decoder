@@ -97,10 +97,15 @@ class Snapshot:
         # If the snapshot is ECU_V2, find BattU_u and convert Millivolts to Volts
         # Update the PID unit to Volts
         if self.snapshot_type == SnapType.ECU_V2:
+            
             if "BattU_u" in self.snapshot.columns:
                 self.snapshot["BattU_u"] = pd.to_numeric(self.snapshot["BattU_u"], errors="coerce")
                 self.snapshot["BattU_u"] = self.snapshot["BattU_u"] / 1000
                 self._update_pid_unit("BattU_u", "Volts")
+
+            # Some V2 snapshots have incorrect PID names for pre-injection parameters
+            # They may have an underscore infront of the [0] 
+            self._fix_preinjection_pid_names()
         
     def _find_engine_hours(self) -> float:
         """
@@ -530,6 +535,30 @@ class Snapshot:
                 
         return snapshot
 
+    def _fix_preinjection_pid_names(self):
+        """
+        Fix pre-injection quantity PID names by removing the underscore before [0].
+        Renames columns like 'InjCrv_qPiI1Des_[0]' to 'InjCrv_qPiI1Des[0]'.
+        Also updates pid_info keys to match.
+        """
+        pids_to_fix = [
+            "InjCrv_qPiI1Des_[0]",
+            "InjCrv_qPiI2Des_[0]",
+            "InjCrv_qPiI3Des_[0]"
+        ]
+        
+        rename_map = {}
+        for old_name in pids_to_fix:
+            if old_name in self.snapshot.columns:
+                new_name = old_name.replace("_[0]", "[0]")
+                rename_map[old_name] = new_name
+        
+        if rename_map:
+            self.snapshot.rename(columns=rename_map, inplace=True)
+            # Also update pid_info keys
+            for old_name, new_name in rename_map.items():
+                if old_name in self.pid_info:
+                    self.pid_info[new_name] = self.pid_info.pop(old_name)
 
 
 # Module-level helper functions

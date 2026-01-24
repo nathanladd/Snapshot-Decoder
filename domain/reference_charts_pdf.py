@@ -7,6 +7,7 @@ Pages 1-4 contain 3 charts each, Page 5 contains 1 chart (same size as others).
 
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
+from tkinter import filedialog
 from ui.chart_renderer import ChartRenderer
 from domain.chart_config import ChartConfig, AxisConfig
 from domain.snaptypes import SnapType
@@ -24,161 +25,113 @@ def V2_show_all_reference_charts(main_app, snaptype: SnapType):
     # Define all chart configurations (13 charts total)
     # Each page definition: (page_title, list of chart configs)
     pages = [
-        # Page 1: Electrical System
+        # Page 1: Operating Conditions
         {
-            "title": "Electrical System Reference",
+            "title": "Operating Conditions",
             "charts": [
                 {
-                    "title": "Battery Test",
-                    "primary_pids": ["BattU_u"],
-                    "primary_min": 0,
-                    "primary_max": 18,
-                    "secondary_pids": ["Epm_nEng"],
-                    "secondary_min": -50,
-                    "secondary_max": 3000
+                    "title": "Engine Speed",
+                    "primary_pids": ["Epm_nEng"]
                 },
                 {
-                    "title": "IMV Current",
-                    "primary_pids": ["IMV_I", "IMV_IDem"],
-                    "primary_min": 0,
-                    "primary_max": 1050,
-                    "secondary_pids": [],
-                    "secondary_min": None,
-                    "secondary_max": None
+                    "title": "TPS",
+                    "primary_pids": ["APP_r"],
                 },
                 {
-                    "title": "Starter System",
-                    "primary_pids": ["BattU_u"],
-                    "primary_min": 0,
-                    "primary_max": 20,
-                    "secondary_pids": ["Epm_nEng"],
-                    "secondary_min": -50,
-                    "secondary_max": 500
+                    "title": "Torque",
+                    "primary_pids": ["PthSet_TrqInrSet"],
                 }
             ]
         },
         
-        # Page 2: Fuel System
+        #Page 2: Temperatures
         {
-            "title": "Fuel System Reference",
+            "title": "Temperatures",
+            "charts": [
+                {
+                    "title": "Fuel and Coolant",
+                    "primary_pids": ["FuelT_t", "CEngDsT_t"],
+                    "primary_min": -20,
+                    "primary_max": 250,
+                },
+                {
+                    "title": "Air Temperature",
+                    "primary_pids": ["Air_tAFS"],
+                    "primary_min": -20,
+                    "primary_max": 110,
+                },
+                {
+                    "title": "Oil Temperature",
+                    "primary_pids": ["Oil_tSwmp"],
+                    "primary_min": -20,
+                    "primary_max": 250,
+                }
+            ]
+        },
+        
+        # Page 3: Fuel System
+        {
+            "title": "Fuel System",
             "charts": [
                 {
                     "title": "Rail Pressure",
-                    "primary_pids": ["RailP_pFlt", "Rail_pSetPoint"],
-                    "primary_min": -15,
-                    "primary_max": 30000,
-                    "secondary_pids": [],
-                    "secondary_min": None,
-                    "secondary_max": None
+                    "primary_pids": ["RailP_pFlt","Rail_pSetPoint"],
                 },
                 {
-                    "title": "Rail Gap",
-                    "primary_pids": ["Rail_pDvt"],
-                    "primary_min": -50,
-                    "primary_max": 4000,
-                    "secondary_pids": [],
-                    "secondary_min": None,
-                    "secondary_max": None
+                    "title": "IMV Current",
+                    "primary_pids": ["MeUn_iActFlt","MeUn_iSet"],
                 },
                 {
-                    "title": "Fuel Delivery",
-                    "primary_pids": ["InjCrv_qPiI1Des"],
-                    "primary_min": -5,
-                    "primary_max": 100,
-                    "secondary_pids": ["IMV_I"],
-                    "secondary_min": 0,
-                    "secondary_max": 1050
+                    "title": "Fuel Quantity",
+                    # The pre-injection PID names get corrected if they have an underscore in front of the [0]
+                    "primary_pids": ["InjCrv_qMI1Des","InjCrv_qPiI1Des[0]","InjCrv_qPiI2Des[0]","InjCrv_qPiI3Des[0]"],
                 }
             ]
         },
         
-        # Page 3: Temperature System
+        # Page 4: Air Circuit
         {
-            "title": "Temperature System Reference",
+            "title": "Air Circuit",
             "charts": [
                 {
-                    "title": "Engine Coolant & Fuel Temp",
-                    "primary_pids": ["CEngDsT_t", "FuelT_t"],
-                    "primary_min": -40,
-                    "primary_max": 290,
-                    "secondary_pids": [],
-                    "secondary_min": None,
-                    "secondary_max": None
+                    "title": "MAF",
+                    "primary_pids": ["AFS_dm", "AirMod_mfGasIntkVlv_f"],
                 },
                 {
-                    "title": "Exhaust Gas Temperature",
-                    "primary_pids": ["ExhMnfT_t"],
-                    "primary_min": 0,
-                    "primary_max": 800,
-                    "secondary_pids": [],
-                    "secondary_min": None,
-                    "secondary_max": None
+                    "title": "MAP",
+                    "primary_pids": ["Air_pIntkVUs", "EnvP_p"],
                 },
                 {
-                    "title": "Intake Air Temperature",
-                    "primary_pids": ["AirT_t"],
-                    "primary_min": -40,
-                    "primary_max": 150,
-                    "secondary_pids": ["Epm_nEng"],
-                    "secondary_min": -50,
-                    "secondary_max": 3000
+                    "title": "EGR Position",
+                    "primary_pids": ["EGRVlv_rAct", "EGRVlv_r"],
+                    "primary_min": -10,
+                    "primary_max": 110,
                 }
             ]
         },
         
-        # Page 4: Air & Boost System
+        # Page 5: Oil Pressure (single chart)
         {
-            "title": "Air & Boost System Reference",
+            "title": "Oil Pressure",
             "charts": [
                 {
-                    "title": "Manifold Pressures",
-                    "primary_pids": ["Boost_p", "BoostPre_pSet"],
-                    "primary_min": -20,
-                    "primary_max": 150,
-                    "secondary_pids": ["Epm_nEng"],
-                    "secondary_min": -50,
-                    "secondary_max": 6250
-                },
-                {
-                    "title": "Turbo Speed",
-                    "primary_pids": ["TrbCh_nTrb"],
-                    "primary_min": 0,
-                    "primary_max": 300000,
-                    "secondary_pids": ["Epm_nEng"],
-                    "secondary_min": -50,
-                    "secondary_max": 6250
-                },
-                {
-                    "title": "Intake Throttle",
-                    "primary_pids": ["Thr_rAct", "Thr_rDes"],
-                    "primary_min": 0,
-                    "primary_max": 140,
-                    "secondary_pids": [],
-                    "secondary_min": None,
-                    "secondary_max": None
-                }
-            ]
-        },
-        
-        # Page 5: Engine Performance (single chart)
-        {
-            "title": "Engine Performance Reference",
-            "charts": [
-                {
-                    "title": "Engine Speed & Torque",
-                    "primary_pids": ["Epm_nEng"],
-                    "primary_min": -50,
-                    "primary_max": 6250,
-                    "secondary_pids": ["CoETS_rTrq"],
-                    "secondary_min": -100,
-                    "secondary_max": 110
+                    "title": "Oil Pressure",
+                    "primary_pids": ["Oil_pSwmp"],
                 }
             ]
         }
     ]
     
-    # Create PDF filename
-    pdf_filename = os.path.join(os.path.expanduser("~"), "Desktop", "V2_Reference_Charts.pdf")
+    # Prompt user for save location
+    pdf_filename = filedialog.asksaveasfilename(
+        defaultextension=".pdf",
+        filetypes=[("PDF files", "*.pdf")],
+        initialfile="V2_Reference_Charts.pdf",
+        title="Save Reference Charts PDF"
+    )
+    
+    if not pdf_filename:
+        return  # User cancelled
     
     with PdfPages(pdf_filename) as pdf:
         for page_num, page in enumerate(pages, start=1):
@@ -192,20 +145,32 @@ def V2_show_all_reference_charts(main_app, snaptype: SnapType):
             # Add page title at the top
             fig.suptitle(page_title, fontsize=16, fontweight='bold', y=0.96)
             
-            # Create subplots based on number of charts
-            # For 3 charts: 1 row, 3 columns
-            # For 1 chart: 1 row, 3 columns but only use the middle one (same size)
+            # Create all subplots at once for consistent vertical layout
+            # Always create 3 rows to keep chart sizes consistent
+            axes_col = fig.subplots(3, 1)
+            
+            # For pages with fewer than 3 charts, hide unused axes
+            if num_charts == 1:
+                axes_col[0].set_visible(False)
+                axes_col[2].set_visible(False)
+                axes_to_use = [axes_col[1]]  # Use middle position
+            else:
+                axes_to_use = list(axes_col)
+            
             for chart_idx, chart_config in enumerate(charts):
-                if num_charts == 3:
-                    # 3 charts in a row
-                    ax_left = fig.add_subplot(1, 3, chart_idx + 1)
-                else:
-                    # 1 chart centered (use middle position of 3-column layout)
-                    ax_left = fig.add_subplot(1, 3, 2)
+                ax_left = axes_to_use[chart_idx]
+                
+                # Extract config values with defaults for optional fields
+                primary_pids = chart_config.get("primary_pids", [])
+                primary_min = chart_config.get("primary_min", None)
+                primary_max = chart_config.get("primary_max", None)
+                secondary_pids = chart_config.get("secondary_pids", [])
+                secondary_min = chart_config.get("secondary_min", None)
+                secondary_max = chart_config.get("secondary_max", None)
                 
                 # Create secondary axis if needed
                 ax_right = None
-                if chart_config["secondary_pids"]:
+                if secondary_pids:
                     ax_right = ax_left.twinx()
                 
                 # Build ChartConfig
@@ -213,16 +178,16 @@ def V2_show_all_reference_charts(main_app, snaptype: SnapType):
                     data=main_app.engine.snapshot,
                     chart_type="line",
                     primary_axis=AxisConfig(
-                        series=chart_config["primary_pids"],
-                        min_value=chart_config["primary_min"],
-                        max_value=chart_config["primary_max"],
-                        auto_scale=False
+                        series=primary_pids,
+                        min_value=primary_min,
+                        max_value=primary_max,
+                        auto_scale=(primary_min is None or primary_max is None)
                     ),
                     secondary_axis=AxisConfig(
-                        series=chart_config["secondary_pids"],
-                        min_value=chart_config["secondary_min"],
-                        max_value=chart_config["secondary_max"],
-                        auto_scale=False if chart_config["secondary_min"] is not None else True
+                        series=secondary_pids,
+                        min_value=secondary_min,
+                        max_value=secondary_max,
+                        auto_scale=(secondary_min is None or secondary_max is None)
                     ),
                     title=chart_config["title"],
                     pid_info=main_app.engine.pid_info,
@@ -236,8 +201,19 @@ def V2_show_all_reference_charts(main_app, snaptype: SnapType):
                 renderer._render_line_chart(ax_left, ax_right, config.data)
                 renderer._apply_formatting(ax_left, ax_right)
                 
-                # Set chart title
-                ax_left.set_title(chart_config["title"], fontsize=10, fontweight='bold', pad=8)
+                # Move chart title to left side (y-axis label position) for more vertical space
+                # Get units from pid_info for the first primary PID
+                chart_title = chart_config["title"]
+                if primary_pids and main_app.engine.pid_info:
+                    first_pid = primary_pids[0]
+                    pid_info = main_app.engine.pid_info.get(first_pid, {})
+                    unit = pid_info.get("Unit", "")
+                    if unit:
+                        chart_title = f"{chart_title} ({unit})"
+                
+                ax_left.set_ylabel(chart_title, fontsize=8, fontweight='bold')
+                ax_left.set_title("")  # Remove top title
+                ax_left.set_xlabel("")  # Remove x-axis label for more vertical space
             
             # Add chain of custody metadata at the top
             metadata_parts = []

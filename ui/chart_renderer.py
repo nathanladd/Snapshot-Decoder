@@ -605,9 +605,9 @@ class ChartRenderer:
         # Legends
         if self.config.show_legend:
             if self.config.primary_axis.series:
-                ax_left.legend(loc=self.config.primary_legend_loc)
+                ax_left.legend(loc=self.config.primary_legend_loc, fontsize=7)
             if ax_right and self.config.secondary_axis.series:
-                ax_right.legend(loc=self.config.secondary_legend_loc)
+                ax_right.legend(loc=self.config.secondary_legend_loc, fontsize=7)
         
         # Apply axis limits
         if not self.config.primary_axis.auto_scale:
