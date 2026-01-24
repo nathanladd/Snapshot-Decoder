@@ -20,6 +20,7 @@ from matplotlib.widgets import Slider
 import mplcursors
 from domain.snaptypes import SnapType
 from domain import quick_charts
+from domain.reference_charts_pdf import V2_show_all_reference_charts
 from domain.chart_config import ChartConfig, AxisConfig
 from ui.chart_renderer import ChartRenderer
 from domain.snapshot import Snapshot
@@ -457,7 +458,7 @@ class SnapshotDecoderApp(tk.Tk):
             "V2_ENGINE_TORQUE": quick_charts.V2_show_engine_torque_chart,
             "V2_ENGINE_DERATES": quick_charts.V2_show_engine_derates,
             "V2_CRANK_CAM_SYNC": quick_charts.V2_show_crank_cam_sync_chart,
-            "V2_ALL_REFERENCE": quick_charts.V2_show_all_reference_charts
+            "V2_ALL_REFERENCE": V2_show_all_reference_charts
 
 
 

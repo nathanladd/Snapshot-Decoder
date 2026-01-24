@@ -251,8 +251,7 @@ def V1_show_fuel_coolant_temp_chart(main_app, snaptype: SnapType):
 # ----------------------------------V2 Charts----------------------------------
 # ----------------------------------------------------------------------------
 
-def V2_show_all_reference_charts(main_app, snaptype: SnapType):
-    pass
+# V2_show_all_reference_charts is in domain.reference_charts_pdf
 
 def V2_show_battery_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
