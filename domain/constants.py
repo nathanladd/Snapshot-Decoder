@@ -43,27 +43,27 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
 # Button name, COMMAND NAME, tooltip
     SnapType.ECU_V2: [
         ("All Reference Charts", "V2_ALL_REFERENCE", 
-        "All Reference charts"),
+        "Save a pdf of all reference charts"),
         ("Battery Test", "V2_BATTERY_TEST", 
-        "Battery Voltage vs RPM"),
+        "Battery voltage vs RPM"),
         ("Rail Pressure", "V2_RAIL_PRESSURE", 
-        "Demand vs Actual Rail Pressure"),
+        "Demand vs actual rail pressure"),
         ("Rail Gap", "V2_RAIL_GAP", 
-        "Rail Pressure Gap"),
+        "Rail pressure gap"),
         ("IMV Current", "V2_IMV_CURRENT", 
-        "IMV Current Actual vs Demand"),
+        "IMV current actual vs demand"),
         ("Boost Leak", "V2_BOOST_LEAK", 
-        "Boost Leak"),
+        "MAF vs speed density"),
         ("Turbo", "V2_TURBO", 
-        "Manifold Pressure, Atmospheric Pressure, and Fuel Quantity"),
+        "Manifold pressure, atmospheric pressure, and fuel quantity"),
         ("Misfire", "V2_MISFIRE", 
-        "Misfire Count per Cylinder"),
+        "Misfire count per cylinder"),
         ("Intake Throttle", "V2_INTAKE_THROTTLE",
-        "Intake Throttle Actual vs Desired"),
+        "Intake throttle actual vs desired"),
         ("Engine Torque", "V2_ENGINE_TORQUE",
-        "Engine Torque"),
+        "Engine torque"),
         ("Engine Derates", "V2_ENGINE_DERATES",
-        "Engine Derates"),
+        "All engine derates status"),
         ("Fuel/Coolant Temp", "V2_FUEL_COOLANT_TEMP", 
         "Fuel/Coolant Temperature"),
         ("Crank/Cam Sync", "V2_CRANK_CAM_SYNC", 
@@ -74,10 +74,10 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         
     ],
     SnapType.EUD_V1: [
-        ("Speed/Load", "V1EUD_SPEED_V_LOAD", "Speed vs Load"),
-        ("Speed Band", "V1EUD_SPEED_BAND", "Speed Band"),
-        ("Elevation", "V1EUD_ELEVATION", "Elevation"),
-        ("EGT", "V1EUD_EGT", "Exhaust Gas Temperature")
+        ("Speed/Load", "V1EUD_SPEED_V_LOAD", "Speed and load bubble chart"),
+        ("Speed Band", "V1EUD_SPEED_BAND", "Time spent in each speed band"),
+        ("Elevation", "V1EUD_ELEVATION", "Time spent at each elevation"),
+        ("EGT", "V1EUD_EGT", "Time spent at each EGT")
         
     ],
     SnapType.EUD_V2: [
