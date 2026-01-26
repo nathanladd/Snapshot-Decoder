@@ -152,7 +152,13 @@ class HelpWindow(tk.Toplevel):
             item = selection[0]
             values = self.toc_tree.item(item, "values")
             if values and values[0]:
-                self._load_page(values[0])
+                page_or_url = values[0]
+                # Check if it's an external URL
+                if page_or_url.startswith(('http://', 'https://')):
+                    webbrowser.open(page_or_url)
+                else:
+                    # Handle as local help file
+                    self._load_page(page_or_url)
     
     def _load_page(self, page_name):
         """
