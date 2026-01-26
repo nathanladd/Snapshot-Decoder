@@ -9,6 +9,7 @@ import json
 import os
 from typing import Dict, Any
 from utils import resource_path
+from domain.constants import DEFAULT_CHART_SETTINGS
 
 
 class ChartSettings:
@@ -19,17 +20,9 @@ class ChartSettings:
     persistence to JSON file for user preferences.
     """
     
-    # Default settings
-    DEFAULT_SETTINGS = {
-        "legend_font_size": 9,
-        "line_width": 1.5,
-        "grid_linewidth": 0.6,
-        "marker_size": 6.0
-    }
-    
     def __init__(self):
         self.settings_file = resource_path("chart_settings.json")
-        self._settings = self.DEFAULT_SETTINGS.copy()
+        self._settings = DEFAULT_CHART_SETTINGS.copy()
         self.load_settings()
     
     def load_settings(self):
@@ -70,12 +63,12 @@ class ChartSettings:
     
     def reset_to_defaults(self):
         """Reset all settings to default values."""
-        self._settings = self.DEFAULT_SETTINGS.copy()
+        self._settings = DEFAULT_CHART_SETTINGS.copy()
     
     @property
     def legend_font_size(self) -> int:
         """Get the legend font size."""
-        return self.get_setting("legend_font_size", self.DEFAULT_SETTINGS["legend_font_size"])
+        return self.get_setting("legend_font_size", DEFAULT_CHART_SETTINGS["legend_font_size"])
     
     @legend_font_size.setter
     def legend_font_size(self, value: int):
@@ -85,7 +78,7 @@ class ChartSettings:
     @property
     def line_width(self) -> float:
         """Get the line width for charts."""
-        return self.get_setting("line_width", self.DEFAULT_SETTINGS["line_width"])
+        return self.get_setting("line_width", DEFAULT_CHART_SETTINGS["line_width"])
     
     @line_width.setter
     def line_width(self, value: float):
@@ -95,7 +88,7 @@ class ChartSettings:
     @property
     def grid_linewidth(self) -> float:
         """Get the grid line width."""
-        return self.get_setting("grid_linewidth", self.DEFAULT_SETTINGS["grid_linewidth"])
+        return self.get_setting("grid_linewidth", DEFAULT_CHART_SETTINGS["grid_linewidth"])
     
     @grid_linewidth.setter
     def grid_linewidth(self, value: float):
@@ -105,7 +98,7 @@ class ChartSettings:
     @property
     def marker_size(self) -> float:
         """Get the marker size."""
-        return self.get_setting("marker_size", self.DEFAULT_SETTINGS["marker_size"])
+        return self.get_setting("marker_size", DEFAULT_CHART_SETTINGS["marker_size"])
     
     @marker_size.setter
     def marker_size(self, value: float):

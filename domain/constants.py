@@ -7,6 +7,15 @@ APP_TITLE = "Snapshot Decoder"
 UPDATE_URL = "https://nathanladd.github.io/Snapshot-Decoder/"
 
 
+# Default chart settings
+DEFAULT_CHART_SETTINGS = {
+    "legend_font_size": 9,
+    "line_width": 1.5,
+    "grid_linewidth": 0.6,
+    "marker_size": 6.0
+}
+
+
 # Buttons for each V1 snapshot type
 # Button name, COMMAND NAME, tooltip
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
