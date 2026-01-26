@@ -35,6 +35,8 @@ from ui.chart_cart import ChartCart
 
 from ui.chart_popup import ChartPopupWindow
 from ui.help_window import HelpWindow
+from ui.options_window import OptionsWindow
+from domain.chart_settings import chart_settings
 from utils import resource_path
 
 class SnapshotDecoderApp(tk.Tk):
@@ -174,6 +176,8 @@ class SnapshotDecoderApp(tk.Tk):
         chart_menu.add_separator()
         chart_menu.add_checkbutton(label="Show Cursor", variable=self.enable_slider)
         chart_menu.add_checkbutton(label="Show Values", variable=self.enable_cursor)
+        chart_menu.add_separator()
+        chart_menu.add_command(label="Chart Settings...", command=self.show_options)
         menubar.add_cascade(label="Chart", menu=chart_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -1020,6 +1024,19 @@ class SnapshotDecoderApp(tk.Tk):
         help_win = HelpWindow(self)
         help_win.focus_set()
     
+    def show_options(self):
+        """Open the Options window for configuring chart settings."""
+        options_win = OptionsWindow(self, on_settings_changed=self._on_chart_settings_changed)
+        options_win.focus_set()
+    
+    def _on_chart_settings_changed(self):
+        """Handle chart settings changes - redraw current chart if active."""
+        # If there's an active chart, redraw it to apply new settings
+        if self.engine and (self.primary_series or self.secondary_series):
+            try:
+                self.plot_combo_chart()
+            except Exception as e:
+                print(f"Error redrawing chart with new settings: {e}")
         
     def open_update_url(self):
         """Open the Help window to the updating page."""

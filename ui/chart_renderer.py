@@ -16,6 +16,7 @@ from matplotlib.ticker import FuncFormatter
 from matplotlib import dates as mdates
 
 from domain.chart_config import ChartConfig, ChartType
+from domain.chart_settings import chart_settings
 
 
 class ChartRenderer:
@@ -296,6 +297,9 @@ class ChartRenderer:
         df = plot_data
         x_key = self.config.get_x_column()
         
+        # Get global line width setting
+        global_line_width = chart_settings.line_width
+        
         # Plot primary series
         if self.config.primary_axis.series:
             for series_name in self.config.primary_axis.series:
@@ -303,13 +307,16 @@ class ChartRenderer:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=False)
                     
+                    # Use global line width if not overridden by series style
+                    line_width = style.linewidth if hasattr(style, 'linewidth') and style.linewidth != 2.0 else global_line_width
+                    
                     legend_label = self._get_legend_label(series_name)
                     if x_key:
                         ax_left.plot(
                             df[x_key], y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=line_width,
                             marker=style.marker,
                             markersize=style.markersize,
                             color=style.color,
@@ -320,7 +327,7 @@ class ChartRenderer:
                             y.index, y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=line_width,
                             marker=style.marker,
                             markersize=style.markersize,
                             color=style.color,
@@ -334,13 +341,16 @@ class ChartRenderer:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=True)
                     
+                    # Use global line width if not overridden by series style
+                    line_width = style.linewidth if hasattr(style, 'linewidth') and style.linewidth != 2.0 else global_line_width
+                    
                     legend_label = self._get_legend_label(series_name)
                     if x_key:
                         ax_right.plot(
                             df[x_key], y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=line_width,
                             marker=style.marker,
                             markersize=style.markersize,
                             color=style.color,
@@ -351,7 +361,7 @@ class ChartRenderer:
                             y.index, y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=line_width,
                             marker=style.marker,
                             markersize=style.markersize,
                             color=style.color,
@@ -599,15 +609,16 @@ class ChartRenderer:
             ax_left.grid(
                 True, 
                 linestyle=self.config.grid_style, 
-                linewidth=self.config.grid_linewidth
+                linewidth=chart_settings.grid_linewidth
             )
         
         # Legends
         if self.config.show_legend:
+            legend_font_size = chart_settings.legend_font_size
             if self.config.primary_axis.series:
-                ax_left.legend(loc=self.config.primary_legend_loc, fontsize=7)
+                ax_left.legend(loc=self.config.primary_legend_loc, fontsize=legend_font_size)
             if ax_right and self.config.secondary_axis.series:
-                ax_right.legend(loc=self.config.secondary_legend_loc, fontsize=7)
+                ax_right.legend(loc=self.config.secondary_legend_loc, fontsize=legend_font_size)
         
         # Apply axis limits
         if not self.config.primary_axis.auto_scale:
