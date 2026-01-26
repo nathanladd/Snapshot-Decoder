@@ -353,8 +353,7 @@ class SnapshotDecoderApp(tk.Tk):
             self.canvas, self.right, pack_toolbar=False,
             cursor_var=self.enable_slider, values_var=self.enable_cursor,
             add_to_cart_callback=self.add_current_to_cart,
-            pop_out_callback=self.pop_out_chart,
-            help_callback=self.show_chart_help
+            pop_out_callback=self.pop_out_chart
         )
         self.toolbar.update()
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
@@ -1021,26 +1020,7 @@ class SnapshotDecoderApp(tk.Tk):
         help_win = HelpWindow(self)
         help_win.focus_set()
     
-    def show_chart_help(self):
-        """Show help for the current chart if it's a quick chart."""
-        if not self.working_config or not self.working_config.quick_chart_action_id:
-            # No quick chart action ID, show welcome page
-            from ui.help_window import HelpWindow
-            help_win = HelpWindow(self, initial_page="index.html")
-            help_win.focus_set()
-            return
         
-        from domain.constants import QUICK_CHART_HELP_FILES
-        from ui.help_window import HelpWindow
-        
-        help_file = QUICK_CHART_HELP_FILES.get(self.working_config.quick_chart_action_id)
-        if help_file:
-            help_win = HelpWindow(self, initial_page=help_file)
-        else:
-            # No specific help file found, show welcome page
-            help_win = HelpWindow(self, initial_page="index.html")
-        help_win.focus_set()
-    
     def open_update_url(self):
         """Open the Help window to the updating page."""
         help_win = HelpWindow(self, initial_page="updating.html")

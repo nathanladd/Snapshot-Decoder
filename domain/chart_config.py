@@ -27,7 +27,7 @@ class AxisConfig:
 class SeriesStyle:
     """Style configuration for a data series."""
     linestyle: str = "-"
-    linewidth: float = 1.0
+    linewidth: float = 2.0
     marker: str = ""
     markersize: float = 6.0
     color: Optional[str] = None
