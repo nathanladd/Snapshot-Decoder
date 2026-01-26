@@ -21,8 +21,8 @@ class ChartSettings:
     
     # Default settings
     DEFAULT_SETTINGS = {
-        "legend_font_size": 7,
-        "line_width": 2.0,
+        "legend_font_size": 9,
+        "line_width": 1.5,
         "grid_linewidth": 0.6,
         "marker_size": 6.0
     }
