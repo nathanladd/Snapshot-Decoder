@@ -287,14 +287,14 @@ def V2_show_rail_pressure_chart(main_app, snaptype: SnapType):
         "-15", "30000"  
     )
 
-def V2_show_rail_gap_chart(main_app, snaptype: SnapType):
-    apply_quick_chart_setup(
-        main_app,
-        snaptype,
-        "V2_RAIL_GAP",
-        ["Rail_pDvt"],
-        "-50","4000"
-    )
+# def V2_show_rail_gap_chart(main_app, snaptype: SnapType):
+#     apply_quick_chart_setup(
+#         main_app,
+#         snaptype,
+#         "V2_RAIL_GAP",
+#         ["Rail_pDvt"],
+#         "-50","4000"
+#     )
 
 def V2_show_imv_current_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
@@ -349,15 +349,15 @@ def V2_show_intake_throttle_chart(main_app, snaptype: SnapType):
         "140"
     )
 
-def V2_show_engine_torque_chart(main_app, snaptype: SnapType):
+def V2_show_brake_torque_chart(main_app, snaptype: SnapType):
     apply_quick_chart_setup(
         main_app,
         snaptype,
-        "V2_ENGINE_TORQUE",
-        ["CoETS_rTrq"],
-        "-100","110",
+        "V2_BRAKE_TORQUE",
         ["PthSet_TrqInrSet"],
-        "-10","800"
+        "0","300",
+        ["Oil_tSwmp"],
+        "0","240"
     )
 
 def V2_show_crank_cam_sync_chart(main_app, snaptype: SnapType):

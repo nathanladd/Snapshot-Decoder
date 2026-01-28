@@ -51,14 +51,14 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
 # Buttons for each V2 snapshot type
 # Button name, COMMAND NAME, tooltip
     SnapType.ECU_V2: [
-        ("All Reference Charts", "V2_ALL_REFERENCE", 
+        ("Reference Charts PDF", "V2_ALL_REFERENCE", 
         "Save a pdf of all reference charts"),
         ("Battery Test", "V2_BATTERY_TEST", 
         "Battery voltage vs RPM"),
         ("Rail Pressure", "V2_RAIL_PRESSURE", 
         "Demand vs actual rail pressure"),
-        ("Rail Gap", "V2_RAIL_GAP", 
-        "Rail pressure gap"),
+        # ("Rail Gap", "V2_RAIL_GAP", 
+        # "Rail pressure gap"),
         ("IMV Current", "V2_IMV_CURRENT", 
         "IMV current actual vs demand"),
         ("Boost Leak", "V2_BOOST_LEAK", 
@@ -69,8 +69,8 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Misfire count per cylinder"),
         ("Intake Throttle", "V2_INTAKE_THROTTLE",
         "Intake throttle actual vs desired"),
-        ("Engine Torque", "V2_ENGINE_TORQUE",
-        "Engine torque"),
+        ("Brake Torque", "V2_BRAKE_TORQUE",
+        "Brake Torque"),
         ("Engine Derates", "V2_ENGINE_DERATES",
         "All engine derates status"),
         ("Fuel/Coolant Temp", "V2_FUEL_COOLANT_TEMP", 

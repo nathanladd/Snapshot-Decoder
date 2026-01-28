@@ -70,6 +70,11 @@
                         "https://berrycompanies.sharepoint.com/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages/Rail-Pressure-Chart.aspx?csf=1&web=1&e=hMPehs"
                     },
                     {
+                        "title": "Brake Torque",
+                        "page": 
+                        "https://berrycompanies.sharepoint.com/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages/Engine-Torque.aspx?csf=1&web=1&e=IBXlgD"
+                    },
+                    {
                         "title": "Turbo",
                         "page": "turbo.html"
                     },
