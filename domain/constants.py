@@ -195,39 +195,3 @@ ENGINE_HOURS_COLUMNS = {
     # Add more snapshot types and their column names as needed
     # SnapType.ECU_V2: "column_name_for_v2",
 }
-
-# Map quick chart command IDs to their corresponding help HTML files
-QUICK_CHART_HELP_FILES = {
-    # V1 Charts
-    "V1_BATTERY_TEST": "battery_voltage.html",
-    "V1_RAIL_PRESSURE": "rail_pressure.html", 
-    #"V1_RAIL_GAP": "rail_pressure.html", 
-    #"V1_IMV_CURRENT": "rail_pressure.html",
-    "V1_TURBO": "turbo.html",
-    #"V1_EGR_FLOW": "turbo.html", 
-    #"V1_EGR_POSITION": "turbo.html", 
-    #"V1_PISTON_DELTA": "troubleshooting.html",  # Build new help file
-    #"V1_CAM_CRANK": "troubleshooting.html",  # Build new help file
-    #"V1_START_AID": "troubleshooting.html",  # Build new help file
-    #"V1_AIR_FUEL_RATIO": "troubleshooting.html",  # Build new help file
-    #"V1_TORQUE_CONTROL": "troubleshooting.html",  # Build new help file
-    "V1_FUEL_COOLANT_TEMP": "fuel_coolant_temp.html",
-    
-    # V2 Charts  
-    "V2_BATTERY_TEST": "battery_voltage.html",
-    "V2_RAIL_PRESSURE": "rail_pressure.html",
-    #"V2_RAIL_GAP": "rail_pressure.html",
-    #"V2_IMV_CURRENT": "rail_pressure.html",
-    "V2_TURBO": "turbo.html",
-    #"V2_MISFIRE": "troubleshooting.html",
-    #"V2_THROTTLE_VALVE": "troubleshooting.html",
-    #"V2_ENGINE_LOAD": "troubleshooting.html",
-    #"V2_ENGINE_TORQUE_LIMITS": "troubleshooting.html",
-    "V2_FUEL_COOLANT_TEMP": "fuel_coolant_temp.html",
-    
-    # EUD Charts
-    "V1EUD_SPEED_V_LOAD": "eud_speed_load.html",
-    "V1EUD_SPEED_BAND": "eud_speed_band.html", 
-    "V1EUD_ELEVATION": "eud_elevation.html",
-    "V1EUD_EGT": "eud_egt.html"
-}
