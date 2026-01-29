@@ -19,6 +19,7 @@ from domain.snapshot.time_processor import (
     calculate_mdp_success,
 )
 from domain.snaptypes import SnapType
+from domain.constants import SNAPSHOT_TYPE_PIDS
 
 
 class TestHeaderParser:

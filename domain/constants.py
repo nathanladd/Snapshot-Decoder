@@ -134,13 +134,57 @@ UNIT_NORMALIZATION: dict[str, str] = {
     
     }
 
-# Define a mapping of header PIDs to SnapType enumerations
-PID_KEY = {
-    "p_l_battery_raw": SnapType.ECU_V1,
-    "battu_u": SnapType.ECU_V2,
-    "p_l_egr_close_pos_learnt_nvv": SnapType.EUD_V1,
-    
-    # Add more patterns as needed
+# Define PIDs that identify each snapshot type (SnapType → list of identifying PIDs)
+# Detection will match if ANY of the listed PIDs are found in the header row
+SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
+    SnapType.ECU_V1: [
+        "p_l_battery_raw",
+        "smc_engine_state",
+        "in_engine_cycle_speed",
+    ],
+    SnapType.ECU_V2: [
+        "battu_u",
+        "epm_neng",
+    ],
+    SnapType.EUD_V1: [
+        "p_l_egr_close_pos_learnt_nvv",
+    ],
+}
+
+# Define PIDs that identify specific engine systems
+# Detection will match if ANY of the listed PIDs are found in the snapshot
+SYSTEM_PIDS: dict[str, list[str]] = {
+    "egr": [
+        "p_l_egr_close_pos_learnt_nvv",
+        "p_l_egr_open_pos_learnt_nvv",
+        "egr_rdes",
+        "egr_ract",
+    ],
+    "doc": [
+        "exhtemp_tdocusstrm",
+        "exhtemp_tdocdsstrm",
+    ],
+    "dpf": [
+        "dpf_dpflt",
+        "dpf_tisinceregen",
+        "exhtemp_tdpfusstrm",
+        "exhtemp_tdpfdsstrm",
+    ],
+    "scr": [
+        "scr_tnoxdsstrm",
+        "scr_treag",
+        "scr_tscrusstrm",
+    ],
+    "air_throttle": [
+        "thr_rthract",
+        "thr_rthrdes",
+        "thrpos_rpos",
+    ],
+    "turbo": [
+        "p_l_boost_pres_raw",
+        "boost_pboostact",
+        "boost_pboostdes",
+    ],
 }
 
 # Map snapshot types to their engine hours column names

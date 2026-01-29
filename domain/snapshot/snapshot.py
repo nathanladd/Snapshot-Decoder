@@ -23,6 +23,7 @@ from domain.snapshot.time_processor import (
     calculate_mdp_success,
 )
 from domain.snapshot.value_converter import apply_type_specific_conversions
+from domain.snapshot.system_detector import detect_systems, DetectedSystems
 from file_io.reader_excel import load_xls, load_xlsx
 
 
@@ -49,6 +50,15 @@ class Snapshot:
         self.snapshot_type: SnapType = SnapType.EMPTY
         self.mdp_success_rate: float = 0.0
         self.idle_time: float = 0.0
+        
+        # Detected engine systems (set during parsing)
+        self.has_egr: bool = False
+        self.has_doc: bool = False
+        self.has_dpf: bool = False
+        self.has_scr: bool = False
+        self.has_air_throttle: bool = False
+        self.has_turbo: bool = False
+        self._detected_systems: Optional[DetectedSystems] = None
 
     @classmethod
     def load(cls, path: str) -> Snapshot:
@@ -92,6 +102,28 @@ class Snapshot:
         self.hours = find_engine_hours(self.snapshot, self.snapshot_type, self.pid_info)
         self.idle_time = find_idle_time(self.snapshot, self.pid_info)
         self.mdp_success_rate = calculate_mdp_success(self.snapshot)
+        
+        # Detect engine systems
+        self._detect_systems()
+
+    def _detect_systems(self) -> None:
+        """Detect which engine systems are present in the snapshot."""
+        self._detected_systems = detect_systems(self.snapshot)
+        
+        # Set convenience bool attributes
+        self.has_egr = self._detected_systems.egr
+        self.has_doc = self._detected_systems.doc
+        self.has_dpf = self._detected_systems.dpf
+        self.has_scr = self._detected_systems.scr
+        self.has_air_throttle = self._detected_systems.air_throttle
+        self.has_turbo = self._detected_systems.turbo
+    
+    def get_detected_systems_summary(self) -> str:
+        """Get a human-readable summary of detected systems."""
+        from domain.snapshot.system_detector import get_system_summary
+        if self._detected_systems:
+            return get_system_summary(self._detected_systems)
+        return "No systems detected"
 
     def _load_file(self) -> pd.DataFrame:
         """Load raw data from the file based on extension."""
