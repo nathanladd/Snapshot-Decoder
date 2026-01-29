@@ -232,6 +232,9 @@ class MainWindow(QMainWindow):
             self.chart_widget.plot_pids(
                 self.snapshot, primary_pids, secondary_pids
             )
+        else:
+            # No PIDs selected, clear the chart
+            self.chart_widget.clear()
     
     @Slot(str)
     def _on_quick_chart_requested(self, action_id: str):

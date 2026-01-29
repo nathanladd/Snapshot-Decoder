@@ -43,7 +43,10 @@ class HeaderPanel(QWidget):
         
         for row, (key, label_text) in enumerate(fields):
             label = QLabel(label_text)
-            label.setStyleSheet("font-weight: bold;")
+            # Use QFont for bold instead of stylesheet to preserve palette colors
+            font = label.font()
+            font.setBold(True)
+            label.setFont(font)
             value_label = QLabel("-")
             value_label.setWordWrap(True)
             

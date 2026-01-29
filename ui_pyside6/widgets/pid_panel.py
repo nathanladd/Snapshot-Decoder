@@ -177,11 +177,13 @@ class PidPanel(QWidget):
             self._secondary_list.takeItem(self._secondary_list.row(item))
     
     def _on_clear_selections(self):
-        """Clear all selected PIDs."""
+        """Clear all selected PIDs and emit signal."""
         self._primary_pids.clear()
         self._secondary_pids.clear()
         self._primary_list.clear()
         self._secondary_list.clear()
+        # Emit signal so chart can be updated
+        self.pids_changed.emit()
     
     def get_primary_pids(self) -> List[str]:
         """Get the list of primary PIDs."""

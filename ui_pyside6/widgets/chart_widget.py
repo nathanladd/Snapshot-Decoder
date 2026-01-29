@@ -51,8 +51,12 @@ class ChartWidget(QWidget):
         self._ax = self._figure.add_subplot(111)
         self._ax_secondary: Optional[object] = None
         
-        # Navigation toolbar
+        # Navigation toolbar with proper styling for light/dark mode
         self._toolbar = NavigationToolbar(self._canvas, self)
+        self._toolbar.setStyleSheet("""
+            QToolBar { background: palette(window); }
+            QToolButton { background: palette(button); color: palette(text); }
+        """)
         layout.addWidget(self._toolbar)
         
         # Canvas
@@ -230,6 +234,15 @@ class ChartWidget(QWidget):
                     self._ax_secondary.plot(x_data, y_data, label=label, linestyle='--')
             self._ax_secondary.set_ylabel(config.get_axis_label(config.secondary_axis))
         
+        # Apply axis limits
+        if not config.primary_axis.auto_scale:
+            if config.primary_axis.min_value is not None and config.primary_axis.max_value is not None:
+                self._ax.set_ylim(config.primary_axis.min_value, config.primary_axis.max_value)
+        
+        if self._ax_secondary and not config.secondary_axis.auto_scale:
+            if config.secondary_axis.min_value is not None and config.secondary_axis.max_value is not None:
+                self._ax_secondary.set_ylim(config.secondary_axis.min_value, config.secondary_axis.max_value)
+        
         # Legends
         if config.show_legend:
             if config.primary_axis.series:
@@ -238,14 +251,38 @@ class ChartWidget(QWidget):
                 self._ax_secondary.legend(loc=config.secondary_legend_loc)
     
     def _render_status_chart(self, config: ChartConfig, x_data):
-        """Render a status chart (similar to line but with tick labels)."""
-        self._render_line_chart(config, x_data)
+        """Render a status chart with step-style lines for binary values."""
+        df = config.data
+        
+        # Plot primary axis with step style for binary status values
+        for pid in config.primary_axis.series:
+            if pid in df.columns:
+                y_data = pd.to_numeric(df[pid], errors='coerce')
+                label = self._get_pid_label(self._snapshot, pid) if self._snapshot else pid
+                self._ax.step(x_data, y_data, label=label, where='post')
+        
+        self._ax.set_ylabel(config.get_axis_label(config.primary_axis))
+        
+        # Set Y-axis for binary status (0/1) with padding
+        if config.primary_axis.auto_scale:
+            self._ax.set_ylim(-0.1, 1.1)
+        else:
+            if config.primary_axis.min_value is not None and config.primary_axis.max_value is not None:
+                self._ax.set_ylim(config.primary_axis.min_value, config.primary_axis.max_value)
         
         # Apply custom ticks if specified
         if config.primary_axis.ticks is not None:
             self._ax.set_yticks(config.primary_axis.ticks)
             if config.primary_axis.tick_labels:
                 self._ax.set_yticklabels(config.primary_axis.tick_labels)
+        else:
+            # Default to 0/1 ticks for status charts
+            self._ax.set_yticks([0, 1])
+            self._ax.set_yticklabels(["Off", "On"])
+        
+        # Legends
+        if config.show_legend:
+            self._ax.legend(loc=config.primary_legend_loc)
     
     def _render_bar_chart(self, config: ChartConfig):
         """Render a bar chart."""
