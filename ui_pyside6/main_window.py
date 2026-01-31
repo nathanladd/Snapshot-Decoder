@@ -235,7 +235,7 @@ class MainWindow(QMainWindow):
         secondary_pids = self.pid_panel.get_secondary_pids()
         
         if primary_pids or secondary_pids:
-            self.chart_widget.plot_pids(
+            self.chart_widget.update_chart(
                 self.snapshot, primary_pids, secondary_pids,
                 axis_settings=self._get_axis_settings()
             )
@@ -243,6 +243,7 @@ class MainWindow(QMainWindow):
         else:
             # No PIDs selected, clear the chart
             self.chart_widget.clear()
+            self.axis_controls_panel.clear()
     
     @Slot()
     def _on_axis_settings_changed(self):
@@ -254,7 +255,7 @@ class MainWindow(QMainWindow):
         secondary_pids = self.pid_panel.get_secondary_pids()
         
         if primary_pids or secondary_pids:
-            self.chart_widget.plot_pids(
+            self.chart_widget.update_chart(
                 self.snapshot, primary_pids, secondary_pids,
                 axis_settings=self._get_axis_settings()
             )
@@ -271,7 +272,7 @@ class MainWindow(QMainWindow):
         }
     
     def _update_axis_controls_from_chart(self):
-        """Update axis controls with current chart axis limits."""
+        """Update axis controls with current chart axis limits (auto-computed)."""
         limits = self.chart_widget.get_current_axis_limits()
         if limits:
             self.axis_controls_panel.update_from_config(
@@ -283,6 +284,42 @@ class MainWindow(QMainWindow):
                 secondary_max=limits.get('secondary_max'),
             )
     
+    def _update_axis_controls_from_config(self):
+        """Update axis controls from the current chart configuration."""
+        config = self.chart_widget.get_current_config()
+        if not config:
+            return
+        
+        # Get limits from rendered chart
+        limits = self.chart_widget.get_current_axis_limits()
+        
+        # Use config's auto_scale settings and either config values or rendered limits
+        primary_auto = config.primary_axis.auto_scale
+        secondary_auto = config.secondary_axis.auto_scale
+        
+        if primary_auto and limits:
+            primary_min = limits.get('primary_min')
+            primary_max = limits.get('primary_max')
+        else:
+            primary_min = config.primary_axis.min_value
+            primary_max = config.primary_axis.max_value
+        
+        if secondary_auto and limits:
+            secondary_min = limits.get('secondary_min')
+            secondary_max = limits.get('secondary_max')
+        else:
+            secondary_min = config.secondary_axis.min_value
+            secondary_max = config.secondary_axis.max_value
+        
+        self.axis_controls_panel.update_from_config(
+            primary_auto=primary_auto,
+            primary_min=primary_min,
+            primary_max=primary_max,
+            secondary_auto=secondary_auto,
+            secondary_min=secondary_min,
+            secondary_max=secondary_max,
+        )
+    
     @Slot(str)
     def _on_quick_chart_requested(self, action_id: str):
         """Handle quick chart button click."""
@@ -290,7 +327,14 @@ class MainWindow(QMainWindow):
             return
         
         self.chart_widget.plot_quick_chart(self.snapshot, action_id)
-        self._update_axis_controls_from_chart()
+        
+        # Sync PID panel with quick chart's PIDs
+        primary_pids = self.chart_widget.get_current_primary_pids()
+        secondary_pids = self.chart_widget.get_current_secondary_pids()
+        self.pid_panel.set_pids(primary_pids, secondary_pids, emit_signal=False)
+        
+        # Update axis controls from the chart config
+        self._update_axis_controls_from_config()
     
     @Slot()
     def _on_show_data_table(self):

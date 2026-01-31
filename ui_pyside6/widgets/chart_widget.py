@@ -35,6 +35,8 @@ class ChartWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._snapshot: Optional[Snapshot] = None
+        self._current_config: Optional[ChartConfig] = None
+        self._current_action_id: Optional[str] = None  # Track if showing a quick chart
         self._setup_ui()
     
     def _setup_ui(self):
@@ -82,6 +84,8 @@ class ChartWidget(QWidget):
         self._figure.clear()
         self._ax = self._figure.add_subplot(111)
         self._ax_secondary = None
+        self._current_config = None
+        self._current_action_id = None
         self._show_welcome()
     
     def _get_pid_label(self, snapshot: Snapshot, pid: str) -> str:
@@ -199,6 +203,7 @@ class ChartWidget(QWidget):
     def plot_quick_chart(self, snapshot: Snapshot, action_id: str):
         """Plot a quick chart by action ID."""
         self._snapshot = snapshot
+        self._current_action_id = action_id
         
         # Get chart definition from registry
         definition = QUICK_CHART_REGISTRY.get(action_id)
@@ -214,9 +219,86 @@ class ChartWidget(QWidget):
         
         # Build chart config
         config = ChartConfigBuilder.build(definition, snapshot)
+        self._current_config = config
         
         # Render based on chart type
         self._render_config(config)
+    
+    def get_current_config(self) -> Optional[ChartConfig]:
+        """Get the current chart configuration."""
+        return self._current_config
+    
+    def get_current_primary_pids(self) -> List[str]:
+        """Get PIDs currently on primary axis."""
+        if self._current_config:
+            return list(self._current_config.primary_axis.series)
+        return []
+    
+    def get_current_secondary_pids(self) -> List[str]:
+        """Get PIDs currently on secondary axis."""
+        if self._current_config:
+            return list(self._current_config.secondary_axis.series)
+        return []
+    
+    def update_chart(
+        self,
+        snapshot: Snapshot,
+        primary_pids: List[str],
+        secondary_pids: List[str],
+        axis_settings: Optional[Dict] = None
+    ):
+        """Update the current chart with new PIDs and settings."""
+        self._snapshot = snapshot
+        df = snapshot.snapshot
+        
+        if df is None:
+            return
+        
+        # Get relevant columns
+        x_key = "Time" if "Time" in df.columns else ("Frame" if "Frame" in df.columns else None)
+        relevant_columns = list(primary_pids) + list(secondary_pids)
+        if x_key:
+            relevant_columns.insert(0, x_key)
+        
+        # Filter to existing columns
+        relevant_columns = [c for c in relevant_columns if c in df.columns]
+        chart_data = df[relevant_columns].copy() if relevant_columns else pd.DataFrame()
+        
+        # Build axis configs
+        primary_axis = AxisConfig(
+            series=list(primary_pids),
+            auto_scale=axis_settings.get('primary_auto', True) if axis_settings else True,
+            min_value=axis_settings.get('primary_min') if axis_settings else None,
+            max_value=axis_settings.get('primary_max') if axis_settings else None,
+        )
+        
+        secondary_axis = AxisConfig(
+            series=list(secondary_pids),
+            auto_scale=axis_settings.get('secondary_auto', True) if axis_settings else True,
+            min_value=axis_settings.get('secondary_min') if axis_settings else None,
+            max_value=axis_settings.get('secondary_max') if axis_settings else None,
+        )
+        
+        # Preserve title from current config if it exists, otherwise use default
+        title = "Chart"
+        if self._current_config and self._current_config.title:
+            title = self._current_config.title
+        
+        # Create new config
+        self._current_config = ChartConfig(
+            data=chart_data,
+            chart_type="line",
+            primary_axis=primary_axis,
+            secondary_axis=secondary_axis,
+            title=title,
+            x_column=x_key,
+        )
+        
+        # Clear quick chart tracking since we're modifying
+        self._current_action_id = None
+        
+        # Render the updated config
+        self._render_config(self._current_config)
     
     def _render_config(self, config: ChartConfig):
         """Render a ChartConfig."""

@@ -297,6 +297,29 @@ class PidPanel(QWidget):
         """Get the list of secondary PIDs."""
         return self._secondary_pids.copy()
     
+    def set_pids(self, primary_pids: List[str], secondary_pids: List[str], emit_signal: bool = False):
+        """Set the PIDs programmatically (e.g., from a quick chart)."""
+        # Clear current selections
+        self._primary_pids.clear()
+        self._secondary_pids.clear()
+        self._primary_list.clear()
+        self._secondary_list.clear()
+        
+        # Add primary PIDs
+        for pid in primary_pids:
+            if pid in self._all_pids:
+                self._primary_pids.append(pid)
+                self._primary_list.addItem(pid)
+        
+        # Add secondary PIDs
+        for pid in secondary_pids:
+            if pid in self._all_pids:
+                self._secondary_pids.append(pid)
+                self._secondary_list.addItem(pid)
+        
+        if emit_signal:
+            self.pids_changed.emit()
+    
     def clear(self):
         """Clear the panel."""
         self.set_snapshot(None)
