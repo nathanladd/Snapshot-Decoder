@@ -39,11 +39,11 @@ class QuickChartPanel(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        scroll.setMaximumHeight(100)
+        scroll.setMaximumHeight(90)
         
-        # Container for buttons - use horizontal flow
+        # Container for buttons - use grid layout for 2 rows
         self._button_container = QWidget()
-        self._button_layout = QHBoxLayout(self._button_container)
+        self._button_layout = QGridLayout(self._button_container)
         self._button_layout.setSpacing(4)
         self._button_layout.setContentsMargins(0, 0, 0, 0)
         
@@ -88,7 +88,10 @@ class QuickChartPanel(QWidget):
             self._buttons.append(placeholder)
             return
         
-        # Create compact buttons in horizontal row
+        # Create compact buttons in 2-row grid
+        num_buttons = len(buttons_config)
+        num_cols = (num_buttons + 1) // 2  # Calculate columns needed for 2 rows
+        
         for i, (name, action_id, tooltip) in enumerate(buttons_config):
             btn = QPushButton(name)
             btn.setToolTip(tooltip)
@@ -96,11 +99,11 @@ class QuickChartPanel(QWidget):
             btn.clicked.connect(self._on_button_clicked)
             btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
             btn.setMaximumWidth(120)
-            self._button_layout.addWidget(btn)
+            
+            row = i % 2
+            col = i // 2
+            self._button_layout.addWidget(btn, row, col)
             self._buttons.append(btn)
-        
-        # Add stretch at end to keep buttons compact
-        self._button_layout.addStretch()
     
     def _on_button_clicked(self):
         """Handle button click."""

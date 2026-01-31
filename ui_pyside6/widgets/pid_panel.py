@@ -76,7 +76,7 @@ class PidPanel(QWidget):
         self._primary_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         primary_list_row.addWidget(self._primary_list)
         
-        # Up/down buttons for primary
+        # Up/down/delete buttons for primary
         primary_btn_col = QVBoxLayout()
         primary_btn_col.setSpacing(2)
         self._primary_up_btn = QPushButton("▲")
@@ -90,13 +90,16 @@ class PidPanel(QWidget):
         self._primary_down_btn.setToolTip("Move selected down")
         self._primary_down_btn.clicked.connect(self._on_primary_move_down)
         primary_btn_col.addWidget(self._primary_down_btn)
+        
+        self._remove_primary_btn = QPushButton("🗑")
+        self._remove_primary_btn.setFixedWidth(30)
+        self._remove_primary_btn.setToolTip("Remove selected")
+        self._remove_primary_btn.clicked.connect(self._on_remove_from_primary)
+        primary_btn_col.addWidget(self._remove_primary_btn)
+        
         primary_btn_col.addStretch()
         primary_list_row.addLayout(primary_btn_col)
         primary_layout.addLayout(primary_list_row)
-        
-        self._remove_primary_btn = QPushButton("Remove Selected")
-        self._remove_primary_btn.clicked.connect(self._on_remove_from_primary)
-        primary_layout.addWidget(self._remove_primary_btn)
         
         layout.addWidget(primary_group, stretch=1)
         
@@ -111,7 +114,7 @@ class PidPanel(QWidget):
         self._secondary_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         secondary_list_row.addWidget(self._secondary_list)
         
-        # Up/down buttons for secondary
+        # Up/down/delete buttons for secondary
         secondary_btn_col = QVBoxLayout()
         secondary_btn_col.setSpacing(2)
         self._secondary_up_btn = QPushButton("▲")
@@ -125,13 +128,16 @@ class PidPanel(QWidget):
         self._secondary_down_btn.setToolTip("Move selected down")
         self._secondary_down_btn.clicked.connect(self._on_secondary_move_down)
         secondary_btn_col.addWidget(self._secondary_down_btn)
+        
+        self._remove_secondary_btn = QPushButton("🗑")
+        self._remove_secondary_btn.setFixedWidth(30)
+        self._remove_secondary_btn.setToolTip("Remove selected")
+        self._remove_secondary_btn.clicked.connect(self._on_remove_from_secondary)
+        secondary_btn_col.addWidget(self._remove_secondary_btn)
+        
         secondary_btn_col.addStretch()
         secondary_list_row.addLayout(secondary_btn_col)
         secondary_layout.addLayout(secondary_list_row)
-        
-        self._remove_secondary_btn = QPushButton("Remove Selected")
-        self._remove_secondary_btn.clicked.connect(self._on_remove_from_secondary)
-        secondary_layout.addWidget(self._remove_secondary_btn)
         
         layout.addWidget(secondary_group, stretch=1)
         
