@@ -38,7 +38,6 @@ class HeaderPanel(QWidget):
             ("hours", "Engine Hours:"),
             ("idle_time", "Idle Time:"),
             ("mdp_success", "MDP Success:"),
-            ("systems", "Systems:"),
         ]
         
         for row, (key, label_text) in enumerate(fields):
@@ -72,23 +71,6 @@ class HeaderPanel(QWidget):
         self._labels["mdp_success"].setText(
             f"{snapshot.mdp_success_rate:.1f}%" if snapshot.mdp_success_rate else "-"
         )
-        
-        # Build systems string
-        systems = []
-        if snapshot.has_egr:
-            systems.append("EGR")
-        if snapshot.has_turbo:
-            systems.append("Turbo")
-        if snapshot.has_doc:
-            systems.append("DOC")
-        if snapshot.has_dpf:
-            systems.append("DPF")
-        if snapshot.has_scr:
-            systems.append("SCR")
-        if snapshot.has_air_throttle:
-            systems.append("Air Throttle")
-        
-        self._labels["systems"].setText(", ".join(systems) if systems else "-")
     
     def clear(self):
         """Clear all displayed data."""

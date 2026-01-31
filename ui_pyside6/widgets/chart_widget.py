@@ -53,12 +53,8 @@ class ChartWidget(QWidget):
         self._ax = self._figure.add_subplot(111)
         self._ax_secondary: Optional[object] = None
         
-        # Navigation toolbar with proper styling for light/dark mode
+        # Navigation toolbar - let system palette handle styling
         self._toolbar = NavigationToolbar(self._canvas, self)
-        self._toolbar.setStyleSheet("""
-            QToolBar { background: palette(window); }
-            QToolButton { background: palette(button); color: palette(text); }
-        """)
         layout.addWidget(self._toolbar)
         
         # Canvas

@@ -21,6 +21,7 @@ from controllers.snapshot_loader import SnapshotLoader
 from version import APP_VERSION
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
+from ui_pyside6.widgets.system_panel import SystemPanel
 from ui_pyside6.widgets.pid_panel import PidPanel
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
 from ui_pyside6.widgets.chart_widget import ChartWidget
@@ -63,9 +64,15 @@ class MainWindow(QMainWindow):
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(4)
         
-        # Header panel
+        # Header panel with system indicators to the right
+        header_row = QHBoxLayout()
         self.header_panel = HeaderPanel()
-        left_layout.addWidget(self.header_panel)
+        header_row.addWidget(self.header_panel)
+        
+        self.system_panel = SystemPanel()
+        header_row.addWidget(self.system_panel)
+        
+        left_layout.addLayout(header_row)
         
         # PID selection panel
         self.pid_panel = PidPanel()
@@ -206,6 +213,7 @@ class MainWindow(QMainWindow):
         
         # Update UI with snapshot data
         self.header_panel.set_snapshot(snapshot)
+        self.system_panel.set_snapshot(snapshot)
         self.pid_panel.set_snapshot(snapshot)
         self.quick_chart_panel.set_snapshot_type(snapshot.snapshot_type)
         self.chart_widget.clear()
