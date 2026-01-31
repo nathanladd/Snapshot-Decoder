@@ -141,11 +141,6 @@ class PidPanel(QWidget):
         
         layout.addWidget(secondary_group, stretch=1)
         
-        # Plot button
-        self._plot_btn = QPushButton("Plot Selected PIDs")
-        self._plot_btn.clicked.connect(self.pids_changed.emit)
-        layout.addWidget(self._plot_btn)
-        
         # Clear button
         self._clear_btn = QPushButton("Clear All")
         self._clear_btn.clicked.connect(self._on_clear_selections)

@@ -25,7 +25,7 @@ class DetectedSystems:
     dpf: bool = False
     scr: bool = False
     air_throttle: bool = False
-    turbo: bool = False
+    turbo: bool = True
     
     # Store which PIDs matched for each system (for debugging/display)
     matched_pids: dict[str, list[str]] = field(default_factory=dict)

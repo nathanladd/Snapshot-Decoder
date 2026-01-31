@@ -103,12 +103,13 @@ class MainWindow(QMainWindow):
         self.quick_chart_panel.chart_requested.connect(self._on_quick_chart_requested)
         top_bar_layout.addWidget(self.quick_chart_panel, stretch=1)
         
-        # Logo in top right
+        # Logo in top right - scale to match quick chart panel height
         logo_path = os.path.join(os.path.dirname(__file__), "..", "data", "images", "Snapshot Decoder.png")
         if os.path.exists(logo_path):
             logo_label = QLabel()
             pixmap = QPixmap(logo_path)
-            scaled_pixmap = pixmap.scaledToHeight(80, Qt.TransformationMode.SmoothTransformation)
+            # Scale to 100px height
+            scaled_pixmap = pixmap.scaledToHeight(100, Qt.TransformationMode.SmoothTransformation)
             logo_label.setPixmap(scaled_pixmap)
             logo_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
             top_bar_layout.addWidget(logo_label)
