@@ -124,7 +124,6 @@ class SnapshotLoader(QThread):
             snapshot.has_dpf = systems.dpf
             snapshot.has_scr = systems.scr
             snapshot.has_air_throttle = systems.air_throttle
-            snapshot.has_turbo = systems.turbo
             snapshot._detected_systems = systems
             
             self.progress.emit(100, "Complete")

@@ -19,7 +19,6 @@ class SystemPanel(QWidget):
     # System definitions: (attribute_name, display_name)
     SYSTEMS = [
         ("has_egr", "EGR"),
-        ("has_turbo", "Turbo"),
         ("has_doc", "DOC"),
         ("has_dpf", "DPF"),
         ("has_scr", "SCR"),

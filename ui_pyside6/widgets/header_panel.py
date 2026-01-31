@@ -49,7 +49,7 @@ class HeaderPanel(QWidget):
             value_label = QLabel("-")
             value_label.setWordWrap(True)
             
-            group_layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignTop)
+            group_layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
             group_layout.addWidget(value_label, row, 1, Qt.AlignmentFlag.AlignTop)
             self._labels[key] = value_label
         

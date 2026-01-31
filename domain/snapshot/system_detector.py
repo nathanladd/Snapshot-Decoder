@@ -25,7 +25,7 @@ class DetectedSystems:
     dpf: bool = False
     scr: bool = False
     air_throttle: bool = False
-    turbo: bool = True
+    # turbo: bool = False
     
     # Store which PIDs matched for each system (for debugging/display)
     matched_pids: dict[str, list[str]] = field(default_factory=dict)
@@ -89,8 +89,8 @@ def get_system_summary(systems: DetectedSystems) -> str:
         detected.append("SCR")
     if systems.air_throttle:
         detected.append("Air Throttle")
-    if systems.turbo:
-        detected.append("Turbo")
+    # if systems.turbo:
+    #     detected.append("Turbo")
     
     if detected:
         return "Detected systems: " + ", ".join(detected)

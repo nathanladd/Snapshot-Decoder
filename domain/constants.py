@@ -139,15 +139,25 @@ UNIT_NORMALIZATION: dict[str, str] = {
 SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
     SnapType.ECU_V1: [
         "p_l_battery_raw",
+        "p_l_atmosp_raw",
         "smc_engine_state",
         "in_engine_cycle_speed",
+        "in_pedal_position",
+        "acm_intake_port_air_flow_maf",
     ],
     SnapType.ECU_V2: [
         "battu_u",
         "epm_neng",
+        "afsdm",
+        "air_pintkvus",
+        "app_r",
+        "coets_stcurrlimactive",
     ],
     SnapType.EUD_V1: [
         "p_l_egr_close_pos_learnt_nvv",
+        "eud_atmos_pres_timer_nvv[1]",
+        "eud_engine_idle_time_nvv",
+        "i_c_mdp_correction_dat_i_0",
     ],
 }
 
@@ -155,36 +165,31 @@ SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
 # Detection will match if ANY of the listed PIDs are found in the snapshot
 SYSTEM_PIDS: dict[str, list[str]] = {
     "egr": [
-        "p_l_egr_close_pos_learnt_nvv",
-        "p_l_egr_open_pos_learnt_nvv",
-        "egr_rdes",
-        "egr_ract",
+        "ACM_Egr_position_dmnd", #ECU_V1
+        "IN_Egr_position", #ECU_V1
+        "egrvlv_ract", #ECU_V2
+        "egrvlv_r", #ECU_V2
     ],
     "doc": [
-        "exhtemp_tdocusstrm",
-        "exhtemp_tdocdsstrm",
+        "exh_tadaptoxicatus", #ECU_V2
+        "exh_urawtoxicatus", #ECU_V2
     ],
     "dpf": [
-        "dpf_dpflt",
-        "dpf_tisinceregen",
-        "exhtemp_tdpfusstrm",
-        "exhtemp_tdpfdsstrm",
+        "Exh_pPFltDiff", #ECU_V2
     ],
     "scr": [
-        "scr_tnoxdsstrm",
-        "scr_treag",
-        "scr_tscrusstrm",
+        "scr_pupmpp", #ECU_V2
+        "P_T_Dpf_model_soot_mass_nvv", #ECU_V1 (SCR PIDs in V1 seem to be labeled DPF)
     ],
     "air_throttle": [
-        "thr_rthract",
-        "thr_rthrdes",
-        "thrpos_rpos",
+        "ThrVlv_rAct", #ECU_V2
+        "P_L_Thrtl_feedback_abs_pos", #ECU_V1 (currently G70 only)
     ],
-    "turbo": [
-        "p_l_boost_pres_raw",
-        "boost_pboostact",
-        "boost_pboostdes",
-    ],
+    # "turbo": [
+    #     "p_l_boost_pres_raw",
+    #     "boost_pboostact",
+    #     "boost_pboostdes",
+    # ],
 }
 
 # Map snapshot types to their engine hours column names
