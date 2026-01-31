@@ -2,7 +2,7 @@
 Chart widget for displaying matplotlib plots in PySide6.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 import pandas as pd
 
@@ -95,7 +95,8 @@ class ChartWidget(QWidget):
         self,
         snapshot: Snapshot,
         primary_pids: List[str],
-        secondary_pids: List[str]
+        secondary_pids: List[str],
+        axis_settings: Optional[Dict] = None
     ):
         """Plot selected PIDs from the snapshot."""
         self._snapshot = snapshot
@@ -107,6 +108,7 @@ class ChartWidget(QWidget):
         # Clear and recreate axes
         self._figure.clear()
         self._ax = self._figure.add_subplot(111)
+        self._ax_secondary = None
         
         # Determine x-axis
         use_time_format = False
@@ -147,6 +149,20 @@ class ChartWidget(QWidget):
                     )
             self._ax_secondary.set_ylabel("Secondary")
         
+        # Apply axis limits from settings
+        if axis_settings:
+            if not axis_settings.get('primary_auto', True):
+                p_min = axis_settings.get('primary_min')
+                p_max = axis_settings.get('primary_max')
+                if p_min is not None or p_max is not None:
+                    self._ax.set_ylim(bottom=p_min, top=p_max)
+            
+            if self._ax_secondary and not axis_settings.get('secondary_auto', True):
+                s_min = axis_settings.get('secondary_min')
+                s_max = axis_settings.get('secondary_max')
+                if s_min is not None or s_max is not None:
+                    self._ax_secondary.set_ylim(bottom=s_min, top=s_max)
+        
         # Legends
         if primary_pids:
             self._ax.legend(loc='upper left')
@@ -156,6 +172,29 @@ class ChartWidget(QWidget):
         self._ax.grid(True, linestyle=':', alpha=0.7)
         self._figure.tight_layout()
         self._canvas.draw()
+    
+    def get_current_axis_limits(self) -> Optional[Dict]:
+        """Get the current axis limits from the chart."""
+        if self._ax is None:
+            return None
+        
+        try:
+            p_min, p_max = self._ax.get_ylim()
+            result = {
+                'primary_min': round(p_min, 4),
+                'primary_max': round(p_max, 4),
+                'secondary_min': None,
+                'secondary_max': None,
+            }
+            
+            if self._ax_secondary:
+                s_min, s_max = self._ax_secondary.get_ylim()
+                result['secondary_min'] = round(s_min, 4)
+                result['secondary_max'] = round(s_max, 4)
+            
+            return result
+        except Exception:
+            return None
     
     def plot_quick_chart(self, snapshot: Snapshot, action_id: str):
         """Plot a quick chart by action ID."""

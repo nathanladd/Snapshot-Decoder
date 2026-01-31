@@ -70,9 +70,29 @@ class PidPanel(QWidget):
         primary_layout = QVBoxLayout(primary_group)
         primary_layout.setSpacing(4)
         
+        # Primary list with up/down buttons
+        primary_list_row = QHBoxLayout()
         self._primary_list = QListWidget()
         self._primary_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        primary_layout.addWidget(self._primary_list)
+        primary_list_row.addWidget(self._primary_list)
+        
+        # Up/down buttons for primary
+        primary_btn_col = QVBoxLayout()
+        primary_btn_col.setSpacing(2)
+        self._primary_up_btn = QPushButton("▲")
+        self._primary_up_btn.setFixedWidth(30)
+        self._primary_up_btn.setToolTip("Move selected up")
+        self._primary_up_btn.clicked.connect(self._on_primary_move_up)
+        primary_btn_col.addWidget(self._primary_up_btn)
+        
+        self._primary_down_btn = QPushButton("▼")
+        self._primary_down_btn.setFixedWidth(30)
+        self._primary_down_btn.setToolTip("Move selected down")
+        self._primary_down_btn.clicked.connect(self._on_primary_move_down)
+        primary_btn_col.addWidget(self._primary_down_btn)
+        primary_btn_col.addStretch()
+        primary_list_row.addLayout(primary_btn_col)
+        primary_layout.addLayout(primary_list_row)
         
         self._remove_primary_btn = QPushButton("Remove Selected")
         self._remove_primary_btn.clicked.connect(self._on_remove_from_primary)
@@ -85,9 +105,29 @@ class PidPanel(QWidget):
         secondary_layout = QVBoxLayout(secondary_group)
         secondary_layout.setSpacing(4)
         
+        # Secondary list with up/down buttons
+        secondary_list_row = QHBoxLayout()
         self._secondary_list = QListWidget()
         self._secondary_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        secondary_layout.addWidget(self._secondary_list)
+        secondary_list_row.addWidget(self._secondary_list)
+        
+        # Up/down buttons for secondary
+        secondary_btn_col = QVBoxLayout()
+        secondary_btn_col.setSpacing(2)
+        self._secondary_up_btn = QPushButton("▲")
+        self._secondary_up_btn.setFixedWidth(30)
+        self._secondary_up_btn.setToolTip("Move selected up")
+        self._secondary_up_btn.clicked.connect(self._on_secondary_move_up)
+        secondary_btn_col.addWidget(self._secondary_up_btn)
+        
+        self._secondary_down_btn = QPushButton("▼")
+        self._secondary_down_btn.setFixedWidth(30)
+        self._secondary_down_btn.setToolTip("Move selected down")
+        self._secondary_down_btn.clicked.connect(self._on_secondary_move_down)
+        secondary_btn_col.addWidget(self._secondary_down_btn)
+        secondary_btn_col.addStretch()
+        secondary_list_row.addLayout(secondary_btn_col)
+        secondary_layout.addLayout(secondary_list_row)
         
         self._remove_secondary_btn = QPushButton("Remove Selected")
         self._remove_secondary_btn.clicked.connect(self._on_remove_from_secondary)
@@ -146,35 +186,99 @@ class PidPanel(QWidget):
     
     def _on_add_to_primary(self):
         """Add selected PIDs to primary axis."""
+        added = False
         for item in self._available_list.selectedItems():
             pid = item.text()
             if pid not in self._primary_pids:
                 self._primary_pids.append(pid)
                 self._primary_list.addItem(pid)
+                added = True
+        if added:
+            self.pids_changed.emit()
     
     def _on_add_to_secondary(self):
         """Add selected PIDs to secondary axis."""
+        added = False
         for item in self._available_list.selectedItems():
             pid = item.text()
             if pid not in self._secondary_pids:
                 self._secondary_pids.append(pid)
                 self._secondary_list.addItem(pid)
+                added = True
+        if added:
+            self.pids_changed.emit()
     
     def _on_remove_from_primary(self):
         """Remove selected PIDs from primary axis."""
+        removed = False
         for item in self._primary_list.selectedItems():
             pid = item.text()
             if pid in self._primary_pids:
                 self._primary_pids.remove(pid)
             self._primary_list.takeItem(self._primary_list.row(item))
+            removed = True
+        if removed:
+            self.pids_changed.emit()
     
     def _on_remove_from_secondary(self):
         """Remove selected PIDs from secondary axis."""
+        removed = False
         for item in self._secondary_list.selectedItems():
             pid = item.text()
             if pid in self._secondary_pids:
                 self._secondary_pids.remove(pid)
             self._secondary_list.takeItem(self._secondary_list.row(item))
+            removed = True
+        if removed:
+            self.pids_changed.emit()
+    
+    def _on_primary_move_up(self):
+        """Move selected items up in primary list."""
+        self._move_selected_up(self._primary_list, self._primary_pids)
+    
+    def _on_primary_move_down(self):
+        """Move selected items down in primary list."""
+        self._move_selected_down(self._primary_list, self._primary_pids)
+    
+    def _on_secondary_move_up(self):
+        """Move selected items up in secondary list."""
+        self._move_selected_up(self._secondary_list, self._secondary_pids)
+    
+    def _on_secondary_move_down(self):
+        """Move selected items down in secondary list."""
+        self._move_selected_down(self._secondary_list, self._secondary_pids)
+    
+    def _move_selected_up(self, list_widget: QListWidget, pid_list: List[str]):
+        """Move selected items up in the list."""
+        selected_rows = sorted([list_widget.row(item) for item in list_widget.selectedItems()])
+        if not selected_rows or selected_rows[0] == 0:
+            return
+        
+        for row in selected_rows:
+            # Swap in pid_list
+            pid_list[row], pid_list[row - 1] = pid_list[row - 1], pid_list[row]
+            # Swap in list widget
+            item = list_widget.takeItem(row)
+            list_widget.insertItem(row - 1, item)
+            item.setSelected(True)
+        
+        self.pids_changed.emit()
+    
+    def _move_selected_down(self, list_widget: QListWidget, pid_list: List[str]):
+        """Move selected items down in the list."""
+        selected_rows = sorted([list_widget.row(item) for item in list_widget.selectedItems()], reverse=True)
+        if not selected_rows or selected_rows[0] == list_widget.count() - 1:
+            return
+        
+        for row in selected_rows:
+            # Swap in pid_list
+            pid_list[row], pid_list[row + 1] = pid_list[row + 1], pid_list[row]
+            # Swap in list widget
+            item = list_widget.takeItem(row)
+            list_widget.insertItem(row + 1, item)
+            item.setSelected(True)
+        
+        self.pids_changed.emit()
     
     def _on_clear_selections(self):
         """Clear all selected PIDs and emit signal."""
