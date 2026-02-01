@@ -139,6 +139,7 @@ class ChartConfigBuilder:
             primary_axis=AxisConfig(
                 series=[definition.y_label],
                 auto_scale=True,
+                label=definition.y_label,  # Add the y_label here
             ),
             secondary_axis=AxisConfig(series=[]),
             title=definition.title,
@@ -212,7 +213,9 @@ class ChartConfigBuilder:
             chart_type="bubble",
             primary_axis=AxisConfig(
                 series=[definition.y_label],
-                auto_scale=True,
+                auto_scale=False,  # Disable auto-scaling to use our custom range
+                min_value=0,       # Set minimum to 0
+                max_value=110,     # Set maximum to 110% (extra space for bubbles)
                 label=definition.y_label,  # Add the y_label here
             ),
             secondary_axis=AxisConfig(series=[]),
