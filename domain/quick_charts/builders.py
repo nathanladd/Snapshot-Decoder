@@ -213,6 +213,7 @@ class ChartConfigBuilder:
             primary_axis=AxisConfig(
                 series=[definition.y_label],
                 auto_scale=True,
+                label=definition.y_label,  # Add the y_label here
             ),
             secondary_axis=AxisConfig(series=[]),
             title=definition.title,

@@ -64,7 +64,7 @@ class HeaderPanel(QWidget):
             return
         
         self._labels["file_name"].setText(snapshot.file_name)
-        self._labels["snapshot_type"].setText(snapshot.snapshot_type.name)
+        self._labels["snapshot_type"].setText(snapshot.snapshot_type.description)
         self._labels["date_time"].setText(snapshot.date_time or "-")
         self._labels["hours"].setText(f"{snapshot.hours:.1f}" if snapshot.hours else "-")
         self._labels["idle_time"].setText(f"{snapshot.idle_time:.1f}" if snapshot.idle_time else "-")

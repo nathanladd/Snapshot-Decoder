@@ -145,8 +145,29 @@ class PidPanel(QWidget):
         layout.addWidget(secondary_group, stretch=1)
         
         # Clear button
-        self._clear_btn = QPushButton("Clear All")
+        self._clear_btn = QPushButton(" ✕ Clear Chart")
         self._clear_btn.clicked.connect(self._on_clear_selections)
+        
+        # Style with faint red background
+        self._clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #ffe6e6;
+                border: 1px solid #ffcccc;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-weight: bold;
+                color: #cc0000;
+            }
+            QPushButton:hover {
+                background-color: #ffcccc;
+                border: 1px solid #ff9999;
+            }
+            QPushButton:pressed {
+                background-color: #ffb3b3;
+                border: 1px solid #ff6666;
+            }
+        """)
+        
         layout.addWidget(self._clear_btn)
     
     def set_snapshot(self, snapshot: Optional[Snapshot]):
