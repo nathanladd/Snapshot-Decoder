@@ -66,11 +66,14 @@ class MainWindow(QMainWindow):
         
         # Header panel with system indicators to the right
         header_row = QHBoxLayout()
+        header_row.setAlignment(Qt.AlignmentFlag.AlignTop)  # Align entire row to top
+        
         self.header_panel = HeaderPanel()
         header_row.addWidget(self.header_panel)
         
         self.system_panel = SystemPanel()
-        header_row.addWidget(self.system_panel)
+        # Vertically center the system panel relative to header panel
+        header_row.addWidget(self.system_panel, 0, Qt.AlignmentFlag.AlignVCenter)
         
         left_layout.addLayout(header_row)
         

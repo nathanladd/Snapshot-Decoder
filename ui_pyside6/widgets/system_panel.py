@@ -46,7 +46,11 @@ class SystemPanel(QWidget):
             self._set_label_off(label)
             layout.addWidget(label)
         
-        layout.addStretch()
+        # Add stretch to push labels to center when there's extra space
+        top_stretch = 1
+        bottom_stretch = 1
+        layout.insertStretch(0, top_stretch)  # Add stretch at top
+        layout.addStretch(bottom_stretch)    # Add stretch at bottom
     
     def _set_label_on(self, label: QLabel):
         """Style label as ON - glowing green indicator light."""
