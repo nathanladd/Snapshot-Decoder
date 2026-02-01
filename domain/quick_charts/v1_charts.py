@@ -126,18 +126,31 @@ V1_FUEL_COOLANT_TEMP = QuickChartDef(
 
 
 # Registry of all V1 charts by action_id
+
+# 🔄 How It Works:
+# Snapshot Detection: System determines if loaded data is V1 format
+# Registry Selection: Uses V1_CHARTS instead of EUD_CHARTS
+# UI Population: Quick chart panel shows V1-specific options
+# Chart Generation: Selected chart definition builds the appropriate plot
+# 💡 Example Flow:
+# User loads V1 snapshot data
+# Quick chart panel shows "Rail Pressure", "Turbo", etc.
+# User clicks "V1_TURBO" → looks up in V1_CHARTS
+# Gets V1_TURBO definition with boost pressure PIDs
+# Creates line chart showing turbo performance
+
 V1_CHARTS: dict[str, QuickChartDef] = {
-    "V1_BATTERY_TEST": V1_BATTERY_TEST,
-    "V1_RAIL_PRESSURE": V1_RAIL_PRESSURE,
-    "V1_RAIL_GAP": V1_RAIL_GAP,
-    "V1_IMV_CURRENT": V1_IMV_CURRENT,
-    "V1_TURBO": V1_TURBO,
-    "V1_EGR_FLOW": V1_EGR_FLOW,
-    "V1_EGR_POSITION": V1_EGR_POSITION,
-    "V1_PISTON_DELTA": V1_PISTON_DELTA,
-    "V1_CAM_CRANK": V1_CAM_CRANK,
-    "V1_START_AID": V1_START_AID,
-    "V1_AIR_FUEL_RATIO": V1_AIR_FUEL_RATIO,
-    "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,
-    "V1_FUEL_COOLANT_TEMP": V1_FUEL_COOLANT_TEMP,
+    "V1_BATTERY_TEST": V1_BATTERY_TEST,             # Battery Test
+    "V1_RAIL_PRESSURE": V1_RAIL_PRESSURE,           # Rail Pressure
+    "V1_RAIL_GAP": V1_RAIL_GAP,                     # Rail Gap
+    "V1_IMV_CURRENT": V1_IMV_CURRENT,               # IMV Current
+    "V1_TURBO": V1_TURBO,                           # Manifold Pressure vs Atmospheric Pressure
+    "V1_EGR_FLOW": V1_EGR_FLOW,                     # Speed density vs MAF
+    "V1_EGR_POSITION": V1_EGR_POSITION,             # EGR Position
+    "V1_PISTON_DELTA": V1_PISTON_DELTA,             # Piston Delta Speed
+    "V1_CAM_CRANK": V1_CAM_CRANK,                   # Cam/Crank Status
+    "V1_START_AID": V1_START_AID,                   # Start Aid / Glow Plug
+    "V1_AIR_FUEL_RATIO": V1_AIR_FUEL_RATIO,         # Air Fuel Ratio
+    "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,         # Torque Control
+    "V1_FUEL_COOLANT_TEMP": V1_FUEL_COOLANT_TEMP,   # Fuel & Coolant Temperature
 }

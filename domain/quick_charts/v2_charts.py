@@ -110,15 +110,28 @@ V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
 
 
 # Registry of all V2 charts by action_id
+
+# 🔄 How It Works:
+# Snapshot Detection: System determines if loaded data is V2 format
+# Registry Selection: Uses V2_CHARTS instead of V1_CHARTS or EUD_CHARTS
+# UI Population: Quick chart panel shows V2-specific options
+# Chart Generation: Selected chart definition builds the appropriate plot
+# 💡 Example Flow:
+# User loads V2 snapshot data
+# Quick chart panel shows "Rail Pressure", "Misfire", "Torque Limits", etc.
+# User clicks "V2_MISFIRE" → looks up in V2_CHARTS
+# Gets V2_MISFIRE definition with misfire detection PIDs
+# Creates status chart showing misfire flags
+ 
 V2_CHARTS: dict[str, QuickChartDef] = {
-    "V2_BATTERY_TEST": V2_BATTERY_TEST,
-    "V2_FUEL_COOLANT_TEMP": V2_FUEL_COOLANT_TEMP,
-    "V2_RAIL_PRESSURE": V2_RAIL_PRESSURE,
-    "V2_RAIL_GAP": V2_RAIL_GAP,
-    "V2_IMV_CURRENT": V2_IMV_CURRENT,
-    "V2_TURBO": V2_TURBO,
-    "V2_MISFIRE": V2_MISFIRE,
-    "V2_THROTTLE_VALVE": V2_THROTTLE_VALVE,
-    "V2_ENGINE_LOAD": V2_ENGINE_LOAD,
-    "V2_ENGINE_TORQUE_LIMITS": V2_ENGINE_TORQUE_LIMITS,
+    "V2_BATTERY_TEST": V2_BATTERY_TEST,                  # Battery Voltage vs Engine Speed
+    "V2_FUEL_COOLANT_TEMP": V2_FUEL_COOLANT_TEMP,        # Fuel & Coolant Temperature
+    "V2_RAIL_PRESSURE": V2_RAIL_PRESSURE,                # Actual vs Desired Rail Pressure
+    "V2_RAIL_GAP": V2_RAIL_GAP,                          # Rail Gap
+    "V2_IMV_CURRENT": V2_IMV_CURRENT,                    # IMV Current
+    "V2_TURBO": V2_TURBO,                                # Manifold Pressure vs Atmospheric Pressure
+    "V2_MISFIRE": V2_MISFIRE,                            # Misfire Counters
+    "V2_THROTTLE_VALVE": V2_THROTTLE_VALVE,              # Throttle Valve Position
+    "V2_ENGINE_LOAD": V2_ENGINE_LOAD,                    # Engine Load
+    "V2_ENGINE_TORQUE_LIMITS": V2_ENGINE_TORQUE_LIMITS,  # Engine Torque Limits
 }

@@ -134,6 +134,10 @@ UNIT_NORMALIZATION: dict[str, str] = {
     
     }
 
+#############################################################################################################################
+########################################### Snapshot Type Detectors #########################################################
+#############################################################################################################################
+
 # Define PIDs that identify each snapshot type (SnapType → list of identifying PIDs)
 # Detection will match if ANY of the listed PIDs are found in the header row
 SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
@@ -161,8 +165,14 @@ SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
     ],
 }
 
+
+#############################################################################################################################
+########################################### System Detectors ################################################################
+#############################################################################################################################
+
 # Define PIDs that identify specific engine systems
 # Detection will match if ANY of the listed PIDs are found in the snapshot
+
 SYSTEM_PIDS: dict[str, list[str]] = {
     "egr": [
         "ACM_Egr_position_dmnd", #ECU_V1
@@ -183,13 +193,7 @@ SYSTEM_PIDS: dict[str, list[str]] = {
     ],
     "air_throttle": [
         "ThrVlv_rAct", #ECU_V2
-        "P_L_Thrtl_feedback_abs_pos", #ECU_V1 (currently G70 only)
     ],
-    # "turbo": [
-    #     "p_l_boost_pres_raw",
-    #     "boost_pboostact",
-    #     "boost_pboostdes",
-    # ],
 }
 
 # Map snapshot types to their engine hours column names
