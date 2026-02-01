@@ -6,7 +6,14 @@ APP_TITLE = "Snapshot Decoder"
 # Help URL
 UPDATE_URL = "https://nathanladd.github.io/Snapshot-Decoder/"
 
-
+# Map snapshot types to their engine hours column names
+ENGINE_HOURS_COLUMNS = {
+    SnapType.ECU_V1: "EUD_Engine_run_time_total_nvv",
+    SnapType.ECU_V2: "EngDa_tiEngOn",
+    SnapType.EUD_V1: "EUD_Engine_run_time_total_nvv",
+    # Add more snapshot types and their column names as needed
+    # SnapType.ECU_V2: "column_name_for_v2",
+}
 # Buttons for each V1 snapshot type
 # Button name, COMMAND NAME, tooltip
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
@@ -196,11 +203,3 @@ SYSTEM_PIDS: dict[str, list[str]] = {
     ],
 }
 
-# Map snapshot types to their engine hours column names
-ENGINE_HOURS_COLUMNS = {
-    SnapType.ECU_V1: "EUD_Engine_run_time_total_nvv",
-    SnapType.ECU_V2: "EngDa_tiEngOn",
-    SnapType.EUD_V1: "EUD_Engine_run_time_total_nvv",
-    # Add more snapshot types and their column names as needed
-    # SnapType.ECU_V2: "column_name_for_v2",
-}
