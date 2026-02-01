@@ -9,8 +9,10 @@ from PySide6.QtWidgets import (
     QGroupBox, QLineEdit, QLabel, QPushButton, QAbstractItemView
 )
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 
 from domain.snapshot import Snapshot
+from ui.color_manager import ColorManager
 
 
 class PidPanel(QWidget):
@@ -25,6 +27,7 @@ class PidPanel(QWidget):
         self._all_pids: List[str] = []
         self._primary_pids: List[str] = []
         self._secondary_pids: List[str] = []
+        self._current_chart_config = None  # Store current chart config
         self._setup_ui()
     
     def _setup_ui(self):
@@ -324,3 +327,84 @@ class PidPanel(QWidget):
     def clear(self):
         """Clear the panel."""
         self.set_snapshot(None)
+    
+    def update_chart_colors(self, chart_config):
+        """
+        Update listbox colors to match chart series colors.
+        
+        Args:
+            chart_config: ChartConfig instance with current chart configuration
+        """
+        self._current_chart_config = chart_config
+        
+        if not chart_config:
+            self._reset_list_colors()
+            return
+        
+        # Update primary list colors
+        self._update_primary_list_colors(chart_config)
+        
+        # Update secondary list colors
+        self._update_secondary_list_colors(chart_config)
+    
+    def _update_primary_list_colors(self, chart_config):
+        """Update colors for primary axis list."""
+        for i in range(self._primary_list.count()):
+            item = self._primary_list.item(i)
+            pid_name = item.text().lstrip("─ ")
+            
+            if pid_name in chart_config.primary_axis.series:
+                series_index = chart_config.primary_axis.series.index(pid_name)
+                color = ColorManager.get_series_color(
+                    pid_name, False, series_index, chart_config.series_styles
+                )
+                bg_color = ColorManager.get_listbox_background(color)
+                text_color = ColorManager.get_contrast_text_color(bg_color)
+                
+                item.setBackground(QColor(bg_color))
+                item.setForeground(QColor(text_color))
+                item.setText(f"─ {pid_name}")  # Solid line indicator
+            else:
+                # Reset to default for items not in chart
+                item.setBackground(QColor("transparent"))
+                item.setForeground(QColor("black"))
+                text = item.text()
+                if text.startswith("─ "):
+                    item.setText(text[2:])
+    
+    def _update_secondary_list_colors(self, chart_config):
+        """Update colors for secondary axis list."""
+        for i in range(self._secondary_list.count()):
+            item = self._secondary_list.item(i)
+            pid_name = item.text().lstrip("━ ")
+            
+            if pid_name in chart_config.secondary_axis.series:
+                series_index = chart_config.secondary_axis.series.index(pid_name)
+                color = ColorManager.get_series_color(
+                    pid_name, True, series_index, chart_config.series_styles
+                )
+                bg_color = ColorManager.get_listbox_background(color)
+                text_color = ColorManager.get_contrast_text_color(bg_color)
+                
+                item.setBackground(QColor(bg_color))
+                item.setForeground(QColor(text_color))
+                item.setText(f"━ {pid_name}")  # Dashed line indicator
+            else:
+                # Reset to default for items not in chart
+                item.setBackground(QColor("transparent"))
+                item.setForeground(QColor("black"))
+                text = item.text()
+                if text.startswith("━ "):
+                    item.setText(text[2:])
+    
+    def _reset_list_colors(self):
+        """Reset all list colors to default."""
+        for list_widget in [self._primary_list, self._secondary_list]:
+            for i in range(list_widget.count()):
+                item = list_widget.item(i)
+                item.setBackground(QColor("transparent"))
+                item.setForeground(QColor("black"))
+                # Remove line style indicators
+                text = item.text()
+                if text.startswith("━ ") or text.startswith("─ "):
+                    item.setText(text[2:])

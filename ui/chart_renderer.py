@@ -16,6 +16,7 @@ from matplotlib.ticker import FuncFormatter
 from matplotlib import dates as mdates
 
 from domain.chart_config import ChartConfig, ChartType
+from ui.color_manager import ColorManager
 
 
 class ChartRenderer:
@@ -73,6 +74,22 @@ class ChartRenderer:
             if description:
                 return description
         return pid_name
+    
+    def _get_series_color(self, series_name: str, is_secondary: bool, series_index: int) -> str:
+        """
+        Get color for a series using ColorManager for consistency.
+        
+        Args:
+            series_name: Name of the series
+            is_secondary: Whether this is a secondary axis series
+            series_index: Index of the series in its axis
+            
+        Returns:
+            Hex color string
+        """
+        return ColorManager.get_series_color(
+            series_name, is_secondary, series_index, self.config.series_styles
+        )
     
     def render(
         self, 
@@ -228,6 +245,10 @@ class ChartRenderer:
                 if series_name in df.columns:
                     y_vals = pd.to_numeric(df[series_name], errors="coerce").fillna(0)
                     style = self.config.get_series_style(series_name, is_secondary=(ax == ax_right))
+                    
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, is_secondary=(ax == ax_right), series_index=i)
                                        
                     # Stack index
                     y_center = i * 1.5 + 0.5
@@ -298,10 +319,14 @@ class ChartRenderer:
         
         # Plot primary series
         if self.config.primary_axis.series:
-            for series_name in self.config.primary_axis.series:
+            for series_index, series_name in enumerate(self.config.primary_axis.series):
                 if series_name in df.columns:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=False)
+                    
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, False, series_index)
                     
                     legend_label = self._get_legend_label(series_name)
                     if x_key:
@@ -329,10 +354,14 @@ class ChartRenderer:
         
         # Plot secondary series
         if ax_right and self.config.secondary_axis.series:
-            for series_name in self.config.secondary_axis.series:
+            for series_index, series_name in enumerate(self.config.secondary_axis.series):
                 if series_name in df.columns:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=True)
+                    
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, True, series_index)
                     
                     legend_label = self._get_legend_label(series_name)
                     if x_key:
@@ -387,12 +416,16 @@ class ChartRenderer:
         
         # Plot primary series
         if self.config.primary_axis.series:
-            for i, series_name in enumerate(self.config.primary_axis.series):
+            for series_index, series_name in enumerate(self.config.primary_axis.series):
                 if series_name in df.columns:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=False)
                     
-                    offset = (i - num_primary / 2 + 0.5) * bar_width
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, False, series_index)
+                    
+                    offset = (series_index - num_primary / 2 + 0.5) * bar_width
                     legend_label = self._get_legend_label(series_name)
                     bars = ax_left.bar(
                         x_positions + offset, y,
@@ -414,12 +447,16 @@ class ChartRenderer:
         
         # Plot secondary series
         if ax_right and self.config.secondary_axis.series:
-            for i, series_name in enumerate(self.config.secondary_axis.series):
+            for series_index, series_name in enumerate(self.config.secondary_axis.series):
                 if series_name in df.columns:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=True)
                     
-                    offset = ((i + num_primary) - total_bars / 2 + 0.5) * bar_width
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, True, series_index)
+                    
+                    offset = ((series_index + num_primary) - total_bars / 2 + 0.5) * bar_width
                     legend_label = self._get_legend_label(series_name)
                     bars = ax_right.bar(
                         x_positions + offset, y,
@@ -459,10 +496,14 @@ class ChartRenderer:
         
         # Plot primary series
         if self.config.primary_axis.series:
-            for series_name in self.config.primary_axis.series:
+            for series_index, series_name in enumerate(self.config.primary_axis.series):
                 if series_name in df.columns:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=False)
+                    
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, False, series_index)
                     
                     if x_key:
                         x = df[x_key]
@@ -481,10 +522,14 @@ class ChartRenderer:
         
         # Plot secondary series
         if ax_right and self.config.secondary_axis.series:
-            for series_name in self.config.secondary_axis.series:
+            for series_index, series_name in enumerate(self.config.secondary_axis.series):
                 if series_name in df.columns:
                     y = pd.to_numeric(df[series_name], errors="coerce")
                     style = self.config.get_series_style(series_name, is_secondary=True)
+                    
+                    # Use ColorManager for consistent colors
+                    if not style.color:
+                        style.color = self._get_series_color(series_name, True, series_index)
                     
                     if x_key:
                         x = df[x_key]

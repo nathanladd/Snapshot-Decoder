@@ -22,6 +22,7 @@ from domain.snaptypes import SnapType
 from domain import quick_charts
 from domain.chart_config import ChartConfig, AxisConfig
 from ui.chart_renderer import ChartRenderer
+from ui.color_manager import ColorManager
 from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE, APP_VERSION, UPDATE_URL
 
@@ -637,6 +638,68 @@ class SnapshotDecoderApp(tk.Tk):
             return float(s)
         except ValueError:
             return None
+    
+    def update_listbox_colors(self):
+        """Update Tkinter listbox colors to match chart configuration."""
+        if not self.working_config:
+            self._reset_listbox_colors()
+            return
+        
+        # Update primary list colors
+        self._update_tkinter_list_colors(
+            self.primary_list,
+            self.working_config.primary_axis.series,
+            is_secondary=False
+        )
+        
+        # Update secondary list colors
+        self._update_tkinter_list_colors(
+            self.secondary_list,
+            self.working_config.secondary_axis.series,
+            is_secondary=True
+        )
+    
+    def _update_tkinter_list_colors(self, listbox, series_list, is_secondary=False):
+        """Update colors for Tkinter listbox."""
+        for i in range(listbox.size()):
+            pid_name = listbox.get(i)
+            
+            # Remove line style indicators if present
+            clean_pid = pid_name.lstrip("─━ ")
+            
+            if clean_pid in series_list:
+                series_index = series_list.index(clean_pid)
+                color = ColorManager.get_series_color(
+                    clean_pid, is_secondary, series_index, self.working_config.series_styles
+                )
+                bg_color = ColorManager.get_listbox_background(color)
+                
+                # Apply colors using itemconfig
+                listbox.itemconfig(i, background=bg_color, foreground="black")
+                
+                # Add line style indicator
+                prefix = "─ " if not is_secondary else "━ "
+                listbox.delete(i)
+                listbox.insert(i, prefix + clean_pid)
+            else:
+                # Reset to default
+                listbox.itemconfig(i, background="white", foreground="black")
+                # Remove line style indicators
+                if pid_name.startswith("─ ") or pid_name.startswith("━ "):
+                    listbox.delete(i)
+                    listbox.insert(i, clean_pid)
+    
+    def _reset_listbox_colors(self):
+        """Reset all listbox colors to default."""
+        for listbox in [self.primary_list, self.secondary_list]:
+            for i in range(listbox.size()):
+                pid_name = listbox.get(i)
+                # Remove line style indicators
+                clean_pid = pid_name.lstrip("─━ ")
+                if clean_pid != pid_name:
+                    listbox.delete(i)
+                    listbox.insert(i, clean_pid)
+                listbox.itemconfig(i, background="white", foreground="black")
 
 #------------------------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------------- Plotting ---------------------------------------------------------------
@@ -662,6 +725,9 @@ class SnapshotDecoderApp(tk.Tk):
         try:
             renderer = ChartRenderer(self.working_config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
+            
+            # Update listbox colors to match chart
+            self.update_listbox_colors()
             
             # Add interactive slider and cursors
             self._add_interactivity()
@@ -872,6 +938,9 @@ class SnapshotDecoderApp(tk.Tk):
 
         # Clear working config
         self.working_config = None
+        
+        # Reset listbox colors
+        self._reset_listbox_colors()
 
         # Clear and rebuild the axes
         self.figure.clear()

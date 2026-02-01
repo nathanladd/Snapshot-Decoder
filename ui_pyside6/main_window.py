@@ -248,10 +248,16 @@ class MainWindow(QMainWindow):
                 self.snapshot, primary_pids, secondary_pids,
                 axis_settings=self._get_axis_settings()
             )
+            # Update PID panel colors to match chart
+            config = self.chart_widget.get_current_config()
+            if config:
+                self.pid_panel.update_chart_colors(config)
             self._update_axis_controls_from_chart()
         else:
             # No PIDs selected, clear the chart
             self.chart_widget.clear()
+            # Reset PID panel colors
+            self.pid_panel.update_chart_colors(None)
             self.axis_controls_panel.clear()
     
     @Slot()
@@ -268,6 +274,15 @@ class MainWindow(QMainWindow):
                 self.snapshot, primary_pids, secondary_pids,
                 axis_settings=self._get_axis_settings()
             )
+            # Update PID panel colors to match chart
+            config = self.chart_widget.get_current_config()
+            if config:
+                self.pid_panel.update_chart_colors(config)
+        else:
+            # No PIDs selected, clear the chart
+            self.chart_widget.clear()
+            # Reset PID panel colors
+            self.pid_panel.update_chart_colors(None)
     
     def _get_axis_settings(self) -> dict:
         """Get current axis settings from controls panel."""
@@ -341,6 +356,11 @@ class MainWindow(QMainWindow):
         primary_pids = self.chart_widget.get_current_primary_pids()
         secondary_pids = self.chart_widget.get_current_secondary_pids()
         self.pid_panel.set_pids(primary_pids, secondary_pids, emit_signal=False)
+        
+        # Update PID panel colors to match quick chart
+        config = self.chart_widget.get_current_config()
+        if config:
+            self.pid_panel.update_chart_colors(config)
         
         # Update axis controls from the chart config
         self._update_axis_controls_from_config()

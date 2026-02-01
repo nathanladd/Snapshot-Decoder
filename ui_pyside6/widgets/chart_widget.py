@@ -18,6 +18,8 @@ from matplotlib.ticker import FuncFormatter
 from domain.snapshot import Snapshot
 from domain.chart_config import ChartConfig, AxisConfig
 from domain.quick_charts import QUICK_CHART_REGISTRY, ChartConfigBuilder
+from ui.color_manager import ColorManager
+from ui.chart_renderer import ChartRenderer
 
 
 def _format_time_mmss(seconds, pos):
@@ -296,37 +298,19 @@ class ChartWidget(QWidget):
         # Render the updated config
         self._render_config(self._current_config)
     
+    def get_current_config(self) -> Optional[ChartConfig]:
+        """Get the current chart configuration."""
+        return self._current_config
+    
     def _render_config(self, config: ChartConfig):
-        """Render a ChartConfig."""
-        self._figure.clear()
-        self._ax = self._figure.add_subplot(111)
+        """Render a ChartConfig using ChartRenderer."""
+        # Use ChartRenderer for consistent rendering with ColorManager
+        renderer = ChartRenderer(config)
+        ax_left, ax_right = renderer.render(self._figure, self._canvas)
         
-        df = config.data
-        x_col = config.get_x_column()
-        if x_col and x_col in df.columns:
-            x_data = pd.to_numeric(df[x_col], errors='coerce')
-            # Apply mm:ss formatting if this is a time column
-            if x_col == "Time":
-                self._ax.xaxis.set_major_formatter(FuncFormatter(_format_time_mmss))
-                self._ax.set_xlabel("Time (MM:SS)")
-        else:
-            x_data = df.index
-        
-        if config.chart_type == "line":
-            self._render_line_chart(config, x_data)
-        elif config.chart_type == "status":
-            self._render_status_chart(config, x_data)
-        elif config.chart_type == "bar":
-            self._render_bar_chart(config)
-        elif config.chart_type == "bubble":
-            self._render_bubble_chart(config)
-        else:
-            self._render_line_chart(config, x_data)
-        
-        self._ax.set_title(config.title)
-        self._ax.grid(config.grid, linestyle=config.grid_style, linewidth=config.grid_linewidth)
-        self._figure.tight_layout()
-        self._canvas.draw()
+        # Store the axes for reference
+        self._ax = ax_left
+        self._ax_secondary = ax_right
     
     def _render_line_chart(self, config: ChartConfig, x_data):
         """Render a line chart."""
