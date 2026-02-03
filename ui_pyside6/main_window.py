@@ -10,7 +10,7 @@ from typing import Optional
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QMenuBar, QMenu, QStatusBar, QProgressDialog, QMessageBox,
-    QFileDialog, QLabel, QFrame
+    QFileDialog, QLabel, QFrame, QCheckBox
 )
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QAction, QIcon, QPixmap
@@ -19,6 +19,7 @@ from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
 from controllers.snapshot_loader import SnapshotLoader
 from version import APP_VERSION
+from infrastructure import get_logger, set_verbose
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
@@ -26,6 +27,7 @@ from ui_pyside6.widgets.pid_panel import PidPanel
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
 from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
+from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 
 
 class MainWindow(QMainWindow):
@@ -34,6 +36,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
+        # Initialize logging system
+        self.logger = get_logger()
+        self.logger.logger.info(f"Starting {APP_TITLE} v{APP_VERSION}")
+        
         self.snapshot: Optional[Snapshot] = None
         self._loader: Optional[SnapshotLoader] = None
         self._progress_dialog: Optional[QProgressDialog] = None
@@ -41,6 +47,7 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._setup_menu()
         self._setup_statusbar()
+        self._setup_log_console()
         
         self.setWindowTitle(f"{APP_TITLE} {APP_VERSION}")
         self.resize(1400, 900)
@@ -157,6 +164,21 @@ class MainWindow(QMainWindow):
         pid_info_action = QAction("&PID Info...", self)
         pid_info_action.triggered.connect(self._on_show_pid_info)
         view_menu.addAction(pid_info_action)
+        
+        view_menu.addSeparator()
+        
+        log_console_action = QAction("&Log Console", self)
+        log_console_action.setCheckable(True)
+        log_console_action.triggered.connect(self._on_toggle_log_console)
+        view_menu.addAction(log_console_action)
+        
+        # Tools menu
+        tools_menu = menubar.addMenu("&Tools")
+        
+        verbose_action = QAction("&Verbose Logging", self)
+        verbose_action.setCheckable(True)
+        verbose_action.triggered.connect(self._on_toggle_verbose)
+        tools_menu.addAction(verbose_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -396,3 +418,28 @@ class MainWindow(QMainWindow):
             "A tool for analyzing engine snapshot data.\n\n"
             "© 2024-2025"
         )
+    
+    @Slot()
+    def _on_toggle_verbose(self, checked: bool):
+        """Toggle verbose logging mode."""
+        set_verbose(checked)
+        status = "enabled" if checked else "disabled"
+        self.logger.logger.info(f"Verbose logging {status}")
+        self.statusbar.showMessage(f"Verbose logging {status}", 3000)
+    
+    def _setup_log_console(self):
+        """Setup the log console dock widget."""
+        self.log_console_dock = LogConsoleDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.log_console_dock)
+        
+        # Hide by default (user can show via View menu)
+        self.log_console_dock.hide()
+    
+    @Slot()
+    def _on_toggle_log_console(self):
+        """Toggle log console visibility."""
+        if self.log_console_dock.isVisible():
+            self.log_console_dock.hide()
+        else:
+            self.log_console_dock.show()
+            self.log_console_dock.raise_()  # Bring to front

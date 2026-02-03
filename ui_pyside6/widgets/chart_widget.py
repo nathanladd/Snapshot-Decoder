@@ -18,6 +18,7 @@ from matplotlib.ticker import FuncFormatter
 from domain.snapshot import Snapshot
 from domain.chart_config import ChartConfig, AxisConfig
 from domain.quick_charts import QUICK_CHART_REGISTRY, ChartConfigBuilder
+from infrastructure import log_chart_generated, debug
 from ui.color_manager import ColorManager
 from ui.chart_renderer import ChartRenderer
 
@@ -203,9 +204,12 @@ class ChartWidget(QWidget):
         self._snapshot = snapshot
         self._current_action_id = action_id
         
+        debug(f"Plotting quick chart: {action_id}")
+        
         # Get chart definition from registry
         definition = QUICK_CHART_REGISTRY.get(action_id)
         if not definition:
+            debug(f"Unknown chart action ID: {action_id}")
             self._ax.clear()
             self._ax.text(
                 0.5, 0.5, f"Unknown chart: {action_id}",
@@ -218,6 +222,21 @@ class ChartWidget(QWidget):
         # Build chart config
         config = ChartConfigBuilder.build(definition, snapshot)
         self._current_config = config
+        
+        # Log chart generation for audit trail
+        all_pids = []
+        if config.primary_axis.series:
+            all_pids.extend(config.primary_axis.series)
+        if config.secondary_axis.series:
+            all_pids.extend(config.secondary_axis.series)
+        
+        log_chart_generated(
+            chart_type=config.chart_type,
+            pids=all_pids,
+            snapshot_file=snapshot.file_name
+        )
+        
+        debug(f"Generated {config.chart_type} chart with {len(all_pids)} PIDs")
         
         # Render based on chart type
         self._render_config(config)

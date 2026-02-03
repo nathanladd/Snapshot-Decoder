@@ -4,6 +4,34 @@ Infrastructure package - Cross-cutting concerns.
 Contains logging, configuration, and other infrastructure services.
 """
 
-from infrastructure.logging_config import setup_logging, get_logger
+from .logging_config import (
+    SnapshotLogger,
+    get_logger,
+    set_verbose,
+    log_custody,
+    log_file_loaded,
+    log_file_error,
+    log_chart_generated,
+    log_export,
+    debug,
+    info,
+    warning,
+    error,
+    critical
+)
 
-__all__ = ["setup_logging", "get_logger"]
+__all__ = [
+    "SnapshotLogger",
+    "get_logger",
+    "set_verbose",
+    "log_custody",
+    "log_file_loaded",
+    "log_file_error",
+    "log_chart_generated",
+    "log_export",
+    "debug",
+    "info",
+    "warning",
+    "error",
+    "critical"
+]
