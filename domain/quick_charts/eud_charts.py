@@ -106,14 +106,16 @@ V1EUD_EGT = BarChartDef(
 
 # Registry of all EUD charts by action_id
 
-# 📊 What It Contains:
+# What It Contains:
 # Keys: String action IDs (e.g., "V1EUD_SPEED_V_LOAD")
 # Values: Chart definition objects (e.g., V1EUD_SPEED_V_LOAD)
-# 🔄 How It's Used:
+
+# How It's Used:
 # UI Buttons: Quick chart buttons use these action IDs when clicked
 # Chart Lookup: When a user clicks a quick chart, the system looks up the action ID in this registry
 # Chart Building: The corresponding chart definition is used to build the actual chart
-# 💡 Example Flow:
+
+# Example Flow:
 # User clicks "Speed vs Load" button → action ID "V1EUD_SPEED_V_LOAD"
 # System looks up "V1EUD_SPEED_V_LOAD" in EUD_CHARTS registry
 # Gets the V1EUD_SPEED_V_LOAD chart definition

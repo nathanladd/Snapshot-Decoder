@@ -15,8 +15,13 @@ ENGINE_HOURS_COLUMNS = {
     # Add more snapshot types and their column names as needed
     # SnapType.ECU_V2: "column_name_for_v2",
 }
-# Buttons for each V1 snapshot type
-# Button name, COMMAND NAME, tooltip
+
+#################################################################################################################################
+########################################### Quick Chart V1_ECU ##################################################################
+#################################################################################################################################
+
+#                           Format: Button name, COMMAND NAME, tooltip
+
 BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     SnapType.ECU_V1: [
         ("Battery Test", "V1_BATTERY_TEST", 
@@ -46,9 +51,12 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         ("Fuel/Coolant Temp", "V1_FUEL_COOLANT_TEMP", 
         "Fuel/Coolant Temperature")
     ],
-    
-# Buttons for each V2 snapshot type
-# Button name, COMMAND NAME, tooltip
+
+########################################################################################################################################
+############################################### Buttons for each V2 snapshot type ######################################################
+########################################################################################################################################
+
+#                                      Format:Button name, COMMAND NAME, tooltip
     SnapType.ECU_V2: [
         ("Battery Test", "V2_BATTERY_TEST", 
         "Battery Voltage vs RPM"),
@@ -138,8 +146,7 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "count": "Counter",
     "mg/stroke": "Milligrams/Stroke",
     "kpa": "Kilopascals",
-    "bar": "Barometric Pressure",
-    
+    "bar": "Barometric Pressure",  
     }
 
 #############################################################################################################################
@@ -171,6 +178,17 @@ SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
         "eud_engine_idle_time_nvv",
         "i_c_mdp_correction_dat_i_0",
     ],
+    SnapType.EUD_V2: [
+       "FlSys_volFlConsTot",
+       "GlbDa_D2Tmr_mp[0]",
+       "GlbDa_D1Tmr_mp[0]",
+       "GlbDa_SingleRngTmr_mp[0]",
+       "GlbDa_EventCounter_mp[0]",
+       "GlbDa_MinMax_mp[0]",
+       "EngDa_tiEngOp1_mp[0]",
+       "EngDa_tiEngOp2_mp[0]",
+       "EngDa_tiEngOp3_mp[0]",
+    ],
 }
 
 
@@ -183,24 +201,24 @@ SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
 
 SYSTEM_PIDS: dict[str, list[str]] = {
     "egr": [
-        "ACM_Egr_position_dmnd", #ECU_V1
-        "IN_Egr_position", #ECU_V1
-        "egrvlv_ract", #ECU_V2
-        "egrvlv_r", #ECU_V2
+        "ACM_Egr_position_dmnd",       #ECU_V1
+        "IN_Egr_position",             #ECU_V1
+        "egrvlv_ract",                 #ECU_V2
+        "egrvlv_r",                    #ECU_V2
     ],
     "doc": [
-        "exh_tadaptoxicatus", #ECU_V2
-        "exh_urawtoxicatus", #ECU_V2
+        "exh_tadaptoxicatus",          #ECU_V2
+        "exh_urawtoxicatus",           #ECU_V2
     ],
     "dpf": [
-        "Exh_pPFltDiff", #ECU_V2
+        "Exh_pPFltDiff",               #ECU_V2
     ],
     "scr": [
-        "scr_pupmpp", #ECU_V2
+        "scr_pupmpp",                  #ECU_V2
         "P_T_Dpf_model_soot_mass_nvv", #ECU_V1 (SCR PIDs in V1 seem to be labeled DPF)
     ],
     "air_throttle": [
-        "ThrVlv_rAct", #ECU_V2
+        "ThrVlv_rAct",                 #ECU_V2
     ],
 }
 
