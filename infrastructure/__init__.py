@@ -7,7 +7,6 @@ Contains logging, configuration, and other infrastructure services.
 from .logging_config import (
     SnapshotLogger,
     get_logger,
-    set_verbose,
     log_custody,
     log_file_loaded,
     log_file_error,
@@ -23,7 +22,6 @@ from .logging_config import (
 __all__ = [
     "SnapshotLogger",
     "get_logger",
-    "set_verbose",
     "log_custody",
     "log_file_loaded",
     "log_file_error",

@@ -209,6 +209,7 @@ SYSTEM_PIDS: dict[str, list[str]] = {
     "doc": [
         "exh_tadaptoxicatus",          #ECU_V2
         "exh_urawtoxicatus",           #ECU_V2
+        "TSE_Doc_in_temp",             #ECU_V1
     ],
     "dpf": [
         "Exh_pPFltDiff",               #ECU_V2

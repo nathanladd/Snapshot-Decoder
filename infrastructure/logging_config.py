@@ -52,7 +52,7 @@ class SnapshotLogger:
         return logs_dir
     
     def _setup_handlers(self):
-        """Setup file and console handlers with appropriate formatting."""
+        """Setup file handlers only (no console output)."""
         # Clear any existing handlers
         self.logger.handlers.clear()
         
@@ -65,27 +65,15 @@ class SnapshotLogger:
             encoding='utf-8'
         )
         
-        # Console handler (only in verbose mode)
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.WARNING)  # Default to warnings only
-        
         # Formatters
         detailed_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
         )
-        simple_formatter = logging.Formatter(
-            '%(levelname)s: %(message)s'
-        )
         
         file_handler.setFormatter(detailed_formatter)
-        console_handler.setFormatter(simple_formatter)
         
-        # Add handlers
+        # Add file handler only
         self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
-        
-        # Store reference for verbosity control
-        self.console_handler = console_handler
     
     def _setup_custody_logging(self) -> logging.Logger:
         """Setup separate logger for chain of custody tracking."""
@@ -114,13 +102,6 @@ class SnapshotLogger:
         custody_logger.propagate = False
         
         return custody_logger
-    
-    def set_verbose(self, verbose: bool):
-        """Toggle verbose logging mode."""
-        if verbose:
-            self.console_handler.setLevel(logging.DEBUG)
-        else:
-            self.console_handler.setLevel(logging.WARNING)
     
     def log_custody_event(self, event_type: str, details: str, level: str = "INFO"):
         """Log a chain of custody event."""
@@ -186,12 +167,6 @@ def get_logger() -> SnapshotLogger:
     if _global_logger is None:
         _global_logger = SnapshotLogger()
     return _global_logger
-
-
-def set_verbose(verbose: bool):
-    """Toggle verbose logging mode globally."""
-    logger = get_logger()
-    logger.set_verbose(verbose)
 
 
 def log_custody(event_type: str, details: str, level: str = "INFO"):

@@ -19,7 +19,7 @@ from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
 from controllers.snapshot_loader import SnapshotLoader
 from version import APP_VERSION
-from infrastructure import get_logger, set_verbose
+from infrastructure import get_logger
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
@@ -172,13 +172,11 @@ class MainWindow(QMainWindow):
         log_console_action.triggered.connect(self._on_toggle_log_console)
         view_menu.addAction(log_console_action)
         
-        # Tools menu
-        tools_menu = menubar.addMenu("&Tools")
+        view_menu.addSeparator()
         
-        verbose_action = QAction("&Verbose Logging", self)
-        verbose_action.setCheckable(True)
-        verbose_action.triggered.connect(self._on_toggle_verbose)
-        tools_menu.addAction(verbose_action)
+        open_logs_action = QAction("&Open Log Files...", self)
+        open_logs_action.triggered.connect(self._on_open_log_files)
+        view_menu.addAction(open_logs_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -419,20 +417,12 @@ class MainWindow(QMainWindow):
             "© 2024-2025"
         )
     
-    @Slot()
-    def _on_toggle_verbose(self, checked: bool):
-        """Toggle verbose logging mode."""
-        set_verbose(checked)
-        status = "enabled" if checked else "disabled"
-        self.logger.logger.info(f"Verbose logging {status}")
-        self.statusbar.showMessage(f"Verbose logging {status}", 3000)
-    
     def _setup_log_console(self):
         """Setup the log console dock widget."""
         self.log_console_dock = LogConsoleDock(self)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.log_console_dock)
         
-        # Hide by default (user can show via View menu)
+        # Hide by default (user can show via menu)
         self.log_console_dock.hide()
     
     @Slot()
@@ -443,3 +433,26 @@ class MainWindow(QMainWindow):
         else:
             self.log_console_dock.show()
             self.log_console_dock.raise_()  # Bring to front
+    
+    @Slot()
+    def _on_open_log_files(self):
+        """Open the log files directory in file explorer."""
+        import subprocess
+        import platform
+        
+        logger = get_logger()
+        log_dir = logger.logs_dir
+        
+        try:
+            if platform.system() == "Windows":
+                subprocess.run(["explorer", str(log_dir)], check=True)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", str(log_dir)], check=True)
+            else:  # Linux
+                subprocess.run(["xdg-open", str(log_dir)], check=True)
+        except Exception as e:
+            QMessageBox.warning(
+                self, 
+                "Error", 
+                f"Could not open log files directory:\n{str(e)}"
+            )

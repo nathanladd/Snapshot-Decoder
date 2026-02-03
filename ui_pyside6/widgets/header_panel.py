@@ -37,7 +37,6 @@ class HeaderPanel(QWidget):
             ("date_time", "Date/Time:"),
             ("hours", "Engine Hours:"),
             ("idle_time", "Idle Time:"),
-            ("mdp_success", "MDP Success:"),
         ]
         
         for row, (key, label_text) in enumerate(fields):
@@ -68,9 +67,6 @@ class HeaderPanel(QWidget):
         self._labels["date_time"].setText(snapshot.date_time or "-")
         self._labels["hours"].setText(f"{snapshot.hours:.1f}" if snapshot.hours else "-")
         self._labels["idle_time"].setText(f"{snapshot.idle_time:.1f}" if snapshot.idle_time else "-")
-        self._labels["mdp_success"].setText(
-            f"{snapshot.mdp_success_rate:.1f}%" if snapshot.mdp_success_rate else "-"
-        )
     
     def clear(self):
         """Clear all displayed data."""

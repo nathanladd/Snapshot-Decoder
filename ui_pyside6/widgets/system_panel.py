@@ -23,6 +23,7 @@ class SystemPanel(QWidget):
         ("has_dpf", "DPF"),
         ("has_scr", "SCR"),
         ("has_air_throttle", "Air Throttle"),
+        ("mdp_system", "MDP"),  # Special case for MDP system
     ]
     
     def __init__(self, parent=None):
@@ -43,6 +44,11 @@ class SystemPanel(QWidget):
             label.setFixedHeight(20)
             label.setFixedWidth(70)
             self._system_labels[attr_name] = label
+            
+            # Special initialization for MDP label
+            if attr_name == "mdp_system":
+                label.setText("MDP")  # Initial text
+            
             self._set_label_off(label)
             layout.addWidget(label)
         
@@ -86,22 +92,53 @@ class SystemPanel(QWidget):
         font.setStrikeOut(False)
         label.setFont(font)
     
+    def _set_mdp_label(self, label: QLabel, success_rate: float):
+        """Style MDP label with success percentage."""
+        # Green background with success percentage
+        label.setStyleSheet(f"""
+            QLabel {{
+                background-color: #00AA00;
+                color: #FFFFFF;
+                font-weight: bold;
+                font-size: 9px;
+                border: 2px solid #00DD00;
+                border-radius: 4px;
+                padding: 2px 4px;
+            }}
+        """)
+        label.setText(f"MDP {success_rate:.1f}%")
+        font = label.font()
+        font.setStrikeOut(False)
+        label.setFont(font)
+    
     def set_snapshot(self, snapshot: Optional[Snapshot]):
         """Update the panel with snapshot data."""
         if snapshot is None:
-            for label in self._system_labels.values():
+            for attr_name, label in self._system_labels.items():
+                if attr_name == "mdp_system":
+                    # Reset MDP label text to just "MDP"
+                    label.setText("MDP")
                 self._set_label_off(label)
             return
         
         # Update each system label based on snapshot attributes
         for attr_name, display_name in self.SYSTEMS:
             label = self._system_labels[attr_name]
-            has_system = getattr(snapshot, attr_name, False)
             
-            if has_system:
-                self._set_label_on(label)
+            if attr_name == "mdp_system":
+                # Special handling for MDP system
+                if snapshot.mdp_success_rate is not None and snapshot.mdp_success_rate > 0:
+                    self._set_mdp_label(label, snapshot.mdp_success_rate)
+                else:
+                    self._set_label_off(label)
             else:
-                self._set_label_off(label)
+                # Regular system handling
+                has_system = getattr(snapshot, attr_name, False)
+                
+                if has_system:
+                    self._set_label_on(label)
+                else:
+                    self._set_label_off(label)
     
     def clear(self):
         """Clear all displayed data."""
