@@ -11,7 +11,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
@@ -21,6 +20,7 @@ from domain.quick_charts import QUICK_CHART_REGISTRY, ChartConfigBuilder
 from infrastructure import log_chart_generated, debug
 from ui.color_manager import ColorManager
 from ui.chart_renderer import ChartRenderer
+from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 
 
 def _format_time_mmss(seconds, pos):
@@ -56,8 +56,8 @@ class ChartWidget(QWidget):
         self._ax = self._figure.add_subplot(111)
         self._ax_secondary: Optional[object] = None
         
-        # Navigation toolbar - let system palette handle styling
-        self._toolbar = NavigationToolbar(self._canvas, self)
+        # Custom navigation toolbar with PDF export
+        self._toolbar = CustomNavigationToolbar(self._canvas, self)
         layout.addWidget(self._toolbar)
         
         # Canvas
@@ -323,6 +323,9 @@ class ChartWidget(QWidget):
     
     def _render_config(self, config: ChartConfig):
         """Render a ChartConfig using ChartRenderer."""
+        # Update toolbar with current config for PDF export
+        self._toolbar.set_chart_config(config)
+        
         # Use ChartRenderer for consistent rendering with ColorManager
         renderer = ChartRenderer(config)
         ax_left, ax_right = renderer.render(self._figure, self._canvas)
