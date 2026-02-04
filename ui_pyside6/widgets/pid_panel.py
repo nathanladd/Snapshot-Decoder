@@ -21,6 +21,9 @@ class PidPanel(QWidget):
     # Signal emitted when PID selection changes
     pids_changed = Signal()
     
+    # Signal emitted when PID info window is requested
+    pid_info_requested = Signal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self._snapshot: Optional[Snapshot] = None
@@ -29,6 +32,11 @@ class PidPanel(QWidget):
         self._secondary_pids: List[str] = []
         self._current_chart_config = None  # Store current chart config
         self._setup_ui()
+        self._connect_signals()
+    
+    def _connect_signals(self):
+        """Connect internal signals."""
+        self._pid_info_btn.clicked.connect(self.pid_info_requested.emit)
     
     def _setup_ui(self):
         """Set up the UI layout."""
@@ -40,6 +48,18 @@ class PidPanel(QWidget):
         available_group = QGroupBox("Available PIDs")
         available_layout = QVBoxLayout(available_group)
         available_layout.setSpacing(4)
+        
+        # Header with PID info button
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(QLabel("Available PIDs"))
+        
+        self._pid_info_btn = QPushButton("PID Info")
+        self._pid_info_btn.setToolTip("Open PID descriptions window")
+        self._pid_info_btn.setFixedWidth(80)
+        header_layout.addWidget(self._pid_info_btn)
+        header_layout.addStretch()
+        
+        available_layout.addLayout(header_layout)
         
         # Search box
         search_layout = QHBoxLayout()

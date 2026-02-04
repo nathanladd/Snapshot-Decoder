@@ -109,6 +109,7 @@ class MainWindow(QMainWindow):
         # PID selection panel
         self.pid_panel = PidPanel()
         self.pid_panel.pids_changed.connect(self._on_pids_changed)
+        self.pid_panel.pid_info_requested.connect(self._on_show_pid_info)
         left_layout.addWidget(self.pid_panel, stretch=1)
         
         # Axis controls panel
