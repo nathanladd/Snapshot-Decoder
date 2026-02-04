@@ -443,6 +443,17 @@ class MainWindow(QMainWindow):
         logger = get_logger()
         log_dir = logger.logs_dir
         
+        # Ensure the log directory exists
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            QMessageBox.warning(
+                self, 
+                "Error", 
+                f"Could not create log directory:\n{str(e)}"
+            )
+            return
+        
         try:
             if platform.system() == "Windows":
                 subprocess.run(["explorer", str(log_dir)], check=True)
@@ -454,5 +465,5 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(
                 self, 
                 "Error", 
-                f"Could not open log files directory:\n{str(e)}"
+                f"Could not open log files directory:\n{str(e)}\n\nPath: {log_dir}"
             )
