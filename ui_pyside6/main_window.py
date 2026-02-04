@@ -466,7 +466,7 @@ class MainWindow(QMainWindow):
     def _setup_log_console(self):
         """Setup the log console dock widget."""
         self.log_console_dock = LogConsoleDock(self)
-        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.log_console_dock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_console_dock)
         
         # Hide by default (user can show via menu)
         self.log_console_dock.hide()
