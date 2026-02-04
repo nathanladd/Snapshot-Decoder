@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         # UI state
         self.snapshot: Optional[Snapshot] = None
         self._progress_dialog: Optional[QProgressDialog] = None
+        self._pid_info_window: Optional[PidInfoWindow] = None
         
         # Setup UI and connect signals
         self._setup_ui()
@@ -305,24 +306,33 @@ class MainWindow(QMainWindow):
         if not self.app_controller.has_snapshot():
             return
         
+        # Get current PIDs from panel
         primary_pids = self.pid_panel.get_primary_pids()
         secondary_pids = self.pid_panel.get_secondary_pids()
         
+        # Update chart if we have PIDs, otherwise clear chart
         if primary_pids or secondary_pids:
             self.chart_widget.update_chart(
-                self.app_controller.get_snapshot(), primary_pids, secondary_pids,
-                axis_settings=self._get_axis_settings()
+                self.app_controller.get_snapshot(),
+                primary_pids,
+                secondary_pids,
+                self.axis_controls_panel.get_axis_settings()
             )
-            # Update PID panel colors to match chart
-            config = self.chart_widget.get_current_config()
-            if config:
-                self.pid_panel.update_chart_colors(config)
-            self._update_axis_controls_from_config()
         else:
-            # No PIDs selected, clear the chart
+            # Clear chart when no PIDs selected
             self.chart_widget.clear()
-            # Reset PID panel colors
+        
+        # Update PID panel colors
+        config = self.chart_widget.get_current_config()
+        if config:
+            self.pid_panel.update_chart_colors(config)
+        else:
+            # Reset colors when no chart
             self.pid_panel.update_chart_colors(None)
+        
+        # Update PID info window if it's open
+        if self._pid_info_window:
+            self._pid_info_window.update_chart_pids(primary_pids, secondary_pids)
     
     @Slot(list, list)
     def _on_pid_selection_changed(self, primary_pids: list, secondary_pids: list):
@@ -448,6 +458,10 @@ class MainWindow(QMainWindow):
         
         # Update axis controls from the chart config
         self._update_axis_controls_from_config()
+        
+        # Update PID info window if it's open
+        if self._pid_info_window:
+            self._pid_info_window.update_chart_pids(primary_pids, secondary_pids)
     
     @Slot()
     def _on_show_raw_table(self):
@@ -529,63 +543,55 @@ class MainWindow(QMainWindow):
         # Create and show PID info window
         pid_info_window = PidInfoWindow(self, pid_info, self.snapshot.file_path)
         
-        # Connect signals for adding PIDs to axes
-        pid_info_window.pid_added_to_primary.connect(self._on_pid_added_to_primary)
-        pid_info_window.pid_added_to_secondary.connect(self._on_pid_added_to_secondary)
+        # Store reference for updates
+        self._pid_info_window = pid_info_window
+        
+        # Initialize with current chart PIDs
+        if self.app_controller.has_snapshot():
+            primary_pids = self.pid_panel.get_primary_pids()
+            secondary_pids = self.pid_panel.get_secondary_pids()
+            pid_info_window.update_chart_pids(primary_pids, secondary_pids)
         
         pid_info_window.show()
     
-    @Slot(str)
-    def _on_pid_added_to_primary(self, pid: str):
-        """Handle PID added to primary axis from PID info window."""
-        # Get current primary PIDs
-        current_primary = self.pid_panel.get_primary_pids()
-        current_secondary = self.pid_panel.get_secondary_pids()
+    def pid_info_window_update_chart(self, primary_pids: list, secondary_pids: list):
+        """Update chart from PID info window checkbox changes."""
+        # Don't update chart if both axis lists are empty
+        if not primary_pids and not secondary_pids:
+            # Just update PID panel without chart
+            self.pid_panel.set_pids(primary_pids, secondary_pids)
+            return
         
-        # Add if not already present
-        if pid not in current_primary:
-            current_primary.append(pid)
-            self.pid_panel.set_pids(current_primary, current_secondary)
-            
-            # Update chart if we have data
-            if self.app_controller.has_snapshot():
-                self.chart_widget.update_chart(
-                    self.app_controller.get_snapshot(), 
-                    current_primary, 
-                    current_secondary,
-                    self.axis_controls_panel.get_axis_settings()
-                )
-            
-            # Update PID panel colors to match chart
-            config = self.chart_widget.get_current_config()
-            if config:
-                self.pid_panel.update_chart_colors(config)
+        # Update PID panel
+        self.pid_panel.set_pids(primary_pids, secondary_pids)
+        
+        # Update chart if we have data
+        if self.app_controller.has_snapshot():
+            self.chart_widget.update_chart(
+                self.app_controller.get_snapshot(), 
+                primary_pids, 
+                secondary_pids,
+                self.axis_controls_panel.get_axis_settings()
+            )
+        
+        # Update PID panel colors to match chart
+        config = self.chart_widget.get_current_config()
+        if config:
+            self.pid_panel.update_chart_colors(config)
     
-    @Slot(str)
-    def _on_pid_added_to_secondary(self, pid: str):
-        """Handle PID added to secondary axis from PID info window."""
-        # Get current primary and secondary PIDs
-        current_primary = self.pid_panel.get_primary_pids()
-        current_secondary = self.pid_panel.get_secondary_pids()
-        
-        # Add if not already present
-        if pid not in current_secondary:
-            current_secondary.append(pid)
-            self.pid_panel.set_pids(current_primary, current_secondary)
-            
-            # Update chart if we have data
-            if self.app_controller.has_snapshot():
-                self.chart_widget.update_chart(
-                    self.app_controller.get_snapshot(), 
-                    current_primary, 
-                    current_secondary,
-                    self.axis_controls_panel.get_axis_settings()
-                )
-            
-            # Update PID panel colors to match chart
-            config = self.chart_widget.get_current_config()
-            if config:
-                self.pid_panel.update_chart_colors(config)
+    def _on_clear_all(self):
+        """Clear all PID selections and reset chart."""
+        # Clear PID panel selections
+        self.pid_panel._on_clear_selections()
+    
+    def get_current_chart_pids(self):
+        """Get current chart PIDs for PID info window sync."""
+        if self.app_controller.has_snapshot():
+            return (
+                self.pid_panel.get_primary_pids(),
+                self.pid_panel.get_secondary_pids()
+            )
+        return ([], [])
     
     @Slot()
     def _on_show_about(self):
