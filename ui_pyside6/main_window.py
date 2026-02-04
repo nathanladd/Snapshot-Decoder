@@ -28,6 +28,7 @@ from ui_pyside6.widgets.pid_panel import PidPanel
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
+from ui_pyside6.widgets.pid_info_window import PidInfoWindow
 from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 
@@ -520,8 +521,70 @@ class MainWindow(QMainWindow):
         if not self.snapshot:
             QMessageBox.information(self, "No Data", "Please load a snapshot first.")
             return
-        # TODO: Implement PidInfoWindow
-        QMessageBox.information(self, "Coming Soon", "PID info view coming soon.")
+        
+        # Get PID info from snapshot
+        pid_info = self.snapshot.pid_info
+        
+        # Create and show PID info window
+        pid_info_window = PidInfoWindow(self, pid_info, self.snapshot.file_path)
+        
+        # Connect signals for adding PIDs to axes
+        pid_info_window.pid_added_to_primary.connect(self._on_pid_added_to_primary)
+        pid_info_window.pid_added_to_secondary.connect(self._on_pid_added_to_secondary)
+        
+        pid_info_window.show()
+    
+    @Slot(str)
+    def _on_pid_added_to_primary(self, pid: str):
+        """Handle PID added to primary axis from PID info window."""
+        # Get current primary PIDs
+        current_primary = self.pid_panel.get_primary_pids()
+        current_secondary = self.pid_panel.get_secondary_pids()
+        
+        # Add if not already present
+        if pid not in current_primary:
+            current_primary.append(pid)
+            self.pid_panel.set_pids(current_primary, current_secondary)
+            
+            # Update chart if we have data
+            if self.app_controller.has_snapshot():
+                self.chart_widget.update_chart(
+                    self.app_controller.get_snapshot(), 
+                    current_primary, 
+                    current_secondary,
+                    self.axis_controls_panel.get_axis_settings()
+                )
+            
+            # Update PID panel colors to match chart
+            config = self.chart_widget.get_current_config()
+            if config:
+                self.pid_panel.update_chart_colors(config)
+    
+    @Slot(str)
+    def _on_pid_added_to_secondary(self, pid: str):
+        """Handle PID added to secondary axis from PID info window."""
+        # Get current primary and secondary PIDs
+        current_primary = self.pid_panel.get_primary_pids()
+        current_secondary = self.pid_panel.get_secondary_pids()
+        
+        # Add if not already present
+        if pid not in current_secondary:
+            current_secondary.append(pid)
+            self.pid_panel.set_pids(current_primary, current_secondary)
+            
+            # Update chart if we have data
+            if self.app_controller.has_snapshot():
+                self.chart_widget.update_chart(
+                    self.app_controller.get_snapshot(), 
+                    current_primary, 
+                    current_secondary,
+                    self.axis_controls_panel.get_axis_settings()
+                )
+            
+            # Update PID panel colors to match chart
+            config = self.chart_widget.get_current_config()
+            if config:
+                self.pid_panel.update_chart_colors(config)
     
     @Slot()
     def _on_show_about(self):

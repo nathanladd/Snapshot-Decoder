@@ -198,6 +198,37 @@ class AxisControlsPanel(QWidget):
         self.set_secondary_min(secondary_min)
         self.set_secondary_max(secondary_max)
     
+    def get_axis_settings(self):
+        """Get current axis settings as a dictionary."""
+        try:
+            primary_min = float(self._primary_min.text()) if self._primary_min.text() else None
+        except ValueError:
+            primary_min = None
+            
+        try:
+            primary_max = float(self._primary_max.text()) if self._primary_max.text() else None
+        except ValueError:
+            primary_max = None
+            
+        try:
+            secondary_min = float(self._secondary_min.text()) if self._secondary_min.text() else None
+        except ValueError:
+            secondary_min = None
+            
+        try:
+            secondary_max = float(self._secondary_max.text()) if self._secondary_max.text() else None
+        except ValueError:
+            secondary_max = None
+        
+        return {
+            'primary_auto': self._primary_auto.isChecked(),
+            'primary_min': primary_min,
+            'primary_max': primary_max,
+            'secondary_auto': self._secondary_auto.isChecked(),
+            'secondary_min': secondary_min,
+            'secondary_max': secondary_max
+        }
+    
     def clear(self):
         """Reset all controls to default values."""
         self.update_from_config(True, None, None, True, None, None)
