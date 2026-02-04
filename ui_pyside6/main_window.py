@@ -1,7 +1,7 @@
 """
 Main application window for Snapshot Decoder.
 
-PySide6 implementation with modern UI layout.
+PySide6 implementation with clean controller-based architecture.
 """
 
 import os
@@ -10,16 +10,17 @@ from typing import Optional
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QMenuBar, QMenu, QStatusBar, QProgressDialog, QMessageBox,
-    QFileDialog, QLabel, QFrame, QCheckBox
+    QFileDialog, QLabel, QFrame
 )
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QAction, QIcon, QPixmap
 
 from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
-from controllers.snapshot_loader import SnapshotLoader
+from controllers.app_controller import AppController
+from controllers.chart_controller import ChartController
 from version import APP_VERSION
-from infrastructure import get_logger
+from infrastructure import get_logger, info, error, warning, debug
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
@@ -31,23 +32,42 @@ from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 
 
 class MainWindow(QMainWindow):
-    """Main application window."""
+    """Main application window with clean controller architecture."""
     
     def __init__(self):
         super().__init__()
         
         # Initialize logging system
         self.logger = get_logger()
-        self.logger.logger.info(f"Starting {APP_TITLE} v{APP_VERSION}")
+        info(f"Starting {APP_TITLE} v{APP_VERSION}")
         
+        # Initialize controllers (UI-agnostic business logic)
+        self.app_controller = AppController()
+        self.chart_controller = ChartController()
+        
+        # UI state
         self.snapshot: Optional[Snapshot] = None
-        self._loader: Optional[SnapshotLoader] = None
         self._progress_dialog: Optional[QProgressDialog] = None
         
+        # Setup UI and connect signals
         self._setup_ui()
         self._setup_menu()
         self._setup_statusbar()
         self._setup_log_console()
+        self._connect_signals()
+        
+        info("MainWindow initialized with controller architecture")
+    
+    def _connect_signals(self):
+        """Connect controller signals to UI slots."""
+        # AppController signals
+        self.app_controller.snapshot_loaded.connect(self._on_snapshot_loaded)
+        self.app_controller.snapshot_load_progress.connect(self._on_load_progress)
+        self.app_controller.error_occurred.connect(self._on_error)
+        
+        # UI widget signals
+        # Note: Widgets will be refactored to emit signals in later Phase 3 tasks
+        # For now, we'll use the existing widget methods directly
         
         self.setWindowTitle(f"{APP_TITLE} {APP_VERSION}")
         self.resize(1400, 900)
@@ -144,7 +164,7 @@ class MainWindow(QMainWindow):
         
         open_action = QAction("&Open...", self)
         open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self._on_open_file)
+        open_action.triggered.connect(self._on_open_file_dialog)
         file_menu.addAction(open_action)
         
         file_menu.addSeparator()
@@ -186,47 +206,27 @@ class MainWindow(QMainWindow):
         self.statusbar.showMessage("Ready - Open a snapshot file to begin")
     
     @Slot()
-    def _on_open_file(self):
-        """Handle file open action."""
+    def _on_open_file_dialog(self):
+        """Open file dialog and request file load via AppController."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Snapshot File",
             "",
-            "Excel Files (*.xlsx *.xls);;All Files (*)"
+            "Snapshot Files (*.xlsx *.xls);;All Files (*)"
         )
         
         if file_path:
-            self._load_snapshot(file_path)
+            self._on_open_file(file_path)
     
-    def _load_snapshot(self, file_path: str):
-        """Load a snapshot file in the background."""
-        # Create progress dialog
-        self._progress_dialog = QProgressDialog(
-            "Loading snapshot...", "Cancel", 0, 100, self
-        )
-        self._progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
-        self._progress_dialog.setAutoClose(True)
-        self._progress_dialog.setMinimumDuration(0)
-        
-        # Create and start loader
-        self._loader = SnapshotLoader(file_path, self)
-        self._loader.progress.connect(self._on_load_progress)
-        self._loader.finished_loading.connect(self._on_load_finished)
-        self._loader.error.connect(self._on_load_error)
-        self._progress_dialog.canceled.connect(self._loader.cancel)
-        
-        self._loader.start()
-    
-    @Slot(int, str)
-    def _on_load_progress(self, percent: int, message: str):
-        """Handle loading progress updates."""
-        if self._progress_dialog:
-            self._progress_dialog.setValue(percent)
-            self._progress_dialog.setLabelText(message)
+    @Slot(str)
+    def _on_open_file(self, file_path: str):
+        """Handle file open request via AppController."""
+        info(f"Opening file: {file_path}")
+        self.app_controller.load_snapshot(file_path)
     
     @Slot(object)
-    def _on_load_finished(self, snapshot: Snapshot):
-        """Handle successful snapshot load."""
+    def _on_snapshot_loaded(self, snapshot: Snapshot):
+        """Handle successful snapshot load from AppController."""
         self.snapshot = snapshot
         
         # Update UI with snapshot data
@@ -241,20 +241,53 @@ class MainWindow(QMainWindow):
             f"Type: {snapshot.snapshot_type.name} | "
             f"Hours: {snapshot.hours}"
         )
+        
+        info(f"UI updated with loaded snapshot: {snapshot.snapshot_type}")
+    
+    @Slot(int, str)
+    def _on_load_progress(self, percent: int, message: str):
+        """Handle load progress from AppController."""
+        if self._progress_dialog:
+            self._progress_dialog.setValue(percent)
+            self._progress_dialog.setLabelText(message)
     
     @Slot(str)
-    def _on_load_error(self, error_msg: str):
-        """Handle loading error."""
+    def _on_error(self, error_msg: str):
+        """Handle error from AppController."""
         if self._progress_dialog:
             self._progress_dialog.close()
         
-        QMessageBox.critical(self, "Load Error", error_msg)
-        self.statusbar.showMessage("Error loading file")
+        QMessageBox.critical(self, "Error", error_msg)
+        self.statusbar.showMessage("Error occurred")
+        error(f"Error displayed to user: {error_msg}")
+    
+    @Slot(str)
+    def _on_quick_chart_requested(self, action_id: str):
+        """Handle quick chart request via AppController."""
+        if not self.app_controller.has_snapshot():
+            warning("Quick chart requested but no snapshot loaded")
+            return
+        
+        info(f"Quick chart requested: {action_id}")
+        self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
+        
+        # Sync PID panel with quick chart's PIDs
+        primary_pids = self.chart_widget.get_current_primary_pids()
+        secondary_pids = self.chart_widget.get_current_secondary_pids()
+        self.pid_panel.set_pids(primary_pids, secondary_pids, emit_signal=False)
+        
+        # Update PID panel colors to match quick chart
+        config = self.chart_widget.get_current_config()
+        if config:
+            self.pid_panel.update_chart_colors(config)
+        
+        # Update axis controls from the chart config
+        self._update_axis_controls_from_config()
     
     @Slot()
     def _on_pids_changed(self):
         """Handle PID selection changes."""
-        if not self.snapshot:
+        if not self.app_controller.has_snapshot():
             return
         
         primary_pids = self.pid_panel.get_primary_pids()
@@ -262,25 +295,44 @@ class MainWindow(QMainWindow):
         
         if primary_pids or secondary_pids:
             self.chart_widget.update_chart(
-                self.snapshot, primary_pids, secondary_pids,
+                self.app_controller.get_snapshot(), primary_pids, secondary_pids,
                 axis_settings=self._get_axis_settings()
             )
             # Update PID panel colors to match chart
             config = self.chart_widget.get_current_config()
             if config:
                 self.pid_panel.update_chart_colors(config)
-            self._update_axis_controls_from_chart()
+            self._update_axis_controls_from_config()
         else:
             # No PIDs selected, clear the chart
             self.chart_widget.clear()
             # Reset PID panel colors
             self.pid_panel.update_chart_colors(None)
+    
+    @Slot(list, list)
+    def _on_pid_selection_changed(self, primary_pids: list, secondary_pids: list):
+        """Handle PID selection changes (alternative handler)."""
+        # This handler is not used but kept for compatibility
+        self._on_pids_changed()
+    
+    @Slot(object)
+    def _on_chart_config_changed(self, config):
+        """Handle chart configuration changes."""
+        if config and self.app_controller.has_snapshot():
+            # Re-render chart with new config
+            try:
+                self.chart_controller.render(config, self.chart_widget.figure)
+                self.chart_widget.canvas.draw()
+                debug("Chart re-rendered from config change")
+            except Exception as e:
+                error(f"Failed to re-render chart: {str(e)}")
+                self.app_controller.error_occurred.emit(f"Chart rendering failed: {str(e)}")
             self.axis_controls_panel.clear()
     
     @Slot()
     def _on_axis_settings_changed(self):
         """Handle axis settings changes from the controls panel."""
-        if not self.snapshot:
+        if not self.app_controller.has_snapshot():
             return
         
         primary_pids = self.pid_panel.get_primary_pids()
