@@ -30,6 +30,7 @@ from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
 from ui_pyside6.widgets.pid_info_window import PidInfoWindow
 from ui_pyside6.widgets.data_table_window import DataTableWindow
+from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 
 
@@ -72,7 +73,7 @@ class MainWindow(QMainWindow):
         # For now, we'll use the existing widget methods directly
         
         self.setWindowTitle(f"{APP_TITLE} {APP_VERSION}")
-        self.resize(1400, 900)
+        self.resize(1600, 900)
     
     def _setup_ui(self):
         """Set up the main UI layout."""
@@ -83,13 +84,18 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(4)
         
-        # Main splitter for left panel and chart area
-        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
-        main_layout.addWidget(self.main_splitter)
+        # Left panel as dockable widget with expandable functionality
+        from ui_pyside6.widgets.expandable_dock import ExpandableDock
         
-        # Left panel (header, PIDs, quick charts)
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
+        left_dock = ExpandableDock("Controls", self)
+        left_dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea |
+            Qt.DockWidgetArea.RightDockWidgetArea
+        )
+        
+        # Create content widget for the dockable panel
+        left_content = QWidget()
+        left_layout = QVBoxLayout(left_content)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(4)
         
@@ -116,7 +122,11 @@ class MainWindow(QMainWindow):
         self.axis_controls_panel.settings_changed.connect(self._on_axis_settings_changed)
         left_layout.addWidget(self.axis_controls_panel)
         
-        self.main_splitter.addWidget(left_panel)
+        # Set the content widget
+        left_dock.set_content_widget(left_content)
+        
+        # Add dock widget and dock to left side
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
         
         # Right panel (quick charts above chart)
         right_panel = QWidget()
@@ -152,10 +162,7 @@ class MainWindow(QMainWindow):
         self.chart_widget = ChartWidget()
         right_layout.addWidget(self.chart_widget, stretch=1)
         
-        self.main_splitter.addWidget(right_panel)
-        
-        # Set initial splitter sizes (left panel ~350px, rest for chart)
-        self.main_splitter.setSizes([350, 1050])
+        main_layout.addWidget(right_panel)
     
     def _setup_menu(self):
         """Set up the menu bar."""
@@ -432,7 +439,7 @@ class MainWindow(QMainWindow):
         if not self.snapshot:
             return
         
-        self.chart_widget.plot_quick_chart(self.snapshot, action_id)
+        self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
         
         # Sync PID panel with quick chart's PIDs
         primary_pids = self.chart_widget.get_current_primary_pids()

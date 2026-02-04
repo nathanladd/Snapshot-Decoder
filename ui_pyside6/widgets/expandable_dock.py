@@ -1,0 +1,172 @@
+"""
+Expandable dock widget with custom title bar and collapse functionality.
+
+Provides a dockable widget that can expand/collapse with a button in the title bar,
+similar to LogConsoleDock but for general content.
+"""
+
+from typing import Optional
+from PySide6.QtWidgets import QDockWidget, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStyle, QFrame, QLabel
+from PySide6.QtCore import Qt, QSize, Signal
+from PySide6.QtGui import QFont
+
+
+class ExpandableDock(QDockWidget):
+    """
+    Expandable dock widget with custom title bar and collapse functionality.
+    
+    Can be docked to any side of the main window or floated as a separate window.
+    Features an expand/collapse button in the title bar.
+    """
+    
+    # Signal emitted when expansion state changes
+    expansion_changed = Signal(bool)
+    
+    def __init__(self, title: str = "Panel", parent=None):
+        super().__init__(title, parent)
+        
+        # Track expansion state
+        self._is_expanded = True
+        self._collapsed_size = QSize(0, 30)  # Size when collapsed
+        self._expanded_size = QSize(200, 400)  # Size when expanded
+        self._content_widget: Optional[QWidget] = None
+        
+        # Set dock widget properties
+        self.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea |
+            Qt.DockWidgetArea.RightDockWidgetArea |
+            Qt.DockWidgetArea.TopDockWidgetArea |
+            Qt.DockWidgetArea.BottomDockWidgetArea
+        )
+        
+        # Create custom title bar with expand/collapse button
+        self._setup_title_bar()
+        
+        # Default to not floating
+        self.setFloating(False)
+        
+        # Set initial size
+        self.resize(self._expanded_size)
+    
+    def _setup_title_bar(self):
+        """Setup custom title bar with expand/collapse button."""
+        # Create title bar widget
+        title_bar = QWidget()
+        title_layout = QHBoxLayout(title_bar)
+        title_layout.setContentsMargins(5, 2, 5, 2)
+        title_layout.setSpacing(5)
+        
+        # Add expand/collapse button
+        self.expand_btn = QPushButton()
+        self.expand_btn.setFixedSize(16, 16)
+        self.expand_btn.clicked.connect(self.toggle_expand)
+        self._update_expand_button_icon()
+        
+        # Style the button
+        self.expand_btn.setStyleSheet("""
+            QPushButton {
+                border: none;
+                padding: 0px;
+                background: transparent;
+            }
+            QPushButton:hover {
+                background: rgba(200, 200, 200, 100);
+                border-radius: 2px;
+            }
+            QPushButton:pressed {
+                background: rgba(150, 150, 150, 100);
+            }
+        """)
+        
+        title_layout.addWidget(self.expand_btn)
+        title_layout.addStretch()
+        
+        # Set custom title bar
+        self.setTitleBarWidget(title_bar)
+    
+    def set_content_widget(self, widget: QWidget):
+        """Set the content widget to be displayed when expanded."""
+        # Clear existing content
+        if self._content_widget:
+            self.setWidget(None)
+            self._content_widget.setParent(None)
+        
+        # Add new content
+        self._content_widget = widget
+        if widget:
+            self.setWidget(widget)
+            widget.setVisible(self._is_expanded)
+    
+    def toggle_expand(self):
+        """Toggle between expanded and collapsed states."""
+        if self._is_expanded:
+            self.collapse()
+        else:
+            self.expand()
+    
+    def expand(self):
+        """Expand the dock widget to show full content."""
+        self._is_expanded = True
+        if self._content_widget:
+            self._content_widget.setVisible(True)
+        self.resize(self._expanded_size)
+        self._update_expand_button_icon()
+        self.expansion_changed.emit(True)
+    
+    def collapse(self):
+        """Collapse the dock widget to show only title bar."""
+        self._is_expanded = False
+        if self._content_widget:
+            self._content_widget.setVisible(False)
+        self.resize(self._collapsed_size)
+        self._update_expand_button_icon()
+        self.expansion_changed.emit(False)
+    
+    def _update_expand_button_icon(self):
+        """Update the expand/collapse button icon based on state."""
+        if self._is_expanded:
+            # Show collapse icon (down arrow)
+            icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown)
+            self.expand_btn.setIcon(icon)
+            self.expand_btn.setToolTip("Collapse")
+        else:
+            # Show expand icon (up arrow)
+            icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowUp)
+            self.expand_btn.setIcon(icon)
+            self.expand_btn.setToolTip("Expand")
+    
+    def is_expanded(self) -> bool:
+        """Check if the dock widget is expanded."""
+        return self._is_expanded
+    
+    def set_expanded(self, expanded: bool):
+        """Set the expansion state."""
+        if expanded != self._is_expanded:
+            if expanded:
+                self.expand()
+            else:
+                self.collapse()
+    
+    def set_collapsed_size(self, size: QSize):
+        """Set the size when collapsed."""
+        self._collapsed_size = size
+        if not self._is_expanded:
+            self.resize(size)
+    
+    def set_expanded_size(self, size: QSize):
+        """Set the size when expanded."""
+        self._expanded_size = size
+        if self._is_expanded:
+            self.resize(size)
+    
+    def get_collapsed_size(self) -> QSize:
+        """Get the size when collapsed."""
+        return self._collapsed_size
+    
+    def get_expanded_size(self) -> QSize:
+        """Get the size when expanded."""
+        return self._expanded_size
+    
+    def get_content_widget(self) -> Optional[QWidget]:
+        """Get the current content widget."""
+        return self._content_widget
