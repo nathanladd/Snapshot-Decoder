@@ -309,6 +309,7 @@ class ChartWidget(QWidget):
             secondary_axis=secondary_axis,
             title=title,
             x_column=x_key,
+            pid_info=snapshot.pid_info,  # Add pid_info to config
         )
         
         # Clear quick chart tracking since we're modifying
