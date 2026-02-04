@@ -25,9 +25,10 @@ from infrastructure import get_logger, info, error, warning, debug
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
 from ui_pyside6.widgets.pid_panel import PidPanel
-from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
-from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
+from ui_pyside6.widgets.chart_widget import ChartWidget
+from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
+from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 
 
@@ -177,9 +178,21 @@ class MainWindow(QMainWindow):
         # View menu
         view_menu = menubar.addMenu("&View")
         
-        data_table_action = QAction("&Data Table...", self)
-        data_table_action.triggered.connect(self._on_show_data_table)
-        view_menu.addAction(data_table_action)
+        data_menu = view_menu.addMenu("Data Tables")
+        
+        raw_table_action = QAction("&Raw Data...", self)
+        raw_table_action.triggered.connect(self._on_show_raw_table)
+        data_menu.addAction(raw_table_action)
+        
+        clean_table_action = QAction("&Clean Table...", self)
+        clean_table_action.triggered.connect(self._on_show_clean_table)
+        data_menu.addAction(clean_table_action)
+        
+        chart_table_action = QAction("&Chart Table...", self)
+        chart_table_action.triggered.connect(self._on_show_chart_table)
+        data_menu.addAction(chart_table_action)
+        
+        view_menu.addSeparator()
         
         pid_info_action = QAction("&PID Info...", self)
         pid_info_action.triggered.connect(self._on_show_pid_info)
@@ -435,13 +448,71 @@ class MainWindow(QMainWindow):
         self._update_axis_controls_from_config()
     
     @Slot()
-    def _on_show_data_table(self):
-        """Show the data table window."""
+    def _on_show_raw_table(self):
+        """Show the raw data table window."""
         if not self.snapshot:
             QMessageBox.information(self, "No Data", "Please load a snapshot first.")
             return
-        # TODO: Implement DataTableWindow
-        QMessageBox.information(self, "Coming Soon", "Data table view coming soon.")
+        
+        # Create and show raw data table window
+        data_table = DataTableWindow(
+            self,
+            self.snapshot.raw_table,
+            self.snapshot.file_path,
+            "Raw Data"
+        )
+        data_table.show()
+    
+    @Slot()
+    def _on_show_clean_table(self):
+        """Show the clean data table window."""
+        if not self.snapshot:
+            QMessageBox.information(self, "No Data", "Please load a snapshot first.")
+            return
+        
+        # Create and show clean data table window
+        data_table = DataTableWindow(
+            self,
+            self.snapshot.snapshot,
+            self.snapshot.file_path,
+            "Clean Table"
+        )
+        data_table.show()
+    
+    @Slot()
+    def _on_show_chart_table(self):
+        """Show the chart table window."""
+        if not self.snapshot:
+            QMessageBox.information(self, "No Data", "Please load a snapshot first.")
+            return
+        
+        # Get current chart PIDs
+        primary_pids = self.chart_widget.get_current_primary_pids()
+        secondary_pids = self.chart_widget.get_current_secondary_pids()
+        
+        # Union of primary and secondary (no duplicates, preserve order)
+        selected_pids = list(dict.fromkeys(primary_pids + secondary_pids))
+        
+        if not selected_pids:
+            QMessageBox.information(self, "No Chart Data", "Please create a chart first to show the chart table.")
+            return
+        
+        # Create dataframe with only chart PIDs
+        chart_df = self.snapshot.snapshot[selected_pids].copy()
+        
+        # Create and show chart table window
+        data_table = DataTableWindow(
+            self,
+            chart_df,
+            self.snapshot.file_path,
+            "Chart Table"
+        )
+        data_table.show()
+    
+    @Slot()
+    def _on_show_data_table(self):
+        """Show the data table window (legacy - redirects to clean table)."""
+        self._on_show_clean_table()
     
     @Slot()
     def _on_show_pid_info(self):
