@@ -1,110 +1,38 @@
 """
 Logging configuration for Snapshot Decoder.
 
-Provides centralized logging setup with:
-- Chain of custody records for loaded snapshots
-- Diagnostic logging for troubleshooting
-- Toggleable verbose mode for detailed debugging
-- Rotating log files in app data folder
+Provides centralized logging setup with real-time console display only.
+No file logging - all output goes to the in-app log console.
 """
 
 import logging
-import logging.handlers
-import os
-import sys
-from pathlib import Path
 from typing import Optional
-from datetime import datetime
 
 
 class SnapshotLogger:
-    """Centralized logging configuration for the application."""
+    """Centralized logging configuration for the application (console only)."""
     
     def __init__(self, app_name: str = "SnapshotDecoder"):
         self.app_name = app_name
         self.logger = logging.getLogger(app_name)
         self.logger.setLevel(logging.DEBUG)
         
-        # Create logs directory
-        self.logs_dir = self._get_logs_directory()
-        self.logs_dir.mkdir(exist_ok=True)
-        
-        # Setup handlers
-        self._setup_handlers()
-        
-        # Chain of custody tracking
-        self.custody_log = self._setup_custody_logging()
+        # Setup console-only logging
+        self._setup_console_logging()
     
-    def _get_logs_directory(self) -> Path:
-        """Get the appropriate logs directory based on platform."""
-        if sys.platform == "win32":
-            # Windows: %APPDATA%/SnapshotDecoder/logs
-            app_data = os.environ.get("APPDATA", "")
-            base_dir = Path(app_data) / self.app_name
-        else:
-            # macOS/Linux: ~/.local/share/SnapshotDecoder/logs
-            home = Path.home()
-            base_dir = home / ".local" / "share" / self.app_name
-        
-        logs_dir = base_dir / "logs"
-        # Create parent directories if they don't exist
-        base_dir.mkdir(parents=True, exist_ok=True)
-        return logs_dir
-    
-    def _setup_handlers(self):
-        """Setup file handlers only (no console output)."""
+    def _setup_console_logging(self):
+        """Setup console-only logging (no files)."""
         # Clear any existing handlers
         self.logger.handlers.clear()
         
-        # File handler with rotation (10MB max, keep 5 files)
-        log_file = self.logs_dir / f"{self.app_name.lower()}.log"
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=5,
-            encoding='utf-8'
-        )
-        
-        # Formatters
-        detailed_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
-        )
-        
-        file_handler.setFormatter(detailed_formatter)
-        
-        # Add file handler only
-        self.logger.addHandler(file_handler)
-    
-    def _setup_custody_logging(self) -> logging.Logger:
-        """Setup separate logger for chain of custody tracking."""
-        custody_logger = logging.getLogger(f"{self.app_name}.custody")
-        custody_logger.setLevel(logging.INFO)
-        custody_logger.handlers.clear()
-        
-        # Separate custody log file
-        custody_file = self.logs_dir / "custody.log"
-        custody_handler = logging.handlers.RotatingFileHandler(
-            custody_file,
-            maxBytes=5*1024*1024,  # 5MB
-            backupCount=3,
-            encoding='utf-8'
-        )
-        
-        # Custody formatter (structured for easy parsing)
-        custody_formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)s | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        custody_handler.setFormatter(custody_formatter)
-        custody_logger.addHandler(custody_handler)
-        
-        # Prevent propagation to root logger
-        custody_logger.propagate = False
-        
-        return custody_logger
+        # Add a null handler to prevent "No handlers found" warnings
+        # The actual console display is handled by the LogConsole widget
+        null_handler = logging.NullHandler()
+        self.logger.addHandler(null_handler)
     
     def log_custody_event(self, event_type: str, details: str, level: str = "INFO"):
         """Log a chain of custody event."""
+        # This will be captured by the LogConsole widget
         message = f"{event_type} | {details}"
         level_map = {
             "DEBUG": logging.DEBUG,
@@ -115,11 +43,12 @@ class SnapshotLogger:
         }
         
         log_level = level_map.get(level.upper(), logging.INFO)
-        self.custody_log.log(log_level, message)
+        self.logger.log(log_level, message)
     
     def log_file_loaded(self, file_path: str, file_size: int, snapshot_type: str, 
                        load_time: float, record_count: int):
         """Log successful file loading with chain of custody details."""
+        from pathlib import Path
         details = (
             f"File: {Path(file_path).name} | "
             f"Size: {file_size:,} bytes | "
@@ -131,11 +60,13 @@ class SnapshotLogger:
     
     def log_file_error(self, file_path: str, error: str):
         """Log file loading error."""
+        from pathlib import Path
         details = f"File: {Path(file_path).name} | Error: {error}"
         self.log_custody_event("FILE_ERROR", details, "ERROR")
     
     def log_chart_generated(self, chart_type: str, pids: list, snapshot_file: str):
         """Log chart generation for audit trail."""
+        from pathlib import Path
         pid_list = ", ".join(pids[:5])  # Limit to first 5 PIDs
         if len(pids) > 5:
             pid_list += f" (+{len(pids)-5} more)"
@@ -149,6 +80,7 @@ class SnapshotLogger:
     
     def log_export(self, export_type: str, file_path: str, snapshot_source: str):
         """Log data export events."""
+        from pathlib import Path
         details = (
             f"Export: {export_type} | "
             f"Output: {Path(file_path).name} | "

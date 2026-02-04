@@ -172,12 +172,6 @@ class MainWindow(QMainWindow):
         log_console_action.triggered.connect(self._on_toggle_log_console)
         view_menu.addAction(log_console_action)
         
-        view_menu.addSeparator()
-        
-        open_logs_action = QAction("&Open Log Files...", self)
-        open_logs_action.triggered.connect(self._on_open_log_files)
-        view_menu.addAction(open_logs_action)
-        
         # Help menu
         help_menu = menubar.addMenu("&Help")
         
@@ -433,37 +427,3 @@ class MainWindow(QMainWindow):
         else:
             self.log_console_dock.show()
             self.log_console_dock.raise_()  # Bring to front
-    
-    @Slot()
-    def _on_open_log_files(self):
-        """Open the log files directory in file explorer."""
-        import subprocess
-        import platform
-        
-        logger = get_logger()
-        log_dir = logger.logs_dir
-        
-        # Ensure the log directory exists
-        try:
-            log_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            QMessageBox.warning(
-                self, 
-                "Error", 
-                f"Could not create log directory:\n{str(e)}"
-            )
-            return
-        
-        try:
-            if platform.system() == "Windows":
-                subprocess.run(["explorer", str(log_dir)], check=True)
-            elif platform.system() == "Darwin":  # macOS
-                subprocess.run(["open", str(log_dir)], check=True)
-            else:  # Linux
-                subprocess.run(["xdg-open", str(log_dir)], check=True)
-        except Exception as e:
-            QMessageBox.warning(
-                self, 
-                "Error", 
-                f"Could not open log files directory:\n{str(e)}\n\nPath: {log_dir}"
-            )
