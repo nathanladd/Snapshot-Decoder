@@ -535,7 +535,7 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_toggle_log_console(self):
-        """Toggle log console visibility."""
+        """Toggle the log console visibility."""
         if self.log_console_dock.isVisible():
             self.log_console_dock.hide()
         else:
