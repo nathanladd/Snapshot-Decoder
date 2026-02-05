@@ -5,7 +5,7 @@ Provides a dockable widget that contains the log console with
 proper integration into the main window's dock system.
 """
 
-from PySide6.QtWidgets import QDockWidget, QWidget, QHBoxLayout, QPushButton, QStyle
+from PySide6.QtWidgets import QDockWidget, QWidget, QHBoxLayout, QPushButton, QStyle, QLabel
 from PySide6.QtCore import Qt, QSize
 
 from .log_console import LogConsole
@@ -49,12 +49,36 @@ class LogConsoleDock(QDockWidget):
         self.resize(self._expanded_size)
     
     def _setup_title_bar(self):
-        """Setup custom title bar with expand/collapse button."""
+        """Setup custom title bar with expand/collapse button and drag handle."""
         # Create title bar widget
         title_bar = QWidget()
+        title_bar.setFixedHeight(25)
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(5, 2, 5, 2)
         title_layout.setSpacing(5)
+        
+        # Add drag handle indicator
+        self.drag_handle = QLabel()
+        self.drag_handle.setFixedHeight(16)
+        self.drag_handle.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(120, 120, 120, 0.3), 
+                    stop:0.5 rgba(120, 120, 120, 0.5), 
+                    stop:1 rgba(120, 120, 120, 0.3));
+                border: 1px solid rgba(120, 120, 120, 0.4);
+                border-radius: 3px;
+                margin: 2px;
+            }
+            QLabel:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(100, 100, 100, 0.4), 
+                    stop:0.5 rgba(100, 100, 100, 0.6), 
+                    stop:1 rgba(100, 100, 100, 0.4));
+                border: 1px solid rgba(100, 100, 100, 0.6);
+            }
+        """)
+        self.drag_handle.setToolTip("Drag to move panel")
         
         # Add expand/collapse button
         self.expand_btn = QPushButton()
@@ -78,8 +102,9 @@ class LogConsoleDock(QDockWidget):
             }
         """)
         
+        # Add to layout
+        title_layout.addWidget(self.drag_handle, 1)  # Stretch with width
         title_layout.addWidget(self.expand_btn)
-        title_layout.addStretch()
         
         # Set custom title bar
         self.setTitleBarWidget(title_bar)
