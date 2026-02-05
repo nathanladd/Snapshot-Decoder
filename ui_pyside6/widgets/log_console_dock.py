@@ -45,6 +45,21 @@ class LogConsoleDock(QDockWidget):
         # Default to bottom docking
         self.setFloating(False)
         
+        # Add padding around the dock widget
+        self.setStyleSheet("""
+            QDockWidget {
+                border: 1px solid #C0C0C0;
+                margin: 2px;
+                background-color: #F8F8F8;
+            }
+            QDockWidget::title {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #F0F0F0, stop:1 #E0E0E0);
+                border-bottom: 1px solid #C0C0C0;
+                padding: 2px;
+            }
+        """)
+        
         # Set initial size
         self.resize(self._expanded_size)
     

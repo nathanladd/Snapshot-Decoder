@@ -39,6 +39,21 @@ class ExpandableDock(QDockWidget):
             Qt.DockWidgetArea.BottomDockWidgetArea
         )
         
+        # Add padding around the dock widget
+        self.setStyleSheet("""
+            QDockWidget {
+                border: 1px solid #C0C0C0;
+                margin: 2px;
+                background-color: #F8F8F8;
+            }
+            QDockWidget::title {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #F0F0F0, stop:1 #E0E0E0);
+                border-bottom: 1px solid #C0C0C0;
+                padding: 2px;
+            }
+        """)
+        
         # Create custom title bar with expand/collapse button
         self._setup_title_bar()
         
