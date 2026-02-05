@@ -91,6 +91,16 @@ class SystemPanel(QWidget):
         font = label.font()
         font.setStrikeOut(False)
         label.setFont(font)
+
+        '''
+        When MDP system was ON, it showed "MDP 85.0%" (with success rate)
+        When MDP system was turned OFF, it kept the success rate text
+        The label should revert to just "MDP" when off
+        '''
+        
+        # Reset MDP label text to just "MDP" when turning off
+        if label == self._system_labels.get("mdp_system"):
+            label.setText("MDP")
     
     def _set_mdp_label(self, label: QLabel, success_rate: float):
         """Style MDP label with success percentage."""
