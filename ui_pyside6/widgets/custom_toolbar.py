@@ -43,15 +43,24 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         # Add separator and cart button
         self.addSeparator()
         self._cart_btn = QToolButton(self)
-        self._cart_btn.setText("Add to Cart")
         self._cart_btn.setToolTip("Add current chart to the Chart Cart")
+        
+        # Load cart icon
+        import os
+        from PySide6.QtGui import QIcon
+        from PySide6.QtCore import QSize
+        # Get the project root directory
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        icon_path = os.path.join(project_root, 'data', 'images', 'online-shopping.png')
+        self._cart_btn.setIcon(QIcon(icon_path))
+        self._cart_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
+        
         self._cart_btn.setStyleSheet("""
             QToolButton {
                 border: 1px solid #C0C0C0;
                 border-radius: 3px;
-                padding: 2px 6px;
+                padding: 4px;
                 background-color: #F0F0F0;
-                font-size: 10px;
             }
             QToolButton:hover {
                 background-color: #E0E0E0;
