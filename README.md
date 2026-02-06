@@ -48,3 +48,4 @@ licensed under both the open-source license and the commercial license.
 - <a href="https://www.flaticon.com/free-icons/shopping-cart" title="shopping cart icons">Shopping cart icons created by Arafat Uddin - Flaticon</a>
 - <a href="https://www.flaticon.com/free-icons/pop-out" title="pop out icons">Pop out icons created by Freepik - Flaticon</a>
 - <a href="https://www.flaticon.com/free-icons/tooltip" title="tooltip icons">Tooltip icons created by Timothy Miller - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/mirror" title="mirror icons">Mirror icons created by Freepik - Flaticon</a>

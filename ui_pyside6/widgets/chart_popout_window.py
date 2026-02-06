@@ -9,7 +9,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-    QCheckBox, QMessageBox
+    QMessageBox
 )
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction
@@ -66,10 +66,6 @@ class ChartPopoutWindow(QMainWindow):
         # Interactivity controls
         controls_layout = QHBoxLayout()
         
-        self.slider_checkbox = QCheckBox("Time Slider")
-        self.slider_checkbox.stateChanged.connect(self._on_interactivity_change)
-        controls_layout.addWidget(self.slider_checkbox)
-        
         controls_layout.addStretch()
         
         main_layout.addLayout(controls_layout)
@@ -86,6 +82,7 @@ class ChartPopoutWindow(QMainWindow):
         self.toolbar = CustomNavigationToolbar(self.canvas, self, show_popout=False)
         self.toolbar.add_to_cart_requested.connect(self._add_to_cart)
         self.toolbar.value_display_changed.connect(self._on_value_display_changed)
+        self.toolbar.time_slider_changed.connect(self._on_time_slider_changed)
         main_layout.addWidget(self.toolbar)
         
         # Pack canvas
@@ -115,19 +112,20 @@ class ChartPopoutWindow(QMainWindow):
                             ha='center', va='center', transform=self.ax_left.transAxes)
             self.canvas.draw()
     
-    @Slot(int)
-    def _on_interactivity_change(self, state):
-        """Callback when interactivity options change."""
-        self.enable_slider = self.slider_checkbox.isChecked()
+        
+    @Slot(bool)
+    def _on_value_display_changed(self, enabled: bool):
+        """Handle value display toggle change from toolbar."""
+        self.enable_cursor = enabled
         
         self._clear_interactivity()
         self._add_interactivity()
         self.canvas.draw()
     
     @Slot(bool)
-    def _on_value_display_changed(self, enabled: bool):
-        """Handle value display toggle change from toolbar."""
-        self.enable_cursor = enabled
+    def _on_time_slider_changed(self, enabled: bool):
+        """Handle time slider toggle change from toolbar."""
+        self.enable_slider = enabled
         
         self._clear_interactivity()
         self._add_interactivity()
@@ -198,41 +196,32 @@ class ChartPopoutWindow(QMainWindow):
         
         # --- Add Time Slider ---
         if self.enable_slider:
-            import pandas as pd
-            df = self.config.data.copy()
-            x_col = self.config.get_x_column()
-            
-            if pd.api.types.is_timedelta64_dtype(df.get("Time")):
-                df["Time"] = df["Time"].dt.total_seconds()
-            elif pd.api.types.is_timedelta64_dtype(df.get("Time (MM:SS)")):
-                df["Time (MM:SS)"] = df["Time (MM:SS)"].dt.total_seconds()
-            
-            if x_col and x_col in df.columns:
-                x_data = df[x_col]
-            else:
-                x_data = df.index
-            
-            min_val = float(x_data.min())
-            max_val = float(x_data.max())
-            
-            self.figure.subplots_adjust(bottom=0.2)
-            ax_slider = self.figure.add_axes([0.15, 0.05, 0.7, 0.03])
-            
-            self.slider = Slider(
-                ax=ax_slider,
-                label=x_col if x_col else "Index",
-                valmin=min_val,
-                valmax=max_val,
-                valinit=min_val,
-            )
-            
-            self.cursor_line = self.ax_left.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
-            
-            def update(val):
-                self.cursor_line.set_xdata([val, val])
-                self.canvas.draw_idle()
-            
-            self.slider.on_changed(update)
+            # Get the current x-axis limits from the chart
+            if self.ax_left:
+                xlim = self.ax_left.get_xlim()
+                min_val = float(xlim[0])
+                max_val = float(xlim[1])
+                
+                # Make room for slider
+                try:
+                    self.figure.subplots_adjust(bottom=0.2)
+                except Exception:
+                    pass
+                
+                # Create slider with the same range as the chart x-axis
+                self.slider = Slider(
+                    self.figure.add_axes([0.2, 0.1, 0.6, 0.03]),
+                    'Time', min_val, max_val,
+                    valinit=min_val
+                )
+                
+                self.cursor_line = self.ax_left.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
+                
+                def update(val):
+                    self.cursor_line.set_xdata([val, val])
+                    self.canvas.draw_idle()
+                
+                self.slider.on_changed(update)
     
     @Slot()
     def _add_to_cart(self):

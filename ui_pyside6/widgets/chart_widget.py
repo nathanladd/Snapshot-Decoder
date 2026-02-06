@@ -52,6 +52,11 @@ class ChartWidget(QWidget):
         self._value_display_enabled = False
         self._mpl_cursor = None
         
+        # Time slider state
+        self._time_slider_enabled = False
+        self._slider = None
+        self._cursor_line = None
+        
         self._setup_ui()
     
     def _setup_ui(self):
@@ -73,6 +78,7 @@ class ChartWidget(QWidget):
         self._toolbar.add_to_cart_requested.connect(self.add_to_cart_requested.emit)
         self._toolbar.pop_out_requested.connect(self.pop_out_requested.emit)
         self._toolbar.value_display_changed.connect(self._on_value_display_changed)
+        self._toolbar.time_slider_changed.connect(self._on_time_slider_changed)
         layout.addWidget(self._toolbar)
         
         # Canvas
@@ -289,6 +295,78 @@ class ChartWidget(QWidget):
                 pass
             self._mpl_cursor = None
     
+    def _on_time_slider_changed(self, enabled: bool):
+        """Handle time slider toggle change."""
+        self._time_slider_enabled = enabled
+        if enabled:
+            self._enable_time_slider()
+        else:
+            self._disable_time_slider()
+    
+    def _enable_time_slider(self):
+        """Enable time slider and vertical cursor."""
+        if not self._current_config or self._current_config.data is None or self._current_config.data.empty:
+            return
+        
+        # Clear existing slider and cursor
+        self._disable_time_slider()
+        
+        # Get the current x-axis limits from the chart
+        if not self._ax:
+            return
+        
+        # Get the actual x-axis range that's displayed on the chart
+        xlim = self._ax.get_xlim()
+        min_val = float(xlim[0])
+        max_val = float(xlim[1])
+        
+        # Make room for slider
+        try:
+            self._figure.subplots_adjust(bottom=0.2)
+        except Exception:
+            pass
+        
+        # Create slider with the same range as the chart x-axis
+        from matplotlib.widgets import Slider
+        ax_slider = self._figure.add_axes([0.2, 0.1, 0.6, 0.03])
+        self._slider = Slider(ax_slider, 'Time', min_val, max_val, valinit=min_val)
+        
+        # Create vertical cursor line
+        self._cursor_line = self._ax.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
+        
+        # Update cursor position when slider changes
+        def update(val):
+            if self._cursor_line:
+                self._cursor_line.set_xdata([val, val])
+                self._canvas.draw_idle()
+        
+        self._slider.on_changed(update)
+        self._canvas.draw()
+    
+    def _disable_time_slider(self):
+        """Disable time slider and vertical cursor."""
+        if self._slider:
+            try:
+                self._slider.ax.remove()
+            except Exception:
+                pass
+            self._slider = None
+        
+        if self._cursor_line:
+            try:
+                self._cursor_line.remove()
+            except Exception:
+                pass
+            self._cursor_line = None
+        
+        # Reset figure layout
+        try:
+            self._figure.subplots_adjust(bottom=0.1)
+        except Exception:
+            pass
+        
+        self._canvas.draw()
+    
     def plot_quick_chart(self, snapshot: Snapshot, action_id: str):
         """Plot a quick chart by action ID."""
         self._snapshot = snapshot
@@ -425,9 +503,11 @@ class ChartWidget(QWidget):
         self._ax = ax_left
         self._ax_secondary = ax_right
         
-        # Re-enable value display if it was active
+        # Re-enable features if they were active
         if self._value_display_enabled:
             self._enable_value_display()
+        if self._time_slider_enabled:
+            self._enable_time_slider()
     
     def _render_line_chart(self, config: ChartConfig, x_data):
         """Render a line chart."""
