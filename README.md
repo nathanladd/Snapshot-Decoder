@@ -43,3 +43,7 @@ nathan_ladd@comcast.net
 ## Contributions
 By submitting a pull request, you agree that your contribution may be
 licensed under both the open-source license and the commercial license.
+
+## Icon Attributions
+- <a href="https://www.flaticon.com/free-icons/shopping-cart" title="shopping cart icons">Shopping cart icons created by Arafat Uddin - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/pop-out" title="pop out icons">Pop out icons created by Freepik - Flaticon</a>
