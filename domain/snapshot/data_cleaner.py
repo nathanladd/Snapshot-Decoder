@@ -15,18 +15,11 @@ def scrub_snapshot(
     pid_info: Dict[str, Dict[str, str]]
 ) -> pd.DataFrame:
     """
-    Process the raw snapshot DataFrame into a clean format.
-    
-    Operations:
-    - Set column headers from the header row
-    - Normalize column names
-    - Rename first two columns to 'Frame' and 'Time'
-    - Trim to start from Frame == 0
-    - Convert Frame to numeric
+    Clean and prepare raw snapshot data for analysis.
     
     Args:
-        raw_df: Raw DataFrame loaded from file
-        header_row_idx: Index of the header row
+        raw_df: Raw DataFrame from snapshot file
+        header_row_idx: Index of the header row in the raw data
         pid_info: PID metadata dictionary (may be modified to update units)
         
     Returns:
@@ -39,12 +32,6 @@ def scrub_snapshot(
 
     # Normalize column names: strip whitespace
     df.columns = [str(c).strip() for c in df.columns]
-
-    # Clean special columns that need preprocessing
-    if "CoETS_stCurrLimActive" in df.columns:
-        _clean_column_apostrophes(df, "CoETS_stCurrLimActive")
-        if "CoETS_stCurrLimActive" in pid_info:
-            pid_info["CoETS_stCurrLimActive"]["Unit"] = "Bit Stream"
 
     # Ensure first two columns are named Frame and Time
     if len(df.columns) >= 2:

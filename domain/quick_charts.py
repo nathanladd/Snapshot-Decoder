@@ -3,6 +3,7 @@ import pandas as pd
 from pandas.core import apply
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
+from ui.logger import error
 
 # Quick Charts do not pass a chart config data class. I want this method to update all the 
 # controlls on the main ui, then use 'plot chart' to update a chart config.
@@ -351,7 +352,16 @@ def V2_show_engine_torque_limits(main_app, snaptype: SnapType):
     
     # Check if data exists
     if not main_app.engine or col_name not in main_app.engine.snapshot.columns:
+        error(f"V2 Engine Torque Limits: Required PID '{col_name}' not found in snapshot")
         return
+
+    # Clean the column data by removing leading apostrophes
+    from domain.snapshot.data_cleaner import _clean_column_apostrophes
+    _clean_column_apostrophes(main_app.engine.snapshot, col_name)
+    
+    # Update the PID info to reflect the cleaned unit
+    if col_name in main_app.engine.pid_info:
+        main_app.engine.pid_info[col_name]["Unit"] = "Bit Stream"
 
     # Parse the string of digits into individual columns
     # Assuming the column contains strings like "00101"
