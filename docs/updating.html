@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check for Updates</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="content">
+        <h1>Check for Updates</h1>
+        
+        <div class="info">
+            <h2>Current Version Information</h2>
+            <p><strong>Snapshot Decoder Version:</strong> <span id="current-version">Loading...</span></p>
+            <p><strong>Last Checked:</strong> <span id="last-checked">Never</span></p>
+        </div>
+        
+        <div class="section">
+            <h2>Update Status</h2>
+            <div id="update-status">
+                <p>Checking for updates...</p>
+            </div>
+        </div>
+        
+        <div class="section" id="download-section" style="display: none;">
+            <h2>Download Latest Version</h2>
+            <div id="download-info">
+                <!-- Download information will be populated here -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>How to Update</h2>
+            <p>To update Snapshot Decoder:</p>
+            <ol>
+                <li>Download the latest version from the link above</li>
+                <li>Close the current application</li>
+                <li>Install the new version</li>
+                <li>Launch the updated application</li>
+            </ol>
+        </div>
+        
+        <div class="note">
+            <h2>Update Benefits</h2>
+            <p>Keeping Snapshot Decoder updated ensures you have:</p>
+            <ul>
+                <li>Latest snapshot format support</li>
+                <li>New diagnostic features and tools</li>
+                <li>Performance improvements and bug fixes</li>
+                <li>Updated PID descriptions and documentation</li>
+                <li>Enhanced charting capabilities</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Troubleshooting</h2>
+            <p>If you encounter issues with updates:</p>
+            <ul>
+                <li><strong>Unable to check for updates:</strong> Ensure you have internet connection</li>
+                <li><strong>Installation issues:</strong> Close all instances of Snapshot Decoder before installing</li>
+                <li><strong>Version conflicts:</strong> Uninstall the old version before installing the new one</li>
+                <li><strong>Permission errors:</strong> Run the installer as Administrator if needed</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <p><button onclick="checkForUpdates()">Check Again</button></p>
+        </div>
+    </div>
+    
+    <script>
+        // Version comparison function
+        function compareVersions(v1, v2) {
+            const parts1 = v1.split('.').map(Number);
+            const parts2 = v2.split('.').map(Number);
+            
+            for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+                const part1 = parts1[i] || 0;
+                const part2 = parts2[i] || 0;
+                
+                if (part1 > part2) return 1;
+                if (part1 < part2) return -1;
+            }
+            return 0;
+        }
+        
+        // Update checking with fallback to manual link
+        async function checkForUpdates() {
+            const statusDiv = document.getElementById('update-status');
+            const lastCheckedDiv = document.getElementById('last-checked');
+            const downloadSection = document.getElementById('download-section');
+            const downloadInfo = document.getElementById('download-info');
+            
+            statusDiv.innerHTML = '<p>Checking for updates...</p>';
+            downloadSection.style.display = 'none';
+            
+            try {
+                // Try GitHub API directly (may fail due to CORS restrictions in embedded browser)
+                const response = await fetch('https://api.github.com/repos/nathanladd/Snapshot-Decoder/releases/latest');
+                
+                if (!response.ok) {
+                    throw new Error('GitHub API not accessible');
+                }
+                
+                const release = await response.json();
+                const latestVersion = release.tag_name.replace('v', ''); // Remove 'v' prefix if present
+                const downloadUrl = 'https://nathanladd.github.io/Snapshot-Decoder/';
+                const releaseNotes = release.body || 'No release notes available.';
+                const publishedDate = new Date(release.published_at).toLocaleDateString();
+                
+                // Get current version (this should be passed from the application)
+                const currentVersion = '2.0.0'; // This should come from the app
+                
+                // Update last checked time
+                const now = new Date();
+                lastCheckedDiv.textContent = now.toLocaleString();
+                
+                // Compare versions
+                const comparison = compareVersions(latestVersion, currentVersion);
+                
+                if (comparison === 0) {
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            <p><strong>You are using the latest version!</strong></p>
+                            <p>Current version: ${currentVersion}</p>
+                            <p>Latest version: ${latestVersion}</p>
+                        </div>
+                    `;
+                } else if (comparison > 0) {
+                    statusDiv.innerHTML = `
+                        <div class="warning">
+                            <p><strong>A new version is available!</strong></p>
+                            <p>Current version: ${currentVersion}</p>
+                            <p>Latest version: ${latestVersion}</p>
+                            <p>Released: ${publishedDate}</p>
+                        </div>
+                    `;
+                    
+                    // Show download section
+                    downloadInfo.innerHTML = `
+                        <div class="info">
+                            <p><strong>Version ${latestVersion}</strong> is now available!</p>
+                            <p><a href="${downloadUrl}" target="_blank" class="button-link">Download Latest Version</a></p>
+                            <p><strong>Release Notes:</strong></p>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                <pre style="white-space: pre-wrap; font-family: inherit;">${releaseNotes}</pre>
+                            </div>
+                        </div>
+                    `;
+                    downloadSection.style.display = 'block';
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="info">
+                            <p><strong>You are using a pre-release version!</strong></p>
+                            <p>Current version: ${currentVersion}</p>
+                            <p>Latest stable version: ${latestVersion}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+                
+                // Provide manual update option when API fails
+                const downloadUrl = 'https://nathanladd.github.io/Snapshot-Decoder/';
+                const currentVersion = '2.0.0';
+                
+                statusDiv.innerHTML = `
+                    <div class="note">
+                        <p><strong>Unable to check for updates automatically.</strong></p>
+                        <p>The update check failed due to browser security restrictions.</p>
+                        <p>Please check for updates manually by visiting the download page.</p>
+                    </div>
+                `;
+                
+                // Show download section with manual check
+                downloadInfo.innerHTML = `
+                    <div class="info">
+                        <p><strong>Current Version:</strong> ${currentVersion}</p>
+                        <p><strong>Check for updates manually:</strong></p>
+                        <p><a href="${downloadUrl}" target="_blank" class="button-link">Visit Download Page</a></p>
+                        <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                            <p><strong>Why this happens:</strong></p>
+                            <p>The built-in help browser has security restrictions that prevent direct access to the GitHub API. This is normal and helps keep the application secure.</p>
+                        </div>
+                    </div>
+                `;
+                downloadSection.style.display = 'block';
+                
+                const now = new Date();
+                lastCheckedDiv.textContent = now.toLocaleString();
+            }
+        }
+        
+        // Set current version (this would be passed from the application)
+        document.getElementById('current-version').textContent = '2.0.0';
+        
+        // Check for updates on page load
+        window.onload = function() {
+            checkForUpdates();
+        };
+    </script>
+</body>
+</html>

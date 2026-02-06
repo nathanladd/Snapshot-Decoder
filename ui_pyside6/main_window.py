@@ -6,6 +6,7 @@ PySide6 implementation with clean controller-based architecture.
 
 import os
 import copy
+import webbrowser
 from typing import Optional
 
 from PySide6.QtWidgets import (
@@ -29,14 +30,13 @@ from ui_pyside6.widgets.integrated_pid_widget import IntegratedPidWidget
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
-#from ui_pyside6.widgets.pid_info_window import PidInfoWindow
 from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
 from ui_pyside6.widgets.help_tooltip import HelpEventFilter
-
+    
 
 class MainWindow(QMainWindow):
     """Main application window with clean controller architecture."""
@@ -237,6 +237,16 @@ class MainWindow(QMainWindow):
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
+        
+        snapshot_home_action = QAction("Snapshot Decoder Home", self)
+        snapshot_home_action.triggered.connect(self._on_snapshot_decoder_home)
+        help_menu.addAction(snapshot_home_action)
+        
+        check_updates_action = QAction("Check for Updates", self)
+        check_updates_action.triggered.connect(self._on_check_for_updates)
+        help_menu.addAction(check_updates_action)
+        
+        help_menu.addSeparator()
         
         help_home_action = QAction("&Help Home", self)
         help_home_action.setShortcut("F1")
@@ -692,6 +702,18 @@ class MainWindow(QMainWindow):
     def _on_help_browser_visibility_changed(self, visible: bool):
         """Sync menu check state with help browser dock visibility."""
         self._help_browser_action.setChecked(visible)
+    
+    @Slot()
+    def _on_snapshot_decoder_home(self):
+        """Open Snapshot Decoder Home in web browser."""
+        webbrowser.open("https://berrycompanies.sharepoint.com/sites/BOTRServiceSupport/Snapshot_Decoder")
+    
+    @Slot()
+    def _on_check_for_updates(self):
+        """Open the update checking page in the default browser."""
+        # Open the hosted update checker on GitHub Pages
+        update_url = "https://nathanladd.github.io/Snapshot-Decoder/updating.html"
+        webbrowser.open(update_url)
     
     @Slot()
     def _on_show_help_home(self):
