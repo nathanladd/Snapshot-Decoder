@@ -59,7 +59,7 @@ class IntegratedPidWidget(QWidget):
         search_frame = QWidget()
         search_layout = QHBoxLayout(search_frame)
         search_layout.setContentsMargins(0, 0, 0, 0)
-        search_layout.addWidget(QLabel("Search Descriptions:"))
+        search_layout.addWidget(QLabel("Filter Descriptions:"))
         
         self.search_entry = QLineEdit()
         self.search_entry.textChanged.connect(self._filter_descriptions)
@@ -94,20 +94,26 @@ class IntegratedPidWidget(QWidget):
         
         # Tree widget for PID info
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Primary", "Secondary", "PID Name", "Description", "Unit"])
+        self.tree.setHeaderLabels(["1", "2", "Description", "PID Name", "Unit"])
         
         # Configure tree columns
         header = self.tree.header()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)  # Primary checkbox
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)  # Secondary checkbox
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)  # PID name
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive) # Description
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)       # Primary checkbox
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)       # Secondary checkbox
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)  # Description
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)  # PID name
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)  # Unit
         
-        header.resizeSection(0, 80)   # Primary checkbox column
-        header.resizeSection(1, 80)   # Secondary checkbox column
-        header.resizeSection(2, 180)  # PID column
-        header.resizeSection(4, 90)    # Unit column
+        header.resizeSection(0, 40)   # Primary checkbox column (checkbox width + margins)
+        header.resizeSection(1, 25)   # Secondary checkbox column (checkbox width + margins)
+        header.resizeSection(2, 300)  # Description column
+        header.resizeSection(3, 150)  # PID column
+        header.resizeSection(4, 90)   # Unit column
+        
+        # Align checkbox columns to the left
+        self.tree.header().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
         
         # Make header bold
         font = header.font()
@@ -176,15 +182,15 @@ class IntegratedPidWidget(QWidget):
         
         for pid, data in self.pid_info.items():
             item = QTreeWidgetItem(self.tree)
-            item.setText(2, pid)
-            item.setText(3, data.get("Description", ""))
-            item.setText(4, data.get("Unit", ""))
+            item.setText(3, pid)                    # PID Name (column 3)
+            item.setText(2, data.get("Description", ""))  # Description (column 2)
+            item.setText(4, data.get("Unit", ""))    # Unit (column 4)
             
             # Store the full PID data for later use
-            item.setData(2, Qt.ItemDataRole.UserRole, pid)
+            item.setData(3, Qt.ItemDataRole.UserRole, pid)  # Store PID in column 3
             
             # Store item reference for color updates
-            item.setData(3, Qt.ItemDataRole.UserRole, item)  # Store item itself for color updates
+            item.setData(2, Qt.ItemDataRole.UserRole, item)  # Store item itself for color updates
             
             # Create checkboxes for primary and secondary axes
             primary_checkbox = QCheckBox()
@@ -193,34 +199,39 @@ class IntegratedPidWidget(QWidget):
             # Style checkboxes for better visibility on white background
             checkbox_style = """
                 QCheckBox {
-                    spacing: 5px;
+                    spacing: 0px;
+                    margin: 0px;
+                    padding: 0px;
                 }
                 QCheckBox::indicator {
-                    width: 16px;
-                    height: 16px;
-                    border: 2px solid #333333;
-                    border-radius: 3px;
+                    width: 12px;
+                    height: 12px;
+                    border: 1px solid #333333;
+                    border-radius: 2px;
                     background-color: white;
                 }
                 QCheckBox::indicator:hover {
-                    border: 2px solid #0078d4;
+                    border: 1px solid #0078d4;
                     background-color: #f0f8ff;
                 }
                 QCheckBox::indicator:checked {
                     background-color: #28a745;
-                    border: 2px solid #28a745;
+                    border: 1px solid #28a745;
                 }
                 QCheckBox::indicator:checked:hover {
                     background-color: #218838;
-                    border: 2px solid #218838;
+                    border: 1px solid #218838;
                 }
             """
             primary_checkbox.setStyleSheet(checkbox_style)
             secondary_checkbox.setStyleSheet(checkbox_style)
-            
+
             # Set checkboxes as widget items
+            # Direct checkbox placement
             self.tree.setItemWidget(item, 0, primary_checkbox)
             self.tree.setItemWidget(item, 1, secondary_checkbox)
+            
+
             
             # Connect checkbox signals
             primary_checkbox.stateChanged.connect(
@@ -256,6 +267,7 @@ class IntegratedPidWidget(QWidget):
             # Add to primary axis
             if pid not in self.current_primary_pids:
                 self.current_primary_pids.add(pid)
+                
                 # Remove from secondary if it was there
                 if pid in self.current_secondary_pids:
                     self.current_secondary_pids.remove(pid)
@@ -281,6 +293,7 @@ class IntegratedPidWidget(QWidget):
             # Add to secondary axis
             if pid not in self.current_secondary_pids:
                 self.current_secondary_pids.add(pid)
+                
                 # Remove from primary if it was there
                 if pid in self.current_primary_pids:
                     self.current_primary_pids.remove(pid)
@@ -304,7 +317,7 @@ class IntegratedPidWidget(QWidget):
         """Get the primary checkbox for a PID."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.text(2) == pid:
+            if item.text(3) == pid:  # PID is in column 3, not 2
                 return item.data(0, Qt.ItemDataRole.UserRole)
         return None
     
@@ -312,7 +325,7 @@ class IntegratedPidWidget(QWidget):
         """Get the secondary checkbox for a PID."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.text(2) == pid:
+            if item.text(3) == pid:  # PID is in column 3, not 2
                 return item.data(1, Qt.ItemDataRole.UserRole)
         return None
     
@@ -407,15 +420,15 @@ class IntegratedPidWidget(QWidget):
         """Apply color to a PID item while keeping it readable."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.text(2) == pid:
-                # Apply subtle background color to the PID name column
+            if item.text(3) == pid:  # Check PID name column (column 3)
+                # Apply subtle background color to the description column
                 bg_color = QColor(color)
                 bg_color.setAlpha(30)  # Very subtle transparency (30/255)
                 
-                # Apply to PID name column (column 2)
+                # Apply to description column (column 2) - main highlight
                 item.setBackground(2, bg_color)
                 
-                # Also apply to description column (column 3) for consistency
+                # Also apply to PID name column (column 3) for consistency
                 item.setBackground(3, bg_color)
                 
                 # Set text color to ensure readability

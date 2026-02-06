@@ -52,6 +52,12 @@ class ExpandableDock(QDockWidget):
                 border-bottom: 1px solid #C0C0C0;
                 padding: 2px;
             }
+            QDockWidget QWidget#contentWidget {
+                padding-left: 8px;
+            }
+            QDockWidget QWidget#contentWidget QTreeWidget {
+                margin-left: 0px;
+            }
         """)
         
         # Create custom title bar with expand/collapse button
@@ -134,6 +140,10 @@ class ExpandableDock(QDockWidget):
         # Add new content
         self._content_widget = widget
         if widget:
+            # Set object name for CSS targeting
+            widget.setObjectName("contentWidget")
+            # Force style update
+            widget.setStyle(widget.style())
             self.setWidget(widget)
             widget.setVisible(self._is_expanded)
     
