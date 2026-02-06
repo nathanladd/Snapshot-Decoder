@@ -94,7 +94,7 @@ class IntegratedPidWidget(QWidget):
         
         # Tree widget for PID info
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["1", "2", "Description", "PID Name", "Unit"])
+        self.tree.setHeaderLabels(["Left", "Right", "Description", "PID Name", "Unit"])
         
         # Configure tree columns
         header = self.tree.header()
@@ -105,7 +105,7 @@ class IntegratedPidWidget(QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)  # Unit
         
         header.resizeSection(0, 40)   # Primary checkbox column (checkbox width + margins)
-        header.resizeSection(1, 25)   # Secondary checkbox column (checkbox width + margins)
+        header.resizeSection(1, 40)   # Secondary checkbox column (checkbox width + margins)
         header.resizeSection(2, 300)  # Description column
         header.resizeSection(3, 150)  # PID column
         header.resizeSection(4, 90)   # Unit column

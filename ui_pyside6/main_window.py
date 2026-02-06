@@ -29,7 +29,7 @@ from ui_pyside6.widgets.integrated_pid_widget import IntegratedPidWidget
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
-from ui_pyside6.widgets.pid_info_window import PidInfoWindow
+#from ui_pyside6.widgets.pid_info_window import PidInfoWindow
 from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
