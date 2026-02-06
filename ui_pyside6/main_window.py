@@ -5,6 +5,7 @@ PySide6 implementation with clean controller-based architecture.
 """
 
 import os
+import copy
 from typing import Optional
 
 from PySide6.QtWidgets import (
@@ -32,6 +33,7 @@ from ui_pyside6.widgets.pid_info_window import PidInfoWindow
 from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
+from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 
 
 class MainWindow(QMainWindow):
@@ -57,6 +59,7 @@ class MainWindow(QMainWindow):
         self._setup_menu()
         self._setup_statusbar()
         self._setup_log_console()
+        self._setup_chart_cart()
         self._connect_signals()
         
         info("MainWindow initialized with controller architecture")
@@ -160,6 +163,7 @@ class MainWindow(QMainWindow):
         
         # Chart widget
         self.chart_widget = ChartWidget()
+        self.chart_widget.add_to_cart_requested.connect(self.add_current_chart_to_cart)
         right_layout.addWidget(self.chart_widget, stretch=1)
         
         main_layout.addWidget(right_panel)
@@ -202,10 +206,16 @@ class MainWindow(QMainWindow):
         
         view_menu.addSeparator()
         
-        log_console_action = QAction("&Log Console", self)
-        log_console_action.setCheckable(True)
-        log_console_action.triggered.connect(self._on_toggle_log_console)
-        view_menu.addAction(log_console_action)
+        self._chart_cart_action = QAction("&Chart Cart", self)
+        self._chart_cart_action.setCheckable(True)
+        self._chart_cart_action.setChecked(True)
+        self._chart_cart_action.triggered.connect(self._on_toggle_chart_cart)
+        view_menu.addAction(self._chart_cart_action)
+        
+        self._log_console_action = QAction("&Log Console", self)
+        self._log_console_action.setCheckable(True)
+        self._log_console_action.triggered.connect(self._on_toggle_log_console)
+        view_menu.addAction(self._log_console_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -540,6 +550,17 @@ class MainWindow(QMainWindow):
         # Hide by default (user can show via menu)
         self.log_console_dock.hide()
     
+    def _setup_chart_cart(self):
+        """Setup the chart cart dock widget."""
+        self.chart_cart_dock = ChartCartDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.chart_cart_dock)
+        
+        # Visible by default
+        self.chart_cart_dock.show()
+        
+        # Sync menu check state when dock visibility changes
+        self.chart_cart_dock.visibilityChanged.connect(self._on_chart_cart_visibility_changed)
+    
     @Slot()
     def _on_toggle_log_console(self):
         """Toggle the log console visibility."""
@@ -548,3 +569,28 @@ class MainWindow(QMainWindow):
         else:
             self.log_console_dock.show()
             self.log_console_dock.raise_()  # Bring to front
+    
+    @Slot()
+    def _on_toggle_chart_cart(self):
+        """Toggle the chart cart visibility."""
+        if self.chart_cart_dock.isVisible():
+            self.chart_cart_dock.hide()
+        else:
+            self.chart_cart_dock.show()
+            self.chart_cart_dock.raise_()
+    
+    @Slot(bool)
+    def _on_chart_cart_visibility_changed(self, visible: bool):
+        """Sync menu check state with chart cart dock visibility."""
+        self._chart_cart_action.setChecked(visible)
+    
+    def add_current_chart_to_cart(self):
+        """Add the current chart configuration to the chart cart."""
+        config = self.chart_widget.get_current_config()
+        if not config:
+            QMessageBox.information(self, "No Chart", "Create a chart first to add it to the cart.")
+            return
+        
+        config_copy = copy.deepcopy(config)
+        self.chart_cart_dock.add_config(config_copy)
+        info(f"Added chart to cart: {config.title}")

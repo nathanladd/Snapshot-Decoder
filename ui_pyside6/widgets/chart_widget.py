@@ -7,7 +7,7 @@ from typing import Optional, List, Dict
 import pandas as pd
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -35,6 +35,9 @@ def _format_time_mmss(seconds, pos):
 class ChartWidget(QWidget):
     """Widget for displaying charts with matplotlib."""
     
+    # Signal emitted when user clicks "Add to Cart" on toolbar
+    add_to_cart_requested = Signal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self._snapshot: Optional[Snapshot] = None
@@ -58,6 +61,7 @@ class ChartWidget(QWidget):
         
         # Custom navigation toolbar with PDF export
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
+        self._toolbar.add_to_cart_requested.connect(self.add_to_cart_requested.emit)
         layout.addWidget(self._toolbar)
         
         # Canvas

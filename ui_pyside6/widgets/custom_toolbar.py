@@ -7,8 +7,9 @@ Provides PDF export with chain of custody metadata.
 import os
 from typing import Optional
 
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QToolButton
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QIcon
 
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
 from matplotlib.backends.backend_pdf import PdfPages
@@ -38,6 +39,30 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         """
         self.chart_config = chart_config
         super().__init__(canvas, parent, coordinates=coordinates)
+        
+        # Add separator and cart button
+        self.addSeparator()
+        self._cart_btn = QToolButton(self)
+        self._cart_btn.setText("Add to Cart")
+        self._cart_btn.setToolTip("Add current chart to the Chart Cart")
+        self._cart_btn.setStyleSheet("""
+            QToolButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 2px 6px;
+                background-color: #F0F0F0;
+                font-size: 10px;
+            }
+            QToolButton:hover {
+                background-color: #E0E0E0;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:pressed {
+                background-color: #D0D0D0;
+            }
+        """)
+        self._cart_btn.clicked.connect(self.add_to_cart_requested.emit)
+        self.addWidget(self._cart_btn)
     
     def set_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration for PDF export."""
