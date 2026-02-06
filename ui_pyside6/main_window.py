@@ -711,8 +711,9 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_check_for_updates(self):
         """Open the update checking page in the default browser."""
-        # Open the hosted update checker on GitHub Pages
-        update_url = "https://nathanladd.github.io/Snapshot-Decoder/updating.html"
+        # Open the main GitHub Pages site for now
+        # TODO: Change to updating.html once deployed
+        update_url = "https://nathanladd.github.io/Snapshot-Decoder/"
         webbrowser.open(update_url)
     
     @Slot()
