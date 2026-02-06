@@ -589,6 +589,30 @@ class MainWindow(QMainWindow):
         # Listen for cart changes to sync PID panel
         self.chart_cart_dock.chart_cart.cart_changed.connect(self._on_chart_cart_changed)
     
+    def _setup_help_browser(self):
+        """Setup the help browser dock widget."""
+        self.help_browser_dock = HelpBrowserDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_browser_dock)
+        
+        # Hidden by default (auto-shows when a help link is clicked)
+        self.help_browser_dock.hide()
+        
+        # Tab the help browser and log console together in the right dock area
+        self.tabifyDockWidget(self.chart_cart_dock, self.help_browser_dock)
+        self.tabifyDockWidget(self.help_browser_dock, self.log_console_dock)
+        
+        # Set up dock widget visibility changes to raise the active tab
+        self.help_browser_dock.visibilityChanged.connect(self._on_help_browser_visibility_changed)
+        
+        # When help browser is shown, raise it to the front
+        def raise_help_browser():
+            if self.help_browser_dock.isVisible():
+                self.help_browser_dock.raise_()
+        
+        # Connect menu action to raise help browser when shown
+        if hasattr(self, '_help_browser_action'):
+            self._help_browser_action.triggered.connect(raise_help_browser)
+    
     @Slot()
     def _on_toggle_log_console(self):
         """Toggle the log console visibility."""
@@ -612,6 +636,15 @@ class MainWindow(QMainWindow):
         """Sync menu check state with chart cart dock visibility."""
         self._chart_cart_action.setChecked(visible)
     
+    @Slot()
+    def _on_toggle_help_browser(self):
+        """Toggle the help browser visibility."""
+        if self.help_browser_dock.isVisible():
+            self.help_browser_dock.hide()
+        else:
+            self.help_browser_dock.show()
+            self.help_browser_dock.raise_()  # Bring to front
+    
     def add_current_chart_to_cart(self):
         """Add the current chart configuration to the chart cart."""
         config = self.chart_widget.get_current_config()
@@ -623,17 +656,7 @@ class MainWindow(QMainWindow):
         self.chart_cart_dock.add_config(config_copy)
         info(f"Added chart to cart: {config.title}")
     
-    def _setup_help_browser(self):
-        """Setup the help browser dock widget."""
-        self.help_browser_dock = HelpBrowserDock(self)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_browser_dock)
-        
-        # Hidden by default (auto-shows when a help link is clicked)
-        self.help_browser_dock.hide()
-        
-        # Sync menu check state when dock visibility changes
-        self.help_browser_dock.visibilityChanged.connect(self._on_help_browser_visibility_changed)
-
+    
 # ############################################################################################################################
 # ########################################### HELP TOOLTIPS ##################################################################
 # ############################################################################################################################
@@ -669,15 +692,6 @@ class MainWindow(QMainWindow):
             "Interactive chart — zoom, pan, and export",
             "chart_toolbar.html"
         )
-    
-    @Slot()
-    def _on_toggle_help_browser(self):
-        """Toggle the help browser visibility."""
-        if self.help_browser_dock.isVisible():
-            self.help_browser_dock.hide()
-        else:
-            self.help_browser_dock.show()
-            self.help_browser_dock.raise_()
     
     @Slot(bool)
     def _on_help_browser_visibility_changed(self, visible: bool):
