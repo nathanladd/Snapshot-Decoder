@@ -9,7 +9,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-    QPushButton, QCheckBox, QMessageBox
+    QCheckBox, QMessageBox
 )
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction
@@ -70,16 +70,7 @@ class ChartPopoutWindow(QMainWindow):
         self.slider_checkbox.stateChanged.connect(self._on_interactivity_change)
         controls_layout.addWidget(self.slider_checkbox)
         
-        self.cursor_checkbox = QCheckBox("Hover Cursor")
-        self.cursor_checkbox.stateChanged.connect(self._on_interactivity_change)
-        controls_layout.addWidget(self.cursor_checkbox)
-        
         controls_layout.addStretch()
-        
-        if self.chart_cart:
-            add_to_cart_btn = QPushButton("Add to Cart")
-            add_to_cart_btn.clicked.connect(self._add_to_cart)
-            controls_layout.addWidget(add_to_cart_btn)
         
         main_layout.addLayout(controls_layout)
         
@@ -91,8 +82,10 @@ class ChartPopoutWindow(QMainWindow):
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
         self.canvas = FigureCanvas(self.figure)
         
-        # Add custom toolbar
-        self.toolbar = CustomNavigationToolbar(self.canvas, self)
+        # Add custom toolbar (no pop-out button in pop-out windows)
+        self.toolbar = CustomNavigationToolbar(self.canvas, self, show_popout=False)
+        self.toolbar.add_to_cart_requested.connect(self._add_to_cart)
+        self.toolbar.value_display_changed.connect(self._on_value_display_changed)
         main_layout.addWidget(self.toolbar)
         
         # Pack canvas
@@ -126,7 +119,15 @@ class ChartPopoutWindow(QMainWindow):
     def _on_interactivity_change(self, state):
         """Callback when interactivity options change."""
         self.enable_slider = self.slider_checkbox.isChecked()
-        self.enable_cursor = self.cursor_checkbox.isChecked()
+        
+        self._clear_interactivity()
+        self._add_interactivity()
+        self.canvas.draw()
+    
+    @Slot(bool)
+    def _on_value_display_changed(self, enabled: bool):
+        """Handle value display toggle change from toolbar."""
+        self.enable_cursor = enabled
         
         self._clear_interactivity()
         self._add_interactivity()
