@@ -687,12 +687,7 @@ class MainWindow(QMainWindow):
             "Set axis ranges and auto-scale options",
             "axis_controls.html"
         )
-        self._help_filter.register(
-            self.chart_widget,
-            "Interactive chart — zoom, pan, and export",
-            "chart_toolbar.html"
-        )
-    
+            
     @Slot(bool)
     def _on_help_browser_visibility_changed(self, visible: bool):
         """Sync menu check state with help browser dock visibility."""

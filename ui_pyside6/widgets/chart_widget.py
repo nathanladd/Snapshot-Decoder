@@ -13,6 +13,7 @@ from PySide6.QtGui import QAction
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
+import mplcursors
 
 from domain.snapshot import Snapshot
 from domain.chart_config import ChartConfig, AxisConfig
@@ -46,6 +47,11 @@ class ChartWidget(QWidget):
         self._snapshot: Optional[Snapshot] = None
         self._current_config: Optional[ChartConfig] = None
         self._current_action_id: Optional[str] = None  # Track if showing a quick chart
+        
+        # Value display state
+        self._value_display_enabled = False
+        self._mpl_cursor = None
+        
         self._setup_ui()
     
     def _setup_ui(self):
@@ -66,6 +72,7 @@ class ChartWidget(QWidget):
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
         self._toolbar.add_to_cart_requested.connect(self.add_to_cart_requested.emit)
         self._toolbar.pop_out_requested.connect(self.pop_out_requested.emit)
+        self._toolbar.value_display_changed.connect(self._on_value_display_changed)
         layout.addWidget(self._toolbar)
         
         # Canvas
@@ -184,28 +191,103 @@ class ChartWidget(QWidget):
         self._figure.tight_layout()
         self._canvas.draw()
     
-    def get_current_axis_limits(self) -> Optional[Dict]:
-        """Get the current axis limits from the chart."""
-        if self._ax is None:
+    def get_current_axis_limits(self) -> Optional[Dict[str, float]]:
+        """Get the current axis limits from the rendered chart."""
+        if not self._ax:
             return None
         
-        try:
-            p_min, p_max = self._ax.get_ylim()
-            result = {
-                'primary_min': round(p_min, 4),
-                'primary_max': round(p_max, 4),
-                'secondary_min': None,
-                'secondary_max': None,
-            }
+        limits = {
+            'primary_min': self._ax.get_ylim()[0],
+            'primary_max': self._ax.get_ylim()[1],
+        }
+        
+        if self._ax_secondary:
+            limits.update({
+                'secondary_min': self._ax_secondary.get_ylim()[0],
+                'secondary_max': self._ax_secondary.get_ylim()[1],
+            })
+        
+        return limits
+    
+    def _on_value_display_changed(self, enabled: bool):
+        """Handle value display toggle change."""
+        self._value_display_enabled = enabled
+        if enabled:
+            self._enable_value_display()
+        else:
+            self._disable_value_display()
+    
+    def _enable_value_display(self):
+        """Enable hover value display on the chart."""
+        if not self._current_config or self._current_config.data is None or self._current_config.data.empty:
+            return
+        
+        # Clear existing cursor
+        self._disable_value_display()
+        
+        # Collect all plot artists (lines, containers, collections)
+        artists = []
+        if self._ax:
+            artists.extend(self._ax.lines)
+            artists.extend(self._ax.containers)
+            artists.extend(self._ax.collections)
+        if self._ax_secondary:
+            artists.extend(self._ax_secondary.lines)
+            artists.extend(self._ax_secondary.containers)
+            artists.extend(self._ax_secondary.collections)
+        
+        if artists:
+            self._mpl_cursor = mplcursors.cursor(artists, hover=True)
             
-            if self._ax_secondary:
-                s_min, s_max = self._ax_secondary.get_ylim()
-                result['secondary_min'] = round(s_min, 4)
-                result['secondary_max'] = round(s_max, 4)
-            
-            return result
-        except Exception:
-            return None
+            @self._mpl_cursor.connect("add")
+            def on_add(sel):
+                try:
+                    # Get the data point
+                    x, y = sel.target
+                    label = sel.artist.get_label()
+                    
+                    # Format the display text
+                    if self._current_config and self._current_config.x_column:
+                        x_label = self._current_config.x_column
+                    else:
+                        x_label = "X"
+                    
+                    # Format based on chart type
+                    if self._current_config and self._current_config.chart_type == "status":
+                        # For status charts, show On/Off
+                        y_text = "On" if y >= 0.5 else "Off"
+                    else:
+                        # For other charts, show numeric value
+                        y_text = f"{y:.3f}"
+                    
+                    # Format x value (time if available)
+                    if self._current_config and "Time" in str(x):
+                        # Format as MM:SS if it looks like time
+                        try:
+                            mins = int(x // 60)
+                            secs = int(x % 60)
+                            x_text = f"{mins:02d}:{secs:02d}"
+                        except:
+                            x_text = f"{x:.2f}"
+                    else:
+                        x_text = f"{x:.2f}"
+                    
+                    sel.annotation.set_text(f"{label}\n{x_label}: {x_text}\nValue: {y_text}")
+                    sel.annotation.get_bbox_patch().set(fc="white", alpha=0.9)
+                    
+                except Exception as e:
+                    # Fallback to simple display
+                    sel.annotation.set_text(f"{x:.2f}, {y:.3f}")
+                    sel.annotation.get_bbox_patch().set(fc="white", alpha=0.9)
+    
+    def _disable_value_display(self):
+        """Disable hover value display."""
+        if self._mpl_cursor:
+            try:
+                self._mpl_cursor.remove()
+            except Exception:
+                pass
+            self._mpl_cursor = None
     
     def plot_quick_chart(self, snapshot: Snapshot, action_id: str):
         """Plot a quick chart by action ID."""
@@ -342,6 +424,10 @@ class ChartWidget(QWidget):
         # Store the axes for reference
         self._ax = ax_left
         self._ax_secondary = ax_right
+        
+        # Re-enable value display if it was active
+        if self._value_display_enabled:
+            self._enable_value_display()
     
     def _render_line_chart(self, config: ChartConfig, x_data):
         """Render a line chart."""

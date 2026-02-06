@@ -27,6 +27,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     # Signal emitted when pop-out is requested
     pop_out_requested = Signal()
     
+    # Signal emitted when value display toggle changes
+    value_display_changed = Signal(bool)
+    
     def __init__(self, canvas, parent, *, coordinates=True, chart_config: Optional[ChartConfig] = None):
         """
         Initialize the custom toolbar.
@@ -72,6 +75,47 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         """)
         self._cart_btn.clicked.connect(self.add_to_cart_requested.emit)
         self.addWidget(self._cart_btn)
+        
+        # Add value display toggle
+        self.addSeparator()
+        self._value_display_btn = QToolButton(self)
+        self._value_display_btn.setToolTip("Show/hide data values on hover")
+        self._value_display_btn.setCheckable(True)  # Makes it a latching button
+        
+        # Load value popup icon
+        import os
+        from PySide6.QtGui import QIcon
+        from PySide6.QtCore import QSize
+        # Get the project root directory
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        icon_path = os.path.join(project_root, 'data', 'images', 'value-popup.png')
+        self._value_display_btn.setIcon(QIcon(icon_path))
+        self._value_display_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
+        
+        self._value_display_btn.setStyleSheet("""
+            QToolButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 4px;
+                background-color: #F0F0F0;
+            }
+            QToolButton:hover {
+                background-color: #E0E0E0;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:pressed {
+                background-color: #D0D0D0;
+            }
+            QToolButton:checked {
+                background-color: #0078d4;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:checked:hover {
+                background-color: #106ebe;
+            }
+        """)
+        self._value_display_btn.toggled.connect(self.value_display_changed.emit)
+        self.addWidget(self._value_display_btn)
         
         # Add pop-out button
         self._popout_btn = QToolButton(self)
