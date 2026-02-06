@@ -576,6 +576,9 @@ class MainWindow(QMainWindow):
         
         # Sync menu check state when dock visibility changes
         self.chart_cart_dock.visibilityChanged.connect(self._on_chart_cart_visibility_changed)
+        
+        # Listen for cart changes to sync PID panel
+        self.chart_cart_dock.chart_cart.cart_changed.connect(self._on_chart_cart_changed)
     
     @Slot()
     def _on_toggle_log_console(self):
@@ -676,3 +679,11 @@ class MainWindow(QMainWindow):
     def _on_show_help_home(self):
         """Show the help browser with the home page."""
         self.help_browser_dock.navigate("index.html")
+    
+    @Slot()
+    def _on_chart_cart_changed(self):
+        """Handle chart cart changes - sync PID panel when cart is cleared."""
+        count = self.chart_cart_dock.chart_cart.get_config_count()
+        if count == 0:
+            # Cart is empty - clear PID panel checkboxes
+            self.pid_panel.set_pids([], [], emit_signal=False)

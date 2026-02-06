@@ -341,7 +341,7 @@ class IntegratedPidWidget(QWidget):
         """Sync checkboxes with current chart PIDs."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            pid = item.text(2)
+            pid = item.text(3)  # PID Name is in column 3 after reordering
             
             primary_cb = self._get_primary_checkbox(pid)
             secondary_cb = self._get_secondary_checkbox(pid)

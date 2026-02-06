@@ -405,7 +405,6 @@ class ChartCartWidget(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             self.configs.clear()
             self._rebuild_ui()
-            info("Chart cart cleared")
             self.cart_changed.emit()
     
     def _export_to_pdf(self):
