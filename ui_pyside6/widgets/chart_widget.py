@@ -38,6 +38,9 @@ class ChartWidget(QWidget):
     # Signal emitted when user clicks "Add to Cart" on toolbar
     add_to_cart_requested = Signal()
     
+    # Signal emitted when user clicks "Pop Out" on toolbar
+    pop_out_requested = Signal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self._snapshot: Optional[Snapshot] = None
@@ -62,6 +65,7 @@ class ChartWidget(QWidget):
         # Custom navigation toolbar with PDF export
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
         self._toolbar.add_to_cart_requested.connect(self.add_to_cart_requested.emit)
+        self._toolbar.pop_out_requested.connect(self.pop_out_requested.emit)
         layout.addWidget(self._toolbar)
         
         # Canvas

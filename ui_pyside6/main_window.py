@@ -168,6 +168,7 @@ class MainWindow(QMainWindow):
         # Chart widget
         self.chart_widget = ChartWidget()
         self.chart_widget.add_to_cart_requested.connect(self.add_current_chart_to_cart)
+        self.chart_widget.pop_out_requested.connect(self.pop_out_chart)
         right_layout.addWidget(self.chart_widget, stretch=1)
         
         main_layout.addWidget(right_panel)
@@ -195,6 +196,14 @@ class MainWindow(QMainWindow):
         view_menu = menubar.addMenu("&View")
         
         data_menu = view_menu.addMenu("Data Tables")
+        
+        # Chart menu
+        chart_menu = menubar.addMenu("&Chart")
+        
+        pop_out_action = QAction("&Pop Out Chart", self)
+        pop_out_action.setShortcut("Ctrl+P")
+        pop_out_action.triggered.connect(self.pop_out_chart)
+        chart_menu.addAction(pop_out_action)
         
         raw_table_action = QAction("&Raw Data...", self)
         raw_table_action.triggered.connect(self._on_show_raw_table)
@@ -687,3 +696,20 @@ class MainWindow(QMainWindow):
         if count == 0:
             # Cart is empty - clear PID panel checkboxes
             self.pid_panel.set_pids([], [], emit_signal=False)
+    
+    @Slot()
+    def pop_out_chart(self):
+        """Open the current chart in a separate window."""
+        config = self.chart_widget.get_current_config()
+        if not config:
+            QMessageBox.information(self, "No Chart", "Configure a chart first to pop it out.")
+            return
+        
+        # Capture current axis limits from the chart (after pan/zoom)
+        # Note: This would need access to the chart's axes - for now use config as-is
+        # In a full implementation, we'd need to get the current axis limits
+        
+        # Open pop-out window with current config and cart
+        from ui_pyside6.widgets.chart_popout_window import ChartPopoutWindow
+        popup = ChartPopoutWindow(self, config, chart_cart=self.chart_cart_dock.chart_cart)
+        popup.show()
