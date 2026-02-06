@@ -621,6 +621,10 @@ class MainWindow(QMainWindow):
         
         # Sync menu check state when dock visibility changes
         self.help_browser_dock.visibilityChanged.connect(self._on_help_browser_visibility_changed)
+
+# ############################################################################################################################
+# ########################################### HELP TOOLTIPS ##################################################################
+# ############################################################################################################################
     
     def _setup_help_tooltips(self):
         """Register help tooltips on widgets throughout the UI."""

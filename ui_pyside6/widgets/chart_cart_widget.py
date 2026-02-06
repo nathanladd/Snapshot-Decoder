@@ -8,10 +8,10 @@ import copy
 from typing import List, Optional
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QLabel,
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QLabel,
     QPushButton, QFrame, QFileDialog, QMessageBox, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QPixmap, QImage
 
 from matplotlib.figure import Figure
@@ -26,6 +26,11 @@ from infrastructure import info, error
 class ChartCartItem(QFrame):
     """A single item in the chart cart with thumbnail, title, and control buttons."""
     
+    # Standard card dimensions
+    CARD_WIDTH = 200
+    CARD_HEIGHT = 180
+    THUMBNAIL_HEIGHT = 100
+    
     move_up_requested = Signal(int)
     move_down_requested = Signal(int)
     remove_requested = Signal(int)
@@ -35,18 +40,24 @@ class ChartCartItem(QFrame):
         self.config = config
         self.index = index
         
+        # Use fixed size policy to prevent expansion
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        # Also set fixed size to prevent flow layout from expanding
+        self.setFixedSize(self.CARD_WIDTH, self.CARD_HEIGHT)
+        
         self.setFrameShape(QFrame.Shape.Box)
         self.setFrameShadow(QFrame.Shadow.Raised)
         self.setLineWidth(1)
         self.setStyleSheet("""
             ChartCartItem {
                 background-color: white;
-                border: 1px solid #C0C0C0;
-                border-radius: 3px;
-                margin: 2px;
+                border: 1px solid #D0D0D0;
+                border-radius: 6px;
+                margin: 4px;
             }
             ChartCartItem:hover {
-                border: 1px solid #0078d4;
+                border: 2px solid #0078d4;
+                background-color: #F8F8FF;
             }
         """)
         
@@ -54,22 +65,55 @@ class ChartCartItem(QFrame):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(2)
         
-        # Thumbnail
+        # Thumbnail (fixed height)
         thumbnail_label = QLabel()
+        thumbnail_label.setFixedSize(self.CARD_WIDTH - 16, self.THUMBNAIL_HEIGHT)
         thumbnail_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        thumbnail_label.setStyleSheet("""
+            QLabel {
+                background-color: #F8F8F8;
+                border: 1px solid #E0E0E0;
+                border-radius: 4px;
+                margin: 2px;
+            }
+        """)
         pixmap = self._render_thumbnail(config)
         if pixmap:
-            thumbnail_label.setPixmap(pixmap)
+            # Scale thumbnail to fit the fixed area
+            scaled_pixmap = pixmap.scaled(
+                thumbnail_label.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            thumbnail_label.setPixmap(scaled_pixmap)
         else:
             thumbnail_label.setText("(No preview)")
-            thumbnail_label.setStyleSheet("color: gray; font-style: italic;")
+            thumbnail_label.setStyleSheet("""
+                QLabel {
+                    background-color: #F8F8F8;
+                    border: 1px solid #E0E0E0;
+                    border-radius: 4px;
+                    margin: 2px;
+                    color: #999;
+                    font-style: italic;
+                    font-size: 10px;
+                }
+            """)
         layout.addWidget(thumbnail_label)
         
-        # Title
+        # Title (with word wrap and max height)
         title_label = QLabel(config.title or "Chart")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("font-size: 9px; font-weight: bold; color: #333;")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 11px;
+                font-weight: bold;
+                color: #333;
+                padding: 4px 6px;
+            }
+        """)
         title_label.setWordWrap(True)
+        title_label.setMaximumHeight(40)  # Allow up to 2 lines
         layout.addWidget(title_label)
         
         # Control buttons
@@ -158,6 +202,14 @@ class ChartCartItem(QFrame):
         del fig
         
         return pixmap
+    
+    def sizeHint(self) -> QSize:
+        """Return the preferred size for the card."""
+        return QSize(self.CARD_WIDTH, self.CARD_HEIGHT)
+    
+    def minimumSize(self) -> QSize:
+        """Return the minimum size for the card."""
+        return QSize(self.CARD_WIDTH, self.CARD_HEIGHT)
 
 
 class ChartCartWidget(QWidget):
@@ -241,19 +293,18 @@ class ChartCartWidget(QWidget):
         """)
         
         self._scroll_content = QWidget()
-        self._scroll_layout = QVBoxLayout(self._scroll_content)
-        self._scroll_layout.setContentsMargins(4, 4, 4, 4)
-        self._scroll_layout.setSpacing(4)
-        self._scroll_layout.addStretch()
+        self._grid_layout = QGridLayout(self._scroll_content)
+        self._grid_layout.setContentsMargins(4, 4, 4, 4)
+        self._grid_layout.setSpacing(8)
         
         self._scroll_area.setWidget(self._scroll_content)
         main_layout.addWidget(self._scroll_area, stretch=1)
         
-        # Empty state label
+        # Empty state label (managed outside grid)
         self._empty_label = QLabel("Add charts using the cart button\non the chart toolbar")
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._empty_label.setStyleSheet("color: #999; font-style: italic; font-size: 10px;")
-        self._scroll_layout.insertWidget(0, self._empty_label)
+        self._grid_layout.addWidget(self._empty_label, 0, 0)
     
     def add_config(self, config: ChartConfig):
         """Add a new chart config to the cart."""
@@ -286,28 +337,57 @@ class ChartCartWidget(QWidget):
             self.cart_changed.emit()
     
     def _rebuild_ui(self):
-        """Rebuild the entire scrollable list."""
-        # Remove existing items
+        """Rebuild the grid with the correct number of columns."""
+        # Remove all items from grid
         for item in self._items:
-            self._scroll_layout.removeWidget(item)
+            self._grid_layout.removeWidget(item)
             item.deleteLater()
         self._items.clear()
-        
-        # Show/hide empty label
-        self._empty_label.setVisible(len(self.configs) == 0)
         
         # Update count label
         count = len(self.configs)
         self._count_label.setText(f"{count} chart{'s' if count != 1 else ''}")
         
-        # Add items for each config
+        # Show/hide empty label
+        if count == 0:
+            self._empty_label.show()
+            return
+        self._empty_label.hide()
+        
+        # Calculate columns based on available width
+        cols = self._calc_columns()
+        
+        # Add items to grid
         for i, config in enumerate(self.configs):
             item = ChartCartItem(config, i)
             item.move_up_requested.connect(self.move_up)
             item.move_down_requested.connect(self.move_down)
             item.remove_requested.connect(self.remove_config)
-            self._scroll_layout.insertWidget(i, item)
+            row = i // cols
+            col = i % cols
+            self._grid_layout.addWidget(item, row, col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
             self._items.append(item)
+    
+    def _calc_columns(self) -> int:
+        """Calculate how many card columns fit in the current width."""
+        available = self._scroll_area.viewport().width()
+        card_w = ChartCartItem.CARD_WIDTH + 8  # card + spacing
+        cols = max(1, available // card_w)
+        return cols
+    
+    def resizeEvent(self, event):
+        """Recalculate grid columns when the widget is resized."""
+        super().resizeEvent(event)
+        if self._items:
+            self._relayout_grid()
+    
+    def _relayout_grid(self):
+        """Re-place existing items into the grid with updated column count."""
+        cols = self._calc_columns()
+        for i, item in enumerate(self._items):
+            row = i // cols
+            col = i % cols
+            self._grid_layout.addWidget(item, row, col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
     
     def _clear_cart(self):
         """Clear all charts from the cart."""
