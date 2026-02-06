@@ -296,6 +296,8 @@ class ChartCartWidget(QWidget):
         self._grid_layout = QGridLayout(self._scroll_content)
         self._grid_layout.setContentsMargins(4, 4, 4, 4)
         self._grid_layout.setSpacing(8)
+        self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._grid_layout.setColumnStretch(0, 0)  # Don't stretch columns
         
         self._scroll_area.setWidget(self._scroll_content)
         main_layout.addWidget(self._scroll_area, stretch=1)
@@ -357,6 +359,10 @@ class ChartCartWidget(QWidget):
         # Calculate columns based on available width
         cols = self._calc_columns()
         
+        # Clear column stretch factors
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 0)
+        
         # Add items to grid
         for i, config in enumerate(self.configs):
             item = ChartCartItem(config, i)
@@ -384,6 +390,11 @@ class ChartCartWidget(QWidget):
     def _relayout_grid(self):
         """Re-place existing items into the grid with updated column count."""
         cols = self._calc_columns()
+        
+        # Clear column stretch factors
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 0)
+        
         for i, item in enumerate(self._items):
             row = i // cols
             col = i % cols
