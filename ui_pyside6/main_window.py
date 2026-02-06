@@ -34,6 +34,8 @@ from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
+from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
+from ui_pyside6.widgets.help_tooltip import HelpEventFilter
 
 
 class MainWindow(QMainWindow):
@@ -60,6 +62,8 @@ class MainWindow(QMainWindow):
         self._setup_statusbar()
         self._setup_log_console()
         self._setup_chart_cart()
+        self._setup_help_browser()
+        self._setup_help_tooltips()
         self._connect_signals()
         
         info("MainWindow initialized with controller architecture")
@@ -212,6 +216,11 @@ class MainWindow(QMainWindow):
         self._chart_cart_action.triggered.connect(self._on_toggle_chart_cart)
         view_menu.addAction(self._chart_cart_action)
         
+        self._help_browser_action = QAction("&Help Browser", self)
+        self._help_browser_action.setCheckable(True)
+        self._help_browser_action.triggered.connect(self._on_toggle_help_browser)
+        view_menu.addAction(self._help_browser_action)
+        
         self._log_console_action = QAction("&Log Console", self)
         self._log_console_action.setCheckable(True)
         self._log_console_action.triggered.connect(self._on_toggle_log_console)
@@ -219,6 +228,13 @@ class MainWindow(QMainWindow):
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
+        
+        help_home_action = QAction("&Help Home", self)
+        help_home_action.setShortcut("F1")
+        help_home_action.triggered.connect(self._on_show_help_home)
+        help_menu.addAction(help_home_action)
+        
+        help_menu.addSeparator()
         
         about_action = QAction("&About", self)
         about_action.triggered.connect(self._on_show_about)
@@ -594,3 +610,65 @@ class MainWindow(QMainWindow):
         config_copy = copy.deepcopy(config)
         self.chart_cart_dock.add_config(config_copy)
         info(f"Added chart to cart: {config.title}")
+    
+    def _setup_help_browser(self):
+        """Setup the help browser dock widget."""
+        self.help_browser_dock = HelpBrowserDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_browser_dock)
+        
+        # Hidden by default (auto-shows when a help link is clicked)
+        self.help_browser_dock.hide()
+        
+        # Sync menu check state when dock visibility changes
+        self.help_browser_dock.visibilityChanged.connect(self._on_help_browser_visibility_changed)
+    
+    def _setup_help_tooltips(self):
+        """Register help tooltips on widgets throughout the UI."""
+        self._help_filter = HelpEventFilter(self)
+        self._help_filter.link_clicked.connect(self.help_browser_dock.navigate)
+        
+        # Register widgets with their help pages
+        self._help_filter.register(
+            self.header_panel,
+            "Snapshot header info — file name, type, hours",
+            "snapshot_header.html"
+        )
+        self._help_filter.register(
+            self.quick_chart_panel,
+            "One-click diagnostic charts for common analyses",
+            "quick_charts.html"
+        )
+        self._help_filter.register(
+            self.pid_panel,
+            "Search and select PIDs for custom charts",
+            "custom_charts.html"
+        )
+        self._help_filter.register(
+            self.axis_controls_panel,
+            "Set axis ranges and auto-scale options",
+            "axis_controls.html"
+        )
+        self._help_filter.register(
+            self.chart_widget,
+            "Interactive chart — zoom, pan, and export",
+            "chart_toolbar.html"
+        )
+    
+    @Slot()
+    def _on_toggle_help_browser(self):
+        """Toggle the help browser visibility."""
+        if self.help_browser_dock.isVisible():
+            self.help_browser_dock.hide()
+        else:
+            self.help_browser_dock.show()
+            self.help_browser_dock.raise_()
+    
+    @Slot(bool)
+    def _on_help_browser_visibility_changed(self, visible: bool):
+        """Sync menu check state with help browser dock visibility."""
+        self._help_browser_action.setChecked(visible)
+    
+    @Slot()
+    def _on_show_help_home(self):
+        """Show the help browser with the home page."""
+        self.help_browser_dock.navigate("index.html")
