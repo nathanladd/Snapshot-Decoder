@@ -147,12 +147,43 @@ Updated 2/2 cards
 - **✗ NO CARD** - Interpolation worked but no card exists
 - **⚠ NO VALUE** - Card exists but no interpolated value
 
+### Error Logging
+
+Actual errors are now logged with **ERROR** level (red color in most log consoles):
+- **Data type errors**: Non-numeric data that can't be interpolated
+- **Interpolation failures**: Invalid results (NaN, infinity)
+- **Missing cards**: Interpolation succeeded but no display card exists
+- **Missing values**: Card exists but no interpolated value available
+
+These errors will appear prominently in red in the log console, making them easy to spot when debugging object vs. float PID issues.
+
 ### Common Issues
 
 1. **All NaN Values**: PID column contains no valid data
 2. **Data Type Issues**: Non-numeric data that can't be interpolated
 3. **Missing Cards**: Card creation failed or PID not in chart config
 4. **Out of Range**: Slider position outside data bounds
+
+### Object vs. Float PIDs
+
+Many PIDs in automotive data are stored as objects (strings, mixed types) instead of floats. The system handles this automatically:
+
+#### Automatic Data Cleaning
+- **Chart Creation**: Object columns are converted to numeric with `errors='coerce'`
+- **Non-numeric values**: Become NaN and are skipped during interpolation
+- **Mixed data**: Valid numbers are preserved, invalid values become NaN
+
+#### Error Detection
+When object PIDs cause issues, you'll see:
+```
+ERROR: PID interpolation error for Epm_nEng: Cannot cast array data from dtype('O') to dtype('float64') according to the rule 'safe' at position 12.345
+```
+
+#### Debugging Object PIDs
+1. **Enable debug logging** to see data types and sample values
+2. **Check the "Data type" field** in interpolation logs
+3. **Look for "Sample values"** to understand the actual data format
+4. **Monitor ERROR messages** for problematic conversions
 
 ## Configuration Options
 

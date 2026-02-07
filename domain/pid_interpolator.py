@@ -11,7 +11,7 @@ from typing import Dict, Optional
 import time
 
 from domain.chart_config import ChartConfig
-from infrastructure import debug
+from infrastructure import debug, error
 from pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
 
 
@@ -163,10 +163,12 @@ class PIDInterpolator:
                 else:
                     if should_log:
                         debug(f"  - FAILED: Invalid result = {value}")
+                    error(f"PID interpolation failed for {pid}: Invalid result {value} at position {x_position}")
             except Exception as e:
                 # Skip problematic columns
                 if should_log:
                     debug(f"  - ERROR: {e}")
+                error(f"PID interpolation error for {pid}: {e} at position {x_position}")
                 continue
         
         if should_log:

@@ -18,7 +18,7 @@ import time
 from domain.chart_config import ChartConfig
 from domain.pid_interpolator import PIDInterpolator
 from ui.color_manager import ColorManager
-from infrastructure import debug
+from infrastructure import debug, error
 from pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
 
 
@@ -239,12 +239,14 @@ class LiveValuesWidget(QWidget):
             else:
                 if should_log:
                     debug(f"  ✗ No card found for {pid_name}")
+                error(f"Live values: No card found for PID {pid_name} but interpolation succeeded")
         
         # Check for cards that didn't get updated
         if should_log:
             for pid_name in self.cards:
                 if pid_name not in values:
                     debug(f"  ⚠ No interpolated value for {pid_name}")
+                    error(f"Live values: Card exists for PID {pid_name} but no interpolated value available")
             
             debug(f"Updated {updated_count}/{len(self.cards)} cards")
             debug(f"=== Live Values Update Complete ===")
