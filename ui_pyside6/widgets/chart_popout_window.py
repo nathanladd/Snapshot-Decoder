@@ -23,6 +23,7 @@ from ui.chart_renderer import ChartRenderer
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
 from ui_pyside6.widgets.debug_settings_dialog import DebugSettingsDialog
+from ui_pyside6.widgets.enhanced_time_slider import EnhancedTimeSlider
 
 
 class ChartPopoutWindow(QMainWindow):
@@ -232,12 +233,48 @@ class ChartPopoutWindow(QMainWindow):
                 except Exception:
                     pass
                 
-                # Create slider with the same range as the chart x-axis
+                # Create standard slider and enhance it
+                from matplotlib.widgets import Slider
                 self.slider = Slider(
-                    self.figure.add_axes([0.2, 0.1, 0.6, 0.03]),
+                    self.figure.add_axes([0.15, 0.08, 0.7, 0.04]),  # Slightly larger and better positioned
                     'Time', min_val, max_val,
-                    valinit=min_val
+                    valinit=min_val,
+                    color='lightgray'
                 )
+                
+                # Enhance the slider with better visual appearance (time display optional)
+                from ui_pyside6.widgets.enhanced_time_slider import enhance_slider
+                import numpy as np
+                try:
+                    enhance_slider(self.slider, show_time_display=True)
+                except Exception as e:
+                    print(f"Warning: Could not enhance slider: {e}")
+                    # At least try to enhance the appearance manually with aggressive styling
+                    if hasattr(self.slider, 'poly'):
+                        self.slider.poly.set_facecolor('red')
+                        self.slider.poly.set_edgecolor('darkred')
+                        self.slider.poly.set_linewidth(4)  # Thicker border
+                        self.slider.poly.set_alpha(1.0)    # Fully opaque
+                        # Try to make it larger
+                        try:
+                            verts = self.slider.poly.get_xy()
+                            if len(verts) > 0:
+                                center_x = np.mean(verts[:, 0])
+                                center_y = np.mean(verts[:, 1])
+                                width = verts[:, 0].max() - verts[:, 0].min()
+                                height = verts[:, 1].max() - verts[:, 1].min()
+                                new_width = width * 3.0
+                                new_height = height * 2.5
+                                new_verts = [
+                                    [center_x - new_width/2, center_y - new_height/2],
+                                    [center_x + new_width/2, center_y - new_height/2],
+                                    [center_x + new_width/2, center_y + new_height/2],
+                                    [center_x - new_width/2, center_y + new_height/2]
+                                ]
+                                self.slider.poly.set_xy(new_verts)
+                                self.slider.poly.set_zorder(10)
+                        except Exception:
+                            pass
                 
                 self.cursor_line = self.ax_left.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
                 
