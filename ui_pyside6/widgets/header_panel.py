@@ -1,19 +1,27 @@
 """
-Header panel widget displaying snapshot metadata.
+Header panel widget displaying snapshot metadata with toolbar.
 """
 
 from typing import Optional
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QGridLayout, QLabel, QGroupBox
+    QWidget, QVBoxLayout, QGridLayout, QLabel, QGroupBox, QToolBar, QToolButton
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction, QIcon
 
 from domain.snapshot import Snapshot
 
 
 class HeaderPanel(QWidget):
-    """Panel displaying snapshot header information."""
+    """Panel displaying snapshot header information with toolbar."""
+    
+    # Signals for toolbar actions
+    open_requested = Signal()
+    raw_data_requested = Signal()
+    clean_table_requested = Signal()
+    chart_table_requested = Signal()
+    help_requested = Signal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -23,6 +31,10 @@ class HeaderPanel(QWidget):
         """Set up the UI layout."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Add toolbar
+        self._setup_toolbar()
+        layout.addWidget(self._toolbar)
         
         # Group box for header info
         group = QGroupBox("Snapshot Info")
@@ -71,3 +83,61 @@ class HeaderPanel(QWidget):
     def clear(self):
         """Clear all displayed data."""
         self.set_snapshot(None)
+    
+    def _setup_toolbar(self):
+        """Set up the toolbar with common actions."""
+        self._toolbar = QToolBar()
+        self._toolbar.setOrientation(Qt.Horizontal)
+        self._toolbar.setMovable(False)
+        
+        # Apply consistent styling matching existing chart toolbar
+        self._toolbar.setStyleSheet("""
+            QToolButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 4px;
+                background-color: #F0F0F0;
+            }
+            QToolButton:hover {
+                background-color: #E0E0E0;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:pressed {
+                background-color: #D0D0D0;
+            }
+        """)
+        
+        # Open action
+        open_btn = QToolButton()
+        open_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogOpenButton))
+        open_btn.setToolTip("Open snapshot file (Ctrl+O)")
+        open_btn.clicked.connect(self.open_requested.emit)
+        self._toolbar.addWidget(open_btn)
+        
+        # Raw Data action
+        raw_data_btn = QToolButton()
+        raw_data_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_FileDialogDetailedView))
+        raw_data_btn.setToolTip("Show raw data table")
+        raw_data_btn.clicked.connect(self.raw_data_requested.emit)
+        self._toolbar.addWidget(raw_data_btn)
+        
+        # Clean Table action
+        clean_table_btn = QToolButton()
+        clean_table_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_FileDialogListView))
+        clean_table_btn.setToolTip("Show clean data table")
+        clean_table_btn.clicked.connect(self.clean_table_requested.emit)
+        self._toolbar.addWidget(clean_table_btn)
+        
+        # Chart Table action
+        chart_table_btn = QToolButton()
+        chart_table_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_FileIcon))
+        chart_table_btn.setToolTip("Show chart data table")
+        chart_table_btn.clicked.connect(self.chart_table_requested.emit)
+        self._toolbar.addWidget(chart_table_btn)
+        
+        # Help action
+        help_btn = QToolButton()
+        help_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogHelpButton))
+        help_btn.setToolTip("Show help documentation (F1)")
+        help_btn.clicked.connect(self.help_requested.emit)
+        self._toolbar.addWidget(help_btn)

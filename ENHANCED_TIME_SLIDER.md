@@ -2,6 +2,18 @@
 
 Simple enhancement functions for matplotlib Slider that add visual improvements and time display for better user experience.
 
+## Related Features
+
+The enhanced time slider is part of the broader UI improvements in Snapshot Decoder, including:
+
+### **Toolbar Enhancement**
+- **Quick Access Toolbar**: Added to the snapshot info panel with common actions
+- **Icon-based Interface**: Clean icons with tooltips for frequently used features
+- **Actions Included**: Open, Raw Data, Clean Table, Chart Table, Help
+- **Consistent Styling**: Matches existing UI design and chart toolbar appearance
+
+For more details on the toolbar implementation, see the updated HeaderPanel widget.
+
 ## Features
 
 ### 🎯 Enhanced Visual Design

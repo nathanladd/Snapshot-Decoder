@@ -114,6 +114,13 @@ class MainWindow(QMainWindow):
         self.header_panel = HeaderPanel()
         header_row.addWidget(self.header_panel)
         
+        # Connect toolbar signals to existing handler methods
+        self.header_panel.open_requested.connect(self._on_open_file_dialog)
+        self.header_panel.raw_data_requested.connect(self._on_show_raw_table)
+        self.header_panel.clean_table_requested.connect(self._on_show_clean_table)
+        self.header_panel.chart_table_requested.connect(self._on_show_chart_table)
+        self.header_panel.help_requested.connect(self._on_show_help_home)
+        
         self.system_panel = SystemPanel()
         # Vertically center the system panel relative to header panel
         header_row.addWidget(self.system_panel, 0, Qt.AlignmentFlag.AlignVCenter)
