@@ -58,7 +58,14 @@ class ChartConfigBuilder:
         cls, definition: QuickChartDef, snapshot: "Snapshot"
     ) -> ChartConfig:
         """Build a standard line or status chart configuration."""
-        df = snapshot.snapshot
+        df = snapshot.snapshot.copy()  # Make a copy to avoid modifying original
+        
+        # Clean data types for all PID columns to ensure numeric interpolation works
+        all_pids = definition.primary_pids + definition.secondary_pids
+        for pid in all_pids:
+            if pid in df.columns:
+                # Convert to numeric, coercing errors to NaN
+                df[pid] = pd.to_numeric(df[pid], errors='coerce')
         
         # Resolve primary PIDs (filter to those present in data)
         primary_pids = cls._resolve_pids(definition, df)

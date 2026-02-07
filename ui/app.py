@@ -128,6 +128,10 @@ class SnapshotDecoderApp(tk.Tk):
         self.enable_slider.trace_add("write", self._on_interactivity_change)
         self.enable_cursor.trace_add("write", self._on_interactivity_change)
         
+        # Live values display
+        from ui.live_values_display import LiveValuesDisplay
+        self.live_values_display = None
+        
     def _build_ui(self):
         self._set_window_title()
         self._build_menu()
@@ -246,6 +250,10 @@ class SnapshotDecoderApp(tk.Tk):
         ttk.Button(cart_title_frame, text="💾 Export PDF", command=self.export_cart_to_pdf).pack(side=tk.LEFT)
         
         self.chart_cart.build_ui(cart_pane)
+        
+        # Live Values Display in right pane (below chart cart)
+        self.live_values_display = LiveValuesDisplay(cart_pane)
+        # Initially hidden, shown when slider is enabled
 
         # Search box - row 1
         search_frame = ttk.Frame(left_border)
@@ -746,6 +754,13 @@ class SnapshotDecoderApp(tk.Tk):
         self._clear_interactivity()
         self._add_interactivity()
         self.canvas.draw_idle()
+        
+        # Show/hide live values display based on slider state
+        if self.enable_slider.get() and self.live_values_display:
+            self.live_values_display.update_chart_config(self.working_config)
+            self.live_values_display.show()
+        elif self.live_values_display:
+            self.live_values_display.hide()
 
     def _clear_interactivity(self):
         """Remove slider and cursor from the chart."""
@@ -864,6 +879,11 @@ class SnapshotDecoderApp(tk.Tk):
             def update(val):
                 # The memory specifically mentions using set_xdata([x, x]) for axvline updates
                 self.cursor_line.set_xdata([val, val])
+                
+                # Update live values display
+                if self.live_values_display and self.live_values_display.winfo_ismapped():
+                    self.live_values_display.update_values(val)
+                
                 self.canvas.draw_idle()
                 
             self.slider.on_changed(update)

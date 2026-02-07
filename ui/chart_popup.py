@@ -44,6 +44,10 @@ class ChartPopupWindow(tk.Toplevel):
         self.cursor_line = None
         self.mpl_cursor = None
         
+        # Live values display
+        from ui.live_values_display import LiveValuesDisplay
+        self.live_values_display = None
+        
         # Build the UI
         self._build_ui()
         
@@ -77,6 +81,10 @@ class ChartPopupWindow(tk.Toplevel):
         # Pack canvas
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
+        # Live values display (initially hidden)
+        self.live_values_display = LiveValuesDisplay(main_frame)
+        # Initially hidden, shown when slider is enabled
     
     def _render_chart(self):
         """Render the chart using ChartRenderer."""
@@ -95,6 +103,13 @@ class ChartPopupWindow(tk.Toplevel):
         self._clear_interactivity()
         self._add_interactivity()
         self.canvas.draw()
+        
+        # Show/hide live values display based on slider state
+        if self.enable_slider.get() and self.live_values_display:
+            self.live_values_display.update_chart_config(self.config)
+            self.live_values_display.show()
+        elif self.live_values_display:
+            self.live_values_display.hide()
     
     def _clear_interactivity(self):
         """Remove existing slider and cursors."""
@@ -192,6 +207,11 @@ class ChartPopupWindow(tk.Toplevel):
             
             def update(val):
                 self.cursor_line.set_xdata([val, val])
+                
+                # Update live values display
+                if self.live_values_display and self.live_values_display.winfo_ismapped():
+                    self.live_values_display.update_values(val)
+                
                 self.canvas.draw_idle()
             
             self.slider.on_changed(update)

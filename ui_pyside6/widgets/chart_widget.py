@@ -22,6 +22,7 @@ from infrastructure import log_chart_generated, debug
 from ui.color_manager import ColorManager
 from ui.chart_renderer import ChartRenderer
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
+from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
 
 
 def _format_time_mmss(seconds, pos):
@@ -57,6 +58,9 @@ class ChartWidget(QWidget):
         self._slider = None
         self._cursor_line = None
         
+        # Live values display
+        self._live_values_widget = None
+        
         self._setup_ui()
     
     def _setup_ui(self):
@@ -83,6 +87,10 @@ class ChartWidget(QWidget):
         
         # Canvas
         layout.addWidget(self._canvas, stretch=1)
+        
+        # Live values display (initially hidden)
+        self._live_values_widget = LiveValuesWidget(self)
+        layout.addWidget(self._live_values_widget)
         
         # Initial empty state
         self._show_welcome()
@@ -302,6 +310,14 @@ class ChartWidget(QWidget):
             self._enable_time_slider()
         else:
             self._disable_time_slider()
+        
+        # Show/hide live values display
+        if self._live_values_widget:
+            if enabled and self._current_config:
+                self._live_values_widget.update_chart_config(self._current_config)
+                self._live_values_widget.show_widget()
+            else:
+                self._live_values_widget.hide_widget()
     
     def _enable_time_slider(self):
         """Enable time slider and vertical cursor."""
@@ -338,6 +354,11 @@ class ChartWidget(QWidget):
         def update(val):
             if self._cursor_line:
                 self._cursor_line.set_xdata([val, val])
+                
+                # Update live values display
+                if self._live_values_widget and self._live_values_widget.isVisible():
+                    self._live_values_widget.update_values(val)
+                
                 self._canvas.draw_idle()
         
         self._slider.on_changed(update)
@@ -503,6 +524,10 @@ class ChartWidget(QWidget):
         self._ax = ax_left
         self._ax_secondary = ax_right
         
+        # Update live values display when chart config changes
+        if self._live_values_widget and self._time_slider_enabled:
+            self._live_values_widget.update_chart_config(config)
+        
         # Re-enable features if they were active
         if self._value_display_enabled:
             self._enable_value_display()
@@ -611,3 +636,7 @@ class ChartWidget(QWidget):
             self._ax.scatter(df[x_col], df[y_col], s=sizes, alpha=0.6)
             self._ax.set_xlabel(x_col)
             self._ax.set_ylabel(y_col)
+    
+    def get_live_values_widget(self):
+        """Get the live values widget for debug settings updates."""
+        return self._live_values_widget

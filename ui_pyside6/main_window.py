@@ -36,6 +36,7 @@ from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
 from ui_pyside6.widgets.help_tooltip import HelpEventFilter
+from ui_pyside6.widgets.debug_settings_dialog import DebugSettingsDialog
     
 
 class MainWindow(QMainWindow):
@@ -234,6 +235,13 @@ class MainWindow(QMainWindow):
         self._log_console_action.setCheckable(True)
         self._log_console_action.triggered.connect(self._on_toggle_log_console)
         view_menu.addAction(self._log_console_action)
+        
+        # Debug menu
+        debug_menu = menubar.addMenu("&Debug")
+        
+        debug_settings_action = QAction("&Debug Settings...", self)
+        debug_settings_action.triggered.connect(self._on_show_debug_settings)
+        debug_menu.addAction(debug_settings_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -744,3 +752,39 @@ class MainWindow(QMainWindow):
         from ui_pyside6.widgets.chart_popout_window import ChartPopoutWindow
         popup = ChartPopoutWindow(self, config, chart_cart=self.chart_cart_dock.chart_cart)
         popup.show()
+    
+    @Slot()
+    def _on_show_debug_settings(self):
+        """Show the debug settings dialog."""
+        dialog = DebugSettingsDialog(self)
+        
+        # Get current settings before dialog
+        from pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
+        original_settings = {
+            'enable': get_pid_debug_setting(),
+            'interval': get_log_interval(),
+            'log_on_stop': get_log_on_stop(),
+            'threshold': get_position_threshold()
+        }
+        
+        if dialog.exec():
+            # Settings were applied - update running instances
+            new_settings = {
+                'enable': get_pid_debug_setting(),
+                'interval': get_log_interval(),
+                'log_on_stop': get_log_on_stop(),
+                'threshold': get_position_threshold()
+            }
+            
+            # Update chart widget's live values widget if settings changed
+            if original_settings != new_settings:
+                self._update_debug_settings(new_settings)
+    
+    def _update_debug_settings(self, settings: dict):
+        """Update debug settings in running widgets."""
+        # Update chart widget's live values widget
+        if hasattr(self, 'chart_widget') and self.chart_widget:
+            live_widget = self.chart_widget.get_live_values_widget()
+            if live_widget:
+                live_widget.set_debug_logging(settings['enable'])
+                # The interpolator will pick up new settings on next call
