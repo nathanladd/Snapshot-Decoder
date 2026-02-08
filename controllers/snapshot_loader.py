@@ -67,7 +67,7 @@ class SnapshotLoader(QThread):
                 file_size = os.path.getsize(self.file_path)
                 debug(f"File size: {file_size:,} bytes")
             except OSError:
-                debug("Could not determine file size")
+                warning("Could not determine file size")
             
             snapshot = Snapshot(self.file_path)
             
@@ -92,8 +92,19 @@ class SnapshotLoader(QThread):
             debug("Phase 2: Parsing header information")
             snapshot.header_list = parse_header(snapshot.raw_table, max_rows=5)
             snapshot.date_time = find_date_time(snapshot.header_list)
+            
+            # Log all parsed header information
+            if snapshot.header_list:
+                info(f"Parsed {len(snapshot.header_list)} header fields:")
+                for label, value in snapshot.header_list:
+                    info(f"  Header: {label} = {value}")
+                log_custody("HEADERS_PARSED", f"Count: {len(snapshot.header_list)} | DateTime: {snapshot.date_time}")
+            else:
+                info("No header information found")
+                warning("HEADERS_PARSED", "Count: 0 | No headers found")
+            
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 2 - Parsing headers")
+                warning("LOAD_CANCELLED", "Phase 2 - Parsing headers")
                 return
             
             # Phase 3: Find header row and identify snapshot type
@@ -151,6 +162,17 @@ class SnapshotLoader(QThread):
             )
             snapshot.idle_time = find_idle_time(snapshot.snapshot, snapshot.pid_info)
             snapshot.mdp_success_rate = calculate_mdp_success(snapshot.snapshot)
+            
+            # Log derived values calculation
+            info(f"Derived values calculated:")
+            info(f"  Engine Hours: {snapshot.hours}")
+            info(f"  Idle Time: {snapshot.idle_time}")
+            info(f"  MDP Success Rate: {snapshot.mdp_success_rate}")
+            
+            # Log custody event for derived values
+            derived_details = f"Hours: {snapshot.hours} | Idle: {snapshot.idle_time} | MDP: {snapshot.mdp_success_rate}"
+            log_custody("DERIVED_VALUES_CALCULATED", derived_details)
+            
             debug(f"Derived values - Hours: {snapshot.hours}, Idle: {snapshot.idle_time}, MDP: {snapshot.mdp_success_rate}")
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 8 - Calculating derived values")

@@ -37,52 +37,76 @@ class HeaderPanel(QWidget):
         layout.addWidget(self._toolbar)
         
         # Group box for header info
-        group = QGroupBox("Snapshot Info")
-        group_layout = QGridLayout(group)
-        group_layout.setSpacing(4)
+        self._group = QGroupBox("Snapshot Info")
+        self._group_layout = QGridLayout(self._group)
+        self._group_layout.setSpacing(4)
         
-        # Labels for header fields
-        self._labels = {}
-        fields = [
-            ("file_name", "File:"),
-            ("snapshot_type", "Type:"),
-            ("date_time", "Date/Time:"),
-            ("hours", "Engine Hours:"),
-            ("idle_time", "Idle Time:"),
-        ]
+        # Container for dynamic header labels
+        self._header_labels = []
         
-        for row, (key, label_text) in enumerate(fields):
-            label = QLabel(label_text)
-            # Use QFont for bold instead of stylesheet to preserve palette colors
-            font = label.font()
-            font.setBold(True)
-            label.setFont(font)
-            value_label = QLabel("-")
-            value_label.setWordWrap(True)
-            
-            group_layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-            group_layout.addWidget(value_label, row, 1, Qt.AlignmentFlag.AlignTop)
-            self._labels[key] = value_label
-        
-        group_layout.setColumnStretch(1, 1)
-        layout.addWidget(group)
+        layout.addWidget(self._group)
     
     def set_snapshot(self, snapshot: Optional[Snapshot]):
         """Update the panel with snapshot data."""
+        # Clear existing header labels
+        self._clear_header_labels()
+        
         if snapshot is None:
-            for label in self._labels.values():
-                label.setText("-")
             return
         
-        self._labels["file_name"].setText(snapshot.file_name)
-        self._labels["snapshot_type"].setText(snapshot.snapshot_type.description)
-        self._labels["date_time"].setText(snapshot.date_time or "-")
-        self._labels["hours"].setText(f"{snapshot.hours:.1f}" if snapshot.hours else "-")
-        self._labels["idle_time"].setText(f"{snapshot.idle_time:.1f}" if snapshot.idle_time else "-")
+        # Add file name as first entry
+        self._add_header_row("File:", snapshot.file_name)
+        
+        # Add snapshot type as second entry
+        self._add_header_row("Type:", snapshot.snapshot_type.description)
+        
+        # Add all parsed header information
+        if snapshot.header_list:
+            for label, value in snapshot.header_list:
+                self._add_header_row(f"{label}:", value)
+        
+        # Add derived values if available
+        if snapshot.hours is not None:
+            self._add_header_row("Engine Hours:", f"{snapshot.hours:.1f}")
+        if snapshot.idle_time is not None and snapshot.idle_time > 0:
+            self._add_header_row("Idle Time:", f"{snapshot.idle_time:.1f}")
     
     def clear(self):
         """Clear all displayed data."""
-        self.set_snapshot(None)
+        self._clear_header_labels()
+    
+    def _clear_header_labels(self):
+        """Clear all dynamic header labels."""
+        # Remove all widgets from the layout
+        while self._group_layout.count():
+            child = self._group_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+        
+        # Clear the header labels list
+        self._header_labels.clear()
+    
+    def _add_header_row(self, label_text: str, value_text: str):
+        """Add a new header row to the layout."""
+        row = self._group_layout.rowCount()
+        
+        label = QLabel(label_text)
+        # Use QFont for bold instead of stylesheet to preserve palette colors
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        
+        value_label = QLabel(value_text or "-")
+        value_label.setWordWrap(True)
+        
+        self._group_layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        self._group_layout.addWidget(value_label, row, 1, Qt.AlignmentFlag.AlignTop)
+        
+        # Store references to the labels
+        self._header_labels.append((label, value_label))
+        
+        # Ensure the value column stretches
+        self._group_layout.setColumnStretch(1, 1)
     
     def _setup_toolbar(self):
         """Set up the toolbar with common actions."""
