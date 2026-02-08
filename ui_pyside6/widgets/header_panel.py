@@ -133,7 +133,7 @@ class HeaderPanel(QWidget):
         
         # Open action
         open_btn = QToolButton()
-        open_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogOpenButton))
+        open_btn.setIcon(QIcon("data/images/folder-open.png"))
         open_btn.setToolTip("Open snapshot file (Ctrl+O)")
         open_btn.clicked.connect(self.open_requested.emit)
         self._toolbar.addWidget(open_btn)
@@ -161,7 +161,7 @@ class HeaderPanel(QWidget):
         
         # Help action
         help_btn = QToolButton()
-        help_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogHelpButton))
+        help_btn.setIcon(QIcon("data/images/person-drowning.png"))
         help_btn.setToolTip("Show help documentation (F1)")
         help_btn.clicked.connect(self.help_requested.emit)
         self._toolbar.addWidget(help_btn)
