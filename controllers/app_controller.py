@@ -77,19 +77,6 @@ class AppController(QObject):
         self.snapshot = snapshot
         info(f"Snapshot loaded successfully: {snapshot.snapshot_type}")
         
-        # Log file details for chain of custody
-        file_size = os.path.getsize(snapshot.file_path) if hasattr(snapshot, 'file_path') else 0
-        load_time = getattr(snapshot, 'load_time', 0.0)
-        record_count = len(snapshot.snapshot) if hasattr(snapshot, 'snapshot') and snapshot.snapshot is not None else 0
-        
-        log_file_loaded(
-            snapshot.file_path if hasattr(snapshot, 'file_path') else "unknown",
-            file_size,
-            str(snapshot.snapshot_type),
-            load_time,
-            record_count
-        )
-        
         # Emit to UI
         self.snapshot_loaded.emit(snapshot)
     

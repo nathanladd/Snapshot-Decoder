@@ -6,12 +6,11 @@ based on PIDs found in the snapshot data.
 """
 
 from dataclasses import dataclass, field
-from logging import warning
 from typing import Set
 import pandas as pd
 
 from domain.constants import SYSTEM_PIDS
-from infrastructure.logging_config import debug
+from infrastructure.logging_config import debug, info, warning
 
 
 @dataclass

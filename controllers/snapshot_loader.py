@@ -173,7 +173,6 @@ class SnapshotLoader(QThread):
             derived_details = f"Hours: {snapshot.hours} | Idle: {snapshot.idle_time} | MDP: {snapshot.mdp_success_rate}"
             log_custody("DERIVED_VALUES_CALCULATED", derived_details)
             
-            debug(f"Derived values - Hours: {snapshot.hours}, Idle: {snapshot.idle_time}, MDP: {snapshot.mdp_success_rate}")
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 8 - Calculating derived values")
                 return
