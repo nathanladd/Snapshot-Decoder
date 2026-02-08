@@ -6,10 +6,12 @@ based on PIDs found in the snapshot data.
 """
 
 from dataclasses import dataclass, field
+from logging import warning
 from typing import Set
 import pandas as pd
 
 from domain.constants import SYSTEM_PIDS
+from infrastructure.logging_config import debug
 
 
 @dataclass
@@ -54,16 +56,22 @@ def detect_systems(df: pd.DataFrame) -> DetectedSystems:
         col.lower().strip() for col in df.columns
     )
     
+    debug(f"System Detection: Found {len(columns_lower)} total columns in snapshot")
+    
     systems = DetectedSystems()
     
     for system_name, pids in SYSTEM_PIDS.items():
         # Find which PIDs from this system are present
         matched = [pid for pid in pids if pid.lower() in columns_lower]
+        missing = [pid for pid in pids if pid.lower() not in columns_lower]
         
         if matched:
             # Set the corresponding attribute to True
             setattr(systems, system_name, True)
             systems.matched_pids[system_name] = matched
+            info(f"System Detection: {system_name.upper()} DETECTED - Found PIDs: {matched}")
+        else:
+            warning(f"System Detection: {system_name.upper()} NOT DETECTED - Missing PIDs: {missing}")
     
     return systems
 
