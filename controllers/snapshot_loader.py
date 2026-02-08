@@ -187,16 +187,17 @@ class SnapshotLoader(QThread):
             snapshot.has_dpf = systems.dpf
             snapshot.has_scr = systems.scr
             snapshot.has_air_throttle = systems.air_throttle
+            snapshot.has_mdp = systems.mdp
             snapshot._detected_systems = systems
-            debug(f"Detected systems: EGR={systems.egr}, DOC={systems.doc}, DPF={systems.dpf}, SCR={systems.scr}")
+            debug(f"Detected systems: EGR={systems.egr}, DOC={systems.doc}, DPF={systems.dpf}, SCR={systems.scr}, MDP={systems.mdp}")
             
             # Calculate load time and log success
             load_time = time.time() - start_time
             record_count = len(snapshot.snapshot) if snapshot.snapshot is not None else 0
             
             self.progress.emit(100, "Complete")
-            info("Snapshot loaded successfully")
-            debug(f"Snapshot loaded successfully in {load_time:.2f}s")
+            debug("Snapshot loaded successfully")
+            info(f"Snapshot loaded successfully in {load_time:.2f}s")
             
             # Log chain of custody
             log_file_loaded(

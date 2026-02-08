@@ -23,7 +23,7 @@ class SystemPanel(QWidget):
         ("has_dpf", "DPF"),
         ("has_scr", "SCR"),
         ("has_air_throttle", "Air Throttle"),
-        ("mdp_system", "MDP"),  # Special case for MDP system
+        ("has_mdp", "MDP"),  # MDP now uses has_mdp attribute like other systems
     ]
     
     def __init__(self, parent=None):
@@ -42,12 +42,8 @@ class SystemPanel(QWidget):
             label = QLabel(display_name)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             label.setFixedHeight(20)
-            label.setFixedWidth(70)
+            label.setFixedWidth(80)
             self._system_labels[attr_name] = label
-            
-            # Special initialization for MDP label
-            if attr_name == "mdp_system":
-                label.setText("MDP")  # Initial text
             
             self._set_label_off(label)
             layout.addWidget(label)
@@ -91,30 +87,20 @@ class SystemPanel(QWidget):
         font = label.font()
         font.setStrikeOut(False)
         label.setFont(font)
-
-        '''
-        When MDP system was ON, it showed "MDP 85.0%" (with success rate)
-        When MDP system was turned OFF, it kept the success rate text
-        The label should revert to just "MDP" when off
-        '''
-        
-        # Reset MDP label text to just "MDP" when turning off
-        if label == self._system_labels.get("mdp_system"):
-            label.setText("MDP")
     
     def _set_mdp_label(self, label: QLabel, success_rate: float):
         """Style MDP label with success percentage."""
-        # Green background with success percentage
-        label.setStyleSheet(f"""
-            QLabel {{
+        # Green background with success percentage - same styling as other indicators
+        label.setStyleSheet("""
+            QLabel {
                 background-color: #00AA00;
                 color: #FFFFFF;
                 font-weight: bold;
-                font-size: 9px;
+                font-size: 10px;
                 border: 2px solid #00DD00;
                 border-radius: 4px;
-                padding: 2px 4px;
-            }}
+                padding: 2px 6px;
+            }
         """)
         label.setText(f"MDP {success_rate:.1f}%")
         font = label.font()
@@ -125,7 +111,7 @@ class SystemPanel(QWidget):
         """Update the panel with snapshot data."""
         if snapshot is None:
             for attr_name, label in self._system_labels.items():
-                if attr_name == "mdp_system":
+                if attr_name == "has_mdp":
                     # Reset MDP label text to just "MDP"
                     label.setText("MDP")
                 self._set_label_off(label)
@@ -135,10 +121,13 @@ class SystemPanel(QWidget):
         for attr_name, display_name in self.SYSTEMS:
             label = self._system_labels[attr_name]
             
-            if attr_name == "mdp_system":
-                # Special handling for MDP system
-                if snapshot.mdp_success_rate is not None and snapshot.mdp_success_rate > 0:
+            if attr_name == "has_mdp":
+                # Special handling for MDP system - check both detection and success rate
+                if getattr(snapshot, attr_name, False) and snapshot.mdp_success_rate is not None and snapshot.mdp_success_rate > 0:
                     self._set_mdp_label(label, snapshot.mdp_success_rate)
+                elif getattr(snapshot, attr_name, False):
+                    # MDP detected but no success rate - show as regular ON
+                    self._set_label_on(label)
                 else:
                     self._set_label_off(label)
             else:

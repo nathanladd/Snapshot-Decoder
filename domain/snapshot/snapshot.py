@@ -115,6 +115,7 @@ class Snapshot:
         self.has_dpf = self._detected_systems.dpf
         self.has_scr = self._detected_systems.scr
         self.has_air_throttle = self._detected_systems.air_throttle
+        self.has_mdp = self._detected_systems.mdp
     
     def get_detected_systems_summary(self) -> str:
         """Get a human-readable summary of detected systems."""

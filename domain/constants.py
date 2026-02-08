@@ -221,5 +221,10 @@ SYSTEM_PIDS: dict[str, list[str]] = {
     "air_throttle": [
         "ThrVlv_rAct",                 #ECU_V2
     ],
+    "mdp": [
+        "I_C_Mdp_nb_update_success_nvv",   # MDP success counter
+        "I_C_Mdp_nb_update_failure_nvv",   # MDP failure counter
+        "i_c_mdp_correction_dat_i_0",      # MDP correction data (EUD_V1)
+    ],
 }
 
