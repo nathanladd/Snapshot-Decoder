@@ -296,7 +296,8 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _on_open_file(self, file_path: str):
         """Handle file open request via AppController."""
-        info(f"Opening file: {file_path}")
+        from pathlib import Path
+        info(f"Opening file: {Path(file_path).name}")
         self.app_controller.load_snapshot(file_path)
     
     @Slot(object)

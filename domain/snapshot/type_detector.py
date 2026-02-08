@@ -5,10 +5,13 @@ Identifies the type of snapshot (ECU_V1, ECU_V2, etc.) based on
 column headers and known PID patterns.
 """
 
+from logging import warning
+from nt import error
 import pandas as pd
 
 from domain.snaptypes import SnapType
 from domain.constants import SNAPSHOT_TYPE_PIDS
+from infrastructure.logging_config import info
 
 
 def find_header_row(df: pd.DataFrame, max_scan_rows: int = 10) -> int:
@@ -30,10 +33,18 @@ def find_header_row(df: pd.DataFrame, max_scan_rows: int = 10) -> int:
     for pids in SNAPSHOT_TYPE_PIDS.values():
         all_pids.update(pids)
     
+    info(f"Scanning {max_scan_rows} rows for header containing known PIDs...")
+    info(f"Looking for {len(all_pids)} known identifying PIDs")
+    
     for i in range(min(len(df), max_scan_rows)):
         row_values = df.iloc[i].astype(str).str.strip().str.lower().tolist()
         
-        if any(v in all_pids for v in row_values):
+        # Count how many identifying PIDs are in this row
+        found_pids = [v for v in row_values if v in all_pids]
+        
+        if found_pids:
+            info(f"Header found at row {i} with {len(found_pids)} identifying PIDs")
+            info(f"  Sample PIDs: {', '.join(found_pids[:5])}{'...' if len(found_pids) > 5 else ''}")
             return i
     
     raise ValueError("[Find Header Row] Couldn't locate header row containing useful information.")
@@ -65,6 +76,9 @@ def detect_snapshot_type(
     best_match: SnapType = SnapType.EMPTY
     best_percentage: float = 0.0
 
+    info("Starting snapshot type detection...")
+    info(f"Found {len(row_values)} total PIDs in header row")
+    
     for snap_type, pids in SNAPSHOT_TYPE_PIDS.items():
         if not pids:
             continue
@@ -73,10 +87,25 @@ def detect_snapshot_type(
         matched = sum(1 for pid in pids if pid in row_values)
         percentage = matched / len(pids)
         
+        # Log detailed information for this type
+        found_pids = [pid for pid in pids if pid in row_values]
+        missing_pids = [pid for pid in pids if pid not in row_values]
+        
+        info(f"TYPE {snap_type.name}: {percentage:.1%} confidence ({matched}/{len(pids)} PIDs)")
+        if found_pids:
+            info(f"  Found: {', '.join(found_pids[:5])}{'...' if len(found_pids) > 5 else ''}")
+        if missing_pids:
+            warning(f"  Missing: {', '.join(missing_pids[:5])}{'...' if len(missing_pids) > 5 else ''}")
+        
         # Update best match if this type has higher percentage and meets threshold
         if percentage >= match_threshold and percentage > best_percentage:
             best_percentage = percentage
             best_match = snap_type
+    
+    if best_match != SnapType.EMPTY:
+        info(f"Selected: {best_match.name} ({best_percentage:.1%} confidence)")
+    else:
+        error("No snapshot type met the minimum threshold")
     
     return best_match
 

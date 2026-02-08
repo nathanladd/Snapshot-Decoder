@@ -193,7 +193,8 @@ class LogConsole(QWidget):
         line_info = f"{module}:{func_name}" if func_name else module
         
         # Create formatted line
-        full_message = f"[{timestamp}] {level_name} {line_info}: {message}"
+        #full_message = f"[{timestamp}] {level_name} {line_info}: {message}"
+        full_message = f"[{timestamp}] {level_name}: {message}"
         
         # Apply formatting
         color = self.colors.get(record.levelno, QColor(0, 0, 0))
