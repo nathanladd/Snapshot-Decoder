@@ -345,6 +345,12 @@ class MainWindow(QMainWindow):
             return
         
         info(f"Quick chart requested: {action_id}")
+        
+        # Handle special reference PDF generation
+        if action_id == "REF_GENERATE_PDF":
+            self._generate_reference_pdf()
+            return
+        
         self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
         
         # Sync PID panel with quick chart's PIDs
@@ -498,6 +504,11 @@ class MainWindow(QMainWindow):
     def _on_quick_chart_requested(self, action_id: str):
         """Handle quick chart button click."""
         if not self.snapshot:
+            return
+        
+        # Handle special reference PDF generation
+        if action_id == "REF_GENERATE_PDF":
+            self._generate_reference_pdf()
             return
         
         self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
@@ -791,8 +802,31 @@ class MainWindow(QMainWindow):
     def _update_debug_settings(self, settings: dict):
         """Update debug settings in running widgets."""
         # Update chart widget's live values widget
-        if hasattr(self, 'chart_widget') and self.chart_widget:
-            live_widget = self.chart_widget.get_live_values_widget()
-            if live_widget:
-                live_widget.set_debug_logging(settings['enable'])
-                # The interpolator will pick up new settings on next call
+        if hasattr(self.chart_widget, '_live_values_widget'):
+            self.chart_widget._live_values_widget.update_settings(settings)
+    
+    def _generate_reference_pdf(self):
+        """Generate reference PDF using V2 architecture."""
+        from domain.quick_charts.reference_builder import ReferenceChartBuilder
+        from domain.snaptypes import SnapType
+        
+        snapshot = self.app_controller.get_snapshot()
+        if not snapshot:
+            warning("No snapshot available for reference PDF generation")
+            return
+        
+        # Create reference builder
+        builder = ReferenceChartBuilder(snapshot, self)
+        
+        # Generate PDF
+        file_path = builder.create_reference_pdf(snapshot.snapshot_type)
+        if file_path:
+            # Show success message
+            QMessageBox.information(
+                self,
+                "Reference PDF Generated",
+                f"Reference charts PDF saved to:\n{file_path}"
+            )
+            info(f"Reference PDF generated: {file_path}")
+        else:
+            info("Reference PDF generation cancelled or failed")

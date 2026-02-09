@@ -6,12 +6,12 @@ from typing import Optional, List, Tuple
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QGroupBox, 
-    QScrollArea, QSizePolicy
+    QScrollArea, QSizePolicy, QToolButton, QMenu
 )
 from PySide6.QtCore import Signal, Qt
 
 from domain.snaptypes import SnapType
-from domain.constants import BUTTONS_BY_TYPE
+from domain.constants import BUTTONS_BY_TYPE, REFERENCE_CHARTS_BY_TYPE
 
 
 class QuickChartPanel(QWidget):
@@ -23,6 +23,8 @@ class QuickChartPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._buttons: List[QPushButton] = []
+        self._reference_button: Optional[QToolButton] = None
+        self._current_snapshot_type: Optional[SnapType] = None
         self._setup_ui()
     
     def _setup_ui(self):
@@ -69,14 +71,24 @@ class QuickChartPanel(QWidget):
             self._button_layout.removeWidget(btn)
             btn.deleteLater()
         self._buttons.clear()
+        
+        # Also clear reference button if it exists
+        if self._reference_button:
+            self._button_layout.removeWidget(self._reference_button)
+            self._reference_button.deleteLater()
+            self._reference_button = None
     
     def set_snapshot_type(self, snapshot_type: Optional[SnapType]):
         """Update buttons based on snapshot type."""
         self._clear_buttons()
+        self._current_snapshot_type = snapshot_type
         
         if snapshot_type is None or snapshot_type == SnapType.EMPTY:
             self._show_placeholder()
             return
+        
+        # Add reference button if available for this snapshot type
+        self._add_reference_button_if_available(snapshot_type)
         
         # Get buttons for this snapshot type
         buttons_config = BUTTONS_BY_TYPE.get(snapshot_type, [])
@@ -89,6 +101,8 @@ class QuickChartPanel(QWidget):
             return
         
         # Create compact buttons in 2-row grid
+        # Adjust column offset if reference button is present
+        col_offset = 1 if self._reference_button else 0
         num_buttons = len(buttons_config)
         num_cols = (num_buttons + 1) // 2  # Calculate columns needed for 2 rows
         
@@ -101,7 +115,7 @@ class QuickChartPanel(QWidget):
             btn.setMaximumWidth(120)
             
             row = i % 2
-            col = i // 2
+            col = col_offset + (i // 2)
             self._button_layout.addWidget(btn, row, col)
             self._buttons.append(btn)
     
@@ -112,6 +126,48 @@ class QuickChartPanel(QWidget):
             action_id = btn.property("action_id")
             if action_id:
                 self.chart_requested.emit(action_id)
+    
+    def _add_reference_button_if_available(self, snapshot_type: SnapType):
+        """Add reference charts button if available for this snapshot type."""
+        if snapshot_type not in REFERENCE_CHARTS_BY_TYPE:
+            return
+        
+        # Create reference button
+        self._reference_button = QToolButton()
+        self._reference_button.setText("Reference Charts")
+        self._reference_button.setPopupMode(QToolButton.InstantPopup)
+        self._reference_button.setStyleSheet("""
+            QToolButton {
+                background-color: #FFD700;
+                border: 2px solid #FFA500;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-weight: bold;
+            }
+            QToolButton::menu-indicator {
+                width: 12px;
+                height: 12px;
+            }
+        """)
+        self._reference_button.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        self._reference_button.setMaximumWidth(120)
+        
+        # Create dropdown menu
+        reference_menu = QMenu(self._reference_button)
+        
+        # Add individual chart options from constants
+        reference_charts = REFERENCE_CHARTS_BY_TYPE[snapshot_type]
+        for name, action_id, tooltip in reference_charts:
+            action = reference_menu.addAction(name)
+            action.setToolTip(tooltip)
+            action.triggered.connect(
+                lambda checked, aid=action_id: self.chart_requested.emit(aid)
+            )
+        
+        self._reference_button.setMenu(reference_menu)
+        
+        # Add to layout at top-left position
+        self._button_layout.addWidget(self._reference_button, 0, 0)
     
     def clear(self):
         """Clear the panel."""

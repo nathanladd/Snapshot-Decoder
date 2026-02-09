@@ -95,6 +95,26 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
     ],
 }
 
+# Reference chart mappings for V2 architecture
+REFERENCE_CHARTS_BY_TYPE = {
+    SnapType.ECU_V2: [
+        ("Ref: Engine Speed", "REF_ENGINE_SPEED", "Reference Engine Speed"),
+        ("Ref: TPS", "REF_TPS", "Reference Throttle Position"),
+        ("Ref: Torque", "REF_TORQUE", "Reference Torque"),
+        ("Ref: Fuel/Coolant Temp", "REF_FUEL_COOLANT_TEMP", "Reference Fuel and Coolant Temperature"),
+        ("Ref: Air Temp", "REF_AIR_TEMP", "Reference Air Temperature"),
+        ("Ref: Oil Temp", "REF_OIL_TEMP", "Reference Oil Temperature"),
+        ("Ref: Rail Pressure", "REF_RAIL_PRESSURE", "Reference Rail Pressure"),
+        ("Ref: IMV Current", "REF_IMV_CURRENT", "Reference IMV Current"),
+        ("Ref: Fuel Quantity", "REF_FUEL_QUANTITY", "Reference Fuel Quantity"),
+        ("Ref: MAF", "REF_MAF", "Reference Mass Air Flow"),
+        ("Ref: MAP", "REF_MAP", "Reference Manifold Pressure"),
+        ("Ref: EGR Position", "REF_EGR_POSITION", "Reference EGR Position"),
+        ("Ref: Oil Pressure", "REF_OIL_PRESSURE", "Reference Oil Pressure"),
+        ("Generate Reference PDF...", "REF_GENERATE_PDF", "Generate complete reference charts PDF"),
+    ]
+}
+
 # Standardize the labels found in the header. 
 # - labels we expect in row 0..3 of collumn 0, with values in collumn 1.
 # squeez and clean the name from the snapshot cell and map it to a more readable name

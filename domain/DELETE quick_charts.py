@@ -4,6 +4,7 @@ from pandas.core import apply
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE
 from ui.logger import error
+from domain.quick_charts.reference_definitions import REFERENCE_CHARTS_BY_TYPE
 
 # Quick Charts do not pass a chart config data class. I want this method to update all the 
 # controlls on the main ui, then use 'plot chart' to update a chart config.
@@ -742,3 +743,5 @@ def V1EUD_show_EGT_chart(main_app, snaptype: SnapType):
     renderer = ChartRenderer(config)
     main_app.ax_left, main_app.ax_right = renderer.render(main_app.figure, main_app.canvas)
     main_app.toolbar.chart_config = config
+
+    

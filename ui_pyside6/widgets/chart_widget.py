@@ -557,9 +557,18 @@ class ChartWidget(QWidget):
         # Update toolbar with current config for PDF export
         self._toolbar.set_chart_config(config)
         
+        # Add "Reference: " prefix for reference charts
+        title = config.title
+        if config.quick_chart_action_id and config.quick_chart_action_id.startswith("REF_"):
+            title = f"Reference: {title}"
+        
         # Use ChartRenderer for consistent rendering with ColorManager
         renderer = ChartRenderer(config)
         ax_left, ax_right = renderer.render(self._figure, self._canvas)
+        
+        # Update title for reference charts
+        if config.quick_chart_action_id and config.quick_chart_action_id.startswith("REF_"):
+            ax_left.set_title(title)
         
         # Store the axes for reference
         self._ax = ax_left
