@@ -12,7 +12,7 @@ import time
 
 from domain.chart_config import ChartConfig
 from infrastructure import debug, error
-from pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
+from domain.pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
 
 
 class PIDInterpolator:
