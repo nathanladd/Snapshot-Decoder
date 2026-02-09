@@ -98,6 +98,7 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
 # Reference chart mappings for V2 architecture
 REFERENCE_CHARTS_BY_TYPE = {
     SnapType.ECU_V2: [
+        ("Generate Reference PDF...", "REF_GENERATE_PDF", "Generate complete reference charts PDF"),
         ("Ref: Engine Speed", "REF_ENGINE_SPEED", "Reference Engine Speed"),
         ("Ref: TPS", "REF_TPS", "Reference Throttle Position"),
         ("Ref: Torque", "REF_TORQUE", "Reference Torque"),
@@ -111,7 +112,6 @@ REFERENCE_CHARTS_BY_TYPE = {
         ("Ref: MAP", "REF_MAP", "Reference Manifold Pressure"),
         ("Ref: EGR Position", "REF_EGR_POSITION", "Reference EGR Position"),
         ("Ref: Oil Pressure", "REF_OIL_PRESSURE", "Reference Oil Pressure"),
-        ("Generate Reference PDF...", "REF_GENERATE_PDF", "Generate complete reference charts PDF"),
     ]
 }
 

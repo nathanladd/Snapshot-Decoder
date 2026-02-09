@@ -16,6 +16,7 @@ from matplotlib.ticker import FuncFormatter
 from matplotlib import dates as mdates
 
 from domain.chart_config import ChartConfig, ChartType
+from domain.app_settings import app_settings
 from ui.color_manager import ColorManager
 
 
@@ -45,6 +46,11 @@ class ChartRenderer:
             config: ChartConfig instance with all chart parameters
         """
         self.config = config
+        # Apply user appearance settings from AppSettings
+        self.config.grid_linewidth = app_settings.grid_linewidth
+        self._user_line_width = app_settings.line_width
+        self._user_marker_size = app_settings.marker_size
+        self._user_legend_font_size = app_settings.legend_font_size
         self._validate_config()
     
     def _validate_config(self):
@@ -329,14 +335,16 @@ class ChartRenderer:
                         style.color = self._get_series_color(series_name, False, series_index)
                     
                     legend_label = self._get_legend_label(series_name)
+                    lw = self._user_line_width
+                    ms = self._user_marker_size
                     if x_key:
                         ax_left.plot(
                             df[x_key], y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=lw,
                             marker=style.marker,
-                            markersize=style.markersize,
+                            markersize=ms,
                             color=style.color,
                             alpha=style.alpha
                         )
@@ -345,9 +353,9 @@ class ChartRenderer:
                             y.index, y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=lw,
                             marker=style.marker,
-                            markersize=style.markersize,
+                            markersize=ms,
                             color=style.color,
                             alpha=style.alpha
                         )
@@ -364,14 +372,16 @@ class ChartRenderer:
                         style.color = self._get_series_color(series_name, True, series_index)
                     
                     legend_label = self._get_legend_label(series_name)
+                    lw = self._user_line_width
+                    ms = self._user_marker_size
                     if x_key:
                         ax_right.plot(
                             df[x_key], y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=lw,
                             marker=style.marker,
-                            markersize=style.markersize,
+                            markersize=ms,
                             color=style.color,
                             alpha=style.alpha
                         )
@@ -380,9 +390,9 @@ class ChartRenderer:
                             y.index, y, 
                             label=legend_label,
                             linestyle=style.linestyle,
-                            linewidth=style.linewidth,
+                            linewidth=lw,
                             marker=style.marker,
-                            markersize=style.markersize,
+                            markersize=ms,
                             color=style.color,
                             alpha=style.alpha
                         )
@@ -649,10 +659,11 @@ class ChartRenderer:
         
         # Legends
         if self.config.show_legend:
+            fs = self._user_legend_font_size
             if self.config.primary_axis.series:
-                ax_left.legend(loc=self.config.primary_legend_loc)
+                ax_left.legend(loc=self.config.primary_legend_loc, fontsize=fs)
             if ax_right and self.config.secondary_axis.series:
-                ax_right.legend(loc=self.config.secondary_legend_loc)
+                ax_right.legend(loc=self.config.secondary_legend_loc, fontsize=fs)
         
         # Apply axis limits
         if not self.config.primary_axis.auto_scale:

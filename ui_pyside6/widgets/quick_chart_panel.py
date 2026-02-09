@@ -134,23 +134,24 @@ class QuickChartPanel(QWidget):
         
         # Create reference button
         self._reference_button = QToolButton()
-        self._reference_button.setText("Reference Charts")
+        self._reference_button.setText("Reference\nCharts")
+        self._reference_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._reference_button.setPopupMode(QToolButton.InstantPopup)
         self._reference_button.setStyleSheet("""
             QToolButton {
                 background-color: #FFD700;
                 border: 2px solid #FFA500;
                 border-radius: 4px;
-                padding: 4px 8px;
+                padding: 4px 4px;
                 font-weight: bold;
             }
             QToolButton::menu-indicator {
                 width: 12px;
                 height: 12px;
+                subcontrol-position: bottom center;
             }
         """)
-        self._reference_button.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        self._reference_button.setMaximumWidth(120)
+        self._reference_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         
         # Create dropdown menu
         reference_menu = QMenu(self._reference_button)
@@ -166,8 +167,8 @@ class QuickChartPanel(QWidget):
         
         self._reference_button.setMenu(reference_menu)
         
-        # Add to layout at top-left position
-        self._button_layout.addWidget(self._reference_button, 0, 0)
+        # Span both rows so it matches the height of two button rows
+        self._button_layout.addWidget(self._reference_button, 0, 0, 2, 1)
     
     def clear(self):
         """Clear the panel."""

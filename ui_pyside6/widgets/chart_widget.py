@@ -28,7 +28,6 @@ from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
 from ui_pyside6.widgets.help_tooltip import HelpEventFilter
-from ui_pyside6.widgets.debug_settings_dialog import DebugSettingsDialog
 from ui_pyside6.widgets.enhanced_time_slider import EnhancedTimeSlider
 
 

@@ -22,7 +22,6 @@ from domain.chart_config import ChartConfig
 from ui.chart_renderer import ChartRenderer
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
-from ui_pyside6.widgets.debug_settings_dialog import DebugSettingsDialog
 from ui_pyside6.widgets.enhanced_time_slider import EnhancedTimeSlider
 
 
@@ -54,8 +53,6 @@ class ChartPopoutWindow(QMainWindow):
         
         # Build the UI
         self._setup_ui()
-        self._setup_menu()
-        
         # Render the chart
         self._render_chart()
     
@@ -97,25 +94,6 @@ class ChartPopoutWindow(QMainWindow):
         # Live values display (initially hidden)
         self.live_values_widget = LiveValuesWidget(self)
         main_layout.addWidget(self.live_values_widget)
-    
-    def _setup_menu(self):
-        """Set up the window menu bar."""
-        menubar = self.menuBar()
-        
-        # File menu
-        file_menu = menubar.addMenu("&File")
-        
-        close_action = QAction("&Close", self)
-        close_action.setShortcut("Ctrl+W")
-        close_action.triggered.connect(self.close)
-        file_menu.addAction(close_action)
-        
-        # Debug menu
-        debug_menu = menubar.addMenu("&Debug")
-        
-        debug_settings_action = QAction("&Debug Settings...", self)
-        debug_settings_action.triggered.connect(self._on_show_debug_settings)
-        debug_menu.addAction(debug_settings_action)
     
     def _render_chart(self):
         """Render the chart using ChartRenderer."""
@@ -312,29 +290,3 @@ class ChartPopoutWindow(QMainWindow):
         config_copy = copy.deepcopy(self.config)
         self.chart_cart.add_config(config_copy)
     
-    @Slot()
-    def _on_show_debug_settings(self):
-        """Show the debug settings dialog."""
-        dialog = DebugSettingsDialog(self)
-        
-        # Get current settings before dialog
-        from pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
-        original_settings = {
-            'enable': get_pid_debug_setting(),
-            'interval': get_log_interval(),
-            'log_on_stop': get_log_on_stop(),
-            'threshold': get_position_threshold()
-        }
-        
-        if dialog.exec():
-            # Settings were applied - update running instances
-            new_settings = {
-                'enable': get_pid_debug_setting(),
-                'interval': get_log_interval(),
-                'log_on_stop': get_log_on_stop(),
-                'threshold': get_position_threshold()
-            }
-            
-            # Update live values widget if settings changed
-            if original_settings != new_settings and self.live_values_widget:
-                self.live_values_widget.set_debug_logging(new_settings['enable'])
