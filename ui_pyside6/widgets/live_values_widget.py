@@ -135,6 +135,13 @@ class LiveValuesWidget(QWidget):
         """Enable or disable debug logging for live values updates."""
         self._debug_logging = enabled
         self.interpolator.set_debug_logging(enabled)
+
+    def update_settings(self, settings: dict):
+        """Update debug/logging settings from the settings dialog."""
+        self.set_debug_logging(settings.get('enable', self._debug_logging))
+        self._log_interval = settings.get('interval', self._log_interval)
+        self._log_on_stop = settings.get('log_on_stop', self._log_on_stop)
+        self._position_threshold = settings.get('threshold', self._position_threshold)
     
     def _should_log(self, x_position: float) -> bool:
         """Check if we should log based on rate limiting and position changes."""
