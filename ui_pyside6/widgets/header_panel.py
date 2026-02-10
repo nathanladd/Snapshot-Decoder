@@ -140,28 +140,28 @@ class HeaderPanel(QWidget):
         
         # Raw Data action
         raw_data_btn = QToolButton()
-        raw_data_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_FileDialogDetailedView))
+        raw_data_btn.setIcon(QIcon("data/images/raw-table.png"))
         raw_data_btn.setToolTip("Show raw data table")
         raw_data_btn.clicked.connect(self.raw_data_requested.emit)
         self._toolbar.addWidget(raw_data_btn)
         
         # Clean Table action
         clean_table_btn = QToolButton()
-        clean_table_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_FileDialogListView))
+        clean_table_btn.setIcon(QIcon("data/images/data-cleaning.png"))
         clean_table_btn.setToolTip("Show clean data table")
         clean_table_btn.clicked.connect(self.clean_table_requested.emit)
         self._toolbar.addWidget(clean_table_btn)
         
         # Chart Table action
         chart_table_btn = QToolButton()
-        chart_table_btn.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_FileIcon))
+        chart_table_btn.setIcon(QIcon("data/images/chart-table.png"))
         chart_table_btn.setToolTip("Show chart data table")
         chart_table_btn.clicked.connect(self.chart_table_requested.emit)
         self._toolbar.addWidget(chart_table_btn)
         
         # Help action
         help_btn = QToolButton()
-        help_btn.setIcon(QIcon("data/images/person-drowning.png"))
+        help_btn.setIcon(QIcon("data/images/information.png"))
         help_btn.setToolTip("Show help documentation (F1)")
         help_btn.clicked.connect(self.help_requested.emit)
         self._toolbar.addWidget(help_btn)
