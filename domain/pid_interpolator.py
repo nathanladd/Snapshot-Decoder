@@ -109,7 +109,7 @@ class PIDInterpolator:
         
         # Sort by X column for proper interpolation
         df_sorted = df.sort_values(x_col)
-        x_data = df_sorted[x_col].values
+        x_data = pd.to_numeric(df_sorted[x_col], errors='coerce').values
         
         # Check if position is within data range
         if x_position < x_data[0] or x_position > x_data[-1]:
@@ -135,7 +135,7 @@ class PIDInterpolator:
         
         for pid in pid_columns:
             try:
-                y_data = df_sorted[pid].values
+                y_data = pd.to_numeric(df_sorted[pid], errors='coerce').values
                 nan_count = pd.isna(y_data).sum()
                 valid_count = len(y_data) - nan_count
                 
@@ -214,14 +214,14 @@ class PIDInterpolator:
             # Use first row values (extrapolate backward)
             first_row = df.iloc[0]
             for pid in pid_columns:
-                value = first_row[pid]
+                value = pd.to_numeric(first_row[pid], errors='coerce')
                 if not pd.isna(value):
                     result[pid] = float(value)
         else:
             # Use last row values (extrapolate forward)
             last_row = df.iloc[-1]
             for pid in pid_columns:
-                value = last_row[pid]
+                value = pd.to_numeric(last_row[pid], errors='coerce')
                 if not pd.isna(value):
                     result[pid] = float(value)
         

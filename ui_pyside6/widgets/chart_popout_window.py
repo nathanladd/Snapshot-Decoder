@@ -9,20 +9,18 @@ from typing import Optional
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-    QMessageBox
+    QMessageBox, QSlider, QLabel, QLineEdit
 )
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction
 
 from matplotlib.figure import Figure
-from matplotlib.widgets import Slider
 import mplcursors
 
 from domain.chart_config import ChartConfig
 from ui.chart_renderer import ChartRenderer
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
-from ui_pyside6.widgets.enhanced_time_slider import EnhancedTimeSlider
 
 
 class ChartPopoutWindow(QMainWindow):
@@ -44,9 +42,12 @@ class ChartPopoutWindow(QMainWindow):
         self.enable_cursor = False
         
         # Interactivity state
-        self.slider = None
         self.cursor_line = None
         self.mpl_cursor = None
+        
+        # Slider data range
+        self._slider_min_val = 0.0
+        self._slider_max_val = 1.0
         
         # Live values display
         self.live_values_widget = None
@@ -90,6 +91,66 @@ class ChartPopoutWindow(QMainWindow):
         
         # Pack canvas
         main_layout.addWidget(self.canvas, stretch=1)
+        
+        # Qt-based time slider widget (hidden by default)
+        self._slider_widget = QWidget(self)
+        sl = QHBoxLayout(self._slider_widget)
+        sl.setContentsMargins(8, 2, 8, 2)
+        sl.setSpacing(6)
+        self._slider_label_left = QLabel("00:00")
+        self._slider_label_left.setStyleSheet("font-size: 11px; color: #555;")
+        self._qt_slider = QSlider(Qt.Orientation.Horizontal)
+        self._qt_slider.setMinimum(0)
+        self._qt_slider.setMaximum(1000)
+        self._qt_slider.setValue(0)
+        self._qt_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                border: 1px solid #ccc;
+                height: 6px;
+                background: #e0e0e0;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: red;
+                border: 2px solid darkred;
+                width: 16px;
+                margin: -6px 0;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #ff4444;
+            }
+        """)
+        self._slider_label_right = QLabel("00:00")
+        self._slider_label_right.setStyleSheet("font-size: 11px; color: #555;")
+        self._slider_time_entry = QLineEdit("00:00")
+        self._slider_time_entry.setFixedWidth(60)
+        self._slider_time_entry.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._slider_time_entry.setStyleSheet("""
+            QLineEdit {
+                font-size: 11px;
+                font-weight: bold;
+                color: darkred;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                padding: 1px 4px;
+                background: white;
+            }
+            QLineEdit:focus {
+                border: 1px solid darkred;
+            }
+        """)
+        self._slider_time_entry.setToolTip("Current time (MM:SS) \u2014 type a value and press Enter to jump")
+        self._slider_time_entry.returnPressed.connect(self._on_time_entry)
+        sl.addWidget(self._slider_label_left)
+        sl.addWidget(self._qt_slider, stretch=1)
+        sl.addWidget(self._slider_label_right)
+        sl.addWidget(self._slider_time_entry)
+        self._slider_widget.hide()
+        main_layout.addWidget(self._slider_widget)
+        
+        # Connect Qt slider signal
+        self._qt_slider.valueChanged.connect(self._on_qt_slider_changed)
         
         # Live values display (initially hidden)
         self.live_values_widget = LiveValuesWidget(self)
@@ -136,13 +197,8 @@ class ChartPopoutWindow(QMainWindow):
     
     def _clear_interactivity(self):
         """Remove existing slider and cursors."""
-        if self.slider:
-            try:
-                self.slider.ax.remove()
-                self.figure.subplots_adjust(bottom=0.1)
-            except Exception:
-                pass
-            self.slider = None
+        # Hide the Qt slider widget
+        self._slider_widget.hide()
         
         if self.cursor_line:
             try:
@@ -199,73 +255,81 @@ class ChartPopoutWindow(QMainWindow):
         
         # --- Add Time Slider ---
         if self.enable_slider:
-            # Get the current x-axis limits from the chart
             if self.ax_left:
                 xlim = self.ax_left.get_xlim()
-                min_val = float(xlim[0])
-                max_val = float(xlim[1])
+                self._slider_min_val = float(xlim[0])
+                self._slider_max_val = float(xlim[1])
                 
-                # Make room for slider
-                try:
-                    self.figure.subplots_adjust(bottom=0.2)
-                except Exception:
-                    pass
+                # Update slider labels
+                self._slider_label_left.setText(self._format_slider_time(self._slider_min_val))
+                self._slider_label_right.setText(self._format_slider_time(self._slider_max_val))
                 
-                # Create standard slider and enhance it
-                from matplotlib.widgets import Slider
-                self.slider = Slider(
-                    self.figure.add_axes([0.15, 0.08, 0.7, 0.04]),  # Slightly larger and better positioned
-                    'Time', min_val, max_val,
-                    valinit=min_val,
-                    color='lightgray'
+                # Reset slider to start
+                self._qt_slider.blockSignals(True)
+                self._qt_slider.setValue(0)
+                self._qt_slider.blockSignals(False)
+                self._slider_time_entry.setText(self._format_slider_time(self._slider_min_val))
+                
+                # Show the Qt slider widget
+                self._slider_widget.show()
+                
+                # Create vertical cursor line on the matplotlib chart
+                self.cursor_line = self.ax_left.axvline(
+                    x=self._slider_min_val, color='red', alpha=0.5, linestyle='--'
                 )
-                
-                # Enhance the slider with better visual appearance (time display optional)
-                from ui_pyside6.widgets.enhanced_time_slider import enhance_slider
-                import numpy as np
-                try:
-                    enhance_slider(self.slider, show_time_display=True)
-                except Exception as e:
-                    print(f"Warning: Could not enhance slider: {e}")
-                    # At least try to enhance the appearance manually with aggressive styling
-                    if hasattr(self.slider, 'poly'):
-                        self.slider.poly.set_facecolor('red')
-                        self.slider.poly.set_edgecolor('darkred')
-                        self.slider.poly.set_linewidth(4)  # Thicker border
-                        self.slider.poly.set_alpha(1.0)    # Fully opaque
-                        # Try to make it larger
-                        try:
-                            verts = self.slider.poly.get_xy()
-                            if len(verts) > 0:
-                                center_x = np.mean(verts[:, 0])
-                                center_y = np.mean(verts[:, 1])
-                                width = verts[:, 0].max() - verts[:, 0].min()
-                                height = verts[:, 1].max() - verts[:, 1].min()
-                                new_width = width * 3.0
-                                new_height = height * 2.5
-                                new_verts = [
-                                    [center_x - new_width/2, center_y - new_height/2],
-                                    [center_x + new_width/2, center_y - new_height/2],
-                                    [center_x + new_width/2, center_y + new_height/2],
-                                    [center_x - new_width/2, center_y + new_height/2]
-                                ]
-                                self.slider.poly.set_xy(new_verts)
-                                self.slider.poly.set_zorder(10)
-                        except Exception:
-                            pass
-                
-                self.cursor_line = self.ax_left.axvline(x=min_val, color='red', alpha=0.5, linestyle='--')
-                
-                def update(val):
-                    self.cursor_line.set_xdata([val, val])
-                    
-                    # Update live values display
-                    if self.live_values_widget and self.live_values_widget.isVisible():
-                        self.live_values_widget.update_values(val)
-                    
-                    self.canvas.draw_idle()
-                
-                self.slider.on_changed(update)
+    
+    def _format_slider_time(self, seconds):
+        """Format seconds as MM:SS for slider labels."""
+        if seconds < 0:
+            seconds = 0
+        mins = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{mins:02d}:{secs:02d}"
+    
+    def _on_time_entry(self):
+        """Handle manual time entry — parse MM:SS and jump the slider."""
+        text = self._slider_time_entry.text().strip()
+        try:
+            parts = text.split(":")
+            if len(parts) == 2:
+                mins, secs = int(parts[0]), int(parts[1])
+                target_seconds = mins * 60 + secs
+            elif len(parts) == 1:
+                target_seconds = float(parts[0])
+            else:
+                return
+            
+            target_seconds = max(self._slider_min_val, min(self._slider_max_val, target_seconds))
+            
+            data_range = self._slider_max_val - self._slider_min_val
+            if data_range > 0:
+                frac = (target_seconds - self._slider_min_val) / data_range
+                self._qt_slider.setValue(int(frac * 1000))
+            
+            self._slider_time_entry.setText(self._format_slider_time(target_seconds))
+            self._slider_time_entry.clearFocus()
+        except (ValueError, IndexError):
+            frac = self._qt_slider.value() / 1000.0
+            val = self._slider_min_val + frac * (self._slider_max_val - self._slider_min_val)
+            self._slider_time_entry.setText(self._format_slider_time(val))
+    
+    def _on_qt_slider_changed(self, int_val):
+        """Handle Qt slider value changes — update cursor line and live values."""
+        frac = int_val / 1000.0
+        val = self._slider_min_val + frac * (self._slider_max_val - self._slider_min_val)
+        
+        # Update time display (only when not focused, to avoid overwriting user typing)
+        if not self._slider_time_entry.hasFocus():
+            self._slider_time_entry.setText(self._format_slider_time(val))
+        
+        # Update vertical cursor line on the chart
+        if self.cursor_line:
+            self.cursor_line.set_xdata([val, val])
+            self.canvas.draw_idle()
+        
+        # Update live values display
+        if self.live_values_widget and self.live_values_widget.isVisible():
+            self.live_values_widget.update_values(val)
     
     @Slot()
     def _add_to_cart(self):
