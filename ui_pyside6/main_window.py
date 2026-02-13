@@ -268,6 +268,10 @@ class MainWindow(QMainWindow):
         help_home_action.triggered.connect(self._on_show_help_home)
         help_menu.addAction(help_home_action)
         
+        ref_charts_action = QAction("What are Reference Charts?", self)
+        ref_charts_action.triggered.connect(self._on_what_are_reference_charts)
+        help_menu.addAction(ref_charts_action)
+        
         help_menu.addSeparator()
         
         about_action = QAction("&About", self)
@@ -741,6 +745,13 @@ class MainWindow(QMainWindow):
         # Open the updating page on GitHub Pages
         update_url = "https://nathanladd.github.io/Snapshot-Decoder/updating.html"
         webbrowser.open(update_url)
+    
+    @Slot()
+    def _on_what_are_reference_charts(self):
+        """Open the Reference Charts help page in the help browser dock."""
+        self.help_browser_dock.navigate(
+            "https://berrycompanies.sharepoint.com/:u:/r/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages/Reference-Snapshot.aspx?csf=1&web=1&e=HyLXbK"
+        )
     
     @Slot()
     def _on_show_help_home(self):
