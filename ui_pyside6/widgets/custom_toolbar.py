@@ -21,6 +21,12 @@ from version import APP_VERSION
 class CustomNavigationToolbar(NavigationToolbar2QT):
     """Custom navigation toolbar that saves charts as PDF with metadata."""
     
+    # Remove "Configure Subplots" and "Edit Axis" from the default toolbar
+    toolitems = [
+        t for t in NavigationToolbar2QT.toolitems
+        if t[0] not in ("Subplots", "Customize")
+    ]
+    
     # Signal emitted when chart is added to cart
     add_to_cart_requested = Signal()
     
