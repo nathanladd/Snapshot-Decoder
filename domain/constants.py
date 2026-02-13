@@ -76,8 +76,6 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Load Percent and Brake Torque"),
         ("Torque Limits", "V2_ENGINE_TORQUE_LIMITS",
         "Torque Limits"),
-        ("Fuel/Coolant Temp", "V2_FUEL_COOLANT_TEMP", 
-        "Fuel/Coolant Temperature")
         
     ],
     SnapType.DCU_V1: [

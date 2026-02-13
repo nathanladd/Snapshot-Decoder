@@ -17,15 +17,6 @@ V2_BATTERY_TEST = QuickChartDef(
     secondary_range=(-50, 3000),
 )
 
-V2_FUEL_COOLANT_TEMP = QuickChartDef(
-    action_id="V2_FUEL_COOLANT_TEMP",
-    title="Fuel & Coolant Temperature",
-    primary_pids=["CEngDsT_t", "FuelT_t"],
-    primary_range=(-40, 290),
-    secondary_pids=["CEngDsT_uRaw", "FuelT_uRaw"],
-    secondary_range=(0, 5000),
-)
-
 V2_RAIL_PRESSURE = QuickChartDef(
     action_id="V2_RAIL_PRESSURE",
     title="Rail Pressure",
@@ -125,7 +116,6 @@ V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
  
 V2_CHARTS: dict[str, QuickChartDef] = {
     "V2_BATTERY_TEST": V2_BATTERY_TEST,                  # Battery Voltage vs Engine Speed
-    "V2_FUEL_COOLANT_TEMP": V2_FUEL_COOLANT_TEMP,        # Fuel & Coolant Temperature
     "V2_RAIL_PRESSURE": V2_RAIL_PRESSURE,                # Actual vs Desired Rail Pressure
     "V2_RAIL_GAP": V2_RAIL_GAP,                          # Rail Gap
     "V2_IMV_CURRENT": V2_IMV_CURRENT,                    # IMV Current
