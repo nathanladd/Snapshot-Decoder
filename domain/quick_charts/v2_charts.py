@@ -74,10 +74,10 @@ V2_THROTTLE_VALVE = QuickChartDef(
 V2_ENGINE_LOAD = QuickChartDef(
     action_id="V2_ENGINE_LOAD",
     title="Engine Load",
-    primary_pids=["CoETS_rTrq"],
-    primary_range=(-100, 110),
-    secondary_pids=["PthSet_TrqInrSet"],
-    secondary_range=(0, 800),
+    primary_pids=["PthSet_TrqInrSet"],
+    primary_range=(0, 300),
+    secondary_pids=["Oil_tSwmp"],
+    secondary_range=(0, 240),
 )
 
 V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
