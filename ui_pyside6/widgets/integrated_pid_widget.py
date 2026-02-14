@@ -52,6 +52,7 @@ class IntegratedPidWidget(QWidget):
         
         # PID selection group
         pid_group = QGroupBox("PID Selection")
+        pid_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         pid_layout = QVBoxLayout(pid_group)
         pid_layout.setSpacing(4)
         

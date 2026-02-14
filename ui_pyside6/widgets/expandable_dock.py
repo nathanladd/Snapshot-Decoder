@@ -6,9 +6,8 @@ similar to LogConsoleDock but for general content.
 """
 
 from typing import Optional
-from PySide6.QtWidgets import QDockWidget, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStyle, QFrame, QLabel
+from PySide6.QtWidgets import QDockWidget, QWidget, QHBoxLayout, QLabel, QPushButton
 from PySide6.QtCore import Qt, QSize, Signal
-from PySide6.QtGui import QFont
 
 
 class ExpandableDock(QDockWidget):
@@ -16,7 +15,7 @@ class ExpandableDock(QDockWidget):
     Expandable dock widget with custom title bar and collapse functionality.
     
     Can be docked to any side of the main window or floated as a separate window.
-    Features an expand/collapse button in the title bar.
+    Uses a custom title bar with a left-justified title label.
     """
     
     # Signal emitted when expansion state changes
@@ -48,85 +47,99 @@ class ExpandableDock(QDockWidget):
             }
             QDockWidget::title {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #F0F0F0, stop:1 #E0E0E0);
-                border-bottom: 1px solid #C0C0C0;
+                    stop:0 #EAF4FF, stop:1 #D8E9FF);
+                border-bottom: 1px solid #AFC8E8;
                 padding: 2px;
             }
             QDockWidget QWidget#contentWidget {
-                padding-left: 8px;
+                padding: 0px;
             }
             QDockWidget QWidget#contentWidget QTreeWidget {
                 margin-left: 0px;
             }
         """)
         
-        # Create custom title bar with expand/collapse button
+        # Create custom title bar
         self._setup_title_bar()
+        self.topLevelChanged.connect(self._on_top_level_changed)
         
         # Default to not floating
         self.setFloating(False)
         
         # Set initial size
         self.resize(self._expanded_size)
+        self._on_top_level_changed(self.isFloating())
     
     def _setup_title_bar(self):
-        """Setup custom title bar with expand/collapse button and drag handle."""
-        # Create title bar widget
+        """Setup custom title bar with left-justified title."""
         title_bar = QWidget()
         title_bar.setFixedHeight(25)
+        title_bar.setStyleSheet("""
+            QWidget {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #EAF4FF, stop:1 #D8E9FF);
+                border-bottom: 1px solid #AFC8E8;
+            }
+        """)
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(5, 2, 5, 2)
         title_layout.setSpacing(5)
-        
-        # Add drag handle indicator
-        self.drag_handle = QLabel()
-        self.drag_handle.setFixedHeight(16)
-        self.drag_handle.setStyleSheet("""
-            QLabel {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(120, 120, 120, 0.3), 
-                    stop:0.5 rgba(120, 120, 120, 0.5), 
-                    stop:1 rgba(120, 120, 120, 0.3));
-                border: 1px solid rgba(120, 120, 120, 0.4);
-                border-radius: 3px;
-                margin: 2px;
-            }
-            QLabel:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(100, 100, 100, 0.4), 
-                    stop:0.5 rgba(100, 100, 100, 0.6), 
-                    stop:1 rgba(100, 100, 100, 0.4));
-                border: 1px solid rgba(100, 100, 100, 0.6);
-            }
-        """)
-        self.drag_handle.setToolTip("Drag to move panel")
-        
-        # Add expand/collapse button
-        self.expand_btn = QPushButton()
-        self.expand_btn.setFixedSize(16, 16)
-        self.expand_btn.clicked.connect(self.toggle_expand)
-        self._update_expand_button_icon()
-        
-        # Style the button
-        self.expand_btn.setStyleSheet("""
+
+        self.title_label = QLabel(self.windowTitle())
+        self.title_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #333;")
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch(1)
+
+        btn_style = """
             QPushButton {
-                border: none;
-                padding: 0px;
-                background: transparent;
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 2px;
+                background-color: #F0F0F0;
+                font-size: 11px;
+                font-weight: bold;
             }
             QPushButton:hover {
-                background: rgba(200, 200, 200, 100);
-                border-radius: 2px;
+                background-color: #E0E0E0;
+                border: 1px solid #0078d4;
             }
             QPushButton:pressed {
-                background: rgba(150, 150, 150, 100);
+                background-color: #D0D0D0;
             }
-        """)
-        
-        # Add to layout
-        title_layout.addWidget(self.drag_handle, 1)  # Stretch with width
-        title_layout.addWidget(self.expand_btn)
-        
+        """
+
+        close_btn_style = """
+            QPushButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 2px;
+                background-color: #FFF0F0;
+                font-size: 11px;
+                font-weight: bold;
+                color: #A40000;
+            }
+            QPushButton:hover {
+                background-color: #FFD0D0;
+                border: 1px solid #d40000;
+            }
+            QPushButton:pressed {
+                background-color: #FFB8B8;
+            }
+        """
+
+        self.popout_btn = QPushButton("↗")
+        self.popout_btn.setFixedSize(22, 22)
+        self.popout_btn.setStyleSheet(btn_style)
+        self.popout_btn.clicked.connect(self._on_toggle_floating)
+        title_layout.addWidget(self.popout_btn)
+
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setFixedSize(22, 22)
+        self.close_btn.setStyleSheet(close_btn_style)
+        self.close_btn.setToolTip("Close")
+        self.close_btn.clicked.connect(self._on_close_requested)
+        title_layout.addWidget(self.close_btn)
+
         # Set custom title bar
         self.setTitleBarWidget(title_bar)
     
@@ -160,7 +173,6 @@ class ExpandableDock(QDockWidget):
         if self._content_widget:
             self._content_widget.setVisible(True)
         self.resize(self._expanded_size)
-        self._update_expand_button_icon()
         self.expansion_changed.emit(True)
     
     def collapse(self):
@@ -169,21 +181,7 @@ class ExpandableDock(QDockWidget):
         if self._content_widget:
             self._content_widget.setVisible(False)
         self.resize(self._collapsed_size)
-        self._update_expand_button_icon()
         self.expansion_changed.emit(False)
-    
-    def _update_expand_button_icon(self):
-        """Update the expand/collapse button icon based on state."""
-        if self._is_expanded:
-            # Show collapse icon (down arrow)
-            icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown)
-            self.expand_btn.setIcon(icon)
-            self.expand_btn.setToolTip("Collapse")
-        else:
-            # Show expand icon (up arrow)
-            icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowUp)
-            self.expand_btn.setIcon(icon)
-            self.expand_btn.setToolTip("Expand")
     
     def is_expanded(self) -> bool:
         """Check if the dock widget is expanded."""
@@ -220,3 +218,17 @@ class ExpandableDock(QDockWidget):
     def get_content_widget(self) -> Optional[QWidget]:
         """Get the current content widget."""
         return self._content_widget
+
+    def _on_toggle_floating(self):
+        self.setFloating(not self.isFloating())
+
+    def _on_close_requested(self):
+        self.close()
+
+    def _on_top_level_changed(self, is_floating: bool):
+        if is_floating:
+            self.popout_btn.setText("⇲")
+            self.popout_btn.setToolTip("Dock panel")
+        else:
+            self.popout_btn.setText("↗")
+            self.popout_btn.setToolTip("Pop out panel")

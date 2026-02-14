@@ -229,14 +229,10 @@ class ChartCartWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(4)
         
-        # Header with title and export button
+        # Header controls (title now lives in the dock title bar)
         header = QHBoxLayout()
-        header.setContentsMargins(4, 4, 4, 0)
-        
-        title_label = QLabel("Chart Cart")
-        title_label.setStyleSheet("font-size: 12px; font-weight: bold;")
-        header.addWidget(title_label)
-        
+        header.setContentsMargins(4, 1, 4, 0)
+
         header.addStretch()
         
         self._count_label = QLabel("0 charts")

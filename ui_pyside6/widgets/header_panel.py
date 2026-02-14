@@ -37,7 +37,8 @@ class HeaderPanel(QWidget):
         layout.addWidget(self._toolbar)
         
         # Group box for header info
-        self._group = QGroupBox("Snapshot Info")
+        self._group = QGroupBox("Header Info")
+        self._group.setStyleSheet("QGroupBox { font-weight: bold; }")
         self._group_layout = QGridLayout(self._group)
         self._group_layout.setSpacing(4)
         

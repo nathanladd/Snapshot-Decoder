@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
         # Left panel as dockable widget with expandable functionality
         from ui_pyside6.widgets.expandable_dock import ExpandableDock
         
-        self.controls_dock = ExpandableDock("Controls", self)
+        self.controls_dock = ExpandableDock("Snapshot Data", self)
         self.controls_dock.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea |
             Qt.DockWidgetArea.RightDockWidgetArea
