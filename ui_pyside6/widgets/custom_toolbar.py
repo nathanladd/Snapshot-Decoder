@@ -16,6 +16,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from domain.chart_config import ChartConfig
 from version import APP_VERSION
+from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
@@ -41,6 +42,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     
     # Signal emitted when time slider toggle changes
     time_slider_changed = Signal(bool)
+
+    # Signal emitted when axis controls are changed
+    axis_settings_changed = Signal()
     
     def __init__(self, canvas, parent, *, coordinates=True, chart_config: Optional[ChartConfig] = None, show_popout=True):
         """
@@ -197,6 +201,12 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         """)
         self._quick_iq_btn.clicked.connect(self.quick_iq_requested.emit)
         self.addWidget(self._quick_iq_btn)
+
+        # Add compact axis controls directly on the chart toolbar
+        self.addSeparator()
+        self._axis_controls = AxisControlsPanel(self, compact=True)
+        self._axis_controls.settings_changed.connect(self.axis_settings_changed.emit)
+        self.addWidget(self._axis_controls)
         
         # Add pop-out button (only if not in a pop-out window)
         if show_popout:
@@ -230,6 +240,33 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             """)
             self._popout_btn.clicked.connect(self.pop_out_requested.emit)
             self.addWidget(self._popout_btn)
+
+    def get_axis_settings(self) -> dict:
+        """Get current axis settings from toolbar controls."""
+        return self._axis_controls.get_axis_settings()
+
+    def update_axis_controls_from_config(
+        self,
+        primary_auto: bool,
+        primary_min: Optional[float],
+        primary_max: Optional[float],
+        secondary_auto: bool,
+        secondary_min: Optional[float],
+        secondary_max: Optional[float],
+    ):
+        """Update toolbar axis controls from chart config values."""
+        self._axis_controls.update_from_config(
+            primary_auto=primary_auto,
+            primary_min=primary_min,
+            primary_max=primary_max,
+            secondary_auto=secondary_auto,
+            secondary_min=secondary_min,
+            secondary_max=secondary_max,
+        )
+
+    def clear_axis_controls(self):
+        """Reset toolbar axis controls to defaults."""
+        self._axis_controls.clear()
     
     def set_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration for PDF export."""

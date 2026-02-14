@@ -51,6 +51,9 @@ class ChartWidget(QWidget):
 
     # Signal emitted when user clicks "Quick IQ" on toolbar
     quick_iq_requested = Signal(str)
+
+    # Signal emitted when axis settings are changed from toolbar controls
+    axis_settings_changed = Signal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -102,6 +105,7 @@ class ChartWidget(QWidget):
         self._toolbar.quick_iq_requested.connect(self._on_quick_iq_requested)
         self._toolbar.value_display_changed.connect(self._on_value_display_changed)
         self._toolbar.time_slider_changed.connect(self._on_time_slider_changed)
+        self._toolbar.axis_settings_changed.connect(self.axis_settings_changed.emit)
         layout.addWidget(self._toolbar)
         
         # Canvas
@@ -594,6 +598,33 @@ class ChartWidget(QWidget):
             })
         
         return limits
+
+    def get_axis_settings(self) -> Dict:
+        """Get axis settings from toolbar controls."""
+        return self._toolbar.get_axis_settings()
+
+    def update_axis_controls(
+        self,
+        primary_auto: bool,
+        primary_min: Optional[float],
+        primary_max: Optional[float],
+        secondary_auto: bool,
+        secondary_min: Optional[float],
+        secondary_max: Optional[float],
+    ):
+        """Update toolbar axis controls from values."""
+        self._toolbar.update_axis_controls_from_config(
+            primary_auto=primary_auto,
+            primary_min=primary_min,
+            primary_max=primary_max,
+            secondary_auto=secondary_auto,
+            secondary_min=secondary_min,
+            secondary_max=secondary_max,
+        )
+
+    def clear_axis_controls(self):
+        """Reset toolbar axis controls to defaults."""
+        self._toolbar.clear_axis_controls()
     
     def _on_value_display_changed(self, enabled: bool):
         """Handle value display toggle change."""

@@ -6,7 +6,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QCheckBox,
-    QLabel, QLineEdit, QFormLayout
+    QLabel, QLineEdit
 )
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QDoubleValidator
@@ -18,8 +18,9 @@ class AxisControlsPanel(QWidget):
     # Signal emitted when any axis setting changes
     settings_changed = Signal()
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, compact: bool = False):
         super().__init__(parent)
+        self._compact = compact
         self._setup_ui()
         self._connect_signals()
     
@@ -27,68 +28,150 @@ class AxisControlsPanel(QWidget):
         """Set up the UI layout."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Group box
-        self._group = QGroupBox("Axis Ranges (optional)")
-        group_layout = QVBoxLayout(self._group)
-        group_layout.setContentsMargins(8, 8, 8, 8)
-        group_layout.setSpacing(6)
-        
+
         # Validator for numeric input
         validator = QDoubleValidator()
         validator.setNotation(QDoubleValidator.Notation.StandardNotation)
-        
-        # Primary axis controls
-        primary_row = QHBoxLayout()
-        primary_row.setSpacing(8)
-        
-        self._primary_auto = QCheckBox("Primary auto")
-        self._primary_auto.setChecked(True)
-        primary_row.addWidget(self._primary_auto)
-        
-        primary_row.addWidget(QLabel("min:"))
-        self._primary_min = QLineEdit()
-        self._primary_min.setMaximumWidth(70)
-        self._primary_min.setValidator(validator)
-        self._primary_min.setEnabled(False)
-        primary_row.addWidget(self._primary_min)
-        
-        primary_row.addWidget(QLabel("max:"))
-        self._primary_max = QLineEdit()
-        self._primary_max.setMaximumWidth(70)
-        self._primary_max.setValidator(validator)
-        self._primary_max.setEnabled(False)
-        primary_row.addWidget(self._primary_max)
-        
-        primary_row.addStretch()
-        group_layout.addLayout(primary_row)
-        
-        # Secondary axis controls
-        secondary_row = QHBoxLayout()
-        secondary_row.setSpacing(8)
-        
-        self._secondary_auto = QCheckBox("Secondary auto")
-        self._secondary_auto.setChecked(True)
-        secondary_row.addWidget(self._secondary_auto)
-        
-        secondary_row.addWidget(QLabel("min:"))
-        self._secondary_min = QLineEdit()
-        self._secondary_min.setMaximumWidth(70)
-        self._secondary_min.setValidator(validator)
-        self._secondary_min.setEnabled(False)
-        secondary_row.addWidget(self._secondary_min)
-        
-        secondary_row.addWidget(QLabel("max:"))
-        self._secondary_max = QLineEdit()
-        self._secondary_max.setMaximumWidth(70)
-        self._secondary_max.setValidator(validator)
-        self._secondary_max.setEnabled(False)
-        secondary_row.addWidget(self._secondary_max)
-        
-        secondary_row.addStretch()
-        group_layout.addLayout(secondary_row)
-        
-        layout.addWidget(self._group)
+
+        if self._compact:
+            layout.setSpacing(0)
+
+            row = QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(6)
+
+            left_group = QVBoxLayout()
+            left_group.setContentsMargins(0, 0, 0, 0)
+            left_group.setSpacing(2)
+
+            left_header = QHBoxLayout()
+            left_header.setContentsMargins(0, 0, 0, 0)
+            left_header.setSpacing(6)
+            left_label = QLabel("Left Axis")
+            left_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            left_header.addWidget(left_label)
+            self._primary_auto = QCheckBox("Auto")
+            self._primary_auto.setChecked(True)
+            left_header.addWidget(self._primary_auto)
+            left_header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            left_group.addLayout(left_header)
+
+            left_bounds = QHBoxLayout()
+            left_bounds.setContentsMargins(0, 0, 0, 0)
+            left_bounds.setSpacing(4)
+            left_bounds.addWidget(QLabel("Min"))
+            self._primary_min = QLineEdit()
+            self._primary_min.setMaximumWidth(52)
+            self._primary_min.setValidator(validator)
+            self._primary_min.setEnabled(False)
+            left_bounds.addWidget(self._primary_min)
+            left_bounds.addWidget(QLabel("Max"))
+            self._primary_max = QLineEdit()
+            self._primary_max.setMaximumWidth(52)
+            self._primary_max.setValidator(validator)
+            self._primary_max.setEnabled(False)
+            left_bounds.addWidget(self._primary_max)
+            left_group.addLayout(left_bounds)
+            row.addLayout(left_group)
+
+            divider = QLabel("|")
+            divider.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            row.addWidget(divider)
+
+            right_group = QVBoxLayout()
+            right_group.setContentsMargins(0, 0, 0, 0)
+            right_group.setSpacing(2)
+
+            right_header = QHBoxLayout()
+            right_header.setContentsMargins(0, 0, 0, 0)
+            right_header.setSpacing(6)
+            right_label = QLabel("Right Axis")
+            right_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            right_header.addWidget(right_label)
+            self._secondary_auto = QCheckBox("Auto")
+            self._secondary_auto.setChecked(True)
+            right_header.addWidget(self._secondary_auto)
+            right_header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            right_group.addLayout(right_header)
+
+            right_bounds = QHBoxLayout()
+            right_bounds.setContentsMargins(0, 0, 0, 0)
+            right_bounds.setSpacing(4)
+            right_bounds.addWidget(QLabel("Min"))
+            self._secondary_min = QLineEdit()
+            self._secondary_min.setMaximumWidth(52)
+            self._secondary_min.setValidator(validator)
+            self._secondary_min.setEnabled(False)
+            right_bounds.addWidget(self._secondary_min)
+            right_bounds.addWidget(QLabel("Max"))
+            self._secondary_max = QLineEdit()
+            self._secondary_max.setMaximumWidth(52)
+            self._secondary_max.setValidator(validator)
+            self._secondary_max.setEnabled(False)
+            right_bounds.addWidget(self._secondary_max)
+            right_group.addLayout(right_bounds)
+            row.addLayout(right_group)
+
+            row.addStretch()
+            layout.addLayout(row)
+        else:
+            # Group box for dock panel layout
+            self._group = QGroupBox("Axis Ranges (optional)")
+            group_layout = QVBoxLayout(self._group)
+            group_layout.setContentsMargins(8, 8, 8, 8)
+            group_layout.setSpacing(6)
+
+            # Primary axis controls
+            primary_row = QHBoxLayout()
+            primary_row.setSpacing(8)
+
+            self._primary_auto = QCheckBox("Primary auto")
+            self._primary_auto.setChecked(True)
+            primary_row.addWidget(self._primary_auto)
+
+            primary_row.addWidget(QLabel("min:"))
+            self._primary_min = QLineEdit()
+            self._primary_min.setMaximumWidth(70)
+            self._primary_min.setValidator(validator)
+            self._primary_min.setEnabled(False)
+            primary_row.addWidget(self._primary_min)
+
+            primary_row.addWidget(QLabel("max:"))
+            self._primary_max = QLineEdit()
+            self._primary_max.setMaximumWidth(70)
+            self._primary_max.setValidator(validator)
+            self._primary_max.setEnabled(False)
+            primary_row.addWidget(self._primary_max)
+
+            primary_row.addStretch()
+            group_layout.addLayout(primary_row)
+
+            # Secondary axis controls
+            secondary_row = QHBoxLayout()
+            secondary_row.setSpacing(8)
+
+            self._secondary_auto = QCheckBox("Secondary auto")
+            self._secondary_auto.setChecked(True)
+            secondary_row.addWidget(self._secondary_auto)
+
+            secondary_row.addWidget(QLabel("min:"))
+            self._secondary_min = QLineEdit()
+            self._secondary_min.setMaximumWidth(70)
+            self._secondary_min.setValidator(validator)
+            self._secondary_min.setEnabled(False)
+            secondary_row.addWidget(self._secondary_min)
+
+            secondary_row.addWidget(QLabel("max:"))
+            self._secondary_max = QLineEdit()
+            self._secondary_max.setMaximumWidth(70)
+            self._secondary_max.setValidator(validator)
+            self._secondary_max.setEnabled(False)
+            secondary_row.addWidget(self._secondary_max)
+
+            secondary_row.addStretch()
+            group_layout.addLayout(secondary_row)
+
+            layout.addWidget(self._group)
     
     def _connect_signals(self):
         """Connect internal signals."""

@@ -28,7 +28,6 @@ from infrastructure import get_logger, info, error, warning, debug
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
 from ui_pyside6.widgets.integrated_pid_widget import IntegratedPidWidget
-from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
 from ui_pyside6.widgets.data_table_window import DataTableWindow
@@ -134,11 +133,6 @@ class MainWindow(QMainWindow):
         self.pid_panel.pids_changed.connect(self._on_pids_changed)
         left_layout.addWidget(self.pid_panel, stretch=1)
         
-        # Axis controls panel
-        self.axis_controls_panel = AxisControlsPanel()
-        self.axis_controls_panel.settings_changed.connect(self._on_axis_settings_changed)
-        left_layout.addWidget(self.axis_controls_panel)
-        
         # Set the content widget
         self.controls_dock.set_content_widget(left_content)
         
@@ -182,6 +176,7 @@ class MainWindow(QMainWindow):
         self.chart_widget.add_to_cart_requested.connect(self.add_current_chart_to_cart)
         self.chart_widget.pop_out_requested.connect(self.pop_out_chart)
         self.chart_widget.quick_iq_requested.connect(self._on_quick_iq_requested)
+        self.chart_widget.axis_settings_changed.connect(self._on_axis_settings_changed)
         right_layout.addWidget(self.chart_widget, stretch=1)
         
         main_layout.addWidget(right_panel)
@@ -238,7 +233,7 @@ class MainWindow(QMainWindow):
         
         view_menu.addSeparator()
 
-        self._controls_panel_action = QAction("&Controls Panel", self)
+        self._controls_panel_action = QAction("&Snapshot Data Panel", self)
         self._controls_panel_action.setCheckable(True)
         self._controls_panel_action.toggled.connect(self._on_toggle_controls_panel)
         view_menu.addAction(self._controls_panel_action)
@@ -399,7 +394,7 @@ class MainWindow(QMainWindow):
                 self.app_controller.get_snapshot(),
                 primary_pids,
                 secondary_pids,
-                self.axis_controls_panel.get_axis_settings()
+                self._get_axis_settings()
             )
         else:
             # Clear chart when no PIDs selected
@@ -431,7 +426,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 error(f"Failed to re-render chart: {str(e)}")
                 self.app_controller.error_occurred.emit(f"Chart rendering failed: {str(e)}")
-            self.axis_controls_panel.clear()
+            self.chart_widget.clear_axis_controls()
     
     @Slot()
     def _on_axis_settings_changed(self):
@@ -458,25 +453,19 @@ class MainWindow(QMainWindow):
             self.pid_panel.update_chart_colors(None)
     
     def _get_axis_settings(self) -> dict:
-        """Get current axis settings from controls panel."""
-        return {
-            'primary_auto': self.axis_controls_panel.is_primary_auto(),
-            'primary_min': self.axis_controls_panel.get_primary_min(),
-            'primary_max': self.axis_controls_panel.get_primary_max(),
-            'secondary_auto': self.axis_controls_panel.is_secondary_auto(),
-            'secondary_min': self.axis_controls_panel.get_secondary_min(),
-            'secondary_max': self.axis_controls_panel.get_secondary_max(),
-        }
+        """Get current axis settings from chart toolbar controls."""
+        return self.chart_widget.get_axis_settings()
     
     def _update_axis_controls_from_chart(self):
         """Update axis controls with current chart axis limits (auto-computed)."""
         limits = self.chart_widget.get_current_axis_limits()
         if limits:
-            self.axis_controls_panel.update_from_config(
-                primary_auto=self.axis_controls_panel.is_primary_auto(),
+            current_settings = self._get_axis_settings()
+            self.chart_widget.update_axis_controls(
+                primary_auto=current_settings.get('primary_auto', True),
                 primary_min=limits.get('primary_min'),
                 primary_max=limits.get('primary_max'),
-                secondary_auto=self.axis_controls_panel.is_secondary_auto(),
+                secondary_auto=current_settings.get('secondary_auto', True),
                 secondary_min=limits.get('secondary_min'),
                 secondary_max=limits.get('secondary_max'),
             )
@@ -508,7 +497,7 @@ class MainWindow(QMainWindow):
             secondary_min = config.secondary_axis.min_value
             secondary_max = config.secondary_axis.max_value
         
-        self.axis_controls_panel.update_from_config(
+        self.chart_widget.update_axis_controls(
             primary_auto=primary_auto,
             primary_min=primary_min,
             primary_max=primary_max,
