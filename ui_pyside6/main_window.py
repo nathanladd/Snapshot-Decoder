@@ -6,6 +6,7 @@ PySide6 implementation with clean controller-based architecture.
 
 import os
 import copy
+import re
 import webbrowser
 from typing import Optional
 
@@ -35,6 +36,7 @@ from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
+from ui_pyside6.widgets.quick_iq_dock import QuickIQDock
 from ui_pyside6.widgets.settings import SettingsDialog
 from domain.app_settings import app_settings
     
@@ -64,6 +66,7 @@ class MainWindow(QMainWindow):
         self._setup_log_console()
         self._setup_chart_cart()
         self._setup_help_browser()
+        self._setup_quick_iq()
         self._connect_signals()
         
         info("MainWindow initialized with controller architecture")
@@ -178,6 +181,7 @@ class MainWindow(QMainWindow):
         self.chart_widget = ChartWidget()
         self.chart_widget.add_to_cart_requested.connect(self.add_current_chart_to_cart)
         self.chart_widget.pop_out_requested.connect(self.pop_out_chart)
+        self.chart_widget.quick_iq_requested.connect(self._on_quick_iq_requested)
         right_layout.addWidget(self.chart_widget, stretch=1)
         
         main_layout.addWidget(right_panel)
@@ -253,6 +257,11 @@ class MainWindow(QMainWindow):
         self._log_console_action.setCheckable(True)
         self._log_console_action.toggled.connect(self._on_toggle_log_console)
         view_menu.addAction(self._log_console_action)
+
+        self._quick_iq_action = QAction("&Quick IQ", self)
+        self._quick_iq_action.setCheckable(True)
+        self._quick_iq_action.toggled.connect(self._on_toggle_quick_iq)
+        view_menu.addAction(self._quick_iq_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -664,6 +673,24 @@ class MainWindow(QMainWindow):
 
         # Ensure initial menu checks match actual dock enabled states
         self._sync_view_menu_checks()
+
+    def _setup_quick_iq(self):
+        """Setup the Quick IQ dock widget."""
+        self.quick_iq_dock = QuickIQDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.quick_iq_dock)
+
+        # Hidden by default (shows when Quick IQ is requested)
+        self.quick_iq_dock.hide()
+
+        # Tab with existing right-side docks
+        self.tabifyDockWidget(self.help_browser_dock, self.quick_iq_dock)
+
+        # Sync menu check state when dock visibility changes
+        self.quick_iq_dock.visibilityChanged.connect(self._on_quick_iq_visibility_changed)
+        self.quick_iq_dock.toggleViewAction().toggled.connect(self._on_quick_iq_visibility_changed)
+
+        # Ensure initial menu checks match actual dock enabled states
+        self._sync_view_menu_checks()
     
     @Slot(bool)
     def _on_toggle_log_console(self, enabled: bool):
@@ -671,6 +698,13 @@ class MainWindow(QMainWindow):
         self.log_console_dock.setVisible(enabled)
         if enabled:
             self.log_console_dock.raise_()
+
+    @Slot(bool)
+    def _on_toggle_quick_iq(self, enabled: bool):
+        """Enable/disable the Quick IQ dock from the View menu."""
+        self.quick_iq_dock.setVisible(enabled)
+        if enabled:
+            self.quick_iq_dock.raise_()
 
     @Slot(bool)
     def _on_toggle_controls_panel(self, enabled: bool):
@@ -696,6 +730,8 @@ class MainWindow(QMainWindow):
             self._help_browser_action.setChecked(self.help_browser_dock.toggleViewAction().isChecked())
         if hasattr(self, 'log_console_dock') and hasattr(self, '_log_console_action'):
             self._log_console_action.setChecked(self.log_console_dock.toggleViewAction().isChecked())
+        if hasattr(self, 'quick_iq_dock') and hasattr(self, '_quick_iq_action'):
+            self._quick_iq_action.setChecked(self.quick_iq_dock.toggleViewAction().isChecked())
 
     @Slot(bool)
     def _on_controls_panel_visibility_changed(self, _visible: bool):
@@ -705,6 +741,11 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_log_console_visibility_changed(self, _visible: bool):
         """Sync menu check state when log console dock state changes."""
+        self._sync_view_menu_checks()
+
+    @Slot(bool)
+    def _on_quick_iq_visibility_changed(self, _visible: bool):
+        """Sync menu check state when Quick IQ dock state changes."""
         self._sync_view_menu_checks()
     
     @Slot(bool)
@@ -759,6 +800,28 @@ class MainWindow(QMainWindow):
     def _on_show_help_home(self):
         """Show the help browser with the home page."""
         self.help_browser_dock.navigate("index.html")
+
+    def _build_quick_iq_url(self, chart_title: str) -> str:
+        """Build a Quick IQ SharePoint page URL from chart title."""
+        slug = chart_title.strip()
+        slug = slug.replace("&", " and ")
+        slug = slug.replace("/", "-")
+        slug = re.sub(r"\s+", "-", slug)
+        slug = re.sub(r"[^A-Za-z0-9\-]", "", slug)
+        slug = re.sub(r"-+", "-", slug).strip("-")
+
+        base = "https://berrycompanies.sharepoint.com/:u:/r/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages"
+        return f"{base}/{slug}.aspx"
+
+    @Slot(str)
+    def _on_quick_iq_requested(self, chart_title: str):
+        """Open Quick IQ dock for the provided chart title."""
+        if not chart_title:
+            QMessageBox.information(self, "Quick IQ", "Create or select a chart first.")
+            return
+
+        url = self._build_quick_iq_url(chart_title)
+        self.quick_iq_dock.navigate(url)
     
     @Slot()
     def _on_chart_cart_changed(self):
@@ -783,6 +846,7 @@ class MainWindow(QMainWindow):
         # Open pop-out window with current config and cart
         from ui_pyside6.widgets.chart_popout_window import ChartPopoutWindow
         popup = ChartPopoutWindow(self, config, chart_cart=self.chart_cart_dock.chart_cart)
+        popup.quick_iq_requested.connect(self._on_quick_iq_requested)
         popup.show()
     
     @Slot()
@@ -804,6 +868,14 @@ class MainWindow(QMainWindow):
                 }
                 if hasattr(self.chart_widget, '_live_values_widget'):
                     self.chart_widget._live_values_widget.update_settings(debug_settings)
+
+            # Propagate web browser zoom changes to docked web panels
+            if original.get('web_zoom_factor') != new.get('web_zoom_factor'):
+                zoom = new['web_zoom_factor']
+                if hasattr(self, 'help_browser_dock'):
+                    self.help_browser_dock.set_zoom_factor(zoom)
+                if hasattr(self, 'quick_iq_dock'):
+                    self.quick_iq_dock.set_zoom_factor(zoom)
     
     def _generate_reference_pdf(self):
         """Generate reference PDF using V2 architecture."""

@@ -40,7 +40,7 @@ V2_IMV_CURRENT = QuickChartDef(
 
 V2_TURBO = QuickChartDef(
     action_id="V2_TURBO",
-    title="Turbo / Boost Pressure",
+    title="Boost Pressure",
     primary_pids=["Air_pIntkVUs", "EnvP_p"],
     primary_range=(-20, 35),
     secondary_pids=["InjCrv_qMI1Des"],
@@ -64,7 +64,7 @@ V2_THROTTLE_VALVE = QuickChartDef(
 
 V2_ENGINE_LOAD = QuickChartDef(
     action_id="V2_ENGINE_LOAD",
-    title="Engine Load",
+    title="Engine Torque",
     primary_pids=["PthSet_TrqInrSet"],
     primary_range=(0, 300),
     secondary_pids=["Oil_tSwmp"],

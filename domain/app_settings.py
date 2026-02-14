@@ -25,6 +25,9 @@ _DEFAULTS: Dict[str, Any] = {
     "log_interval": 1.0,
     "log_on_stop": True,
     "position_threshold": 0.01,
+
+    # Web Browser Panels
+    "web_zoom_factor": 0.70,
 }
 
 
@@ -191,6 +194,19 @@ class AppSettings:
     def position_threshold(self, value: float):
         self._ensure_loaded()
         self._data["position_threshold"] = float(value)
+
+    # ------------------------------------------------------------------
+    # Web Browser properties
+    # ------------------------------------------------------------------
+    @property
+    def web_zoom_factor(self) -> float:
+        self._ensure_loaded()
+        return float(self._data["web_zoom_factor"])
+
+    @web_zoom_factor.setter
+    def web_zoom_factor(self, value: float):
+        self._ensure_loaded()
+        self._data["web_zoom_factor"] = float(value)
 
 
 # Singleton instance

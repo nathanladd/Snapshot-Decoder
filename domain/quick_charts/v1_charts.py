@@ -19,7 +19,7 @@ V1_BATTERY_TEST = QuickChartDef(
 
 V1_RAIL_PRESSURE = QuickChartDef(
     action_id="V1_RAIL_PRESSURE",
-    title="Rail Pressure vs Fuel Demand",
+    title="Rail Pressure",
     primary_pids=["RPC_Rail_pressure_dmnd", "P_L_RAIL_PRES_RAW"],
     primary_range=(-15, 30000),
     secondary_pids=["FQD_Chkd_inj_fuel_dmnd"],

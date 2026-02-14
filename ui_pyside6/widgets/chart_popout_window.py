@@ -26,6 +26,9 @@ from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
 
 class ChartPopoutWindow(QMainWindow):
     """A pop-out window displaying a chart with toolbar."""
+
+    # Signal emitted when Quick IQ is requested from pop-out toolbar
+    quick_iq_requested = Signal(str)
     
     def __init__(self, parent, config: ChartConfig, chart_cart=None):
         super().__init__(parent)
@@ -94,6 +97,7 @@ class ChartPopoutWindow(QMainWindow):
         # Add custom toolbar (no pop-out button in pop-out windows)
         self.toolbar = CustomNavigationToolbar(self.canvas, self, show_popout=False)
         self.toolbar.add_to_cart_requested.connect(self._add_to_cart)
+        self.toolbar.quick_iq_requested.connect(self._on_quick_iq_requested)
         self.toolbar.value_display_changed.connect(self._on_value_display_changed)
         self.toolbar.time_slider_changed.connect(self._on_time_slider_changed)
         main_layout.addWidget(self.toolbar)
@@ -625,4 +629,10 @@ class ChartPopoutWindow(QMainWindow):
         
         config_copy = copy.deepcopy(self.config)
         self.chart_cart.add_config(config_copy)
+
+    @Slot()
+    def _on_quick_iq_requested(self):
+        """Forward Quick IQ request to main window with this chart title."""
+        title = self.config.title if self.config and self.config.title else ""
+        self.quick_iq_requested.emit(title)
     

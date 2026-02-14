@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSize, QUrl, Slot
 from PySide6.QtWebEngineWidgets import QWebEngineView
+from domain.app_settings import app_settings
 
 
 # Resolve the help directory path once
@@ -101,6 +102,7 @@ class HelpBrowserDock(QDockWidget):
 
         # Web view
         self.browser = QWebEngineView()
+        self.set_zoom_factor(app_settings.web_zoom_factor)
         self.browser.urlChanged.connect(self._on_url_changed)
         layout.addWidget(self.browser, stretch=1)
 
@@ -200,6 +202,11 @@ class HelpBrowserDock(QDockWidget):
             icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowUp)
             self.expand_btn.setIcon(icon)
             self.expand_btn.setToolTip("Expand")
+
+    def set_zoom_factor(self, zoom_factor: float):
+        """Set browser zoom factor with a safe clamp range."""
+        zoom = max(0.50, min(2.50, float(zoom_factor)))
+        self.browser.setZoomFactor(zoom)
 
     # ── Navigation ─────────────────────────────────────────────
 

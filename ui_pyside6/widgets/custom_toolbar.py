@@ -32,6 +32,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     
     # Signal emitted when pop-out is requested
     pop_out_requested = Signal()
+
+    # Signal emitted when Quick IQ is requested
+    quick_iq_requested = Signal()
     
     # Signal emitted when value display toggle changes
     value_display_changed = Signal(bool)
@@ -165,6 +168,35 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         """)
         self._time_slider_btn.toggled.connect(self.time_slider_changed.emit)
         self.addWidget(self._time_slider_btn)
+
+        # Add Quick IQ button
+        self._quick_iq_btn = QToolButton(self)
+        self._quick_iq_btn.setToolTip("Open Quick IQ panel for this chart")
+
+        # Load brain icon
+        from PySide6.QtCore import QSize
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        icon_path = os.path.join(project_root, 'data', 'images', 'brain.png')
+        self._quick_iq_btn.setIcon(QIcon(icon_path))
+        self._quick_iq_btn.setIconSize(QSize(20, 20))
+
+        self._quick_iq_btn.setStyleSheet("""
+            QToolButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 4px;
+                background-color: #F0F0F0;
+            }
+            QToolButton:hover {
+                background-color: #E0E0E0;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:pressed {
+                background-color: #D0D0D0;
+            }
+        """)
+        self._quick_iq_btn.clicked.connect(self.quick_iq_requested.emit)
+        self.addWidget(self._quick_iq_btn)
         
         # Add pop-out button (only if not in a pop-out window)
         if show_popout:

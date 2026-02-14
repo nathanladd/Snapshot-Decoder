@@ -48,6 +48,9 @@ class ChartWidget(QWidget):
     
     # Signal emitted when user clicks "Pop Out" on toolbar
     pop_out_requested = Signal()
+
+    # Signal emitted when user clicks "Quick IQ" on toolbar
+    quick_iq_requested = Signal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -96,6 +99,7 @@ class ChartWidget(QWidget):
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
         self._toolbar.add_to_cart_requested.connect(self.add_to_cart_requested.emit)
         self._toolbar.pop_out_requested.connect(self.pop_out_requested.emit)
+        self._toolbar.quick_iq_requested.connect(self._on_quick_iq_requested)
         self._toolbar.value_display_changed.connect(self._on_value_display_changed)
         self._toolbar.time_slider_changed.connect(self._on_time_slider_changed)
         layout.addWidget(self._toolbar)
@@ -267,6 +271,13 @@ class ChartWidget(QWidget):
             return float(self._ax.transData.inverted().transform((event.x, event.y))[1])
         except Exception:
             return None
+
+    def _on_quick_iq_requested(self):
+        """Emit Quick IQ request with the current chart title."""
+        title = ""
+        if self._current_config and self._current_config.title:
+            title = self._current_config.title
+        self.quick_iq_requested.emit(title)
 
     def _on_chart_mouse_move(self, event):
         """Track mouse Y position and update dragged ruler."""

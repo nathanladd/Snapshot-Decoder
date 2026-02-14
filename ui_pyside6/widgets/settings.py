@@ -18,7 +18,7 @@ from domain.app_settings import app_settings
 
 class SettingsDialog(QDialog):
     """
-    Unified settings dialog with tabs for Chart Appearance and Logging.
+    Unified settings dialog with tabs for chart, logging, and web browser settings.
     """
 
     def __init__(self, parent=None):
@@ -48,6 +48,9 @@ class SettingsDialog(QDialog):
 
         # Tab 2 – Logging
         self.tab_widget.addTab(self._create_logging_tab(), "Logging")
+
+        # Tab 3 – Web Browser
+        self.tab_widget.addTab(self._create_web_browser_tab(), "Web Browser")
 
         # Buttons
         btn_layout = QHBoxLayout()
@@ -105,6 +108,36 @@ class SettingsDialog(QDialog):
         form.addRow("Marker Size:", self.marker_size_spin)
 
         layout.addWidget(group)
+        layout.addStretch()
+        return widget
+
+    # ---- Web Browser tab ----
+    def _create_web_browser_tab(self) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        group = QGroupBox("Web Browser Panels")
+        form = QFormLayout(group)
+
+        self.web_zoom_spin = QDoubleSpinBox()
+        self.web_zoom_spin.setRange(0.50, 2.50)
+        self.web_zoom_spin.setSingleStep(0.05)
+        self.web_zoom_spin.setDecimals(2)
+        self.web_zoom_spin.setSuffix("x")
+        self.web_zoom_spin.setToolTip(
+            "Zoom factor for embedded web panels (Help Browser and Quick IQ)."
+        )
+        form.addRow("Browser Zoom:", self.web_zoom_spin)
+
+        info = QLabel(
+            "Tip: 0.70x is default. Increase to make web text larger, "
+            "or decrease to fit more content on screen."
+        )
+        info.setWordWrap(True)
+        info.setStyleSheet("color: #666; font-size: 11px;")
+
+        layout.addWidget(group)
+        layout.addWidget(info)
         layout.addStretch()
         return widget
 
@@ -194,6 +227,8 @@ class SettingsDialog(QDialog):
         self.log_interval_spin.setValue(app_settings.log_interval)
         self.log_on_stop_cb.setChecked(app_settings.log_on_stop)
         self.position_threshold_spin.setValue(app_settings.position_threshold)
+        # Web Browser
+        self.web_zoom_spin.setValue(app_settings.web_zoom_factor)
         # Sync enabled state
         self._on_debug_toggled(app_settings.enable_pid_debug)
 
@@ -209,6 +244,8 @@ class SettingsDialog(QDialog):
         app_settings.log_interval = self.log_interval_spin.value()
         app_settings.log_on_stop = self.log_on_stop_cb.isChecked()
         app_settings.position_threshold = self.position_threshold_spin.value()
+        # Web Browser
+        app_settings.web_zoom_factor = self.web_zoom_spin.value()
         # Persist
         app_settings.save()
 
