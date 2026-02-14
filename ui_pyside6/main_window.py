@@ -94,8 +94,8 @@ class MainWindow(QMainWindow):
         # Left panel as dockable widget with expandable functionality
         from ui_pyside6.widgets.expandable_dock import ExpandableDock
         
-        left_dock = ExpandableDock("Controls", self)
-        left_dock.setAllowedAreas(
+        self.controls_dock = ExpandableDock("Controls", self)
+        self.controls_dock.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea |
             Qt.DockWidgetArea.RightDockWidgetArea
         )
@@ -137,10 +137,12 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(self.axis_controls_panel)
         
         # Set the content widget
-        left_dock.set_content_widget(left_content)
+        self.controls_dock.set_content_widget(left_content)
         
         # Add dock widget and dock to left side
-        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.controls_dock)
+        self.controls_dock.visibilityChanged.connect(self._on_controls_panel_visibility_changed)
+        self.controls_dock.toggleViewAction().toggled.connect(self._on_controls_panel_visibility_changed)
         
         # Right panel (quick charts above chart)
         right_panel = QWidget()
@@ -231,21 +233,25 @@ class MainWindow(QMainWindow):
         data_menu.addAction(chart_table_action)
         
         view_menu.addSeparator()
+
+        self._controls_panel_action = QAction("&Controls Panel", self)
+        self._controls_panel_action.setCheckable(True)
+        self._controls_panel_action.toggled.connect(self._on_toggle_controls_panel)
+        view_menu.addAction(self._controls_panel_action)
         
         self._chart_cart_action = QAction("&Chart Cart", self)
         self._chart_cart_action.setCheckable(True)
-        self._chart_cart_action.setChecked(True)
-        self._chart_cart_action.triggered.connect(self._on_toggle_chart_cart)
+        self._chart_cart_action.toggled.connect(self._on_toggle_chart_cart)
         view_menu.addAction(self._chart_cart_action)
         
         self._help_browser_action = QAction("&Help Browser", self)
         self._help_browser_action.setCheckable(True)
-        self._help_browser_action.triggered.connect(self._on_toggle_help_browser)
+        self._help_browser_action.toggled.connect(self._on_toggle_help_browser)
         view_menu.addAction(self._help_browser_action)
         
         self._log_console_action = QAction("&Log Console", self)
         self._log_console_action.setCheckable(True)
-        self._log_console_action.triggered.connect(self._on_toggle_log_console)
+        self._log_console_action.toggled.connect(self._on_toggle_log_console)
         view_menu.addAction(self._log_console_action)
         
         # Help menu
@@ -610,6 +616,8 @@ class MainWindow(QMainWindow):
         """Setup the log console dock widget."""
         self.log_console_dock = LogConsoleDock(self)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_console_dock)
+        self.log_console_dock.visibilityChanged.connect(self._on_log_console_visibility_changed)
+        self.log_console_dock.toggleViewAction().toggled.connect(self._on_log_console_visibility_changed)
         
         # Hide by default (user can show via menu)
         self.log_console_dock.hide()
@@ -624,6 +632,7 @@ class MainWindow(QMainWindow):
         
         # Sync menu check state when dock visibility changes
         self.chart_cart_dock.visibilityChanged.connect(self._on_chart_cart_visibility_changed)
+        self.chart_cart_dock.toggleViewAction().toggled.connect(self._on_chart_cart_visibility_changed)
         
         # Listen for cart changes to sync PID panel
         self.chart_cart_dock.chart_cart.cart_changed.connect(self._on_chart_cart_changed)
@@ -642,6 +651,7 @@ class MainWindow(QMainWindow):
         
         # Set up dock widget visibility changes to raise the active tab
         self.help_browser_dock.visibilityChanged.connect(self._on_help_browser_visibility_changed)
+        self.help_browser_dock.toggleViewAction().toggled.connect(self._on_help_browser_visibility_changed)
         
         # When help browser is shown, raise it to the front
         def raise_help_browser():
@@ -651,37 +661,62 @@ class MainWindow(QMainWindow):
         # Connect menu action to raise help browser when shown
         if hasattr(self, '_help_browser_action'):
             self._help_browser_action.triggered.connect(raise_help_browser)
-    
-    @Slot()
-    def _on_toggle_log_console(self):
-        """Toggle the log console visibility."""
-        if self.log_console_dock.isVisible():
-            self.log_console_dock.hide()
-        else:
-            self.log_console_dock.show()
-            self.log_console_dock.raise_()  # Bring to front
-    
-    @Slot()
-    def _on_toggle_chart_cart(self):
-        """Toggle the chart cart visibility."""
-        if self.chart_cart_dock.isVisible():
-            self.chart_cart_dock.hide()
-        else:
-            self.chart_cart_dock.show()
-            self.chart_cart_dock.raise_()
+
+        # Ensure initial menu checks match actual dock enabled states
+        self._sync_view_menu_checks()
     
     @Slot(bool)
-    def _on_chart_cart_visibility_changed(self, visible: bool):
-        """Sync menu check state with chart cart dock visibility."""
-        self._chart_cart_action.setChecked(visible)
+    def _on_toggle_log_console(self, enabled: bool):
+        """Enable/disable the log console dock from the View menu."""
+        self.log_console_dock.setVisible(enabled)
+        if enabled:
+            self.log_console_dock.raise_()
+
+    @Slot(bool)
+    def _on_toggle_controls_panel(self, enabled: bool):
+        """Enable/disable the controls panel dock from the View menu."""
+        self.controls_dock.setVisible(enabled)
+        if enabled:
+            self.controls_dock.raise_()
     
-    @Slot()
-    def _on_toggle_help_browser(self):
-        """Toggle the help browser visibility."""
-        if self.help_browser_dock.isVisible():
-            self.help_browser_dock.hide()
-        else:
-            self.help_browser_dock.show()
+    @Slot(bool)
+    def _on_toggle_chart_cart(self, enabled: bool):
+        """Enable/disable the chart cart dock from the View menu."""
+        self.chart_cart_dock.setVisible(enabled)
+        if enabled:
+            self.chart_cart_dock.raise_()
+
+    def _sync_view_menu_checks(self):
+        """Sync View menu checks with dock enabled states (independent of tab focus)."""
+        if hasattr(self, 'controls_dock') and hasattr(self, '_controls_panel_action'):
+            self._controls_panel_action.setChecked(self.controls_dock.toggleViewAction().isChecked())
+        if hasattr(self, 'chart_cart_dock') and hasattr(self, '_chart_cart_action'):
+            self._chart_cart_action.setChecked(self.chart_cart_dock.toggleViewAction().isChecked())
+        if hasattr(self, 'help_browser_dock') and hasattr(self, '_help_browser_action'):
+            self._help_browser_action.setChecked(self.help_browser_dock.toggleViewAction().isChecked())
+        if hasattr(self, 'log_console_dock') and hasattr(self, '_log_console_action'):
+            self._log_console_action.setChecked(self.log_console_dock.toggleViewAction().isChecked())
+
+    @Slot(bool)
+    def _on_controls_panel_visibility_changed(self, _visible: bool):
+        """Sync menu check state when controls panel dock state changes."""
+        self._sync_view_menu_checks()
+
+    @Slot(bool)
+    def _on_log_console_visibility_changed(self, _visible: bool):
+        """Sync menu check state when log console dock state changes."""
+        self._sync_view_menu_checks()
+    
+    @Slot(bool)
+    def _on_chart_cart_visibility_changed(self, _visible: bool):
+        """Sync menu check state with chart cart dock visibility."""
+        self._sync_view_menu_checks()
+    
+    @Slot(bool)
+    def _on_toggle_help_browser(self, enabled: bool):
+        """Enable/disable the help browser dock from the View menu."""
+        self.help_browser_dock.setVisible(enabled)
+        if enabled:
             self.help_browser_dock.raise_()  # Bring to front
     
     def add_current_chart_to_cart(self):
@@ -697,9 +732,9 @@ class MainWindow(QMainWindow):
     
     
     @Slot(bool)
-    def _on_help_browser_visibility_changed(self, visible: bool):
+    def _on_help_browser_visibility_changed(self, _visible: bool):
         """Sync menu check state with help browser dock visibility."""
-        self._help_browser_action.setChecked(visible)
+        self._sync_view_menu_checks()
     
     @Slot()
     def _on_snapshot_decoder_home(self):
