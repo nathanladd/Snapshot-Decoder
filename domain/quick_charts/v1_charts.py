@@ -46,7 +46,7 @@ V1_IMV_CURRENT = QuickChartDef(
 
 V1_TURBO = QuickChartDef(
     action_id="V1_TURBO",
-    title="Turbo / Boost Pressure",
+    title="Boost Pressure",
     primary_pids=["P_L_MAP_RAW", "P_L_Atmosp_raw"],
     primary_range=(-10, 35),
     secondary_pids=["IN_Engine_cycle_speed"],

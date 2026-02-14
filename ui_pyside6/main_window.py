@@ -35,7 +35,6 @@ from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
-from ui_pyside6.widgets.help_tooltip import HelpEventFilter
 from ui_pyside6.widgets.settings import SettingsDialog
 from domain.app_settings import app_settings
     
@@ -65,7 +64,6 @@ class MainWindow(QMainWindow):
         self._setup_log_console()
         self._setup_chart_cart()
         self._setup_help_browser()
-        self._setup_help_tooltips()
         self._connect_signals()
         
         info("MainWindow initialized with controller architecture")
@@ -698,37 +696,6 @@ class MainWindow(QMainWindow):
         info(f"Added chart to cart: {config.title}")
     
     
-# ############################################################################################################################
-# ########################################### HELP TOOLTIPS ##################################################################
-# ############################################################################################################################
-    
-    def _setup_help_tooltips(self):
-        """Register help tooltips on widgets throughout the UI."""
-        self._help_filter = HelpEventFilter(self)
-        self._help_filter.link_clicked.connect(self.help_browser_dock.navigate)
-        
-        # Register widgets with their help pages
-        self._help_filter.register(
-            self.header_panel,
-            "Snapshot header info — file name, type, hours",
-            "snapshot_header.html"
-        )
-        self._help_filter.register(
-            self.quick_chart_panel,
-            "One-click diagnostic charts for common analyses",
-            "quick_charts.html"
-        )
-        self._help_filter.register(
-            self.pid_panel,
-            "Search and select PIDs for custom charts",
-            "custom_charts.html"
-        )
-        self._help_filter.register(
-            self.axis_controls_panel,
-            "Set axis ranges and auto-scale options",
-            "axis_controls.html"
-        )
-            
     @Slot(bool)
     def _on_help_browser_visibility_changed(self, visible: bool):
         """Sync menu check state with help browser dock visibility."""
