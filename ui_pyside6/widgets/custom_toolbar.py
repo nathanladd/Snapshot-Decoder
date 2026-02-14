@@ -137,7 +137,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         from PySide6.QtCore import QSize
         # Get the project root directory
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        icon_path = os.path.join(project_root, 'data', 'images', 'vertical-cursor.png')
+        icon_path = os.path.join(project_root, 'data', 'images', 'time.png')
         self._time_slider_btn.setIcon(QIcon(icon_path))
         self._time_slider_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         

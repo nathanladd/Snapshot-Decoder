@@ -5,14 +5,15 @@ A standalone window that displays a chart with its own toolbar.
 """
 
 import copy
-from typing import Optional
+import os
+from typing import Optional, List
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-    QMessageBox, QSlider, QLabel, QLineEdit
+    QMessageBox, QSlider, QLabel, QLineEdit, QPushButton
 )
 from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QPixmap
 
 from matplotlib.figure import Figure
 import mplcursors
@@ -51,6 +52,14 @@ class ChartPopoutWindow(QMainWindow):
         
         # Live values display
         self.live_values_widget = None
+
+        # Horizontal Y-ruler state
+        self._y_ruler_values: List[float] = []
+        self._y_ruler_lines = []
+        self._y_ruler_handles = []
+        self._y_ruler_value_labels = []
+        self._dragging_ruler = False
+        self._active_ruler_index: Optional[int] = None
         
         # Build the UI
         self._setup_ui()
@@ -89,8 +98,83 @@ class ChartPopoutWindow(QMainWindow):
         self.toolbar.time_slider_changed.connect(self._on_time_slider_changed)
         main_layout.addWidget(self.toolbar)
         
-        # Pack canvas
-        main_layout.addWidget(self.canvas, stretch=1)
+        # Canvas + Y-ruler controls row
+        canvas_row = QHBoxLayout()
+        canvas_row.setContentsMargins(0, 0, 0, 0)
+        canvas_row.setSpacing(4)
+
+        self._y_ruler_controls = QWidget(self)
+        ruler_layout = QVBoxLayout(self._y_ruler_controls)
+        ruler_layout.setContentsMargins(0, 4, 0, 4)
+        ruler_layout.setSpacing(4)
+
+        self._add_ruler_btn = QPushButton("+")
+        self._add_ruler_btn.setFixedSize(22, 22)
+        self._add_ruler_btn.setToolTip("Add horizontal ruler at the middle of the Y axis")
+        self._add_ruler_btn.clicked.connect(self._on_add_y_ruler)
+
+        self._remove_ruler_btn = QPushButton("-")
+        self._remove_ruler_btn.setFixedSize(22, 22)
+        self._remove_ruler_btn.setToolTip("Remove selected ruler (or last if none selected)")
+        self._remove_ruler_btn.clicked.connect(self._on_remove_last_y_ruler)
+
+        self._clear_rulers_btn = QPushButton("x")
+        self._clear_rulers_btn.setFixedSize(22, 22)
+        self._clear_rulers_btn.setToolTip("Clear all horizontal rulers")
+        self._clear_rulers_btn.clicked.connect(self._on_clear_y_rulers)
+
+        self._ruler_icon_label = QLabel()
+        self._ruler_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._ruler_icon_label.setToolTip("Y-axis ruler controls")
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        ruler_icon_path = os.path.join(project_root, "data", "images", "ruler.png")
+        if os.path.exists(ruler_icon_path):
+            icon_pixmap = QPixmap(ruler_icon_path).scaled(
+                16,
+                16,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self._ruler_icon_label.setPixmap(icon_pixmap)
+        else:
+            self._ruler_icon_label.setText("Y")
+
+        ruler_btn_style = """
+            QPushButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                background-color: #F6F6F6;
+                font-weight: bold;
+                color: #444;
+                padding: 0;
+            }
+            QPushButton:hover {
+                background-color: #EAEAEA;
+                border: 1px solid #0078d4;
+            }
+            QPushButton:pressed {
+                background-color: #DDDDDD;
+            }
+            QPushButton:disabled {
+                color: #AAA;
+                background-color: #F9F9F9;
+            }
+        """
+        self._add_ruler_btn.setStyleSheet(ruler_btn_style)
+        self._remove_ruler_btn.setStyleSheet(ruler_btn_style)
+        self._clear_rulers_btn.setStyleSheet(ruler_btn_style)
+
+        ruler_layout.addStretch(1)
+        ruler_layout.addWidget(self._ruler_icon_label)
+        ruler_layout.addSpacing(2)
+        ruler_layout.addWidget(self._add_ruler_btn)
+        ruler_layout.addWidget(self._remove_ruler_btn)
+        ruler_layout.addWidget(self._clear_rulers_btn)
+        ruler_layout.addStretch(1)
+
+        canvas_row.addWidget(self._y_ruler_controls)
+        canvas_row.addWidget(self.canvas, stretch=1)
+        main_layout.addLayout(canvas_row, stretch=1)
         
         # Qt-based time slider widget (hidden by default)
         self._slider_widget = QWidget(self)
@@ -151,16 +235,204 @@ class ChartPopoutWindow(QMainWindow):
         
         # Connect Qt slider signal
         self._qt_slider.valueChanged.connect(self._on_qt_slider_changed)
+
+        # Track mouse interactions for Y-rulers
+        self.canvas.mpl_connect("motion_notify_event", self._on_chart_mouse_move)
+        self.canvas.mpl_connect("button_press_event", self._on_chart_mouse_press)
+        self.canvas.mpl_connect("button_release_event", self._on_chart_mouse_release)
         
         # Live values display (initially hidden)
         self.live_values_widget = LiveValuesWidget(self)
         main_layout.addWidget(self.live_values_widget)
+
+    def _event_to_primary_y(self, event) -> Optional[float]:
+        """Convert a matplotlib mouse event to primary-axis Y data coordinates."""
+        if self.ax_left is None:
+            return None
+        if event.x is None or event.y is None:
+            return None
+
+        try:
+            return float(self.ax_left.transData.inverted().transform((event.x, event.y))[1])
+        except Exception:
+            return None
+
+    def _find_ruler_near_y(self, y_val: float) -> Optional[int]:
+        """Find the index of the ruler nearest the given y-value."""
+        if not self._y_ruler_values or self.ax_left is None:
+            return None
+
+        y_min, y_max = self.ax_left.get_ylim()
+        tolerance = abs(y_max - y_min) * 0.03
+        if tolerance == 0:
+            tolerance = 1.0
+
+        closest_idx = None
+        closest_dist = None
+        for i, ruler_y in enumerate(self._y_ruler_values):
+            dist = abs(ruler_y - y_val)
+            if closest_dist is None or dist < closest_dist:
+                closest_idx = i
+                closest_dist = dist
+
+        if closest_dist is not None and closest_dist <= tolerance:
+            return closest_idx
+        return None
+
+    def _on_chart_mouse_move(self, event):
+        """Update dragged ruler position while mouse moves."""
+        y_val = self._event_to_primary_y(event)
+        if y_val is None:
+            return
+
+        if self._dragging_ruler and self._active_ruler_index is not None:
+            self._y_ruler_values[self._active_ruler_index] = y_val
+            self._redraw_y_rulers()
+
+    def _on_chart_mouse_press(self, event):
+        """Start ruler drag when clicking near a ruler."""
+        if self.ax_left is None or event.inaxes is None or event.button != 1:
+            return
+
+        y_val = self._event_to_primary_y(event)
+        if y_val is None:
+            return
+
+        nearest_idx = self._find_ruler_near_y(y_val)
+        self._active_ruler_index = nearest_idx
+        if nearest_idx is not None:
+            self._dragging_ruler = True
+            self._y_ruler_values[nearest_idx] = y_val
+        self._redraw_y_rulers()
+
+    def _on_chart_mouse_release(self, event):
+        """End ruler drag operation."""
+        self._dragging_ruler = False
+
+    def _on_add_y_ruler(self):
+        """Add a horizontal ruler at the midpoint of the primary Y-axis."""
+        if self.ax_left is None:
+            return
+
+        y_min, y_max = self.ax_left.get_ylim()
+        y_mid = float((y_min + y_max) / 2.0)
+
+        self._y_ruler_values.append(y_mid)
+        self._active_ruler_index = len(self._y_ruler_values) - 1
+        self._redraw_y_rulers()
+
+    def _on_remove_last_y_ruler(self):
+        """Remove selected ruler, or the last one if none is selected."""
+        if not self._y_ruler_values:
+            return
+
+        if self._active_ruler_index is not None and 0 <= self._active_ruler_index < len(self._y_ruler_values):
+            self._y_ruler_values.pop(self._active_ruler_index)
+            self._active_ruler_index = None
+        else:
+            self._y_ruler_values.pop()
+        self._redraw_y_rulers()
+
+    def _on_clear_y_rulers(self):
+        """Remove all horizontal rulers."""
+        if not self._y_ruler_values and not self._y_ruler_lines:
+            return
+        self._y_ruler_values.clear()
+        self._active_ruler_index = None
+        self._redraw_y_rulers()
+
+    def _redraw_y_rulers(self):
+        """Redraw all horizontal rulers on the primary axis."""
+        x_limits = None
+        y_limits = None
+        if self.ax_left is not None:
+            x_limits = self.ax_left.get_xlim()
+            y_limits = self.ax_left.get_ylim()
+
+        for line in self._y_ruler_lines:
+            try:
+                line.remove()
+            except Exception:
+                pass
+        self._y_ruler_lines.clear()
+
+        for handle in self._y_ruler_handles:
+            try:
+                handle.remove()
+            except Exception:
+                pass
+        self._y_ruler_handles.clear()
+
+        for text_obj in self._y_ruler_value_labels:
+            try:
+                text_obj.remove()
+            except Exception:
+                pass
+        self._y_ruler_value_labels.clear()
+
+        if self.ax_left is not None:
+            x_min, x_max = self.ax_left.get_xlim()
+            x_span = x_max - x_min
+            handle_x = x_min + (0.015 * x_span if x_span != 0 else 0.0)
+
+            for i, y_val in enumerate(self._y_ruler_values):
+                is_active = i == self._active_ruler_index
+                line = self.ax_left.axhline(
+                    y=y_val,
+                    color="#ff7a00" if not is_active else "#d94f00",
+                    linestyle=":",
+                    linewidth=1.4 if is_active else 1.2,
+                    alpha=0.8,
+                    zorder=3,
+                    label=f"Y Ruler {i + 1}",
+                )
+                self._y_ruler_lines.append(line)
+
+                handle = self.ax_left.plot(
+                    [handle_x], [y_val],
+                    marker="s",
+                    markersize=6 if is_active else 5,
+                    markeredgewidth=1.0,
+                    markerfacecolor="#ff7a00" if not is_active else "#d94f00",
+                    markeredgecolor="white",
+                    linestyle="None",
+                    zorder=4,
+                )[0]
+                self._y_ruler_handles.append(handle)
+
+                value_label = self.ax_left.text(
+                    handle_x,
+                    y_val,
+                    f" {y_val:.2f}",
+                    va="center",
+                    ha="left",
+                    fontsize=8,
+                    color="#d94f00" if is_active else "#ff7a00",
+                    zorder=5,
+                    bbox={
+                        "boxstyle": "round,pad=0.15",
+                        "facecolor": "white",
+                        "edgecolor": "#dddddd",
+                        "alpha": 0.75,
+                    },
+                )
+                self._y_ruler_value_labels.append(value_label)
+
+            # Keep chart scaling fixed while rulers are added/moved.
+            if x_limits is not None and y_limits is not None:
+                self.ax_left.set_xlim(x_limits)
+                self.ax_left.set_ylim(y_limits)
+
+        self._remove_ruler_btn.setEnabled(bool(self._y_ruler_values))
+        self._clear_rulers_btn.setEnabled(bool(self._y_ruler_values))
+        self.canvas.draw_idle()
     
     def _render_chart(self):
         """Render the chart using ChartRenderer."""
         try:
             renderer = ChartRenderer(self.config)
             self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
+            self._redraw_y_rulers()
         except Exception as e:
             # Show error on the chart
             self.ax_left.clear()
