@@ -63,9 +63,10 @@ class ChartConfigBuilder:
         # Clean data types for all PID columns to ensure numeric interpolation works
         all_pids = definition.primary_pids + definition.secondary_pids
         for pid in all_pids:
-            if pid in df.columns:
+            resolved_pid = cls._resolve_column_name(df, pid)
+            if resolved_pid:
                 # Convert to numeric, coercing errors to NaN
-                df[pid] = pd.to_numeric(df[pid], errors='coerce')
+                df[resolved_pid] = pd.to_numeric(df[resolved_pid], errors='coerce')
         
         # Resolve primary PIDs (filter to those present in data)
         primary_pids = cls._resolve_pids(definition, df)
@@ -73,8 +74,18 @@ class ChartConfigBuilder:
         # Resolve secondary PIDs
         secondary_pids = [
             pid for pid in definition.secondary_pids 
-            if pid in df.columns
+            if cls._resolve_column_name(df, pid)
         ]
+
+        # Normalize data column names to configured PID names so downstream
+        # rendering/interpolation can use definition names consistently.
+        rename_map = {}
+        for pid in primary_pids + secondary_pids:
+            resolved_pid = cls._resolve_column_name(df, pid)
+            if resolved_pid and resolved_pid != pid:
+                rename_map[resolved_pid] = pid
+        if rename_map:
+            df = df.rename(columns=rename_map)
         
         # Build axis configs
         primary_axis = AxisConfig(
@@ -101,6 +112,7 @@ class ChartConfigBuilder:
             title=definition.title,
             show_legend=definition.show_legend,
             pid_info=snapshot.pid_info,
+            snapshot_type=snapshot.snapshot_type,
             file_name=snapshot.file_name,
             date_time=snapshot.date_time,
             engine_hours=snapshot.hours,
@@ -115,7 +127,8 @@ class ChartConfigBuilder:
         df = snapshot.snapshot
         
         # Get Frame 0 row
-        frame_zero = df[df["Frame"] == 0]
+        frame_col = cls._resolve_column_name(df, "Frame")
+        frame_zero = df[df[frame_col] == 0] if frame_col else pd.DataFrame()
         if frame_zero.empty:
             # Fall back to first row if Frame 0 not found
             frame_zero = df.iloc[[0]]
@@ -123,9 +136,10 @@ class ChartConfigBuilder:
         # Extract values from source columns
         values = []
         for col in definition.source_columns:
-            if col in frame_zero.columns:
+            resolved_col = cls._resolve_column_name(frame_zero, col)
+            if resolved_col:
                 try:
-                    val = float(frame_zero[col].iloc[0])
+                    val = float(frame_zero[resolved_col].iloc[0])
                     if definition.convert_seconds_to_hours:
                         val = round(val / 3600, 2)
                     values.append(val)
@@ -153,6 +167,7 @@ class ChartConfigBuilder:
             x_column=definition.x_label or "Category",
             x_label=definition.x_label,
             pid_info=snapshot.pid_info,
+            snapshot_type=snapshot.snapshot_type,
             file_name=snapshot.file_name,
             date_time=snapshot.date_time,
             engine_hours=snapshot.hours,
@@ -169,9 +184,10 @@ class ChartConfigBuilder:
         # Get total reference value for percentage calculation
         total_value = 1.0
         if definition.total_reference_column:
-            if definition.total_reference_column in df.columns:
+            total_col = cls._resolve_column_name(df, definition.total_reference_column)
+            if total_col:
                 try:
-                    total_value = float(df[definition.total_reference_column].iloc[0])
+                    total_value = float(df[total_col].iloc[0])
                 except (ValueError, IndexError, TypeError):
                     total_value = 1.0
         
@@ -232,6 +248,7 @@ class ChartConfigBuilder:
             bubble_size_column=definition.size_label,
             bubble_size_scale=50.0,
             pid_info=snapshot.pid_info,
+            snapshot_type=snapshot.snapshot_type,
             file_name=snapshot.file_name,
             date_time=snapshot.date_time,
             engine_hours=snapshot.hours,
@@ -249,9 +266,9 @@ class ChartConfigBuilder:
         represents a different status flag.
         """
         df = snapshot.snapshot.copy()
-        col_name = definition.source_column
+        col_name = cls._resolve_column_name(df, definition.source_column)
         
-        if col_name not in df.columns:
+        if not col_name:
             # Return empty chart if column missing
             return cls._build_line_or_status_chart(definition, snapshot)
         
@@ -285,6 +302,7 @@ class ChartConfigBuilder:
             title=definition.title,
             show_legend=definition.show_legend,
             pid_info=snapshot.pid_info,
+            snapshot_type=snapshot.snapshot_type,
             file_name=snapshot.file_name,
             date_time=snapshot.date_time,
             engine_hours=snapshot.hours,
@@ -301,5 +319,19 @@ class ChartConfigBuilder:
         # Use dynamic PIDs if specified, otherwise use primary_pids
         candidate_pids = definition.dynamic_primary_pids or definition.primary_pids
         
-        # Filter to PIDs present in the data
-        return [pid for pid in candidate_pids if pid in df.columns]
+        # Filter to PIDs present in the data (case-insensitive); keep configured names
+        return [pid for pid in candidate_pids if cls._resolve_column_name(df, pid)]
+
+    @staticmethod
+    def _resolve_column_name(df: pd.DataFrame, column_name: Optional[str]) -> Optional[str]:
+        """Return actual DataFrame column matching name (case-insensitive)."""
+        if not column_name:
+            return None
+        if column_name in df.columns:
+            return column_name
+
+        target = str(column_name).casefold()
+        for col in df.columns:
+            if str(col).casefold() == target:
+                return str(col)
+        return None

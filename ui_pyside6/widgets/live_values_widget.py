@@ -6,17 +6,26 @@ PySide6 implementation with modern styling.
 """
 
 import numpy as np
+import re
+import math
 from typing import Dict, Optional
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, 
     QScrollArea, QStyle, QStyleOption
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QPalette, QColor
+from PySide6.QtCore import Qt, Signal, QRect
+from PySide6.QtGui import QFont, QPalette, QColor, QPainter, QPen, QFontMetrics
 import time
+import pandas as pd
 
 from domain.chart_config import ChartConfig
 from domain.pid_interpolator import PIDInterpolator
+from domain.constants import (
+    LIVE_METRIC_KEYS,
+    LIVE_METRIC_PID_MAP,
+    LIVE_METRIC_META,
+    LIVE_METRIC_STATE_LABELS,
+)
 from ui.color_manager import ColorManager
 from infrastructure import debug, error
 from domain.pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
@@ -87,7 +96,7 @@ class PIDCard(QFrame):
         self.value_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.value_label)
         
-        # Set fixed size for consistency - make cards bigger for better text display
+        # Keep standard PID cards compact.
         self.setFixedSize(120, 70)
     
     def update_value(self, value: float):
@@ -106,6 +115,209 @@ class PIDCard(QFrame):
         return luminance < 0.5
 
 
+class MiniGaugeCard(QFrame):
+    """Compact arc-style gauge card sized similarly to PID cards."""
+
+    def __init__(
+        self,
+        label: str,
+        unit: str,
+        min_value: float,
+        max_value: float,
+        decimals: int = 0,
+        bands: Optional[list[tuple[float, float, str]]] = None,
+        tick_values: Optional[list[float]] = None,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.metric_label = label
+        self.unit = unit
+        self.min_value = float(min_value)
+        self.max_value = float(max_value)
+        self.decimals = int(decimals)
+        self.current_value: Optional[float] = None
+        self.bands = list(bands or [])
+        self.tick_values = list(tick_values or [])
+
+        self.setFrameStyle(QFrame.StyledPanel)
+        self.setLineWidth(1)
+        self.setStyleSheet(
+            """
+            QFrame {
+                border: 1px solid #CCCCCC;
+                border-radius: 4px;
+                background-color: white;
+                margin: 2px;
+            }
+            """
+        )
+        self.setFixedSize(117, 108)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(4, 3, 4, 3)
+        layout.setSpacing(0)
+
+        self.name_label = QLabel(self.metric_label, self)
+        self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.name_label.setFont(QFont("Segoe UI", 8, QFont.Bold))
+        self.name_label.setStyleSheet("QLabel { color: #333; }")
+        self.name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.name_label.raise_()
+
+        layout.addStretch(1)
+
+        self.value_label = QLabel("--")
+        self.value_label.setAlignment(Qt.AlignCenter)
+        self.value_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
+        self.value_label.setStyleSheet("QLabel { color: #111; }")
+        layout.addWidget(self.value_label)
+
+        self._position_name_label()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._position_name_label()
+
+    def _position_name_label(self):
+        """Pin metric label to top-left with slight card-edge overlap."""
+        if not hasattr(self, "name_label") or self.name_label is None:
+            return
+        self.name_label.adjustSize()
+        self.name_label.move(-3, -3)
+
+    def update_value(self, value: Optional[float]):
+        """Update value text and needle position."""
+        if value is None or np.isnan(value) or np.isinf(value):
+            self.current_value = None
+            self.value_label.setText("--")
+            self.update()
+            return
+
+        self.current_value = float(value)
+        if self.unit:
+            fmt = f"{{:.{self.decimals}f}}"
+            self.value_label.setText(f"{fmt.format(self.current_value)} {self.unit}")
+        else:
+            fmt = f"{{:.{self.decimals}f}}"
+            self.value_label.setText(fmt.format(self.current_value))
+        self.update()
+
+    def _to_ratio(self) -> Optional[float]:
+        if self.current_value is None:
+            return None
+        value_span = self.max_value - self.min_value
+        if value_span <= 0:
+            return 0.0
+        ratio = (self.current_value - self.min_value) / value_span
+        return max(0.0, min(1.0, ratio))
+
+    def _value_to_angle(self, value: float, start_deg: float, span_deg: float) -> float:
+        """Map a value in gauge range to an arc angle."""
+        span = self.max_value - self.min_value
+        if span <= 0:
+            return start_deg
+        ratio = (value - self.min_value) / span
+        ratio = max(0.0, min(1.0, ratio))
+        return start_deg + (span_deg * ratio)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        sweep_bounds = self.rect().adjusted(10, 22, -10, -22)
+        sweep_size = min(sweep_bounds.width(), sweep_bounds.height())
+        sweep_center = sweep_bounds.center()
+        needle_rect = QRect(
+            int(sweep_center.x() - (sweep_size / 2)),
+            int(sweep_center.y() - (sweep_size / 2)),
+            int(sweep_size),
+            int(sweep_size),
+        )
+        band_inset = 14
+        band_rect = needle_rect.adjusted(band_inset, band_inset, -band_inset, -band_inset)
+        start_deg = 210
+        span_deg = -240
+
+        band_pen = QPen(QColor("#C8C8C8"), 2)
+        painter.setPen(band_pen)
+        painter.drawArc(band_rect, start_deg * 16, span_deg * 16)
+
+        # Draw configured threshold color bands, or fallback defaults.
+        band_width = 4
+        if self.bands:
+            for band_start, band_end, band_color in self.bands:
+                start_angle = self._value_to_angle(float(band_start), start_deg, span_deg)
+                end_angle = self._value_to_angle(float(band_end), start_deg, span_deg)
+                band_span = end_angle - start_angle
+                painter.setPen(QPen(QColor(band_color), band_width))
+                painter.drawArc(band_rect, int(start_angle * 16), int(band_span * 16))
+        else:
+            painter.setPen(QPen(QColor("#4CAF50"), band_width))
+            painter.drawArc(band_rect, 210 * 16, -144 * 16)
+            painter.setPen(QPen(QColor("#FFC107"), band_width))
+            painter.drawArc(band_rect, 66 * 16, -60 * 16)
+            painter.setPen(QPen(QColor("#E53935"), band_width))
+            painter.drawArc(band_rect, 6 * 16, -36 * 16)
+
+        # Optional tick labels for key thresholds.
+        if self.tick_values:
+            tick_font = QFont("Segoe UI", 7)
+            painter.setFont(tick_font)
+            painter.setPen(QPen(QColor("#555555"), 1))
+            cx = band_rect.center().x()
+            cy = band_rect.center().y()
+            base_radius = max(8, min(band_rect.width(), band_rect.height()) // 2 - 2)
+            # Keep numeric scale outside the colored arc band.
+            label_radius = base_radius + band_width + 8
+            for tick in self.tick_values:
+                angle_deg = self._value_to_angle(float(tick), start_deg, span_deg)
+                angle_rad = math.radians(angle_deg)
+                tx = cx + label_radius * math.cos(angle_rad)
+                ty = cy - label_radius * math.sin(angle_rad)
+
+                text = str(int(round(tick)))
+                text_w = 28
+                text_h = 10
+                cos_v = math.cos(angle_rad)
+
+                if cos_v > 0.25:
+                    # Right side: anchor left edge at the radial point.
+                    text_rect_x = int(tx + 1)
+                    text_align = Qt.AlignLeft | Qt.AlignVCenter
+                elif cos_v < -0.25:
+                    # Left side: anchor right edge at the radial point.
+                    text_rect_x = int(tx - text_w - 1)
+                    text_align = Qt.AlignRight | Qt.AlignVCenter
+                else:
+                    # Top/near-vertical: keep centered.
+                    text_rect_x = int(tx - text_w / 2)
+                    text_align = Qt.AlignHCenter | Qt.AlignVCenter
+
+                painter.drawText(text_rect_x, int(ty - text_h / 2), text_w, text_h, text_align, text)
+
+        ratio = self._to_ratio()
+        if ratio is None:
+            return
+
+        angle_deg = start_deg + (span_deg * ratio)
+        angle_rad = math.radians(angle_deg)
+
+        cx = needle_rect.center().x()
+        cy = needle_rect.center().y()
+        radius = max(8, min(needle_rect.width(), needle_rect.height()) // 2 - 2)
+
+        nx = cx + radius * math.cos(angle_rad)
+        ny = cy - radius * math.sin(angle_rad)
+
+        painter.setPen(QPen(QColor("#333333"), 2))
+        painter.drawLine(int(cx), int(cy), int(nx), int(ny))
+        painter.setBrush(QColor("#333333"))
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(int(cx - 2), int(cy - 2), 4, 4)
+
+
 class LiveValuesWidget(QWidget):
     """Widget displaying live PID values in color-coded cards for PySide6."""
     
@@ -118,6 +330,9 @@ class LiveValuesWidget(QWidget):
         self.chart_config: Optional[ChartConfig] = None
         self.interpolator = PIDInterpolator()  # Uses config file setting
         self.cards = {}  # pid_name -> PIDCard
+        self.live_metric_gauges: Dict[str, MiniGaugeCard] = {}
+        self.live_state_chip_groups: Dict[str, Dict[int, QLabel]] = {}
+        self._resolved_live_metric_pids: Dict[str, str] = {}
         self.current_x_position = 0.0
         self._debug_logging = get_pid_debug_setting()
         
@@ -194,6 +409,15 @@ class LiveValuesWidget(QWidget):
             }
         """)
         layout.addWidget(self.title_label)
+
+        # Compact key live metrics row (strictly opt-in by snapshot type)
+        self.key_live_widget = QWidget(self)
+        self.key_live_layout = QHBoxLayout(self.key_live_widget)
+        self.key_live_layout.setContentsMargins(0, 0, 0, 0)
+        self.key_live_layout.setSpacing(2)
+        self.key_live_layout.addStretch()
+        self.key_live_widget.hide()
+        layout.addWidget(self.key_live_widget)
         
         # Scroll area for cards
         self.scroll_area = QScrollArea()
@@ -215,6 +439,13 @@ class LiveValuesWidget(QWidget):
     def update_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration and rebuild cards."""
         self.chart_config = config
+        if self._debug_logging:
+            snap_type = config.snapshot_type if config else None
+            data_cols = list(config.data.columns) if config and config.data is not None else []
+            debug("=== Live Values Config Update ===")
+            debug(f"Snapshot type: {snap_type}")
+            debug(f"Chart data columns ({len(data_cols)}): {data_cols}")
+        self._rebuild_compact_live_metrics()
         self._rebuild_cards()
     
     def update_values(self, x_position: float):
@@ -223,11 +454,13 @@ class LiveValuesWidget(QWidget):
             return
         
         self.current_x_position = x_position
+        should_log = self._should_log(x_position)
         
         # Get interpolated values
         values = self.interpolator.interpolate_values(self.chart_config, x_position)
-        
-        should_log = self._should_log(x_position)
+
+        # Update compact live metrics first
+        self._update_compact_live_metrics(values, x_position, should_log)
         
         if should_log:
             debug(f"=== Live Values Update Debug ===")
@@ -264,6 +497,479 @@ class LiveValuesWidget(QWidget):
         
         # Emit signal for debugging
         self.values_updated.emit(x_position, values)
+
+    def _clear_layout_widgets(self, layout: QHBoxLayout):
+        """Remove all widgets/items from a horizontal layout."""
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+    def _resolve_live_metric_pids(self) -> Dict[str, str]:
+        """Resolve canonical live metrics to available PID columns for current config."""
+        if not self.chart_config or self.chart_config.data is None or self.chart_config.data.empty:
+            if self._debug_logging:
+                debug("Live metrics: no chart data available; compact row hidden")
+            return {}
+
+        snap_type = self.chart_config.snapshot_type
+        if snap_type is None:
+            if self._debug_logging:
+                debug("Live metrics: snapshot_type is None; compact row hidden")
+            return {}
+
+        metric_aliases = LIVE_METRIC_PID_MAP.get(snap_type)
+        if not metric_aliases:
+            # Strict opt-in: undefined snaptypes should not show gauges/chips.
+            if self._debug_logging:
+                debug(f"Live metrics: no LIVE_METRIC_PID_MAP entry for {snap_type}; compact row hidden")
+            return {}
+
+        available_cols = set(self.chart_config.data.columns)
+        available_cols_cf = {str(col).casefold(): str(col) for col in self.chart_config.data.columns}
+        resolved: Dict[str, str] = {}
+        if self._debug_logging:
+            debug(f"Live metrics: resolving aliases for {snap_type}")
+            debug(f"Live metrics: available columns = {sorted(available_cols)}")
+        for key in LIVE_METRIC_KEYS:
+            aliases = metric_aliases.get(key, [])
+            if self._debug_logging:
+                debug(f"  {key}: aliases={aliases}")
+            for alias in aliases:
+                actual_col = alias if alias in available_cols else available_cols_cf.get(alias.casefold())
+                if actual_col:
+                    resolved[key] = actual_col
+                    if self._debug_logging:
+                        if actual_col == alias:
+                            debug(f"    -> resolved to {actual_col}")
+                        else:
+                            debug(f"    -> resolved alias {alias} to actual column {actual_col}")
+                    break
+            if self._debug_logging and key not in resolved:
+                error(f"    -> no matching column for {key}")
+
+        if self._debug_logging:
+            debug(f"Live metrics: resolved map = {resolved}")
+        return resolved
+
+    def _parse_state_labels_from_unit(self, pid_name: str) -> Dict[int, str]:
+        """Parse [0]Off [1]Running style labels from pid_info Unit text."""
+        if not self.chart_config or not self.chart_config.pid_info:
+            return {}
+        info = self.chart_config.pid_info.get(pid_name)
+        if info is None:
+            pid_cf = pid_name.casefold()
+            for key, value in self.chart_config.pid_info.items():
+                if str(key).casefold() == pid_cf:
+                    info = value
+                    break
+        info = info or {}
+        unit_text = str(info.get("Unit", ""))
+        matches = re.findall(r"\[(\d+)\]\s*([^\[]+)", unit_text)
+        parsed: Dict[int, str] = {}
+        for code_str, label in matches:
+            parsed[int(code_str)] = label.strip()
+        return parsed
+
+    def _set_chip_active(self, label: QLabel, active: bool):
+        if active:
+            label.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #00AA00;
+                    color: #FFFFFF;
+                    font-weight: bold;
+                    font-size: 9px;
+                    border: 1px solid #00DD00;
+                    border-radius: 4px;
+                    padding: 0px 4px;
+                }
+                """
+            )
+        else:
+            label.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #D0D0D0;
+                    color: #888888;
+                    font-weight: normal;
+                    font-size: 9px;
+                    border: 1px solid #B0B0B0;
+                    border-radius: 4px;
+                    padding: 0px 4px;
+                }
+                """
+            )
+
+    def _set_engine_state_chip_state(self, label: QLabel, state_code: int, is_active: bool):
+        """Apply state-specific styling for Engine State chips."""
+        if not is_active:
+            label.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #E0E0E0;
+                    color: #616161;
+                    font-weight: bold;
+                    font-size: 9px;
+                    border: 1px solid #BDBDBD;
+                    border-radius: 4px;
+                    padding: 0px 4px;
+                }
+                """
+            )
+            return
+
+        state_styles = {
+            0: ("#F5F5F5", "#000000", "#9E9E9E"),  # Stopped
+            1: ("#FFF59D", "#5D4A00", "#FDD835"),  # Cranking
+            2: ("#2E7D32", "#FFFFFF", "#1B5E20"),  # Running
+            3: ("#E53935", "#FFFFFF", "#C62828"),  # Stalling
+        }
+        bg, fg, border = state_styles.get(state_code, ("#E0E0E0", "#111111", "#BDBDBD"))
+        label.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: {bg};
+                color: {fg};
+                font-weight: bold;
+                font-size: 9px;
+                border: 1px solid {border};
+                border-radius: 4px;
+                padding: 0px 4px;
+            }}
+            """
+        )
+
+    def _set_binary_chip_state(
+        self,
+        label: QLabel,
+        is_on: bool,
+        on_bg: str,
+        on_text: str,
+        on_border: str,
+    ):
+        """Apply styling for a single binary indicator chip."""
+        if is_on:
+            label.setStyleSheet(
+                f"""
+                QLabel {{
+                    background-color: {on_bg};
+                    color: {on_text};
+                    font-weight: bold;
+                    font-size: 9px;
+                    border: 1px solid {on_border};
+                    border-radius: 4px;
+                    padding: 0px 4px;
+                }}
+                """
+            )
+        else:
+            label.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #E0E0E0;
+                    color: #616161;
+                    font-weight: bold;
+                    font-size: 9px;
+                    border: 1px solid #BDBDBD;
+                    border-radius: 4px;
+                    padding: 0px 4px;
+                }
+                """
+            )
+
+    def _rebuild_compact_live_metrics(self):
+        """Build compact gauge/chip row based on strict snaptype mappings."""
+        self._clear_layout_widgets(self.key_live_layout)
+        self.live_metric_gauges.clear()
+        self.live_state_chip_groups.clear()
+        self._resolved_live_metric_pids = self._resolve_live_metric_pids()
+
+        if not self._resolved_live_metric_pids:
+            if self._debug_logging:
+                debug("Live metrics: nothing resolved; compact row hidden")
+            self.key_live_widget.hide()
+            return
+
+        # Prioritize gauges first for constrained widths; keep RPM first on the left.
+        for metric_key in ("ENGINE_SPEED", "OIL_TEMP", "COOLANT_TEMP"):
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            if not pid_name:
+                continue
+            meta = LIVE_METRIC_META.get(metric_key, {})
+            min_value = float(meta.get("min", 0.0))
+            max_value = float(meta.get("max", 100.0))
+            gauge_unit = str(meta.get("unit", ""))
+            gauge_bands: list[tuple[float, float, str]] = []
+            gauge_ticks: list[float] = []
+
+            if metric_key == "ENGINE_SPEED":
+                # Requested RPM scale and threshold colors.
+                min_value = 0.0
+                max_value = 2900.0
+                gauge_unit = "RPM"
+            elif metric_key == "COOLANT_TEMP":
+                # Requested Fahrenheit scale and threshold colors.
+                min_value = 0.0
+                max_value = 250.0
+                gauge_unit = "°F"
+                gauge_bands = [
+                    (0.0, 185.0, "#1E88E5"),
+                    (186.0, 205.0, "#2E7D32"),
+                    (206.0, 220.0, "#F9A825"),
+                    (220.0, 250.0, "#E53935"),
+                ]
+                gauge_ticks = [0.0, 185.0, 205.0, 220.0, 250.0]
+            elif metric_key == "OIL_TEMP":
+                # Requested Fahrenheit scale and threshold colors.
+                min_value = 0.0
+                max_value = 280.0
+                gauge_unit = "°F"
+
+            if (
+                metric_key != "COOLANT_TEMP"
+                and self.chart_config
+                and self.chart_config.data is not None
+                and pid_name in self.chart_config.data.columns
+            ):
+                series = pd.to_numeric(self.chart_config.data[pid_name], errors="coerce")
+                if not series.empty:
+                    data_min = float(series.min(skipna=True)) if series.notna().any() else None
+                    data_max = float(series.max(skipna=True)) if series.notna().any() else None
+                    if data_min is not None and data_max is not None:
+                        if data_min < min_value or data_max > max_value:
+                            min_value = min(min_value, data_min)
+                            max_value = max(max_value, data_max)
+                            if abs(max_value - min_value) < 1e-9:
+                                max_value = min_value + 1.0
+                            if self._debug_logging:
+                                debug(
+                                    f"Live metrics: expanded range for {metric_key} ({pid_name}) "
+                                    f"to [{min_value:.3f}, {max_value:.3f}] from data"
+                                )
+
+            if metric_key == "OIL_TEMP":
+                oil_band_max = max(max_value, 240.0)
+                gauge_bands = [
+                    (0.0, 130.0, "#1E88E5"),
+                    (131.0, 230.0, "#2E7D32"),
+                    (231.0, 240.0, "#F9A825"),
+                    (241.0, oil_band_max, "#E53935"),
+                ]
+                gauge_ticks = [0.0, 130.0, 230.0, 240.0, oil_band_max]
+            elif metric_key == "ENGINE_SPEED":
+                rpm_band_max = max(max_value, 2900.0)
+                gauge_bands = [
+                    (0.0, 1000.0, "#F9A825"),
+                    (1001.0, 2500.0, "#2E7D32"),
+                    (2501.0, rpm_band_max, "#E53935"),
+                ]
+                gauge_ticks = [0.0, 1000.0, 2500.0, rpm_band_max]
+
+            gauge = MiniGaugeCard(
+                label=str(meta.get("label", metric_key)),
+                unit=gauge_unit,
+                min_value=min_value,
+                max_value=max_value,
+                decimals=int(meta.get("decimals", 0)),
+                bands=gauge_bands,
+                tick_values=gauge_ticks,
+                parent=self.key_live_widget,
+            )
+            self.live_metric_gauges[metric_key] = gauge
+            self.key_live_layout.addWidget(gauge)
+            if self._debug_logging:
+                debug(f"Live metrics: created gauge {metric_key} from PID {pid_name}")
+
+        snap_type = self.chart_config.snapshot_type if self.chart_config else None
+        state_map = LIVE_METRIC_STATE_LABELS.get(snap_type, {}) if snap_type else {}
+        chip_font = QFont("Segoe UI", 9, QFont.Bold)
+        chip_width = QFontMetrics(chip_font).horizontalAdvance("Check Engine") + 8
+
+        for metric_key in ("ENGINE_STATE",):
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            if not pid_name:
+                continue
+
+            labels_by_value = dict(state_map.get(metric_key, {}))
+            if not labels_by_value and metric_key == "ENGINE_STATE":
+                labels_by_value = self._parse_state_labels_from_unit(pid_name)
+
+            if not labels_by_value:
+                if self._debug_logging:
+                    debug(f"Live metrics: skipping chips for {metric_key}; no state labels")
+                continue
+
+            state_stack_widget = QWidget(self.key_live_widget)
+            state_stack_layout = QVBoxLayout(state_stack_widget)
+            state_stack_layout.setContentsMargins(0, 0, 0, 0)
+            state_stack_layout.setSpacing(2)
+            metric_chip_map: Dict[int, QLabel] = {}
+            for state_val in sorted(labels_by_value.keys()):
+                chip = QLabel(labels_by_value[state_val], state_stack_widget)
+                chip.setAlignment(Qt.AlignCenter)
+                chip.setFixedHeight(20)
+                chip.setFixedWidth(chip_width)
+                if metric_key == "ENGINE_STATE":
+                    self._set_engine_state_chip_state(chip, state_val, False)
+                else:
+                    self._set_chip_active(chip, False)
+                metric_chip_map[state_val] = chip
+                state_stack_layout.addWidget(chip)
+
+            self.live_state_chip_groups[metric_key] = metric_chip_map
+            self.key_live_layout.addWidget(state_stack_widget)
+            if self._debug_logging:
+                debug(
+                    f"Live metrics: created chips for {metric_key} from PID {pid_name} "
+                    f"states={sorted(metric_chip_map.keys())}"
+                )
+
+        binary_stack_widget = QWidget(self.key_live_widget)
+        binary_stack_layout = QVBoxLayout(binary_stack_widget)
+        binary_stack_layout.setContentsMargins(0, 0, 0, 0)
+        binary_stack_layout.setSpacing(2)
+        binary_stack_added = False
+
+        for metric_key in ("START_AID", "SMOKE_LIMIT", "CHECK_ENGINE"):
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            if not pid_name:
+                continue
+
+            chip = QLabel(
+                str(LIVE_METRIC_META.get(metric_key, {}).get("label", metric_key.replace("_", " ").title())),
+                binary_stack_widget,
+            )
+            chip.setAlignment(Qt.AlignCenter)
+            chip.setFixedHeight(20)
+            chip.setFixedWidth(chip_width)
+            is_red_binary = metric_key in ("CHECK_ENGINE", "SMOKE_LIMIT")
+            self._set_binary_chip_state(
+                chip,
+                is_on=False,
+                on_bg="#E53935" if is_red_binary else "#2E7D32",
+                on_text="#FFFFFF",
+                on_border="#C62828" if is_red_binary else "#1B5E20",
+            )
+            binary_stack_layout.addWidget(chip)
+            self.live_state_chip_groups[metric_key] = {-1: chip}
+            binary_stack_added = True
+            if self._debug_logging:
+                debug(f"Live metrics: created single chip for {metric_key} from PID {pid_name}")
+
+        if binary_stack_added:
+            self.key_live_layout.addWidget(binary_stack_widget)
+
+        should_show = bool(self.live_metric_gauges or self.live_state_chip_groups)
+        self.key_live_widget.setVisible(should_show)
+        if self._debug_logging:
+            debug(
+                "Live metrics: rebuild complete "
+                f"visible={should_show}, gauges={list(self.live_metric_gauges.keys())}, "
+                f"chips={list(self.live_state_chip_groups.keys())}"
+            )
+
+    def _interpolate_metric_value(self, pid_name: str, x_position: float) -> Optional[float]:
+        """Interpolate a single PID value directly from chart data."""
+        if not self.chart_config or self.chart_config.data is None or self.chart_config.data.empty:
+            return None
+
+        x_col = self.chart_config.get_x_column()
+        if not x_col or x_col not in self.chart_config.data.columns:
+            return None
+        if pid_name not in self.chart_config.data.columns:
+            return None
+
+        df = self.chart_config.data.copy()
+
+        if pd.api.types.is_timedelta64_dtype(df.get("Time")):
+            df["Time"] = df["Time"].dt.total_seconds()
+        elif pd.api.types.is_timedelta64_dtype(df.get("Time (MM:SS)")):
+            df["Time (MM:SS)"] = df["Time (MM:SS)"].dt.total_seconds()
+            if x_col == "Time (MM:SS)":
+                x_col = "Time"
+
+        if x_col not in df.columns:
+            return None
+
+        sorted_df = df.sort_values(x_col)
+        x_data = pd.to_numeric(sorted_df[x_col], errors="coerce").values
+        y_data = pd.to_numeric(sorted_df[pid_name], errors="coerce").values
+
+        mask = (~np.isnan(x_data)) & (~np.isnan(y_data))
+        if not np.any(mask):
+            return None
+
+        x_valid = x_data[mask]
+        y_valid = y_data[mask]
+
+        if len(x_valid) == 0:
+            return None
+        if x_position <= x_valid[0]:
+            return float(y_valid[0])
+        if x_position >= x_valid[-1]:
+            return float(y_valid[-1])
+
+        return float(np.interp(x_position, x_valid, y_valid))
+
+    def _update_compact_live_metrics(self, interpolated_values: Dict[str, float], x_position: float, should_log: bool = False):
+        """Update compact gauges/chips from interpolated values."""
+        if not self.key_live_widget.isVisible() or not self._resolved_live_metric_pids:
+            if should_log:
+                debug(
+                    "Live metrics: update skipped "
+                    f"visible={self.key_live_widget.isVisible()} resolved={bool(self._resolved_live_metric_pids)}"
+                )
+            return
+
+        for metric_key, gauge in self.live_metric_gauges.items():
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            if not pid_name:
+                gauge.update_value(None)
+                continue
+            value = interpolated_values.get(pid_name)
+            if value is None:
+                value = self._interpolate_metric_value(pid_name, x_position)
+
+            gauge.update_value(value)
+            if should_log:
+                debug(f"Live metrics: gauge {metric_key} pid={pid_name} value={value}")
+
+        for metric_key, chip_map in self.live_state_chip_groups.items():
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            state_val = None
+            raw = None
+            if pid_name:
+                raw = interpolated_values.get(pid_name)
+                if raw is None:
+                    raw = self._interpolate_metric_value(pid_name, x_position)
+                if raw is not None and not np.isnan(raw) and not np.isinf(raw):
+                    state_val = int(round(raw))
+
+            if metric_key in ("CHECK_ENGINE", "START_AID", "SMOKE_LIMIT"):
+                binary_chip = chip_map.get(-1)
+                if binary_chip is not None:
+                    is_on = bool(state_val) if state_val is not None else False
+                    is_red_binary = metric_key in ("CHECK_ENGINE", "SMOKE_LIMIT")
+                    self._set_binary_chip_state(
+                        binary_chip,
+                        is_on=is_on,
+                        on_bg="#E53935" if is_red_binary else "#2E7D32",
+                        on_text="#FFFFFF",
+                        on_border="#C62828" if is_red_binary else "#1B5E20",
+                    )
+                if should_log:
+                    debug(f"Live metrics: binary chip {metric_key} pid={pid_name} raw={raw} rounded={state_val}")
+                continue
+
+            for val, chip in chip_map.items():
+                if metric_key == "ENGINE_STATE":
+                    self._set_engine_state_chip_state(chip, val, state_val == val)
+                else:
+                    self._set_chip_active(chip, state_val == val)
+            if should_log:
+                debug(f"Live metrics: chips {metric_key} pid={pid_name} active_state={state_val}")
     
     def _rebuild_cards(self):
         """Rebuild all cards based on current chart configuration."""

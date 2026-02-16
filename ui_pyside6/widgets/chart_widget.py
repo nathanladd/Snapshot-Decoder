@@ -20,6 +20,7 @@ import mplcursors
 from domain.snapshot import Snapshot
 from domain.chart_config import ChartConfig, AxisConfig
 from domain.quick_charts import QUICK_CHART_REGISTRY, ChartConfigBuilder
+from domain.constants import LIVE_METRIC_PID_MAP
 from infrastructure import log_chart_generated, debug
 from ui.color_manager import ColorManager
 from ui.chart_renderer import ChartRenderer
@@ -190,8 +191,11 @@ class ChartWidget(QWidget):
         
         # Qt-based time slider widget (hidden by default)
         self._slider_widget = QWidget(self)
-        slider_layout = QHBoxLayout(self._slider_widget)
-        slider_layout.setContentsMargins(8, 2, 8, 2)
+        slider_container_layout = QVBoxLayout(self._slider_widget)
+        slider_container_layout.setContentsMargins(8, 2, 8, 2)
+        slider_container_layout.setSpacing(1)
+        slider_layout = QHBoxLayout()
+        slider_layout.setContentsMargins(0, 0, 0, 0)
         slider_layout.setSpacing(6)
         self._slider_label_left = QLabel("00:00")
         self._slider_label_left.setStyleSheet("font-size: 11px; color: #555;")
@@ -242,6 +246,16 @@ class ChartWidget(QWidget):
         slider_layout.addWidget(self._qt_slider, stretch=1)
         slider_layout.addWidget(self._slider_label_right)
         slider_layout.addWidget(self._slider_time_entry)
+
+        self._slider_keyboard_hint_label = QLabel(
+            "Tip: Use Left/Right arrow keys to increment Snapshot time.",
+            self._slider_widget,
+        )
+        self._slider_keyboard_hint_label.setStyleSheet("font-size: 10px; color: #666;")
+        self._slider_keyboard_hint_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        slider_container_layout.addLayout(slider_layout)
+        slider_container_layout.addWidget(self._slider_keyboard_hint_label)
         self._slider_widget.hide()
         layout.addWidget(self._slider_widget)
         
@@ -493,10 +507,32 @@ class ChartWidget(QWidget):
     
     def _get_pid_label(self, snapshot: Snapshot, pid: str) -> str:
         """Get the display label for a PID (description if available)."""
-        if snapshot.pid_info and pid in snapshot.pid_info:
-            desc = snapshot.pid_info[pid].get("description", pid)
-            return desc if desc else pid
+        if snapshot.pid_info:
+            info = snapshot.pid_info.get(pid)
+            if info is None:
+                pid_cf = pid.casefold()
+                for key, value in snapshot.pid_info.items():
+                    if str(key).casefold() == pid_cf:
+                        info = value
+                        break
+            if info:
+                desc = info.get("description") or info.get("Description") or pid
+                return desc if desc else pid
         return pid
+
+    @staticmethod
+    def _resolve_column_name(df: pd.DataFrame, column_name: Optional[str]) -> Optional[str]:
+        """Return actual DataFrame column matching name (case-insensitive)."""
+        if not column_name:
+            return None
+        if column_name in df.columns:
+            return column_name
+
+        target = column_name.casefold()
+        for col in df.columns:
+            if str(col).casefold() == target:
+                return str(col)
+        return None
     
     def plot_pids(
         self,
@@ -902,15 +938,38 @@ class ChartWidget(QWidget):
         if df is None:
             return
         
-        # Get relevant columns
-        x_key = "Time" if "Time" in df.columns else ("Frame" if "Frame" in df.columns else None)
-        relevant_columns = list(primary_pids) + list(secondary_pids)
-        if x_key:
-            relevant_columns.insert(0, x_key)
-        
-        # Filter to existing columns
-        relevant_columns = [c for c in relevant_columns if c in df.columns]
-        chart_data = df[relevant_columns].copy() if relevant_columns else pd.DataFrame()
+        # Get relevant columns (case-insensitive) and normalize selected names.
+        time_col = self._resolve_column_name(df, "Time")
+        frame_col = self._resolve_column_name(df, "Frame")
+        x_source_col = time_col or frame_col
+        x_key = "Time" if time_col else ("Frame" if frame_col else None)
+
+        requested_columns = list(primary_pids) + list(secondary_pids)
+
+        # Include compact live-metric PID aliases so live gauges/chips can update
+        # even when those metrics are not part of plotted axes.
+        live_metric_aliases = LIVE_METRIC_PID_MAP.get(snapshot.snapshot_type, {})
+        for aliases in live_metric_aliases.values():
+            requested_columns.extend(aliases)
+
+        selected_columns: List[str] = []
+        rename_map: Dict[str, str] = {}
+
+        if x_source_col and x_key:
+            selected_columns.append(x_source_col)
+            rename_map[x_source_col] = x_key
+
+        for requested in requested_columns:
+            resolved = self._resolve_column_name(df, requested)
+            if not resolved:
+                continue
+            if resolved not in selected_columns:
+                selected_columns.append(resolved)
+                rename_map[resolved] = requested
+
+        chart_data = df[selected_columns].copy() if selected_columns else pd.DataFrame()
+        if not chart_data.empty:
+            chart_data.rename(columns=rename_map, inplace=True)
         
         # Build axis configs
         primary_axis = AxisConfig(
@@ -941,6 +1000,7 @@ class ChartWidget(QWidget):
             title=title,
             x_column=x_key,
             pid_info=snapshot.pid_info,  # Add pid_info to config
+            snapshot_type=snapshot.snapshot_type,
         )
         
         # Clear quick chart tracking since we're modifying

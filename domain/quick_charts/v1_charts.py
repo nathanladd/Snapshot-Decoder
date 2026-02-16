@@ -86,7 +86,7 @@ V1_PISTON_DELTA = QuickChartDef(
 
 V1_CAM_CRANK = StatusChartDef(
     action_id="V1_CAM_CRANK",
-    title="Cam/Crank Status",
+    title="Cam andCrank Status",
     primary_pids=["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"],
     chart_type="status",
     show_legend=True,
@@ -94,11 +94,12 @@ V1_CAM_CRANK = StatusChartDef(
 
 V1_START_AID = QuickChartDef(
     action_id="V1_START_AID",
-    title="Start Aid / Glow Plug",
+    title="Start Aid",
     primary_pids=["SAC_Glow_plug_output"],
     primary_range=(-10, 4),
     secondary_pids=["SMC_ENGINE_STATE"],
     secondary_range=(-2, 10),
+    #chart_type="status",
 )
 
 V1_AIR_FUEL_RATIO = QuickChartDef(

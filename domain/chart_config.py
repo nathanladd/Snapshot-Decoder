@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Literal
 import pandas as pd
 
+from domain.snaptypes import SnapType
+
 ChartType = Literal["line", "bar", "bubble", "status"]
 
 
@@ -73,6 +75,9 @@ class ChartConfig:
     
     # PID information (for unit labels)
     pid_info: Optional[Dict[str, Dict]] = None
+
+    # Snapshot type context (used for snaptype-specific live metric mappings)
+    snapshot_type: Optional[SnapType] = None
     
     # Chain of custody metadata
     file_name: Optional[str] = None
@@ -85,19 +90,42 @@ class ChartConfig:
     
     # Quick chart tracking: which quick chart command created this chart
     quick_chart_action_id: Optional[str] = None
+
+    @staticmethod
+    def _resolve_column_name(data: pd.DataFrame, column_name: str) -> Optional[str]:
+        """Return actual DataFrame column matching name (case-insensitive)."""
+        if column_name in data.columns:
+            return column_name
+
+        target = column_name.casefold()
+        for col in data.columns:
+            if str(col).casefold() == target:
+                return str(col)
+        return None
     
     def get_x_column(self) -> Optional[str]:
         """Determine the X-axis column from data."""
         if self.x_column:
-            return self.x_column
+            resolved = self._resolve_column_name(self.data, self.x_column)
+            if resolved:
+                return resolved
         
         # Auto-detect: prefer Time (MM:SS), then Time, then Frame
-        if "Time (MM:SS)" in self.data.columns and pd.api.types.is_numeric_dtype(self.data["Time (MM:SS)"]):
-            return "Time (MM:SS)"
-        elif "Time" in self.data.columns and (pd.api.types.is_numeric_dtype(self.data["Time"]) or pd.api.types.is_datetime64_any_dtype(self.data["Time"]) or pd.api.types.is_timedelta64_dtype(self.data["Time"])):
-            return "Time"
-        elif "Frame" in self.data.columns and pd.api.types.is_numeric_dtype(self.data["Frame"]):
-            return "Frame"
+        time_mmss_col = self._resolve_column_name(self.data, "Time (MM:SS)")
+        if time_mmss_col and pd.api.types.is_numeric_dtype(self.data[time_mmss_col]):
+            return time_mmss_col
+
+        time_col = self._resolve_column_name(self.data, "Time")
+        if time_col and (
+            pd.api.types.is_numeric_dtype(self.data[time_col])
+            or pd.api.types.is_datetime64_any_dtype(self.data[time_col])
+            or pd.api.types.is_timedelta64_dtype(self.data[time_col])
+        ):
+            return time_col
+
+        frame_col = self._resolve_column_name(self.data, "Frame")
+        if frame_col and pd.api.types.is_numeric_dtype(self.data[frame_col]):
+            return frame_col
         
         return None
     
@@ -110,6 +138,12 @@ class ChartConfig:
         if self.pid_info:
             for pid_name in axis_config.series:
                 info = self.pid_info.get(pid_name)
+                if info is None:
+                    pid_cf = pid_name.casefold()
+                    for key, value in self.pid_info.items():
+                        if str(key).casefold() == pid_cf:
+                            info = value
+                            break
                 unit = (info or {}).get("Unit") if info else None
                 if unit:
                     return unit

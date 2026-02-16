@@ -90,17 +90,29 @@ class SystemPanel(QWidget):
     
     def _set_mdp_label(self, label: QLabel, success_rate: float):
         """Style MDP label with success percentage."""
-        # Green background with success percentage - same styling as other indicators
-        label.setStyleSheet("""
-            QLabel {
-                background-color: #00AA00;
-                color: #FFFFFF;
+        if success_rate <= 50.0:
+            bg = "#C62828"
+            fg = "#FFFFFF"
+            border = "#E53935"
+        elif success_rate >= 76.0:
+            bg = "#00AA00"
+            fg = "#FFFFFF"
+            border = "#00DD00"
+        else:
+            bg = "#F9A825"
+            fg = "#111111"
+            border = "#FBC02D"
+
+        label.setStyleSheet(f"""
+            QLabel {{
+                background-color: {bg};
+                color: {fg};
                 font-weight: bold;
                 font-size: 10px;
-                border: 2px solid #00DD00;
+                border: 2px solid {border};
                 border-radius: 4px;
                 padding: 2px 6px;
-            }
+            }}
         """)
         label.setText(f"MDP {success_rate:.1f}%")
         font = label.font()
@@ -123,11 +135,9 @@ class SystemPanel(QWidget):
             
             if attr_name == "has_mdp":
                 # Special handling for MDP system - check both detection and success rate
-                if getattr(snapshot, attr_name, False) and snapshot.mdp_success_rate is not None and snapshot.mdp_success_rate > 0:
-                    self._set_mdp_label(label, snapshot.mdp_success_rate)
-                elif getattr(snapshot, attr_name, False):
-                    # MDP detected but no success rate - show as regular ON
-                    self._set_label_on(label)
+                if getattr(snapshot, attr_name, False):
+                    mdp_rate = snapshot.mdp_success_rate if snapshot.mdp_success_rate is not None else 0.0
+                    self._set_mdp_label(label, mdp_rate)
                 else:
                     self._set_label_off(label)
             else:
