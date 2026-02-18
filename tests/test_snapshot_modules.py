@@ -11,7 +11,11 @@ import math
 from domain.snapshot.header_parser import parse_header, find_date_time, _normalize_label
 from domain.snapshot.type_detector import find_header_row, detect_snapshot_type
 from domain.snapshot.pid_extractor import extract_pid_info, _to_str
-from domain.snapshot.data_cleaner import scrub_snapshot, remove_unsupported_pids
+from domain.snapshot.data_cleaner import (
+    scrub_snapshot,
+    remove_unsupported_pids,
+    convert_pid_kpa_to_psi,
+)
 from domain.snapshot.time_processor import (
     process_time_column,
     find_engine_hours,
@@ -203,6 +207,22 @@ class TestDataCleaner:
         assert "GoodPID" in result.columns
         assert "BadPID" not in result.columns
         assert "BadPID" not in pid_info
+
+    def test_convert_pid_kpa_to_psi_updates_data_and_units(self):
+        """Test converting oil pressure from kPa to PSI with case-insensitive PID lookup."""
+        df = pd.DataFrame({
+            "P_L_Oil_pressure": [0, 100, 200],
+        })
+        pid_info = {
+            "P_L_OIL_PRESSURE": {"Unit": "kPa"},
+        }
+
+        result = convert_pid_kpa_to_psi(df, pid_info, "P_L_OIL_PRESSURE")
+
+        assert math.isclose(result["P_L_Oil_pressure"].iloc[0], 0.0, rel_tol=1e-9)
+        assert math.isclose(result["P_L_Oil_pressure"].iloc[1], 14.5037738, rel_tol=1e-9)
+        assert math.isclose(result["P_L_Oil_pressure"].iloc[2], 29.0075476, rel_tol=1e-9)
+        assert pid_info["P_L_OIL_PRESSURE"]["Unit"] == "PSI"
 
 
 class TestTimeProcessor:

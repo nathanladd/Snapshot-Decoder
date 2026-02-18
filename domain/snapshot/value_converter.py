@@ -9,6 +9,7 @@ from typing import Dict
 import pandas as pd
 
 from domain.snaptypes import SnapType
+from domain.snapshot.data_cleaner import convert_pid_kpa_to_psi
 
 
 def apply_type_specific_conversions(
@@ -28,6 +29,7 @@ def apply_type_specific_conversions(
         DataFrame with conversions applied
     """
     if snapshot_type == SnapType.ECU_V1:
+        df = convert_pid_kpa_to_psi(df, pid_info, "P_L_OIL_PRESSURE")
         _update_v1_engine_state_unit(pid_info)
     
     if snapshot_type == SnapType.ECU_V2:

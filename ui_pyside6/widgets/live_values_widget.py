@@ -11,7 +11,7 @@ import math
 from typing import Dict, Optional
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, 
-    QScrollArea, QStyle, QStyleOption
+    QScrollArea, QStyle, QStyleOption, QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal, QRect
 from PySide6.QtGui import QFont, QPalette, QColor, QPainter, QPen, QFontMetrics
@@ -415,7 +415,7 @@ class LiveValuesWidget(QWidget):
         self.key_live_layout = QHBoxLayout(self.key_live_widget)
         self.key_live_layout.setContentsMargins(0, 0, 0, 0)
         self.key_live_layout.setSpacing(2)
-        self.key_live_layout.addStretch()
+        self.key_live_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.key_live_widget.hide()
         layout.addWidget(self.key_live_widget)
         
@@ -459,6 +459,7 @@ class LiveValuesWidget(QWidget):
 
         # Get interpolated values
         extra_metric_pids = list(dict.fromkeys(self._resolved_live_metric_pids.values()))
+        extra_metric_pid_set = set(extra_metric_pids)
         interp_started = time.perf_counter()
         values = self.interpolator.interpolate_values(
             self.chart_config,
@@ -486,6 +487,11 @@ class LiveValuesWidget(QWidget):
                 if should_log:
                     debug(f"  ✓ Updated {pid_name}: {value}")
             else:
+                if pid_name in extra_metric_pid_set:
+                    # Compact gauges/chips consume these values directly; no standalone card is expected.
+                    if should_log:
+                        debug(f"  • Compact-only PID (no card expected): {pid_name}")
+                    continue
                 if should_log:
                     debug(f"  ✗ No card found for {pid_name}")
                 error(f"Live values: No card found for PID {pid_name} but interpolation succeeded")
@@ -702,7 +708,7 @@ class LiveValuesWidget(QWidget):
             return
 
         # Prioritize gauges first for constrained widths; keep RPM first on the left.
-        for metric_key in ("ENGINE_SPEED", "OIL_TEMP", "COOLANT_TEMP"):
+        for metric_key in ("ENGINE_SPEED", "OIL_TEMP", "OIL_PRESSURE", "COOLANT_TEMP"):
             pid_name = self._resolved_live_metric_pids.get(metric_key)
             if not pid_name:
                 continue
@@ -718,6 +724,11 @@ class LiveValuesWidget(QWidget):
                 min_value = 0.0
                 max_value = 2900.0
                 gauge_unit = "RPM"
+            elif metric_key == "OIL_PRESSURE":
+                # Requested PSI scale and threshold colors.
+                min_value = 0.0
+                max_value = 120.0
+                gauge_unit = "PSI"
             elif metric_key == "COOLANT_TEMP":
                 # Requested Fahrenheit scale and threshold colors.
                 min_value = 0.0
@@ -775,6 +786,14 @@ class LiveValuesWidget(QWidget):
                     (2501.0, rpm_band_max, "#E53935"),
                 ]
                 gauge_ticks = [0.0, 1000.0, 2500.0, rpm_band_max]
+            elif metric_key == "OIL_PRESSURE":
+                pressure_band_max = max(max_value, 120.0)
+                gauge_bands = [
+                    (0.0, 25.0, "#E53935"),
+                    (26.0, 94.0, "#2E7D32"),
+                    (95.0, pressure_band_max, "#F9A825"),
+                ]
+                gauge_ticks = [0.0, 25.0, 95.0, pressure_band_max]
 
             gauge = MiniGaugeCard(
                 label=str(meta.get("label", metric_key)),
@@ -811,9 +830,11 @@ class LiveValuesWidget(QWidget):
                 continue
 
             state_stack_widget = QWidget(self.key_live_widget)
+            state_stack_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
             state_stack_layout = QVBoxLayout(state_stack_widget)
             state_stack_layout.setContentsMargins(0, 0, 0, 0)
             state_stack_layout.setSpacing(2)
+            state_stack_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
             metric_chip_map: Dict[int, QLabel] = {}
             for state_val in sorted(labels_by_value.keys()):
                 chip = QLabel(labels_by_value[state_val], state_stack_widget)
@@ -825,10 +846,10 @@ class LiveValuesWidget(QWidget):
                 else:
                     self._set_chip_active(chip, False)
                 metric_chip_map[state_val] = chip
-                state_stack_layout.addWidget(chip)
+                state_stack_layout.addWidget(chip, 0, Qt.AlignLeft)
 
             self.live_state_chip_groups[metric_key] = metric_chip_map
-            self.key_live_layout.addWidget(state_stack_widget)
+            self.key_live_layout.addWidget(state_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
             if self._debug_logging:
                 debug(
                     f"Live metrics: created chips for {metric_key} from PID {pid_name} "
@@ -836,12 +857,14 @@ class LiveValuesWidget(QWidget):
                 )
 
         binary_stack_widget = QWidget(self.key_live_widget)
+        binary_stack_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         binary_stack_layout = QVBoxLayout(binary_stack_widget)
         binary_stack_layout.setContentsMargins(0, 0, 0, 0)
         binary_stack_layout.setSpacing(2)
+        binary_stack_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         binary_stack_added = False
 
-        for metric_key in ("START_AID", "SMOKE_LIMIT", "CHECK_ENGINE"):
+        for metric_key in ("START_AID", "SMOKE_LIMIT", "OIL_PRESSURE_LAMP", "CHECK_ENGINE"):
             pid_name = self._resolved_live_metric_pids.get(metric_key)
             if not pid_name:
                 continue
@@ -853,7 +876,7 @@ class LiveValuesWidget(QWidget):
             chip.setAlignment(Qt.AlignCenter)
             chip.setFixedHeight(20)
             chip.setFixedWidth(chip_width)
-            is_red_binary = metric_key in ("CHECK_ENGINE", "SMOKE_LIMIT")
+            is_red_binary = metric_key in ("CHECK_ENGINE", "SMOKE_LIMIT", "OIL_PRESSURE_LAMP")
             self._set_binary_chip_state(
                 chip,
                 is_on=False,
@@ -861,14 +884,17 @@ class LiveValuesWidget(QWidget):
                 on_text="#FFFFFF",
                 on_border="#C62828" if is_red_binary else "#1B5E20",
             )
-            binary_stack_layout.addWidget(chip)
+            binary_stack_layout.addWidget(chip, 0, Qt.AlignLeft)
             self.live_state_chip_groups[metric_key] = {-1: chip}
             binary_stack_added = True
             if self._debug_logging:
                 debug(f"Live metrics: created single chip for {metric_key} from PID {pid_name}")
 
         if binary_stack_added:
-            self.key_live_layout.addWidget(binary_stack_widget)
+            self.key_live_layout.addWidget(binary_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
+
+        # Keep all compact metric widgets packed to the left with spare room on the right.
+        self.key_live_layout.addStretch(1)
 
         should_show = bool(self.live_metric_gauges or self.live_state_chip_groups)
         self.key_live_widget.setVisible(should_show)
@@ -956,11 +982,11 @@ class LiveValuesWidget(QWidget):
                 if raw is not None and not np.isnan(raw) and not np.isinf(raw):
                     state_val = int(round(raw))
 
-            if metric_key in ("CHECK_ENGINE", "START_AID", "SMOKE_LIMIT"):
+            if metric_key in ("CHECK_ENGINE", "START_AID", "SMOKE_LIMIT", "OIL_PRESSURE_LAMP"):
                 binary_chip = chip_map.get(-1)
                 if binary_chip is not None:
                     is_on = bool(state_val) if state_val is not None else False
-                    is_red_binary = metric_key in ("CHECK_ENGINE", "SMOKE_LIMIT")
+                    is_red_binary = metric_key in ("CHECK_ENGINE", "SMOKE_LIMIT", "OIL_PRESSURE_LAMP")
                     self._set_binary_chip_state(
                         binary_chip,
                         is_on=is_on,

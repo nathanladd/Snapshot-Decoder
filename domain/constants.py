@@ -98,11 +98,13 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
 LIVE_METRIC_KEYS: tuple[str, ...] = (
     "ENGINE_SPEED",
     "OIL_TEMP",
+    "OIL_PRESSURE",
     "COOLANT_TEMP",
     "CHECK_ENGINE",
     "ENGINE_STATE",
     "START_AID",
     "SMOKE_LIMIT",
+    "OIL_PRESSURE_LAMP",
 )
 
 # Per-snapshot PID alias map for each canonical live metric.
@@ -111,11 +113,13 @@ LIVE_METRIC_PID_MAP: dict[SnapType, dict[str, list[str]]] = {
     SnapType.ECU_V1: {
         "ENGINE_SPEED": ["IN_Engine_cycle_speed"],
         "OIL_TEMP": ["P_L_Oil_temperature"],
+        "OIL_PRESSURE": ["P_L_Oil_pressure"],
         "COOLANT_TEMP": ["P_L_Coolant_temperature"],
         "CHECK_ENGINE": ["ICI_Ce_lamp_output"],
         "ENGINE_STATE": ["SMC_Engine_state"],
         "START_AID": ["SAC_Glow_plug_output"],
         "SMOKE_LIMIT": ["T_D_Smoke_limit_active"],
+        "OIL_PRESSURE_LAMP": ["ICI_Oil_pressure_lamp_output"],
     },
 }
 
@@ -123,11 +127,13 @@ LIVE_METRIC_PID_MAP: dict[SnapType, dict[str, list[str]]] = {
 LIVE_METRIC_META: dict[str, dict[str, object]] = {
     "ENGINE_SPEED": {"label": "RPM", "unit": "RPM", "min": 0, "max": 3500, "decimals": 0},
     "OIL_TEMP": {"label": "Oil", "unit": "°C", "min": -40, "max": 180, "decimals": 0},
+    "OIL_PRESSURE": {"label": "Oil", "unit": "PSI", "min": 0, "max": 120, "decimals": 0},
     "COOLANT_TEMP": {"label": "Coolant", "unit": "°C", "min": -40, "max": 140, "decimals": 0},
     "CHECK_ENGINE": {"label": "Check Engine", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "ENGINE_STATE": {"label": "Engine State", "unit": "", "min": 0, "max": 5, "decimals": 0},
     "START_AID": {"label": "Start Aid", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "SMOKE_LIMIT": {"label": "Smoke Limit", "unit": "", "min": 0, "max": 1, "decimals": 0},
+    "OIL_PRESSURE_LAMP": {"label": "Oil Pressure", "unit": "", "min": 0, "max": 1, "decimals": 0},
 }
 
 # Optional state labels for chip-based metrics.
@@ -136,6 +142,7 @@ LIVE_METRIC_STATE_LABELS: dict[SnapType, dict[str, dict[int, str]]] = {
         "CHECK_ENGINE": {0: "Off", 1: "On"},
         "START_AID": {0: "Off", 1: "On"},
         "SMOKE_LIMIT": {0: "Off", 1: "On"},
+        "OIL_PRESSURE_LAMP": {0: "Off", 1: "On"},
         "ENGINE_STATE": {0: "Stopped", 1: "Cranking", 2: "Running", 3: "Stalling"},
     },
 }
