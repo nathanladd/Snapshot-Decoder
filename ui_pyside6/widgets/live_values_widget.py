@@ -439,6 +439,7 @@ class LiveValuesWidget(QWidget):
     def update_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration and rebuild cards."""
         self.chart_config = config
+        self.interpolator.clear_cache()
         if self._debug_logging:
             snap_type = config.snapshot_type if config else None
             data_cols = list(config.data.columns) if config and config.data is not None else []
@@ -455,9 +456,16 @@ class LiveValuesWidget(QWidget):
         
         self.current_x_position = x_position
         should_log = self._should_log(x_position)
-        
+
         # Get interpolated values
-        values = self.interpolator.interpolate_values(self.chart_config, x_position)
+        extra_metric_pids = list(dict.fromkeys(self._resolved_live_metric_pids.values()))
+        interp_started = time.perf_counter()
+        values = self.interpolator.interpolate_values(
+            self.chart_config,
+            x_position,
+            extra_pids=extra_metric_pids,
+        )
+        interp_elapsed_ms = (time.perf_counter() - interp_started) * 1000.0
 
         # Update compact live metrics first
         self._update_compact_live_metrics(values, x_position, should_log)
@@ -465,6 +473,7 @@ class LiveValuesWidget(QWidget):
         if should_log:
             debug(f"=== Live Values Update Debug ===")
             debug(f"Position: {x_position:.3f}")
+            debug(f"Interpolation elapsed: {interp_elapsed_ms:.3f} ms")
             debug(f"Interpolated values: {list(values.keys())}")
             debug(f"Available cards: {list(self.cards.keys())}")
         

@@ -7,7 +7,7 @@ Works with ChartConfig data to provide accurate values for the time slider.
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import time
 
 from domain.chart_config import ChartConfig
@@ -21,6 +21,8 @@ class PIDInterpolator:
     def __init__(self, enable_debug_logging: bool = None):
         self._cache = {}  # Cache for repeated positions
         self._cache_size_limit = 1000
+        self._x_sort_cache: Dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+        self._x_sort_cache_limit = 8
         # Use config file setting if not explicitly specified
         if enable_debug_logging is None:
             self._debug_logging = get_pid_debug_setting()
@@ -71,7 +73,12 @@ class PIDInterpolator:
         
         return False
     
-    def interpolate_values(self, config: ChartConfig, x_position: float) -> Dict[str, float]:
+    def interpolate_values(
+        self,
+        config: ChartConfig,
+        x_position: float,
+        extra_pids: Optional[List[str]] = None,
+    ) -> Dict[str, float]:
         """
         Interpolate PID values at a specific X position.
         
@@ -85,76 +92,61 @@ class PIDInterpolator:
         if not config or config.data.empty:
             return {}
         
-        # Check cache first
-        cache_key = self._get_cache_key(config, x_position)
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-        
-        # Get X column
-        x_col = config.get_x_column()
-        if not x_col or x_col not in config.data.columns:
-            return {}
-        
-        # Prepare data
-        df = config.data.copy()
-        
-        # Convert timedelta if necessary (matching ChartRenderer logic)
-        if pd.api.types.is_timedelta64_dtype(df.get("Time")):
-            df["Time"] = df["Time"].dt.total_seconds()
-        elif pd.api.types.is_timedelta64_dtype(df.get("Time (MM:SS)")):
-            df["Time (MM:SS)"] = df["Time (MM:SS)"].dt.total_seconds()
-            # Update x_col if we converted Time (MM:SS)
-            if x_col == "Time (MM:SS)":
-                x_col = "Time"
-        
-        # Sort by X column for proper interpolation
-        df_sorted = df.sort_values(x_col)
-        x_data = pd.to_numeric(df_sorted[x_col], errors='coerce').values
-        
-        # Check if position is within data range
-        if x_position < x_data[0] or x_position > x_data[-1]:
-            return self._handle_out_of_bounds(df_sorted, x_col, x_position, config)
-        
-        # Get all PID columns (exclude X column)
-        pid_columns = []
-        pid_columns.extend(config.primary_axis.series)
-        pid_columns.extend(config.secondary_axis.series)
-        
-        # Filter to only existing columns
-        pid_columns = [col for col in pid_columns if col in df_sorted.columns]
-        
+        pid_columns = self._get_pid_columns(config, extra_pids)
+
         if not pid_columns:
             return {}
-        
+
+        # Check cache first
+        cache_key = self._get_cache_key(config, x_position, pid_columns)
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
+        # Get prepared X-axis data (cached by config/data identity)
+        prepared = self._get_prepared_x_data(config)
+        if prepared is None:
+            return {}
+        x_sorted, sort_idx, x_valid_mask = prepared
+        if x_sorted.size == 0:
+            return {}
+        x_valid = x_sorted[x_valid_mask]
+        if x_valid.size == 0:
+            return {}
+
         # Interpolate values
         interpolated = {}
         should_log = self._should_log(x_position)
-        
+        started = time.perf_counter()
+
         if should_log:
             debug(f"=== PID Interpolation Debug at X={x_position:.3f} ===")
-        
+
         for pid in pid_columns:
             try:
-                y_data = pd.to_numeric(df_sorted[pid], errors='coerce').values
-                nan_count = pd.isna(y_data).sum()
-                valid_count = len(y_data) - nan_count
-                
+                y_data = pd.to_numeric(config.data[pid], errors='coerce').to_numpy()
+                y_sorted = y_data[sort_idx]
+                valid_mask = x_valid_mask & (~np.isnan(y_sorted))
+                valid_count = int(np.count_nonzero(valid_mask))
+                nan_count = int(y_sorted.size - valid_count)
+
                 if should_log:
                     debug(f"PID: {pid}")
-                    debug(f"  - Data shape: {y_data.shape}")
-                    debug(f"  - Valid values: {valid_count}/{len(y_data)} (NaN: {nan_count})")
-                    debug(f"  - Data type: {y_data.dtype}")
-                    debug(f"  - Sample values: {y_data[:5]}")
-                
-                # Skip if all NaN
-                if pd.isna(y_data).all():
+                    debug(f"  - Data shape: {y_sorted.shape}")
+                    debug(f"  - Valid values: {valid_count}/{len(y_sorted)} (NaN: {nan_count})")
+                    debug(f"  - Data type: {y_sorted.dtype}")
+                    debug(f"  - Sample values: {y_sorted[:5]}")
+
+                if valid_count == 0:
                     if should_log:
                         debug(f"  - SKIPPED: All NaN values")
                     continue
-                
+
+                y_valid = y_sorted[valid_mask]
+                x_valid_for_pid = x_sorted[valid_mask]
+
                 # Linear interpolation
-                value = np.interp(x_position, x_data, y_data)
-                
+                value = np.interp(x_position, x_valid_for_pid, y_valid)
+
                 # Check if result is reasonable
                 if not np.isnan(value) and not np.isinf(value):
                     interpolated[pid] = float(value)
@@ -170,9 +162,11 @@ class PIDInterpolator:
                     debug(f"  - ERROR: {e}")
                 error(f"PID interpolation error for {pid}: {e} at position {x_position}")
                 continue
-        
+
+        elapsed_ms = (time.perf_counter() - started) * 1000.0
         if should_log:
             debug(f"=== Interpolation Complete: {len(interpolated)}/{len(pid_columns)} PIDs successful ===")
+            debug(f"Interpolation elapsed: {elapsed_ms:.3f} ms")
             debug("")  # Empty line for spacing
         
         # Cache result
@@ -180,11 +174,72 @@ class PIDInterpolator:
         
         return interpolated
     
-    def _get_cache_key(self, config: ChartConfig, x_position: float) -> str:
+    def _get_pid_columns(self, config: ChartConfig, extra_pids: Optional[List[str]]) -> List[str]:
+        """Return de-duplicated, in-order PID columns that exist in chart data."""
+        pid_columns: List[str] = []
+        pid_columns.extend(config.primary_axis.series)
+        pid_columns.extend(config.secondary_axis.series)
+        if extra_pids:
+            pid_columns.extend(extra_pids)
+
+        seen: set[str] = set()
+        filtered: List[str] = []
+        for col in pid_columns:
+            if col in seen:
+                continue
+            if col not in config.data.columns:
+                continue
+            seen.add(col)
+            filtered.append(col)
+        return filtered
+
+    def _get_prepared_x_data(self, config: ChartConfig) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray]]:
+        """Cache sorted X-axis arrays reused across slider events for same chart data."""
+        x_col = config.get_x_column()
+        if not x_col or x_col not in config.data.columns:
+            return None
+
+        cache_key = self._get_x_cache_key(config, x_col)
+        cached = self._x_sort_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        x_series = config.data[x_col]
+        if pd.api.types.is_timedelta64_dtype(x_series):
+            x_numeric = x_series.dt.total_seconds()
+        else:
+            x_numeric = pd.to_numeric(x_series, errors="coerce")
+
+        x_data = x_numeric.to_numpy()
+        sort_idx = np.argsort(x_data, kind="mergesort")
+        x_sorted = x_data[sort_idx]
+        x_valid_mask = ~np.isnan(x_sorted)
+        prepared = (x_sorted, sort_idx, x_valid_mask)
+
+        if len(self._x_sort_cache) >= self._x_sort_cache_limit:
+            oldest_keys = list(self._x_sort_cache.keys())[:2]
+            for old_key in oldest_keys:
+                self._x_sort_cache.pop(old_key, None)
+        self._x_sort_cache[cache_key] = prepared
+        return prepared
+
+    def _get_x_cache_key(self, config: ChartConfig, x_col: str) -> str:
+        return (
+            f"{id(config.data)}|{x_col}|{config.data.shape}|"
+            f"{hash(tuple(map(str, config.data.columns)))}"
+        )
+
+    def _get_cache_key(self, config: ChartConfig, x_position: float, pid_columns: List[str]) -> str:
         """Generate cache key for interpolation result."""
-        # Use hash of data shape and X position for simple caching
-        data_hash = hash((config.data.shape, tuple(config.primary_axis.series), 
-                         tuple(config.secondary_axis.series)))
+        data_hash = hash(
+            (
+                id(config.data),
+                config.data.shape,
+                tuple(config.primary_axis.series),
+                tuple(config.secondary_axis.series),
+                tuple(pid_columns),
+            )
+        )
         return f"{data_hash}_{x_position:.6f}"
     
     def _cache_result(self, cache_key: str, result: Dict[str, float]):
@@ -197,39 +252,10 @@ class PIDInterpolator:
         
         self._cache[cache_key] = result
     
-    def _handle_out_of_bounds(self, df: pd.DataFrame, x_col: str, x_position: float, 
-                            config: ChartConfig) -> Dict[str, float]:
-        """Handle positions outside the data range."""
-        x_data = df[x_col].values
-        
-        # Get all PID columns
-        pid_columns = []
-        pid_columns.extend(config.primary_axis.series)
-        pid_columns.extend(config.secondary_axis.series)
-        pid_columns = [col for col in pid_columns if col in df.columns]
-        
-        result = {}
-        
-        if x_position < x_data[0]:
-            # Use first row values (extrapolate backward)
-            first_row = df.iloc[0]
-            for pid in pid_columns:
-                value = pd.to_numeric(first_row[pid], errors='coerce')
-                if not pd.isna(value):
-                    result[pid] = float(value)
-        else:
-            # Use last row values (extrapolate forward)
-            last_row = df.iloc[-1]
-            for pid in pid_columns:
-                value = pd.to_numeric(last_row[pid], errors='coerce')
-                if not pd.isna(value):
-                    result[pid] = float(value)
-        
-        return result
-    
     def clear_cache(self):
         """Clear the interpolation cache."""
         self._cache.clear()
+        self._x_sort_cache.clear()
     
     def get_cache_info(self) -> Dict[str, int]:
         """Get information about cache usage."""
