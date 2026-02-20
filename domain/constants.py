@@ -101,7 +101,8 @@ LIVE_METRIC_KEYS: tuple[str, ...] = (
     "OIL_PRESSURE",
     "COOLANT_TEMP",
     "CHECK_ENGINE",
-    "ENGINE_STATE",
+    "ENGINE_STATE",          #ECU_V1 Engines
+    "ENGINE_STATUS",         #ECU_V2 Engines
     "START_AID",
     "SMOKE_LIMIT",
     "OIL_PRESSURE_LAMP",
@@ -116,10 +117,17 @@ LIVE_METRIC_PID_MAP: dict[SnapType, dict[str, list[str]]] = {
         "OIL_PRESSURE": ["P_L_Oil_pressure"],
         "COOLANT_TEMP": ["P_L_Coolant_temperature"],
         "CHECK_ENGINE": ["ICI_Ce_lamp_output"],
-        "ENGINE_STATE": ["SMC_Engine_state"],
+        "ENGINE_STATE": ["SMC_Engine_state"],                 #ECU_V1 Engines
         "START_AID": ["SAC_Glow_plug_output"],
         "SMOKE_LIMIT": ["T_D_Smoke_limit_active"],
         "OIL_PRESSURE_LAMP": ["ICI_Oil_pressure_lamp_output"],
+    },
+    SnapType.ECU_V2: {
+        "ENGINE_SPEED": ["Epm_nEng"],
+        "OIL_TEMP": ["Oil_tSwmp"],
+        "OIL_PRESSURE": ["Oil_pSwmp"],
+        "COOLANT_TEMP": ["CEngDsT_t"],
+        "ENGINE_STATUS": ["CoEng_st"],                         #ECU_V2 Engines
     },
 }
 
@@ -131,6 +139,7 @@ LIVE_METRIC_META: dict[str, dict[str, object]] = {
     "COOLANT_TEMP": {"label": "Coolant", "unit": "°C", "min": -40, "max": 140, "decimals": 0},
     "CHECK_ENGINE": {"label": "Check Engine", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "ENGINE_STATE": {"label": "Engine State", "unit": "", "min": 0, "max": 5, "decimals": 0},
+    "ENGINE_STATUS": {"label": "Engine Status", "unit": "", "min": 0, "max": 5, "decimals": 0},
     "START_AID": {"label": "Start Aid", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "SMOKE_LIMIT": {"label": "Smoke Limit", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "OIL_PRESSURE_LAMP": {"label": "Oil Pressure", "unit": "", "min": 0, "max": 1, "decimals": 0},
@@ -144,6 +153,16 @@ LIVE_METRIC_STATE_LABELS: dict[SnapType, dict[str, dict[int, str]]] = {
         "SMOKE_LIMIT": {0: "Off", 1: "On"},
         "OIL_PRESSURE_LAMP": {0: "Off", 1: "On"},
         "ENGINE_STATE": {0: "Stopped", 1: "Cranking", 2: "Running", 3: "Stalling"},
+    },
+    SnapType.ECU_V2: {
+        "ENGINE_STATUS": {
+            0: "STANDBY",
+            1: "READY",
+            2: "CRANKING",
+            3: "RUNNING",
+            4: "STOPPING",
+            5: "FINISH",
+        },
     },
 }
 

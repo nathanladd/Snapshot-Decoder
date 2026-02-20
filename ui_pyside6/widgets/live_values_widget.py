@@ -618,7 +618,7 @@ class LiveValuesWidget(QWidget):
             )
 
     def _set_engine_state_chip_state(self, label: QLabel, state_code: int, is_active: bool):
-        """Apply state-specific styling for Engine State chips."""
+        """Apply state-specific styling for Engine State/Status chips."""
         if not is_active:
             label.setStyleSheet(
                 """
@@ -636,10 +636,12 @@ class LiveValuesWidget(QWidget):
             return
 
         state_styles = {
-            0: ("#F5F5F5", "#000000", "#9E9E9E"),  # Stopped
-            1: ("#FFF59D", "#5D4A00", "#FDD835"),  # Cranking
-            2: ("#2E7D32", "#FFFFFF", "#1B5E20"),  # Running
-            3: ("#E53935", "#FFFFFF", "#C62828"),  # Stalling
+            0: ("#F5F5F5", "#000000", "#9E9E9E"),  # Stopped/Standby
+            1: ("#90CAF9", "#0D47A1", "#42A5F5"),  # Ready
+            2: ("#FFF59D", "#5D4A00", "#FDD835"),  # Cranking
+            3: ("#2E7D32", "#FFFFFF", "#1B5E20"),  # Running
+            4: ("#E53935", "#FFFFFF", "#C62828"),  # Stopping
+            5: ("#CFD8DC", "#263238", "#90A4AE"),  # Finish
         }
         bg, fg, border = state_styles.get(state_code, ("#E0E0E0", "#111111", "#BDBDBD"))
         label.setStyleSheet(
@@ -813,15 +815,18 @@ class LiveValuesWidget(QWidget):
         snap_type = self.chart_config.snapshot_type if self.chart_config else None
         state_map = LIVE_METRIC_STATE_LABELS.get(snap_type, {}) if snap_type else {}
         chip_font = QFont("Segoe UI", 9, QFont.Bold)
-        chip_width = QFontMetrics(chip_font).horizontalAdvance("Check Engine") + 8
+        chip_width = max(
+            QFontMetrics(chip_font).horizontalAdvance("Check Engine"),
+            QFontMetrics(chip_font).horizontalAdvance("COENG_CRANKING"),
+        ) + 8
 
-        for metric_key in ("ENGINE_STATE",):
+        for metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
             pid_name = self._resolved_live_metric_pids.get(metric_key)
             if not pid_name:
                 continue
 
             labels_by_value = dict(state_map.get(metric_key, {}))
-            if not labels_by_value and metric_key == "ENGINE_STATE":
+            if not labels_by_value and metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
                 labels_by_value = self._parse_state_labels_from_unit(pid_name)
 
             if not labels_by_value:
@@ -841,7 +846,7 @@ class LiveValuesWidget(QWidget):
                 chip.setAlignment(Qt.AlignCenter)
                 chip.setFixedHeight(20)
                 chip.setFixedWidth(chip_width)
-                if metric_key == "ENGINE_STATE":
+                if metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
                     self._set_engine_state_chip_state(chip, state_val, False)
                 else:
                     self._set_chip_active(chip, False)
@@ -999,7 +1004,7 @@ class LiveValuesWidget(QWidget):
                 continue
 
             for val, chip in chip_map.items():
-                if metric_key == "ENGINE_STATE":
+                if metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
                     self._set_engine_state_chip_state(chip, val, state_val == val)
                 else:
                     self._set_chip_active(chip, state_val == val)
