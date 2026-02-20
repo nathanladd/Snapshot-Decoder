@@ -607,7 +607,9 @@ class MainWindow(QMainWindow):
             f"About {APP_TITLE}",
             f"{APP_TITLE} {APP_VERSION}\n\n"
             "A tool for analyzing engine snapshot data.\n\n"
-            "© 2024-2025"
+            "Nathan Ladd\n"
+            "Service Trainer\n"
+            "nladd@bobcatoftherockies.com"
         )
     
     def _setup_log_console(self):
