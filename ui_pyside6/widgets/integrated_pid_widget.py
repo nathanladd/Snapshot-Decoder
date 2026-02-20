@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QHeaderView, QCheckBox,
     QGroupBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont, QColor, QBrush
 
 from domain.snapshot import Snapshot
@@ -23,6 +23,33 @@ class IntegratedPidWidget(QWidget):
     
     # Signal emitted when PID selection changes
     pids_changed = Signal()
+
+    _CHECKBOX_STYLE = """
+        QCheckBox {
+            spacing: 0px;
+            margin: 0px;
+            padding: 0px;
+        }
+        QCheckBox::indicator {
+            width: 12px;
+            height: 12px;
+            border: 1px solid #333333;
+            border-radius: 2px;
+            background-color: white;
+        }
+        QCheckBox::indicator:hover {
+            border: 1px solid #0078d4;
+            background-color: #f0f8ff;
+        }
+        QCheckBox::indicator:checked {
+            background-color: #28a745;
+            border: 1px solid #28a745;
+        }
+        QCheckBox::indicator:checked:hover {
+            background-color: #218838;
+            border: 1px solid #218838;
+        }
+    """
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -35,6 +62,14 @@ class IntegratedPidWidget(QWidget):
         # Track current chart PIDs
         self.current_primary_pids: Set[str] = set()
         self.current_secondary_pids: Set[str] = set()
+
+        # Persistent separator row (created once per snapshot load)
+        self._separator_item: Optional[QTreeWidgetItem] = None
+
+        self._filter_timer = QTimer(self)
+        self._filter_timer.setSingleShot(True)
+        self._filter_timer.setInterval(150)
+        self._filter_timer.timeout.connect(self._filter_descriptions)
         
         self._setup_ui()
         self._connect_signals()
@@ -63,7 +98,7 @@ class IntegratedPidWidget(QWidget):
         search_layout.addWidget(QLabel("Filter Descriptions:"))
         
         self.search_entry = QLineEdit()
-        self.search_entry.textChanged.connect(self._filter_descriptions)
+        self.search_entry.textChanged.connect(self._schedule_filter)
         search_layout.addWidget(self.search_entry)
         
         # Add clear button for search
@@ -93,9 +128,9 @@ class IntegratedPidWidget(QWidget):
         
         pid_layout.addWidget(search_frame)
         
-        # Tree widget for PID info
+        # Tree widget for PID info — column 5 is a hidden sort key
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Left", "Right", "Description", "PID Name", "Unit"])
+        self.tree.setHeaderLabels(["Left", "Right", "Description", "PID Name", "Unit", "_sort"])
         
         # Configure tree columns
         header = self.tree.header()
@@ -115,6 +150,9 @@ class IntegratedPidWidget(QWidget):
         self.tree.header().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+
+        # Hide the sort key column
+        self.tree.setColumnHidden(5, True)
         
         # Make header bold
         font = header.font()
@@ -157,6 +195,7 @@ class IntegratedPidWidget(QWidget):
         self._snapshot = snapshot
         if not snapshot:
             self.tree.clear()
+            self._separator_item = None
             self._all_pids.clear()
             self._primary_pids.clear()
             self._secondary_pids.clear()
@@ -177,6 +216,7 @@ class IntegratedPidWidget(QWidget):
     def _populate_tree(self):
         """Populate the tree with all PID information."""
         self.tree.clear()
+        self._separator_item = None
         
         if not hasattr(self, 'pid_info'):
             return
@@ -193,74 +233,115 @@ class IntegratedPidWidget(QWidget):
             # Store item reference for color updates
             item.setData(2, Qt.ItemDataRole.UserRole, item)  # Store item itself for color updates
             
-            # Create checkboxes for primary and secondary axes
-            primary_checkbox = QCheckBox()
-            secondary_checkbox = QCheckBox()
-            
-            # Style checkboxes for better visibility on white background
-            checkbox_style = """
-                QCheckBox {
-                    spacing: 0px;
-                    margin: 0px;
-                    padding: 0px;
-                }
-                QCheckBox::indicator {
-                    width: 12px;
-                    height: 12px;
-                    border: 1px solid #333333;
-                    border-radius: 2px;
-                    background-color: white;
-                }
-                QCheckBox::indicator:hover {
-                    border: 1px solid #0078d4;
-                    background-color: #f0f8ff;
-                }
-                QCheckBox::indicator:checked {
-                    background-color: #28a745;
-                    border: 1px solid #28a745;
-                }
-                QCheckBox::indicator:checked:hover {
-                    background-color: #218838;
-                    border: 1px solid #218838;
-                }
-            """
-            primary_checkbox.setStyleSheet(checkbox_style)
-            secondary_checkbox.setStyleSheet(checkbox_style)
+            # Create checkboxes — these persist for the lifetime of the tree
+            primary_cb = self._create_checkbox(pid, is_primary=True)
+            secondary_cb = self._create_checkbox(pid, is_primary=False)
+            self.tree.setItemWidget(item, 0, primary_cb)
+            self.tree.setItemWidget(item, 1, secondary_cb)
 
-            # Set checkboxes as widget items
-            # Direct checkbox placement
-            self.tree.setItemWidget(item, 0, primary_checkbox)
-            self.tree.setItemWidget(item, 1, secondary_checkbox)
-            
+        # Create the persistent separator row (always exists, shown/hidden as needed)
+        self._separator_item = QTreeWidgetItem(self.tree)
+        self._separator_item.setFlags(Qt.ItemFlag.NoItemFlags)
+        self._separator_item.setText(2, "────────")
+        self._separator_item.setHidden(True)
 
-            
-            # Connect checkbox signals
-            primary_checkbox.stateChanged.connect(
-                lambda state, p=pid, cb=primary_checkbox: self._on_primary_checkbox_changed(state, p, cb)
+        # Apply initial filter + grouping
+        self._filter_descriptions()
+
+    def _create_checkbox(self, pid: str, is_primary: bool) -> QCheckBox:
+        """Create a styled checkbox wired to the appropriate handler."""
+        cb = QCheckBox()
+        cb.setStyleSheet(self._CHECKBOX_STYLE)
+        if is_primary:
+            cb.stateChanged.connect(
+                lambda state, p=pid: self._on_primary_checkbox_changed(state, p, cb)
             )
-            secondary_checkbox.stateChanged.connect(
-                lambda state, p=pid, cb=secondary_checkbox: self._on_secondary_checkbox_changed(state, p, cb)
+        else:
+            cb.stateChanged.connect(
+                lambda state, p=pid: self._on_secondary_checkbox_changed(state, p, cb)
             )
-            
-            # Store references to checkboxes
-            item.setData(0, Qt.ItemDataRole.UserRole, primary_checkbox)
-            item.setData(1, Qt.ItemDataRole.UserRole, secondary_checkbox)
+        return cb
+
+    # ------------------------------------------------------------------
+    # Grouping — uses a hidden sort column so items are reordered IN PLACE
+    # by QTreeWidget.sortItems().  No items are removed/re-added, so
+    # checkbox widgets are never destroyed.
+    # ------------------------------------------------------------------
+
+    def _get_group_rank(self, pid: str) -> int:
+        """Return ordering group rank for a PID row."""
+        if pid in self.current_primary_pids:
+            return 0
+        if pid in self.current_secondary_pids:
+            return 1
+        return 2
+
+    def _apply_grouping(self):
+        """Assign sort keys and re-sort items in place (no widget destruction)."""
+        has_selected_visible = False
+        has_unselected_visible = False
+
+        for i in range(self.tree.topLevelItemCount()):
+            item = self.tree.topLevelItem(i)
+            if item is self._separator_item:
+                continue
+            pid = item.text(3)
+            rank = self._get_group_rank(pid)
+            item.setText(5, f"{rank}_{pid.lower()}")
+
+            if not item.isHidden():
+                if rank < 2:
+                    has_selected_visible = True
+                else:
+                    has_unselected_visible = True
+
+        # Place separator between selected (0_, 1_) and unselected (2_)
+        if self._separator_item is not None:
+            self._separator_item.setText(5, "1~")  # '~' sorts after all lowercase
+            self._separator_item.setHidden(
+                not (has_selected_visible and has_unselected_visible)
+            )
+
+        self.tree.sortItems(5, Qt.SortOrder.AscendingOrder)
+
+    # ------------------------------------------------------------------
+    # Search / filter
+    # ------------------------------------------------------------------
     
     def _clear_search(self):
         """Clear the search input and show all PIDs."""
         self.search_entry.clear()
+
+    def _schedule_filter(self):
+        """Debounce interactive text filtering to keep the UI responsive."""
+        self._filter_timer.start()
     
     def _filter_descriptions(self):
-        """Filter tree items based on search text."""
+        """Filter tree items based on search text, then regroup."""
         search_term = self.search_entry.text().strip().lower()
         
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            description = item.text(3).lower()
-            pid_name = item.text(2).lower()
+            if item is self._separator_item:
+                continue
+
+            description = item.text(2).lower()
+            pid_name = item.text(3)
+            pid_name_lower = pid_name.lower()
+            is_selected = (
+                pid_name in self.current_primary_pids
+                or pid_name in self.current_secondary_pids
+            )
+            matches_filter = search_term in description or search_term in pid_name_lower
             
-            # Show/hide based on search match
-            item.setHidden(search_term not in description and search_term not in pid_name)
+            # Keep selected PIDs visible even when they do not match the filter.
+            item.setHidden(not matches_filter and not is_selected)
+
+        self._apply_grouping()
+
+    # ------------------------------------------------------------------
+    # Checkbox handlers
+    # ------------------------------------------------------------------
     
     def _on_primary_checkbox_changed(self, state: int, pid: str, checkbox: QCheckBox):
         """Handle primary axis checkbox change."""
@@ -284,6 +365,8 @@ class IntegratedPidWidget(QWidget):
         # Update internal PID lists
         self._primary_pids = list(self.current_primary_pids)
         self._secondary_pids = list(self.current_secondary_pids)
+
+        self._apply_grouping()
         
         # Emit signal to update chart
         self.pids_changed.emit()
@@ -310,6 +393,8 @@ class IntegratedPidWidget(QWidget):
         # Update internal PID lists
         self._primary_pids = list(self.current_primary_pids)
         self._secondary_pids = list(self.current_secondary_pids)
+
+        self._apply_grouping()
         
         # Emit signal to update chart
         self.pids_changed.emit()
@@ -318,16 +403,22 @@ class IntegratedPidWidget(QWidget):
         """Get the primary checkbox for a PID."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.text(3) == pid:  # PID is in column 3, not 2
-                return item.data(0, Qt.ItemDataRole.UserRole)
+            if item is self._separator_item:
+                continue
+            if item.text(3) == pid:
+                cb = self.tree.itemWidget(item, 0)
+                return cb if isinstance(cb, QCheckBox) else None
         return None
     
     def _get_secondary_checkbox(self, pid: str) -> QCheckBox:
         """Get the secondary checkbox for a PID."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.text(3) == pid:  # PID is in column 3, not 2
-                return item.data(1, Qt.ItemDataRole.UserRole)
+            if item is self._separator_item:
+                continue
+            if item.text(3) == pid:
+                cb = self.tree.itemWidget(item, 1)
+                return cb if isinstance(cb, QCheckBox) else None
         return None
     
     def update_chart_pids(self, primary_pids: list, secondary_pids: list):
@@ -337,17 +428,20 @@ class IntegratedPidWidget(QWidget):
         self._primary_pids = list(primary_pids)
         self._secondary_pids = list(secondary_pids)
         self._sync_checkboxes()
+        self._apply_grouping()
     
     def _sync_checkboxes(self):
         """Sync checkboxes with current chart PIDs."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            pid = item.text(3)  # PID Name is in column 3 after reordering
+            if item is self._separator_item:
+                continue
+            pid = item.text(3)
             
-            primary_cb = self._get_primary_checkbox(pid)
-            secondary_cb = self._get_secondary_checkbox(pid)
+            primary_cb = self.tree.itemWidget(item, 0)
+            secondary_cb = self.tree.itemWidget(item, 1)
             
-            if primary_cb and secondary_cb:
+            if isinstance(primary_cb, QCheckBox) and isinstance(secondary_cb, QCheckBox):
                 primary_cb.blockSignals(True)
                 secondary_cb.blockSignals(True)
                 
@@ -364,6 +458,7 @@ class IntegratedPidWidget(QWidget):
         self._primary_pids.clear()
         self._secondary_pids.clear()
         self._sync_checkboxes()
+        self._apply_grouping()
         self.pids_changed.emit()
     
     def _on_item_changed(self, item: QTreeWidgetItem, column: int):
@@ -387,6 +482,7 @@ class IntegratedPidWidget(QWidget):
         
         # Update checkboxes
         self._sync_checkboxes()
+        self._apply_grouping()
         
         # Emit signal if requested
         if emit_signal:
@@ -421,6 +517,8 @@ class IntegratedPidWidget(QWidget):
         """Apply color to a PID item while keeping it readable."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
+            if item is self._separator_item:
+                continue
             if item.text(3) == pid:  # Check PID name column (column 3)
                 # Apply subtle background color to the description column
                 bg_color = QColor(color)
@@ -449,6 +547,8 @@ class IntegratedPidWidget(QWidget):
         """Reset all item colors to default."""
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
+            if item is self._separator_item:
+                continue
             
             # Reset background for PID name and description columns
             item.setBackground(2, QBrush())
