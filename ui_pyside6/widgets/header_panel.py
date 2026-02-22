@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction, QIcon
 
 from domain.snapshot import Snapshot
+from utils import resource_path
 
 
 class HeaderPanel(QWidget):
@@ -134,35 +135,35 @@ class HeaderPanel(QWidget):
         
         # Open action
         open_btn = QToolButton()
-        open_btn.setIcon(QIcon("data/images/folder-open.png"))
+        open_btn.setIcon(QIcon(resource_path("data/images/folder-open.png")))
         open_btn.setToolTip("Open snapshot file (Ctrl+O)")
         open_btn.clicked.connect(self.open_requested.emit)
         self._toolbar.addWidget(open_btn)
         
         # Raw Data action
         raw_data_btn = QToolButton()
-        raw_data_btn.setIcon(QIcon("data/images/raw-table.png"))
+        raw_data_btn.setIcon(QIcon(resource_path("data/images/raw-table.png")))
         raw_data_btn.setToolTip("Show raw data table")
         raw_data_btn.clicked.connect(self.raw_data_requested.emit)
         self._toolbar.addWidget(raw_data_btn)
         
         # Clean Table action
         clean_table_btn = QToolButton()
-        clean_table_btn.setIcon(QIcon("data/images/data-cleaning.png"))
+        clean_table_btn.setIcon(QIcon(resource_path("data/images/data-cleaning.png")))
         clean_table_btn.setToolTip("Show clean data table")
         clean_table_btn.clicked.connect(self.clean_table_requested.emit)
         self._toolbar.addWidget(clean_table_btn)
         
         # Chart Table action
         chart_table_btn = QToolButton()
-        chart_table_btn.setIcon(QIcon("data/images/chart-table.png"))
+        chart_table_btn.setIcon(QIcon(resource_path("data/images/chart-table.png")))
         chart_table_btn.setToolTip("Show chart data table")
         chart_table_btn.clicked.connect(self.chart_table_requested.emit)
         self._toolbar.addWidget(chart_table_btn)
         
         # Help action
         help_btn = QToolButton()
-        help_btn.setIcon(QIcon("data/images/information.png"))
+        help_btn.setIcon(QIcon(resource_path("data/images/information.png")))
         help_btn.setToolTip("Show help documentation (F1)")
         help_btn.clicked.connect(self.help_requested.emit)
         self._toolbar.addWidget(help_btn)

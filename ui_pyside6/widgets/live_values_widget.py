@@ -29,6 +29,7 @@ from domain.constants import (
 from ui.color_manager import ColorManager
 from infrastructure import debug, error
 from domain.pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
+from utils import resource_path
 
 
 class PIDCard(QFrame):
@@ -1005,7 +1006,7 @@ class LiveValuesWidget(QWidget):
             chip_inner.setSpacing(0)
             icon_label = QLabel(chip_frame)
             icon_label.setAlignment(Qt.AlignCenter)
-            pix = QPixmap(f"data/images/{image_file}")
+            pix = QPixmap(resource_path(f"data/images/{image_file}"))
             if not pix.isNull():
                 pix = pix.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             icon_label.setPixmap(pix)

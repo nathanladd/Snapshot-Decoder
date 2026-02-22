@@ -30,6 +30,7 @@ from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
 from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
+from utils import resource_path
 
 
 def _format_time_mmss(seconds, pos):
@@ -139,8 +140,7 @@ class ChartWidget(QWidget):
         self._ruler_icon_label = QLabel()
         self._ruler_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._ruler_icon_label.setToolTip("Y-axis ruler controls")
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        ruler_icon_path = os.path.join(project_root, 'data', 'images', 'ruler.png')
+        ruler_icon_path = resource_path('data/images/ruler.png')
         if os.path.exists(ruler_icon_path):
             icon_pixmap = QPixmap(ruler_icon_path).scaled(
                 16,

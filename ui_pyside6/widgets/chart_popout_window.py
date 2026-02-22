@@ -19,7 +19,9 @@ from matplotlib.figure import Figure
 import mplcursors
 
 from domain.chart_config import ChartConfig
-from ui.chart_renderer import ChartRenderer
+from ui.color_manager import ColorManager
+from infrastructure import debug
+from utils import resource_path
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
 
@@ -130,8 +132,7 @@ class ChartPopoutWindow(QMainWindow):
         self._ruler_icon_label = QLabel()
         self._ruler_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._ruler_icon_label.setToolTip("Y-axis ruler controls")
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        ruler_icon_path = os.path.join(project_root, "data", "images", "ruler.png")
+        ruler_icon_path = resource_path('data/images/ruler.png')
         if os.path.exists(ruler_icon_path):
             icon_pixmap = QPixmap(ruler_icon_path).scaled(
                 16,

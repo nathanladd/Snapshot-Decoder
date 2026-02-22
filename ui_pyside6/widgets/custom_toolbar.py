@@ -18,6 +18,8 @@ from domain.chart_config import ChartConfig
 from version import APP_VERSION
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 
+from utils import resource_path
+
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
     """Custom navigation toolbar that saves charts as PDF with metadata."""
@@ -65,13 +67,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         self._cart_btn.setToolTip("Add current chart to the Chart Cart")
         
         # Load cart icon
-        import os
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        # Get the project root directory
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        icon_path = os.path.join(project_root, 'data', 'images', 'online-shopping.png')
-        self._cart_btn.setIcon(QIcon(icon_path))
+        self._cart_btn.setIcon(QIcon(resource_path('data/images/online-shopping.png')))
         self._cart_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         
         self._cart_btn.setStyleSheet("""
@@ -99,13 +97,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         self._value_display_btn.setCheckable(True)  # Makes it a latching button
         
         # Load value popup icon
-        import os
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        # Get the project root directory
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        icon_path = os.path.join(project_root, 'data', 'images', 'value-popup.png')
-        self._value_display_btn.setIcon(QIcon(icon_path))
+        self._value_display_btn.setIcon(QIcon(resource_path('data/images/value-popup.png')))
         self._value_display_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         
         self._value_display_btn.setStyleSheet("""
@@ -139,13 +133,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         self._time_slider_btn.setCheckable(True)  # Makes it a latching button
         
         # Load vertical cursor icon
-        import os
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        # Get the project root directory
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        icon_path = os.path.join(project_root, 'data', 'images', 'time.png')
-        self._time_slider_btn.setIcon(QIcon(icon_path))
+        self._time_slider_btn.setIcon(QIcon(resource_path('data/images/time.png')))
         self._time_slider_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         
         self._time_slider_btn.setStyleSheet("""
@@ -179,9 +169,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
         # Load brain icon
         from PySide6.QtCore import QSize
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        icon_path = os.path.join(project_root, 'data', 'images', 'brain.png')
-        self._quick_iq_btn.setIcon(QIcon(icon_path))
+        self._quick_iq_btn.setIcon(QIcon(resource_path('data/images/brain.png')))
         self._quick_iq_btn.setIconSize(QSize(20, 20))
 
         self._quick_iq_btn.setStyleSheet("""
@@ -214,13 +202,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             self._popout_btn.setToolTip("Pop out chart to separate window")
             
             # Load icon
-            import os
             from PySide6.QtGui import QIcon
             from PySide6.QtCore import QSize
-            # Get the project root directory
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            icon_path = os.path.join(project_root, 'data', 'images', 'expand-in-new-window.png')
-            self._popout_btn.setIcon(QIcon(icon_path))
+            self._popout_btn.setIcon(QIcon(resource_path('data/images/expand-in-new-window.png')))
             self._popout_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
             
             self._popout_btn.setStyleSheet("""
