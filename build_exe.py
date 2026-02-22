@@ -45,16 +45,19 @@ datas = [
 
 # Define hidden imports (modules that PyInstaller might miss)
 hidden_imports = [
-    'tkinter',
-    'tkinter.ttk',
-    'PIL._tkinter_finder',  # Required for PIL/Pillow with tkinter
+    'PySide6',
+    'PySide6.QtCore',
+    'PySide6.QtGui',
+    'PySide6.QtWidgets',
+    'PySide6.QtWebEngineWidgets',
+    'PySide6.QtWebEngineCore',
+    'PySide6.QtWebChannel',
     'pandas',
     'matplotlib',
-    'matplotlib.backends.backend_tkagg',
+    'matplotlib.backends.backend_qtagg',
+    'mplcursors',
     'openpyxl',  # For reading .xlsx files
-    'xlrd',  # For reading .xls files
-    'tkinterweb',  # HTML viewer for help window
-    'tkinterweb.bindings',  # Required binding module for tkinterweb
+    'numpy',
 ]
 
 # Build the PyInstaller command
@@ -83,7 +86,7 @@ for module in hidden_imports:
 pyinstaller_args.extend([
     '--collect-all=matplotlib',  # Collect all matplotlib data files
     '--collect-all=pandas',  # Collect all pandas data files
-    '--collect-all=tkinterweb',  # Collect all tkinterweb data files and submodules
+    '--collect-all=PySide6',  # Collect all PySide6 modules and plugins
 ])
 
 print("=" * 70)
