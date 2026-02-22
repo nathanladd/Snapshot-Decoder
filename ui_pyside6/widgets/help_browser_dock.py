@@ -6,12 +6,14 @@ help pages, navigated via clickable tooltip links.
 """
 
 import os
+import sys
 
 from PySide6.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit
 )
 from PySide6.QtCore import Qt, QSize, QUrl, Slot
+from PySide6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from domain.app_settings import app_settings
 
@@ -101,8 +103,36 @@ class HelpBrowserDock(QDockWidget):
 
         layout.addLayout(nav)
 
-        # Web view
+        # Persistent browser profile (retains cookies/sessions across restarts)
+        if getattr(sys, "frozen", False):
+            profile_path = os.path.join(os.path.dirname(sys.executable), "browser_data")
+        else:
+            profile_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                "browser_data",
+            )
+        self._profile = QWebEngineProfile("SnapshotDecoder", self)
+        self._profile.setCachePath(os.path.join(profile_path, "cache"))
+        self._profile.setPersistentStoragePath(os.path.join(profile_path, "storage"))
+        self._profile.setPersistentCookiesPolicy(
+            QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies
+        )
+
+        # Web view with persistent profile
+        from PySide6.QtWebEngineCore import QWebEnginePage
+        page = QWebEnginePage(self._profile, self)
         self.browser = QWebEngineView()
+        self.browser.setPage(page)
+
+        # Enable useful browser settings
+        settings = self.browser.settings()
+        settings.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.ScrollAnimatorEnabled, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.FullScreenSupportEnabled, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
+
         self.set_zoom_factor(app_settings.web_zoom_factor)
         self.browser.urlChanged.connect(self._on_url_changed)
         layout.addWidget(self.browser, stretch=1)

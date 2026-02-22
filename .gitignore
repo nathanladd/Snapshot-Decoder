@@ -28,6 +28,9 @@ Thumbs.db
 # *.xls
 # *.tsv
 
+# Browser profile data (persistent cookies/cache)
+browser_data/
+
 # Build artifacts (for PyInstaller or packaging)
 dist/
 build/
