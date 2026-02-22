@@ -310,11 +310,23 @@ class MainWindow(QMainWindow):
         """Handle file open request via AppController."""
         from pathlib import Path
         info(f"Opening file: {Path(file_path).name}")
+
+        # Show progress dialog while the background loader runs
+        self._progress_dialog = QProgressDialog("Loading snapshot...", None, 0, 100, self)
+        self._progress_dialog.setWindowTitle("Loading")
+        self._progress_dialog.setMinimumDuration(0)
+        self._progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        self._progress_dialog.setValue(0)
+
         self.app_controller.load_snapshot(file_path)
     
     @Slot(object)
     def _on_snapshot_loaded(self, snapshot: Snapshot):
         """Handle successful snapshot load from AppController."""
+        if self._progress_dialog:
+            self._progress_dialog.close()
+            self._progress_dialog = None
+
         self.snapshot = snapshot
         
         # Update UI with snapshot data

@@ -42,14 +42,10 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Piston Delta Speed"),
         ("Cam/Crank", "V1_CAM_CRANK", 
         "Cam/Crank Condition with Sync"),
-        ("Start Aid", "V1_START_AID", 
-        "Start Aid Condition with Engine State"),
         ("Air/Fuel Ratio", "V1_AIR_FUEL_RATIO", 
         "Air/Fuel Ratio and Smoke Limit Control"),
         ("Torque Control", "V1_TORQUE_CONTROL", 
         "Actual Brake Torque vs Torque Limit"),
-        ("Fuel/Coolant Temp", "V1_FUEL_COOLANT_TEMP", 
-        "Fuel/Coolant Temperature")
     ],
 
 ########################################################################################################################################

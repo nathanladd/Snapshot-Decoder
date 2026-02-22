@@ -56,7 +56,7 @@ V1_TURBO = QuickChartDef(
 V1_EGR_FLOW = QuickChartDef(
     action_id="V1_EGR_FLOW",
     title="EGR Flow",
-    primary_pids=["ACM_INTAKE_PORT_AIR_FLOW_SPD", "ACM_INTAKE_PORT_AIR_FLOW_MAF"],
+    primary_pids=["ACM_INTAKE_PORT_AIR_FLOW_SPD", "ACM_INTAKE_PORT_AIR_FLOW_MAF", "ACM_Air_estimation_raw_error"],
     primary_range=(0, 150),
     secondary_pids=["IN_Egr_position"],
     secondary_range=(-10, 400),
@@ -86,20 +86,10 @@ V1_PISTON_DELTA = QuickChartDef(
 
 V1_CAM_CRANK = StatusChartDef(
     action_id="V1_CAM_CRANK",
-    title="Cam andCrank Status",
+    title="Cam and Crank Status",
     primary_pids=["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"],
     chart_type="status",
     show_legend=True,
-)
-
-V1_START_AID = QuickChartDef(
-    action_id="V1_START_AID",
-    title="Start Aid",
-    primary_pids=["SAC_Glow_plug_output"],
-    primary_range=(-10, 4),
-    secondary_pids=["SMC_ENGINE_STATE"],
-    secondary_range=(-2, 10),
-    #chart_type="status",
 )
 
 V1_AIR_FUEL_RATIO = QuickChartDef(
@@ -118,12 +108,6 @@ V1_TORQUE_CONTROL = QuickChartDef(
     # Auto-scale when no range specified
 )
 
-V1_FUEL_COOLANT_TEMP = QuickChartDef(
-    action_id="V1_FUEL_COOLANT_TEMP",
-    title="Fuel & Coolant Temperature",
-    primary_pids=["P_L_Fuel_temp_raw", "P_L_Coolant_temperature"],
-    primary_range=(-40, 290),
-)
 
 
 # Registry of all V1 charts by action_id
@@ -150,8 +134,6 @@ V1_CHARTS: dict[str, QuickChartDef] = {
     "V1_EGR_POSITION": V1_EGR_POSITION,             # EGR Position
     "V1_PISTON_DELTA": V1_PISTON_DELTA,             # Piston Delta Speed
     "V1_CAM_CRANK": V1_CAM_CRANK,                   # Cam/Crank Status
-    "V1_START_AID": V1_START_AID,                   # Start Aid / Glow Plug
     "V1_AIR_FUEL_RATIO": V1_AIR_FUEL_RATIO,         # Air Fuel Ratio
     "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,         # Torque Control
-    "V1_FUEL_COOLANT_TEMP": V1_FUEL_COOLANT_TEMP,   # Fuel & Coolant Temperature
 }
