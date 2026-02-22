@@ -84,14 +84,6 @@ V1_PISTON_DELTA = QuickChartDef(
                           "IN_Bal_delta_speed[2]", "IN_Bal_delta_speed[3]"],
 )
 
-V1_CAM_CRANK = StatusChartDef(
-    action_id="V1_CAM_CRANK",
-    title="Cam and Crank Status",
-    primary_pids=["P_L_aps_sync_tasks_enabled", "P_L_aps_crank_valid", "P_L_aps_cam_valid"],
-    chart_type="status",
-    show_legend=True,
-)
-
 V1_TORQUE_CONTROL = QuickChartDef(
     action_id="V1_TORQUE_CONTROL",
     title="Torque",
