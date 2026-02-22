@@ -158,15 +158,9 @@ class TestV1Charts:
         assert chart.primary_range == (0, 18)
         assert chart.secondary_pids == ["IN_Engine_cycle_speed"]
 
-    def test_v1_cam_crank_is_status_chart(self):
-        """Test V1 cam/crank chart is a status chart."""
-        chart = V1_CHARTS["V1_CAM_CRANK"]
-        assert chart.chart_type == "status"
-        assert isinstance(chart, StatusChartDef)
-
     def test_v1_charts_count(self):
         """Verify expected number of V1 charts."""
-        assert len(V1_CHARTS) == 13
+        assert len(V1_CHARTS) == 9
 
 
 class TestV2Charts:

@@ -40,8 +40,6 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "EGR Position vs percent Demand"),
         ("Piston Delta", "V1_PISTON_DELTA", 
         "Piston Delta Speed"),
-        ("Cam/Crank", "V1_CAM_CRANK", 
-        "Cam/Crank Condition with Sync"),
         ("Torque", "V1_TORQUE_CONTROL", 
         "Actual Brake Torque vs Torque Limit"),
     ],
@@ -101,6 +99,9 @@ LIVE_METRIC_KEYS: tuple[str, ...] = (
     "START_AID",
     "SMOKE_LIMIT",
     "OIL_PRESSURE_LAMP",
+    "CAM_VALID",
+    "SYNC_TASKS",
+    "CRANK_VALID",
 )
 
 # Per-snapshot PID alias map for each canonical live metric.
@@ -116,6 +117,9 @@ LIVE_METRIC_PID_MAP: dict[SnapType, dict[str, list[str]]] = {
         "START_AID": ["SAC_Glow_plug_output"],
         "SMOKE_LIMIT": ["T_D_Smoke_limit_active"],
         "OIL_PRESSURE_LAMP": ["ICI_Oil_pressure_lamp_output"],
+        "CAM_VALID": ["P_L_aps_cam_valid"],
+        "SYNC_TASKS": ["P_L_aps_sync_tasks_enabled"],
+        "CRANK_VALID": ["P_L_aps_crank_valid"],
     },
     SnapType.ECU_V2: {
         "ENGINE_SPEED": ["Epm_nEng"],
@@ -140,6 +144,9 @@ LIVE_METRIC_META: dict[str, dict[str, object]] = {
     "START_AID": {"label": "Start Aid", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "SMOKE_LIMIT": {"label": "Smoke Limit", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "OIL_PRESSURE_LAMP": {"label": "Oil Pressure", "unit": "", "min": 0, "max": 1, "decimals": 0},
+    "CAM_VALID": {"label": "Cam", "unit": "", "min": 0, "max": 1, "decimals": 0},
+    "SYNC_TASKS": {"label": "Sync", "unit": "", "min": 0, "max": 1, "decimals": 0},
+    "CRANK_VALID": {"label": "Crank", "unit": "", "min": 0, "max": 1, "decimals": 0},
 }
 
 # Optional state labels for chip-based metrics.

@@ -10,7 +10,7 @@ from domain.quick_charts.definitions import QuickChartDef, StatusChartDef
 
 V1_BATTERY_TEST = QuickChartDef(
     action_id="V1_BATTERY_TEST",
-    title="Battery Voltage vs RPM",
+    title="Battery Voltage",
     primary_pids=["P_L_Battery_raw"],
     primary_range=(0, 18),
     secondary_pids=["IN_Engine_cycle_speed"],
@@ -124,6 +124,5 @@ V1_CHARTS: dict[str, QuickChartDef] = {
     "V1_EGR_FLOW": V1_EGR_FLOW,                     # Speed density vs MAF
     "V1_EGR_POSITION": V1_EGR_POSITION,             # EGR Position
     "V1_PISTON_DELTA": V1_PISTON_DELTA,             # Piston Delta Speed
-    "V1_CAM_CRANK": V1_CAM_CRANK,                   # Cam/Crank Status
     "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,         # Torque and Torque Limit
 }

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QScrollArea, QStyle, QStyleOption, QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal, QRect
-from PySide6.QtGui import QFont, QPalette, QColor, QPainter, QPen, QFontMetrics
+from PySide6.QtGui import QFont, QPalette, QColor, QPainter, QPen, QFontMetrics, QPixmap
 import time
 import pandas as pd
 
@@ -332,6 +332,7 @@ class LiveValuesWidget(QWidget):
         self.cards = {}  # pid_name -> PIDCard
         self.live_metric_gauges: Dict[str, MiniGaugeCard] = {}
         self.live_state_chip_groups: Dict[str, Dict[int, QLabel]] = {}
+        self.cam_crank_chips: Dict[str, QFrame] = {}
         self._resolved_live_metric_pids: Dict[str, str] = {}
         self.current_x_position = 0.0
         self._debug_logging = get_pid_debug_setting()
@@ -658,7 +659,7 @@ class LiveValuesWidget(QWidget):
             """
         )
 
-    def _set_engine_state_chip_state(self, label: QLabel, state_code: int, is_active: bool):
+    def _set_engine_state_chip_state(self, label: QLabel, metric_key: str, state_code: int, is_active: bool):
         """Apply state-specific styling for Engine State/Status chips."""
         if not is_active:
             label.setStyleSheet(
@@ -676,14 +677,23 @@ class LiveValuesWidget(QWidget):
             )
             return
 
-        state_styles = {
-            0: ("#F5F5F5", "#000000", "#9E9E9E"),  # Stopped/Standby
-            1: ("#90CAF9", "#0D47A1", "#42A5F5"),  # Ready
-            2: ("#FFF59D", "#5D4A00", "#FDD835"),  # Cranking
-            3: ("#2E7D32", "#FFFFFF", "#1B5E20"),  # Running
-            4: ("#E53935", "#FFFFFF", "#C62828"),  # Stopping
-            5: ("#CFD8DC", "#263238", "#90A4AE"),  # Finish
-        }
+        # Separate styling for V1 ENGINE_STATE vs V2 ENGINE_STATUS
+        if metric_key == "ENGINE_STATE":  # V1: 0=Stopped, 1=Cranking, 2=Running, 3=Stalling
+            state_styles = {
+                0: ("#F5F5F5", "#000000", "#9E9E9E"),  # Stopped
+                1: ("#FFF59D", "#5D4A00", "#FDD835"),  # Cranking
+                2: ("#2E7D32", "#FFFFFF", "#1B5E20"),  # Running
+                3: ("#E53935", "#FFFFFF", "#C62828"),  # Stalling
+            }
+        else:  # ENGINE_STATUS (V2): 0=STANDBY, 1=READY, 2=CRANKING, 3=RUNNING, 4=STOPPING, 5=FINISH
+            state_styles = {
+                0: ("#F5F5F5", "#000000", "#9E9E9E"),  # STANDBY
+                1: ("#F5F5F5", "#000000", "#9E9E9E"),  # READY
+                2: ("#FFF59D", "#5D4A00", "#FDD835"),  # CRANKING
+                3: ("#2E7D32", "#FFFFFF", "#1B5E20"),  # RUNNING
+                4: ("#E53935", "#FFFFFF", "#C62828"),  # STOPPING
+                5: ("#F5F5F5", "#000000", "#9E9E9E"),  # FINISH
+            }
         bg, fg, border = state_styles.get(state_code, ("#E0E0E0", "#111111", "#BDBDBD"))
         label.setStyleSheet(
             f"""
@@ -742,6 +752,7 @@ class LiveValuesWidget(QWidget):
         self._clear_layout_widgets(self.key_live_layout)
         self.live_metric_gauges.clear()
         self.live_state_chip_groups.clear()
+        self.cam_crank_chips.clear()
         self._resolved_live_metric_pids = self._resolve_live_metric_pids()
 
         if not self._resolved_live_metric_pids:
@@ -889,7 +900,7 @@ class LiveValuesWidget(QWidget):
                 chip.setFixedHeight(20)
                 chip.setFixedWidth(chip_width)
                 if metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
-                    self._set_engine_state_chip_state(chip, state_val, False)
+                    self._set_engine_state_chip_state(chip, metric_key, state_val, False)
                 else:
                     self._set_chip_active(chip, False)
                 metric_chip_map[state_val] = chip
@@ -969,10 +980,47 @@ class LiveValuesWidget(QWidget):
         if binary_stack_added:
             self.key_live_layout.addWidget(binary_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
 
+        # Cam / Sync / Crank image chips (horizontal, to the right of all other indicators)
+        _CAM_CRANK_CHIP_DEFS = [
+            ("CAM_VALID", "camshaft.png"),
+            ("SYNC_TASKS", "cam-crank-sync.png"),
+            ("CRANK_VALID", "crankshaft.png"),
+        ]
+        any_cam_crank = False
+        for metric_key, image_file in _CAM_CRANK_CHIP_DEFS:
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            if not pid_name:
+                continue
+            # Cam and Crank get gauge-sized cards; Sync stays small
+            is_large = metric_key in ("CAM_VALID", "CRANK_VALID")
+            chip_size = (117, 108) if is_large else (52, 52)
+            icon_size = 80 if is_large else 32
+            chip_frame = QFrame(self.key_live_widget)
+            chip_frame.setFixedSize(*chip_size)
+            chip_frame.setStyleSheet(
+                "QFrame { background-color: #FFCDD2; border: 1px solid #EF9A9A; border-radius: 6px; }"
+            )
+            chip_inner = QVBoxLayout(chip_frame)
+            chip_inner.setContentsMargins(4, 4, 4, 4)
+            chip_inner.setSpacing(0)
+            icon_label = QLabel(chip_frame)
+            icon_label.setAlignment(Qt.AlignCenter)
+            pix = QPixmap(f"data/images/{image_file}")
+            if not pix.isNull():
+                pix = pix.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            icon_label.setPixmap(pix)
+            icon_label.setStyleSheet("QLabel { background: transparent; border: none; }")
+            chip_inner.addWidget(icon_label)
+            self.cam_crank_chips[metric_key] = chip_frame
+            self.key_live_layout.addWidget(chip_frame, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            any_cam_crank = True
+            if self._debug_logging:
+                debug(f"Live metrics: created image chip for {metric_key} from PID {pid_name}")
+
         # Keep all compact metric widgets packed to the left with spare room on the right.
         self.key_live_layout.addStretch(1)
 
-        should_show = bool(self.live_metric_gauges or self.live_state_chip_groups)
+        should_show = bool(self.live_metric_gauges or self.live_state_chip_groups or self.cam_crank_chips)
         self.key_live_widget.setVisible(should_show)
         if self._debug_logging:
             debug(
@@ -1076,14 +1124,36 @@ class LiveValuesWidget(QWidget):
 
             for val, chip in chip_map.items():
                 if metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
-                    self._set_engine_state_chip_state(chip, val, state_val == val)
+                    self._set_engine_state_chip_state(chip, metric_key, val, state_val == val)
                 elif metric_key == "SYNC_STATUS":
                     self._set_sync_chip_state(chip, val, state_val == val)
                 else:
                     self._set_chip_active(chip, state_val == val)
             if should_log:
                 debug(f"Live metrics: chips {metric_key} pid={pid_name} active_state={state_val}")
-    
+
+        # Update cam / sync / crank image chips
+        for metric_key, chip_frame in self.cam_crank_chips.items():
+            pid_name = self._resolved_live_metric_pids.get(metric_key)
+            raw = None
+            if pid_name:
+                raw = interpolated_values.get(pid_name)
+                if raw is None:
+                    raw = self._interpolate_metric_value(pid_name, x_position)
+            is_true = False
+            if raw is not None and not np.isnan(raw) and not np.isinf(raw):
+                is_true = bool(int(round(raw)))
+            if is_true:
+                chip_frame.setStyleSheet(
+                    "QFrame { background-color: #C8E6C9; border: 1px solid #81C784; border-radius: 6px; }"
+                )
+            else:
+                chip_frame.setStyleSheet(
+                    "QFrame { background-color: #FFCDD2; border: 1px solid #EF9A9A; border-radius: 6px; }"
+                )
+            if should_log:
+                debug(f"Live metrics: image chip {metric_key} pid={pid_name} raw={raw} is_true={is_true}")
+
     def _rebuild_cards(self):
         """Rebuild all cards based on current chart configuration."""
         # Clear existing cards

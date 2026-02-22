@@ -10,7 +10,7 @@ from domain.quick_charts.definitions import QuickChartDef, StatusChartDef
 
 V2_BATTERY_TEST = QuickChartDef(
     action_id="V2_BATTERY_TEST",
-    title="Battery Voltage vs RPM",
+    title="Battery Voltage",
     primary_pids=["BattU_u"],
     primary_range=(0, 18),
     secondary_pids=["Epm_nEng"],
@@ -26,7 +26,7 @@ V2_RAIL_PRESSURE = QuickChartDef(
 
 V2_RAIL_GAP = QuickChartDef(
     action_id="V2_RAIL_GAP",
-    title="Rail Pressure Deviation",
+    title="Rail Pressure Error",
     primary_pids=["Rail_pDvt"],
     primary_range=(-50, 4000),
 )
