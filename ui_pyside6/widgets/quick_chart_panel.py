@@ -12,6 +12,7 @@ from PySide6.QtCore import Signal, Qt
 
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE, REFERENCE_CHARTS_BY_TYPE
+from domain.snapshot import Snapshot
 
 
 class QuickChartPanel(QWidget):
@@ -170,6 +171,25 @@ class QuickChartPanel(QWidget):
         # Span both rows so it matches the height of two button rows
         self._button_layout.addWidget(self._reference_button, 0, 0, 2, 1)
     
+    def set_snapshot(self, snapshot: Optional[Snapshot]):
+        """Update buttons based on snapshot, disabling charts that require missing systems."""
+        if snapshot is None:
+            self.set_snapshot_type(None)
+            return
+
+        self.set_snapshot_type(snapshot.snapshot_type)
+
+        # Disable buttons whose required systems are absent
+        if not snapshot.has_air_throttle:
+            self._set_button_enabled("V2_THROTTLE_VALVE", False)
+
+    def _set_button_enabled(self, action_id: str, enabled: bool):
+        """Enable or disable a button by its action_id."""
+        for btn in self._buttons:
+            if btn.property("action_id") == action_id:
+                btn.setEnabled(enabled)
+                break
+
     def clear(self):
         """Clear the panel."""
         self.set_snapshot_type(None)

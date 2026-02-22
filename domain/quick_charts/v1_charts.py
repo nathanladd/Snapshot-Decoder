@@ -92,18 +92,9 @@ V1_CAM_CRANK = StatusChartDef(
     show_legend=True,
 )
 
-V1_AIR_FUEL_RATIO = QuickChartDef(
-    action_id="V1_AIR_FUEL_RATIO",
-    title="Air Fuel Ratio",
-    primary_pids=["AFC_Air_fuel_ratio"],
-    primary_range=(-50, 130),
-    secondary_pids=["T_D_Smoke_limit_active"],
-    secondary_range=(-2, 10),
-)
-
 V1_TORQUE_CONTROL = QuickChartDef(
     action_id="V1_TORQUE_CONTROL",
-    title="Torque Control",
+    title="Torque",
     primary_pids=["T_D_Actual_brake_torque", "T_D_Max_brake_torque"],
     # Auto-scale when no range specified
 )
@@ -134,6 +125,5 @@ V1_CHARTS: dict[str, QuickChartDef] = {
     "V1_EGR_POSITION": V1_EGR_POSITION,             # EGR Position
     "V1_PISTON_DELTA": V1_PISTON_DELTA,             # Piston Delta Speed
     "V1_CAM_CRANK": V1_CAM_CRANK,                   # Cam/Crank Status
-    "V1_AIR_FUEL_RATIO": V1_AIR_FUEL_RATIO,         # Air Fuel Ratio
-    "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,         # Torque Control
+    "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,         # Torque and Torque Limit
 }

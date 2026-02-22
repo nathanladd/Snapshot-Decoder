@@ -333,7 +333,7 @@ class MainWindow(QMainWindow):
         self.header_panel.set_snapshot(snapshot)
         self.system_panel.set_snapshot(snapshot)
         self.pid_panel.set_snapshot(snapshot)
-        self.quick_chart_panel.set_snapshot_type(snapshot.snapshot_type)
+        self.quick_chart_panel.set_snapshot(snapshot)
         self.chart_widget.clear()
         
         self.statusbar.showMessage(

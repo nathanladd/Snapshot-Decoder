@@ -42,9 +42,7 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Piston Delta Speed"),
         ("Cam/Crank", "V1_CAM_CRANK", 
         "Cam/Crank Condition with Sync"),
-        ("Air/Fuel Ratio", "V1_AIR_FUEL_RATIO", 
-        "Air/Fuel Ratio and Smoke Limit Control"),
-        ("Torque Control", "V1_TORQUE_CONTROL", 
+        ("Torque", "V1_TORQUE_CONTROL", 
         "Actual Brake Torque vs Torque Limit"),
     ],
 
@@ -99,6 +97,7 @@ LIVE_METRIC_KEYS: tuple[str, ...] = (
     "CHECK_ENGINE",
     "ENGINE_STATE",          #ECU_V1 Engines
     "ENGINE_STATUS",         #ECU_V2 Engines
+    "SYNC_STATUS",           #ECU_V2 Crank/Cam Sync
     "START_AID",
     "SMOKE_LIMIT",
     "OIL_PRESSURE_LAMP",
@@ -124,6 +123,7 @@ LIVE_METRIC_PID_MAP: dict[SnapType, dict[str, list[str]]] = {
         "OIL_PRESSURE": ["Oil_pSwmp"],
         "COOLANT_TEMP": ["CEngDsT_t"],
         "ENGINE_STATUS": ["CoEng_st"],                         #ECU_V2 Engines
+        "SYNC_STATUS": ["Epm_stSync"],                          #ECU_V2 Crank/Cam Sync
     },
 }
 
@@ -136,6 +136,7 @@ LIVE_METRIC_META: dict[str, dict[str, object]] = {
     "CHECK_ENGINE": {"label": "Check Engine", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "ENGINE_STATE": {"label": "Engine State", "unit": "", "min": 0, "max": 5, "decimals": 0},
     "ENGINE_STATUS": {"label": "Engine Status", "unit": "", "min": 0, "max": 5, "decimals": 0},
+    "SYNC_STATUS": {"label": "Sync Status", "unit": "", "min": 0, "max": 30, "decimals": 0},
     "START_AID": {"label": "Start Aid", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "SMOKE_LIMIT": {"label": "Smoke Limit", "unit": "", "min": 0, "max": 1, "decimals": 0},
     "OIL_PRESSURE_LAMP": {"label": "Oil Pressure", "unit": "", "min": 0, "max": 1, "decimals": 0},
@@ -158,6 +159,13 @@ LIVE_METRIC_STATE_LABELS: dict[SnapType, dict[str, dict[int, str]]] = {
             3: "RUNNING",
             4: "STOPPING",
             5: "FINISH",
+        },
+        "SYNC_STATUS": {
+            0: "EPM_NO_SYNC",
+            10: "EPM_ALE_SYNC",
+            20: "EPM_CAS_SYNC",
+            21: "EPM_DIRSTALE_SYNC",
+            30: "EPM_FULL_SYNC",
         },
     },
 }

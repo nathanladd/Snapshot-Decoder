@@ -617,6 +617,47 @@ class LiveValuesWidget(QWidget):
                 """
             )
 
+    def _set_sync_chip_state(self, label: QLabel, state_code: int, is_active: bool):
+        """Apply state-specific styling for Crank/Cam Sync chips."""
+        if not is_active:
+            label.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #E0E0E0;
+                    color: #616161;
+                    font-weight: bold;
+                    font-size: 9px;
+                    border: 1px solid #BDBDBD;
+                    border-radius: 4px;
+                    padding: 0px 4px;
+                }
+                """
+            )
+            return
+
+        # 0 = NO_SYNC -> red, 30 = FULL_SYNC -> green, others -> yellow
+        sync_styles = {
+            0:  ("#E53935", "#FFFFFF", "#C62828"),   # NO_SYNC  - red
+            10: ("#F9A825", "#5D4A00", "#F57F17"),   # ALE_SYNC - yellow
+            20: ("#F9A825", "#5D4A00", "#F57F17"),   # CAS_SYNC - yellow
+            21: ("#F9A825", "#5D4A00", "#F57F17"),   # DIRSTALE - yellow
+            30: ("#2E7D32", "#FFFFFF", "#1B5E20"),   # FULL_SYNC - green
+        }
+        bg, fg, border = sync_styles.get(state_code, ("#F9A825", "#5D4A00", "#F57F17"))
+        label.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: {bg};
+                color: {fg};
+                font-weight: bold;
+                font-size: 9px;
+                border: 1px solid {border};
+                border-radius: 4px;
+                padding: 0px 4px;
+            }}
+            """
+        )
+
     def _set_engine_state_chip_state(self, label: QLabel, state_code: int, is_active: bool):
         """Apply state-specific styling for Engine State/Status chips."""
         if not is_active:
@@ -819,6 +860,7 @@ class LiveValuesWidget(QWidget):
             QFontMetrics(chip_font).horizontalAdvance("Check Engine"),
             QFontMetrics(chip_font).horizontalAdvance("COENG_CRANKING"),
         ) + 8
+        sync_chip_width = QFontMetrics(chip_font).horizontalAdvance("EPM_DIRSTALE_SYNC") + 12
 
         for metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
             pid_name = self._resolved_live_metric_pids.get(metric_key)
@@ -860,6 +902,35 @@ class LiveValuesWidget(QWidget):
                     f"Live metrics: created chips for {metric_key} from PID {pid_name} "
                     f"states={sorted(metric_chip_map.keys())}"
                 )
+
+        # Sync status chips (stacked vertically next to engine status)
+        sync_pid_name = self._resolved_live_metric_pids.get("SYNC_STATUS")
+        if sync_pid_name:
+            sync_labels = dict(state_map.get("SYNC_STATUS", {}))
+            if sync_labels:
+                sync_stack_widget = QWidget(self.key_live_widget)
+                sync_stack_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+                sync_stack_layout = QVBoxLayout(sync_stack_widget)
+                sync_stack_layout.setContentsMargins(0, 0, 0, 0)
+                sync_stack_layout.setSpacing(2)
+                sync_stack_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+                sync_chip_map: Dict[int, QLabel] = {}
+                for state_val in sorted(sync_labels.keys()):
+                    chip = QLabel(sync_labels[state_val], sync_stack_widget)
+                    chip.setAlignment(Qt.AlignCenter)
+                    chip.setFixedHeight(20)
+                    chip.setFixedWidth(sync_chip_width)
+                    self._set_sync_chip_state(chip, state_val, False)
+                    sync_chip_map[state_val] = chip
+                    sync_stack_layout.addWidget(chip, 0, Qt.AlignLeft)
+
+                self.live_state_chip_groups["SYNC_STATUS"] = sync_chip_map
+                self.key_live_layout.addWidget(sync_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
+                if self._debug_logging:
+                    debug(
+                        f"Live metrics: created sync chips from PID {sync_pid_name} "
+                        f"states={sorted(sync_chip_map.keys())}"
+                    )
 
         binary_stack_widget = QWidget(self.key_live_widget)
         binary_stack_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
@@ -1006,6 +1077,8 @@ class LiveValuesWidget(QWidget):
             for val, chip in chip_map.items():
                 if metric_key in ("ENGINE_STATE", "ENGINE_STATUS"):
                     self._set_engine_state_chip_state(chip, val, state_val == val)
+                elif metric_key == "SYNC_STATUS":
+                    self._set_sync_chip_state(chip, val, state_val == val)
                 else:
                     self._set_chip_active(chip, state_val == val)
             if should_log:
