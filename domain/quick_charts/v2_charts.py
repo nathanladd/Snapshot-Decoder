@@ -99,6 +99,15 @@ V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
     display_prefix="Torque Limit:",
 )
 
+V2_BOOST_LEAK = QuickChartDef(
+    action_id="V2_BOOST_LEAK",
+    title="Boost Leak",
+    primary_pids=["AirMod_mfGasIntkVlv_f", "AFS_dm"],
+    primary_range=(0, 400),
+    secondary_pids=["EGRVlv_rAct"],
+    secondary_range=(-5, 200),
+)
+
 
 # Registry of all V2 charts by action_id
 
@@ -115,13 +124,14 @@ V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
 # Creates status chart showing misfire flags
  
 V2_CHARTS: dict[str, QuickChartDef] = {
-    "V2_BATTERY_TEST": V2_BATTERY_TEST,                  # Battery Voltage vs Engine Speed
-    "V2_RAIL_PRESSURE": V2_RAIL_PRESSURE,                # Actual vs Desired Rail Pressure
-    "V2_RAIL_GAP": V2_RAIL_GAP,                          # Rail Gap
-    "V2_IMV_CURRENT": V2_IMV_CURRENT,                    # IMV Current
-    "V2_TURBO": V2_TURBO,                                # Manifold Pressure vs Atmospheric Pressure
-    "V2_MISFIRE": V2_MISFIRE,                            # Misfire Counters
-    "V2_THROTTLE_VALVE": V2_THROTTLE_VALVE,              # Throttle Valve Position
-    "V2_ENGINE_LOAD": V2_ENGINE_LOAD,                    # Engine Load
-    "V2_ENGINE_TORQUE_LIMITS": V2_ENGINE_TORQUE_LIMITS,  # Engine Torque Limits
+    "V2_BATTERY_TEST": V2_BATTERY_TEST,                   # Battery Voltage vs Engine Speed
+    "V2_RAIL_PRESSURE": V2_RAIL_PRESSURE,                 # Actual vs Desired Rail Pressure
+    "V2_RAIL_GAP": V2_RAIL_GAP,                           # Rail Gap
+    "V2_IMV_CURRENT": V2_IMV_CURRENT,                     # IMV Current
+    "V2_TURBO": V2_TURBO,                                 # Manifold Pressure vs Atmospheric Pressure
+    "V2_MISFIRE": V2_MISFIRE,                             # Misfire Counters
+    "V2_THROTTLE_VALVE": V2_THROTTLE_VALVE,               # Throttle Valve Position
+    "V2_ENGINE_LOAD": V2_ENGINE_LOAD,                     # Engine Load
+    "V2_ENGINE_TORQUE_LIMITS": V2_ENGINE_TORQUE_LIMITS,   # Engine Torque Limits
+    "V2_BOOST_LEAK": V2_BOOST_LEAK,                       # Boost Leak
 }
