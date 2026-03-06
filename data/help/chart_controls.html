@@ -5,104 +5,201 @@
 </head>
 <body>
     <h1>Chart Controls</h1>
-    
-    <p>Snapshot Decoder provides comprehensive chart controls that allow you to customize and interact with your diagnostic charts. The chart controls are divided into two main areas: the axis controls in the left panel and the toolbar at the top of each chart.</p>
-    
-    <h2>Overview</h2>
-    
-    <p>The chart controls give you complete flexibility to:</p>
-    <ul>
-        <li>Select which PIDs to display on primary and secondary axes</li>
-        <li>Arrange the display order of PIDs</li>
-        <li>Set custom axis ranges for precise analysis</li>
-        <li>Navigate, zoom, and interact with chart data</li>
-        <li>Export charts for documentation and reporting</li>
-    </ul>
-    
-    <h2>Live Chart Updates</h2>
-    
-    <p>Most chart controls have a <strong>live effect</strong> on the current chart, meaning changes are applied immediately without requiring additional action:</p>
-    
-    <h3>Controls with Live Updates</h3>
-    <ul>
-        <li><strong>Adding PIDs</strong> - Charts update automatically when you add PIDs to either axis</li>
-        <li><strong>Removing PIDs</strong> - Deleting a PID from an axis immediately removes it from the chart</li>
-        <li><strong>Reordering PIDs</strong> - Moving PIDs up or down with the ▲ and ▼ buttons instantly changes the display order and z-order</li>
-        <li><strong>Toolbar interactions</strong> - Zoom, pan, cursor, and values tools activate immediately when clicked</li>
-    </ul>
-    
-    <h3>Axis Range Changes Require Plot Chart</h3>
-    
-    <div class="info">
-        <strong>Important:</strong> When you change the <strong>min</strong> or <strong>max</strong> values for axis ranges, you must click the <strong>Plot Chart</strong> button to apply the changes. This is the only chart control that does not update live.
+
+    <p>Every chart in Snapshot Decoder has a <strong>toolbar</strong> across the top and a small
+    <strong>Y-axis ruler panel</strong> on the left edge. Together they give you full control
+    over navigation, measurement, export, and axis scaling.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="toolbar">Chart Toolbar</h2>
+
+    <p>The toolbar runs across the top of every chart (and pop-out chart window).</p>
+
+    <img src="../images/chart_toolbar.png" alt="Chart toolbar" style="max-width: 100%;">
+
+    <p>From left to right the buttons and controls are:</p>
+
+    <table>
+        <tr><th>Button</th><th>Name</th><th>Description</th></tr>
+        <tr>
+            <td>Home</td>
+            <td><strong>Home</strong></td>
+            <td>Resets the chart to the original view after you have panned or zoomed.
+                Returns both axes to their full auto-scaled range.</td>
+        </tr>
+        <tr>
+            <td>&larr;</td>
+            <td><strong>Back</strong></td>
+            <td>Steps back through the view history (previous zoom or pan positions).</td>
+        </tr>
+        <tr>
+            <td>&rarr;</td>
+            <td><strong>Forward</strong></td>
+            <td>Steps forward through the view history after using Back.</td>
+        </tr>
+        <tr>
+            <td>Cross arrows</td>
+            <td><strong>Pan</strong></td>
+            <td>Click and drag the chart to pan in any direction.
+                Right-click and drag to zoom along a single axis.
+                This is a toggle &ndash; click again to deactivate.</td>
+        </tr>
+        <tr>
+            <td>Magnifying glass</td>
+            <td><strong>Zoom</strong></td>
+            <td>Click and drag a rectangle on the chart to zoom into that region.
+                Right-click and drag to zoom out.
+                This is a toggle &ndash; click again to deactivate.</td>
+        </tr>
+        <tr>
+            <td>Floppy disk</td>
+            <td><strong>Save as PDF</strong></td>
+            <td>Exports the current chart to a PDF file. The PDF includes chain-of-custody
+                metadata (file name, date/time, engine hours) and a Snapshot Decoder
+                version watermark.</td>
+        </tr>
+        <tr>
+            <td colspan="2"><strong>Coordinates display</strong></td>
+            <td>Shows the current cursor position as <code>(x, y)</code> values.
+                When two axes are active it shows both the left and right Y values,
+                e.g. <code>(00:41, 2.02) | (00:41, 292.)</code>.</td>
+        </tr>
+        <tr>
+            <td>Cart icon</td>
+            <td><strong>Add to Chart Cart</strong></td>
+            <td>Adds a snapshot of the current chart to the Chart Cart dock panel.
+                The cart collects charts for batch export to a multi-page PDF.</td>
+        </tr>
+        <tr>
+            <td>Value popup icon</td>
+            <td><strong>Value Display</strong></td>
+            <td>Toggle button. When active (highlighted blue), hovering over a data line
+                shows a tooltip with the exact PID value at that point. Uses
+                <em>mplcursors</em> for interactive data annotation.</td>
+        </tr>
+        <tr>
+            <td>Time icon</td>
+            <td><strong>Time Slider / Cursor</strong></td>
+            <td>Toggle button. When active, a vertical time cursor and a slider bar appear
+                below the chart. Drag the slider or the cursor line to scrub through time.
+                The exact time position is shown on the X-axis.</td>
+        </tr>
+        <tr>
+            <td>Brain icon</td>
+            <td><strong>Quick IQ</strong></td>
+            <td>Opens the Quick IQ panel, which provides context-aware analysis
+                tips for the currently displayed chart.</td>
+        </tr>
+    </table>
+
+    <h3>Axis Range Controls (inline)</h3>
+
+    <p>Immediately after the chart buttons, the toolbar includes inline
+    <strong>Left Axis</strong> and <strong>Right Axis</strong> range controls:</p>
+
+    <table>
+        <tr><th>Control</th><th>Description</th></tr>
+        <tr>
+            <td><strong>Auto</strong> checkbox</td>
+            <td>When checked, the axis automatically scales to fit the data.
+                Uncheck it to type custom <strong>Min</strong> and <strong>Max</strong> values.</td>
+        </tr>
+        <tr>
+            <td><strong>Min / Max</strong> fields</td>
+            <td>Enter numeric values to lock the axis range. Changes are applied live
+                as soon as you press <kbd>Tab</kbd> or <kbd>Enter</kbd>.
+                Leave both axes on <em>Auto</em> to let the chart scale itself.</td>
+        </tr>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> When comparing the same PID across multiple snapshots, set identical
+        Min/Max ranges on both charts so the visual scale matches exactly.
     </div>
-    
-    <p>This design allows you to adjust both primary and secondary axis ranges together before regenerating the chart, avoiding multiple unnecessary redraws.</p>
-    
-    <h2>Chart Control Components</h2>
-    
-    <h3>Axis Controls</h3>
-    <p>The axis controls are located in the left panel and manage which PIDs are displayed and how they are scaled.</p>
-    
-    <p>Key features include:</p>
+
+    <h3>Pop-out Button</h3>
+    <p>At the far right of the toolbar is the <strong>Pop-out</strong> button (expand-in-new-window icon).
+    It opens the current chart in a separate resizable window with its own full toolbar,
+    rulers, and time slider. This is useful for side-by-side comparison or for maximizing
+    chart area on a second monitor. The pop-out button is not shown when the chart is
+    already in a pop-out window.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="rulers">Y-Axis Rulers</h2>
+
+    <p>A small control strip sits on the left edge of the chart area, beside the Y-axis.
+    It lets you add horizontal reference lines (rulers) to the chart for quick
+    visual comparison against specific values.</p>
+
+    <img src="../images/chart_rulers.png" alt="Y-axis ruler controls" style="max-width: 60px;">
+
+    <p>From top to bottom the controls are:</p>
+
+    <table>
+        <tr><th>Button</th><th>Name</th><th>Description</th></tr>
+        <tr>
+            <td>Ruler icon</td>
+            <td><strong>Ruler indicator</strong></td>
+            <td>Visual indicator showing these controls are for Y-axis rulers.</td>
+        </tr>
+        <tr>
+            <td><strong>+</strong></td>
+            <td><strong>Add Ruler</strong></td>
+            <td>Adds a horizontal ruler line at the midpoint of the current left Y-axis range.
+                You can add multiple rulers.</td>
+        </tr>
+        <tr>
+            <td><strong>&minus;</strong></td>
+            <td><strong>Remove Ruler</strong></td>
+            <td>Removes the currently selected ruler. If no ruler is selected, removes
+                the last one that was added.</td>
+        </tr>
+        <tr>
+            <td><strong>x</strong></td>
+            <td><strong>Clear All Rulers</strong></td>
+            <td>Removes all ruler lines from the chart at once.</td>
+        </tr>
+    </table>
+
+    <h3>Interacting with Rulers</h3>
     <ul>
-        <li>Primary and secondary axis list boxes</li>
-        <li>PID reordering buttons (▲ ▼)</li>
-        <li>PID removal button (🗑)</li>
-        <li>Automatic and manual axis scaling options</li>
-        <li>Custom min/max range entry boxes</li>
+        <li><strong>Drag to reposition</strong> &ndash; Click on any ruler line and drag it up or down
+            to set it to an exact Y value. The value label updates in real time as you drag.</li>
+        <li><strong>Select a ruler</strong> &ndash; Click near a ruler to select it (highlighted).
+            The <strong>&minus;</strong> button will then remove that specific ruler.</li>
+        <li><strong>Value labels</strong> &ndash; Each ruler displays its current Y value on the
+            left side of the chart so you can read exact reference points.</li>
     </ul>
-    
-    <p><a href="axis_controls.html">Learn more about Axis Controls →</a></p>
-    
-    <h3>Chart Toolbar</h3>
-    <p>The toolbar appears at the top of every chart and provides navigation, interaction, and export tools.</p>
-    
-    <p>Key features include:</p>
-    <ul>
-        <li>Home, back, and forward navigation</li>
-        <li>Pan and zoom tools</li>
-        <li>Vertical cursor for time alignment</li>
-        <li>Values display for precise measurements</li>
-        <li>Add to cart and pop-out options</li>
-        <li>PDF export with embedded metadata</li>
-    </ul>
-    
-    <p><a href="chart_toolbar.html">Learn more about the Chart Toolbar →</a></p>
-    
+
+    <div class="info">
+        <strong>Use case:</strong> Add a ruler at a known specification limit (for example, a minimum
+        rail pressure threshold) to instantly see where the data crosses that boundary.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
     <h2>Typical Workflow</h2>
-    
-    <p>Here's how the chart controls work together in a typical analysis session:</p>
-    
+
     <ol>
-        <li><strong>Select PIDs</strong> - Search and add PIDs to primary or secondary axes (live update)</li>
-        <li><strong>Arrange display</strong> - Use ▲ and ▼ buttons to order PIDs (live update)</li>
-        <li><strong>Set axis ranges</strong> - Optionally uncheck auto scaling and enter min/max values</li>
-        <li><strong>Click Plot Chart</strong> - Apply axis range changes if you made any</li>
-        <li><strong>Interact with chart</strong> - Use toolbar to zoom, pan, and measure values (live)</li>
-        <li><strong>Export or save</strong> - Add to cart or save as PDF using toolbar buttons (live)</li>
+        <li><strong>Select PIDs</strong> &ndash; Check PIDs on the left or right axis from the Snapshot Data panel.</li>
+        <li><strong>Zoom in</strong> &ndash; Use the Zoom tool to focus on the area of interest.</li>
+        <li><strong>Enable Value Display</strong> &ndash; Toggle the value popup to read exact data points.</li>
+        <li><strong>Add rulers</strong> &ndash; Place horizontal rulers at specification limits.</li>
+        <li><strong>Adjust axis ranges</strong> &ndash; Uncheck Auto and enter Min/Max for precise scaling.</li>
+        <li><strong>Export</strong> &ndash; Save as PDF or add to the Chart Cart for batch export.</li>
     </ol>
-    
-    <h2>Tips for Effective Chart Control</h2>
-    
-    <ul>
-        <li><strong>Start with auto scaling</strong> - Let the chart automatically determine the best axis ranges, then adjust manually if needed</li>
-        <li><strong>Use consistent ranges</strong> - When comparing multiple snapshots, set the same axis ranges to make visual comparison easier</li>
-        <li><strong>Reorder for visibility</strong> - If important data is hidden behind other lines, move it to the bottom of the list to draw on top</li>
-        <li><strong>Combine axes strategically</strong> - Group PIDs with similar ranges on the same axis for clearer visualization</li>
-        <li><strong>Remember to click Plot Chart</strong> - After changing axis min/max values, don't forget to click Plot Chart to see the changes</li>
-    </ul>
-    
-    <div class="info">
-        <strong>Quick Tip:</strong> You can quickly reset your chart by clicking the <strong>Clear Chart</strong> button, which removes all PIDs from both axes and returns the controls to their default state.
+
+    <div class="tip">
+        <strong>Quick Tip:</strong> You can quickly reset your chart by clicking the
+        <strong>Clear Chart</strong> button on the Snapshot Data panel, which removes all PIDs
+        from both axes and returns everything to its default state.
     </div>
-    
+
+    <!-- ─────────────────────────────────────────────────── -->
     <h2>Related Topics</h2>
     <ul>
-        <li><a href="axis_controls.html">Axis Controls</a> - Detailed guide to axis configuration and PID management</li>
-        <li><a href="chart_toolbar.html">Chart Toolbar</a> - Complete reference for toolbar buttons and interactions</li>
-        <li><a href="custom_charts.html">Custom Charts</a> - Learn how to create custom chart configurations</li>
-        <li><a href="quick_charts.html">Quick Charts</a> - Pre-configured charts for common diagnostic scenarios</li>
+        <li><a href="snapshot_panel.html">Snapshot Data Panel</a> &ndash; PID selection and header info</li>
+        <li><a href="quick_charts.html">Quick Charts</a> &ndash; Pre-configured diagnostic chart views</li>
+        <li><a href="snapshots.html">Working with Snapshots</a> &ndash; Supported snapshot types and file formats</li>
     </ul>
 </body>
 </html>

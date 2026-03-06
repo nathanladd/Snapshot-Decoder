@@ -10,7 +10,7 @@ import sys
 
 from PySide6.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QLineEdit
+    QPushButton, QLabel, QLineEdit, QStyle
 )
 from PySide6.QtCore import Qt, QSize, QUrl, Slot
 from PySide6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
@@ -59,36 +59,40 @@ class HelpBrowserDock(QDockWidget):
         nav.setContentsMargins(4, 0, 4, 2)
         nav.setSpacing(4)
 
-        btn_style = """
+        nav_btn_style = """
             QPushButton {
                 border: 1px solid #C0C0C0;
-                border-radius: 2px;
-                padding: 2px 6px;
+                border-radius: 3px;
+                padding: 4px;
                 background-color: #F0F0F0;
-                font-size: 11px;
             }
             QPushButton:hover { background-color: #E0E0E0; border: 1px solid #0078d4; }
             QPushButton:pressed { background-color: #D0D0D0; }
-            QPushButton:disabled { color: #AAA; background-color: #F8F8F8; }
+            QPushButton:disabled { background-color: #F8F8F8; }
         """
+        nav_icon_size = QSize(18, 18)
 
-        self._back_btn = QPushButton("◀")
-        self._back_btn.setFixedWidth(28)
-        self._back_btn.setStyleSheet(btn_style)
+        self._back_btn = QPushButton()
+        self._back_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
+        self._back_btn.setIconSize(nav_icon_size)
+        self._back_btn.setFixedSize(34, 34)
+        self._back_btn.setStyleSheet(nav_btn_style)
         self._back_btn.setToolTip("Back")
         self._back_btn.clicked.connect(self._on_back)
         nav.addWidget(self._back_btn)
 
-        self._fwd_btn = QPushButton("▶")
-        self._fwd_btn.setFixedWidth(28)
-        self._fwd_btn.setStyleSheet(btn_style)
+        self._fwd_btn = QPushButton()
+        self._fwd_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
+        self._fwd_btn.setIconSize(nav_icon_size)
+        self._fwd_btn.setFixedSize(34, 34)
+        self._fwd_btn.setStyleSheet(nav_btn_style)
         self._fwd_btn.setToolTip("Forward")
         self._fwd_btn.clicked.connect(self._on_forward)
         nav.addWidget(self._fwd_btn)
 
-        self._home_btn = QPushButton("⌂")
-        self._home_btn.setFixedWidth(28)
-        self._home_btn.setStyleSheet(btn_style)
+        self._home_btn = QPushButton("\u2302")
+        self._home_btn.setFixedSize(34, 34)
+        self._home_btn.setStyleSheet(nav_btn_style + "QPushButton { font-size: 18px; }")
         self._home_btn.setToolTip("Help home")
         self._home_btn.clicked.connect(self._on_home)
         nav.addWidget(self._home_btn)

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Snapshot Data Panel</h1>
+
+    <p>The <strong>Snapshot Data</strong> panel is the left-side dock that appears when you open a snapshot file.
+    It is the central hub for viewing snapshot metadata, identifying equipped systems,
+    accessing data tools, and selecting PIDs for custom charts.</p>
+
+    <img src="../images/snapshot_panel.png" alt="Snapshot Data panel overview" style="max-width: 420px;">
+
+    <p>The panel is divided into four main sections described below.</p>
+
+    <div class="highlight">
+        <strong>Quick Tip:</strong> The Snapshot Data panel is always accessible on the left side of the main window.
+        If it is not visible, open a snapshot file with <kbd>Ctrl</kbd>+<kbd>O</kbd> or click the
+        <strong>Open</strong> button on the toolbar.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="toolbar">Snapshot Toolbar</h2>
+
+    <p>The toolbar at the top of the Snapshot Data panel provides quick access to commonly used actions.</p>
+
+    <img src="../images/snapshot_toolbar.png" alt="Snapshot toolbar" style="max-width: 260px;">
+
+    <p>From left to right, the toolbar buttons are:</p>
+
+    <table>
+        <tr><th>Icon</th><th>Action</th><th>Description</th></tr>
+        <tr>
+            <td>Folder</td>
+            <td><strong>Open Snapshot</strong></td>
+            <td>Opens a file dialog to load a snapshot file (<code>.xls</code> or <code>.xlsx</code>).
+                Keyboard shortcut: <kbd>Ctrl</kbd>+<kbd>O</kbd>.</td>
+        </tr>
+        <tr>
+            <td>Raw Table</td>
+            <td><strong>Raw Data Table</strong></td>
+            <td>Opens a window showing the unprocessed data exactly as it was imported from the snapshot file.
+                Useful for verifying that a file was read correctly.</td>
+        </tr>
+        <tr>
+            <td>Clean Table</td>
+            <td><strong>Clean Data Table</strong></td>
+            <td>Opens a window showing the data after Snapshot Decoder has cleaned, parsed, and
+                organized it. Column headers are PID names and rows are time-indexed samples.</td>
+        </tr>
+        <tr>
+            <td>Chart Table</td>
+            <td><strong>Chart Data Table</strong></td>
+            <td>Opens a window showing only the data for the PIDs currently plotted on the chart.
+                Helpful for cross-referencing exact values at specific time points.</td>
+        </tr>
+        <tr>
+            <td>Info</td>
+            <td><strong>Help</strong></td>
+            <td>Opens this Help browser panel. Keyboard shortcut: <kbd>F1</kbd>.</td>
+        </tr>
+    </table>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="header-info">Header Info</h2>
+
+    <p>The <strong>Header Info</strong> section displays key metadata extracted from the snapshot file.
+    This information is read directly from the snapshot header rows and varies depending on
+    the snapshot type.</p>
+
+    <img src="../images/snapshot_header_info.png" alt="Snapshot header information" style="max-width: 340px;">
+
+    <p>Common fields include:</p>
+    <ul>
+        <li><strong>File</strong> &ndash; The name of the currently loaded snapshot file.</li>
+        <li><strong>Type</strong> &ndash; The detected snapshot type (V1 ECU, V1 EUD, or V2 ECU).
+            Snapshot Decoder auto-detects this when the file is opened.</li>
+        <li><strong>Engine Model</strong> &ndash; The engine model identifier from the ECU.</li>
+        <li><strong>Map Version</strong> &ndash; The ECU calibration map version.</li>
+        <li><strong>Engine Analyzer</strong> &ndash; The BEA software version and release date that captured the snapshot.</li>
+        <li><strong>Date / Time</strong> &ndash; The date and time the snapshot was recorded.</li>
+        <li><strong>Engine Hours</strong> &ndash; Total operating hours on the engine at the time of capture.
+            Hours are automatically converted from seconds when the snapshot stores them that way.</li>
+    </ul>
+
+    <div class="info">
+        <strong>Note:</strong> Not all fields appear for every snapshot type.
+        V1 ECU and V1 EUD snapshots may show additional fields such as serial number and MDP success rate,
+        while V2 ECU snapshots include map version and engine model details.
+        Snapshot Decoder displays whatever information is available in the file.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="systems">Snapshot Systems</h2>
+
+    <p>The <strong>Systems</strong> column appears to the right of the Header Info section.
+    It shows which emission-related systems and subsystems are detected in the snapshot.</p>
+
+    <img src="../images/snapshot_systems.png" alt="Snapshot systems indicators" style="max-width: 100px;">
+
+    <p>Each system is shown as a small indicator label:</p>
+    <ul>
+        <li><strong style="color: #00AA00;">Green (lit)</strong> &ndash; The system is present in the snapshot data.
+            Quick Charts related to that system are available.</li>
+        <li><strong style="color: #888;">Gray (dim)</strong> &ndash; The system is not detected.
+            Quick Charts for that system will not be offered.</li>
+    </ul>
+
+    <p>The systems monitored are:</p>
+    <table>
+        <tr><th>System</th><th>Description</th></tr>
+        <tr><td><strong>EGR</strong></td><td>Exhaust Gas Recirculation &ndash; reduces NOx emissions by lowering combustion chamber temperature using recirculated exhaust.</td></tr>
+        <tr><td><strong>DOC</strong></td><td>Diesel Oxidation Catalyst &ndash; oxidizes CO and hydrocarbons in the exhaust.</td></tr>
+        <tr><td><strong>DPF</strong></td><td>Diesel Particulate Filter &ndash; traps soot particles from the exhaust stream.</td></tr>
+        <tr><td><strong>SCR</strong></td><td>Selective Catalytic Reduction &ndash; uses DEF to reduce NOx in the exhaust.</td></tr>
+        <tr><td><strong>Air Throttle</strong></td><td>Intake air throttle valve installed in place of the EGR valve. Controls intake airflow to reduce combustion chamber temperature.</td></tr>
+        <tr><td><strong>MDP</strong></td><td>Minimum Drive Pulse &ndash; injector performance metric (V1 snapshots only).
+            When present, the indicator also displays the calculated MDP success rate percentage.
+            The color reflects health: <strong style="color:#00AA00;">green</strong> (&ge; 76%),
+            <strong style="color:#F9A825;">yellow</strong> (51&ndash;75%), or
+            <strong style="color:#C62828;">red</strong> (&le; 50%).</td></tr>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> The system indicators give you an instant overview of the engine&rsquo;s emission
+        configuration before you even look at a chart. If a system you expect to see is grayed out,
+        the snapshot may not contain data for that subsystem, or it may be a different engine variant.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="pid-selection">PID Selection</h2>
+
+    <p>The <strong>PID Selection</strong> section occupies the lower portion of the Snapshot Data panel.
+    It lists every PID (Parameter ID) available in the loaded snapshot and lets you build
+    custom line charts by selecting which PIDs to plot.</p>
+
+    <img src="../images/snapshot_pid_selection.png" alt="PID Selection list" style="max-width: 420px;">
+
+    <h3>Filter Descriptions</h3>
+    <p>At the top of the PID Selection area is a <strong>Filter Descriptions</strong> text field.
+    Type any keyword to instantly filter the PID list. For example, typing
+    <code>coolant</code> narrows the list to only PIDs whose descriptions contain that word.
+    Click the <strong style="color:red;">&#10006;</strong> button to clear the filter and show all PIDs again.</p>
+
+    <h3>Left / Right Axis Checkboxes</h3>
+    <p>Each PID row has two checkboxes:</p>
+    <ul>
+        <li><strong>Left</strong> &ndash; Check this box to plot the PID on the <em>left</em> (primary) Y-axis.</li>
+        <li><strong>Right</strong> &ndash; Check this box to plot the PID on the <em>right</em> (secondary) Y-axis.</li>
+    </ul>
+    <p>Using dual axes lets you compare PIDs with very different value ranges on the same chart.
+    For example, you might plot <em>Engine actual brake torque</em> on the left axis and
+    <em>Oil temperature</em> on the right axis.</p>
+
+    <div class="info">
+        <strong>How it works:</strong> When you check or uncheck a PID, the chart updates immediately.
+        Each PID is drawn as a colored line. The line color is shown in the checkbox cell so you
+        can quickly identify which line belongs to which PID.
+    </div>
+
+    <h3>PID Column</h3>
+    <p>The rightmost column shows a short <strong>PID identifier</strong> code for each parameter.
+    This code corresponds to the internal identifier used in the snapshot file.</p>
+
+    <h3>Clear Chart</h3>
+    <p>At the bottom of the panel is the <strong style="color:red;">&#10006; Clear Chart</strong> button.
+    Clicking it deselects all PIDs and clears the chart, giving you a blank canvas to start a new selection.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2>Related Topics</h2>
+    <ul>
+        <li><a href="snapshots.html">Working with Snapshots</a> &ndash; Supported snapshot types and file formats</li>
+        <li><a href="quick_charts.html">Quick Charts</a> &ndash; One-click diagnostic chart views</li>
+        <li><a href="raw_data_table.html">Raw Data Table</a> &ndash; Viewing original imported data</li>
+        <li><a href="cleaned_data_table.html">Cleaned Data Table</a> &ndash; Viewing processed data</li>
+    </ul>
+</body>
+</html>
