@@ -276,6 +276,10 @@ class MainWindow(QMainWindow):
         help_home_action.triggered.connect(self._on_show_help_home)
         help_menu.addAction(help_home_action)
         
+        seven_step_action = QAction("Seven Step Diagnostic Process", self)
+        seven_step_action.triggered.connect(self._on_show_seven_step)
+        help_menu.addAction(seven_step_action)
+        
         ref_charts_action = QAction("What are Reference Charts?", self)
         ref_charts_action.triggered.connect(self._on_what_are_reference_charts)
         help_menu.addAction(ref_charts_action)
@@ -772,6 +776,9 @@ class MainWindow(QMainWindow):
         
         config_copy = copy.deepcopy(config)
         self.chart_cart_dock.add_config(config_copy)
+        if not self.chart_cart_dock.isVisible():
+            self.chart_cart_dock.show()
+        self.chart_cart_dock.raise_()
         info(f"Added chart to cart: {config.title}")
     
     
@@ -803,6 +810,11 @@ class MainWindow(QMainWindow):
     def _on_show_help_home(self):
         """Show the help browser with the home page."""
         self.help_browser_dock.navigate("index.html")
+
+    @Slot()
+    def _on_show_seven_step(self):
+        """Show the Seven Step Diagnostic Process help page."""
+        self.help_browser_dock.navigate("seven_step.html")
 
     def _build_quick_iq_url(self, chart_title: str) -> str:
         """Build a Quick IQ SharePoint page URL from chart title."""

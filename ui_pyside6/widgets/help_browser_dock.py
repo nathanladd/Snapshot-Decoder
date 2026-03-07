@@ -299,9 +299,9 @@ class HelpBrowserDock(QDockWidget):
         # Auto-show and expand if hidden/collapsed
         if not self.isVisible():
             self.show()
-            self.raise_()
         if not self._is_expanded:
             self.expand()
+        self.raise_()
 
     @Slot()
     def _on_back(self):
