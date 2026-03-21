@@ -133,6 +133,30 @@ def log_export(export_type: str, file_path: str, snapshot_source: str):
     logger.log_export(export_type, file_path, snapshot_source)
 
 
+# Phase and summary helpers
+def log_phase(phase_num: int, description: str):
+    """Log a phase header with visual separator for readability."""
+    logger = get_logger()
+    logger.logger.info("")  # blank line before phase
+    logger.logger.info(f"\u2500\u2500 Phase {phase_num}: {description} \u2500\u2500")
+
+
+def log_summary(lines: list):
+    """Log a bordered summary block.
+    
+    Args:
+        lines: List of strings to display inside the summary box.
+    """
+    logger = get_logger()
+    width = max((len(line) for line in lines), default=0) + 4
+    border = "\u2550" * width
+    logger.logger.info("")
+    logger.logger.info(border)
+    for line in lines:
+        logger.logger.info(f"  {line}")
+    logger.logger.info(border)
+
+
 # Standard logging functions
 def debug(message: str):
     """Log debug message."""

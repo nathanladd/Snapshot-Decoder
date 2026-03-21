@@ -192,17 +192,35 @@ class LogConsole(QWidget):
         func_name = getattr(record, 'funcName', '')
         line_info = f"{module}:{func_name}" if func_name else module
         
+        # Clean blank lines: no timestamp/level prefix for empty messages
+        if not message.strip():
+            cursor.insertText("\n")
+            if self._auto_scroll:
+                self.console.ensureCursorVisible()
+            return
+        
         # Create formatted line
         #full_message = f"[{timestamp}] {level_name} {line_info}: {message}"
         full_message = f"[{timestamp}] {level_name}: {message}"
         
         # Apply formatting
+        is_phase_header = message.startswith("\u2500\u2500 Phase ")
+        is_summary_border = message and all(ch == "\u2550" for ch in message)
+        
         color = self.colors.get(record.levelno, QColor(0, 0, 0))
         bg_color = self.background_colors.get(record.levelno)
         
         # Set text color
         char_format = QTextCharFormat()
-        char_format.setForeground(color)
+        
+        if is_phase_header:
+            char_format.setForeground(QColor(0, 120, 170))   # Teal
+            char_format.setFontWeight(QFont.Weight.Bold)
+        elif is_summary_border:
+            char_format.setForeground(QColor(0, 80, 160))    # Dark blue
+            char_format.setFontWeight(QFont.Weight.Bold)
+        else:
+            char_format.setForeground(color)
         
         if bg_color:
             char_format.setBackground(bg_color)

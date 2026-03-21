@@ -313,6 +313,11 @@ class MainWindow(QMainWindow):
     def _on_open_file(self, file_path: str):
         """Handle file open request via AppController."""
         from pathlib import Path
+        
+        # Clear the log console for a fresh start
+        if hasattr(self, 'log_console_dock') and self.log_console_dock:
+            self.log_console_dock.log_console._clear_console()
+        
         info(f"Opening file: {Path(file_path).name}")
 
         # Show progress dialog while the background loader runs

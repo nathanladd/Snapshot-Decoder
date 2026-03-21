@@ -30,7 +30,7 @@ from domain.snapshot.value_converter import (
 )
 from domain.snapshot.system_detector import detect_systems
 from file_io.reader_excel import load_xls, load_xlsx
-from infrastructure import log_custody, log_file_loaded, log_file_error, debug, error as log_error, info
+from infrastructure import log_custody, log_file_loaded, log_file_error, log_phase, log_summary, debug, error as log_error, info
 
 
 class SnapshotLoader(QThread):
@@ -63,6 +63,10 @@ class SnapshotLoader(QThread):
         file_size = 0
         
         try:
+            # Phase 1: Load raw data
+            self.progress.emit(5, "Reading file...")
+            log_phase(1, "Reading File")
+            
             # Log loading attempt
             log_custody("LOAD_STARTED", f"File: {self.file_path}")
             debug(f"Starting to load snapshot: {self.file_path}")
@@ -75,11 +79,6 @@ class SnapshotLoader(QThread):
                 warning("Could not determine file size")
             
             snapshot = Snapshot(self.file_path)
-            
-            # Phase 1: Load raw data
-            self.progress.emit(5, "Reading file...")
-            info("Reading file...")
-            debug("Phase 1: Loading raw data from file")
             snapshot.raw_table = self._load_raw_file()
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 1 - Reading file")
@@ -93,8 +92,7 @@ class SnapshotLoader(QThread):
             
             # Phase 2: Parse header information
             self.progress.emit(20, "Parsing headers...")
-            info("Parsing headers...")
-            debug("Phase 2: Parsing header information")
+            log_phase(2, "Parsing Headers")
             snapshot.header_list = parse_header(snapshot.raw_table, max_rows=5)
             snapshot.date_time = find_date_time(snapshot.header_list)
             
@@ -114,7 +112,7 @@ class SnapshotLoader(QThread):
             
             # Phase 3: Find header row and identify snapshot type
             self.progress.emit(35, "Identifying snapshot type...")
-            debug("Phase 3: Identifying snapshot type")
+            log_phase(3, "Identifying Snapshot Type")
             header_row_idx = find_header_row(snapshot.raw_table)
             snapshot.snapshot_type = detect_snapshot_type(snapshot.raw_table, header_row_idx)
             debug(f"Detected snapshot type: {snapshot.snapshot_type}")
@@ -124,7 +122,7 @@ class SnapshotLoader(QThread):
             
             # Phase 4: Extract PID metadata
             self.progress.emit(50, "Extracting PID metadata...")
-            debug("Phase 4: Extracting PID metadata")
+            log_phase(4, "Extracting PID Metadata")
             snapshot.pid_info = extract_pid_info(snapshot.raw_table, header_row_idx)
             debug(f"Extracted {len(snapshot.pid_info)} PIDs")
             if self._cancelled:
@@ -133,7 +131,7 @@ class SnapshotLoader(QThread):
             
             # Phase 5: Clean the snapshot data
             self.progress.emit(65, "Cleaning data...")
-            debug("Phase 5: Cleaning snapshot data")
+            log_phase(5, "Cleaning Data")
             snapshot.snapshot = scrub_snapshot(snapshot.raw_table, header_row_idx, snapshot.pid_info)
             snapshot.snapshot = remove_unsupported_pids(snapshot.snapshot, snapshot.pid_info)
             debug(f"Data cleaned, shape: {snapshot.snapshot.shape}")
@@ -143,7 +141,7 @@ class SnapshotLoader(QThread):
             
             # Phase 6: Process time column
             self.progress.emit(75, "Processing time data...")
-            debug("Phase 6: Processing time column")
+            log_phase(6, "Processing Time Column")
             snapshot.snapshot = process_time_column(snapshot.snapshot)
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 6 - Processing time data")
@@ -151,7 +149,7 @@ class SnapshotLoader(QThread):
             
             # Phase 7: Apply type-specific conversions
             self.progress.emit(80, "Applying conversions...")
-            debug("Phase 7: Applying type-specific conversions")
+            log_phase(7, "Applying Conversions")
             snapshot.snapshot = apply_type_specific_conversions(
                 snapshot.snapshot, snapshot.snapshot_type, snapshot.pid_info
             )
@@ -161,7 +159,7 @@ class SnapshotLoader(QThread):
             
             # Phase 7b: Standardize units to US
             self.progress.emit(83, "Standardizing units...")
-            debug("Phase 7b: Standardizing units to US")
+            log_phase("7b", "Standardizing Units")
             snapshot.snapshot = convert_temperature_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_pressure_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_millivolts_to_volts(snapshot.snapshot, snapshot.pid_info)
@@ -171,7 +169,7 @@ class SnapshotLoader(QThread):
             
             # Phase 8: Extract derived values
             self.progress.emit(90, "Calculating derived values...")
-            debug("Phase 8: Calculating derived values")
+            log_phase(8, "Calculating Derived Values")
             snapshot.hours = find_engine_hours(
                 snapshot.snapshot, snapshot.snapshot_type, snapshot.pid_info
             )
@@ -194,7 +192,7 @@ class SnapshotLoader(QThread):
             
             # Phase 9: Detect engine systems
             self.progress.emit(95, "Detecting systems...")
-            debug("Phase 9: Detecting engine systems")
+            log_phase(9, "Detecting Engine Systems")
             systems = detect_systems(snapshot.snapshot)
             snapshot.has_egr = systems.egr
             snapshot.has_doc = systems.doc
@@ -210,8 +208,6 @@ class SnapshotLoader(QThread):
             record_count = len(snapshot.snapshot) if snapshot.snapshot is not None else 0
             
             self.progress.emit(100, "Complete")
-            debug("Snapshot loaded successfully")
-            info(f"Snapshot loaded successfully in {load_time:.2f}s")
             
             # Log chain of custody
             log_file_loaded(
@@ -221,6 +217,23 @@ class SnapshotLoader(QThread):
                 load_time, 
                 record_count
             )
+            
+            # Summary block
+            systems_list = [s for s, v in [
+                ("EGR", systems.egr), ("DOC", systems.doc),
+                ("DPF", systems.dpf), ("SCR", systems.scr),
+                ("MDP", systems.mdp), ("Air Throttle", systems.air_throttle),
+            ] if v]
+            log_summary([
+                f"Snapshot loaded successfully in {load_time:.2f}s",
+                f"Type: {snapshot.snapshot_type}",
+                f"Records: {record_count:,}",
+                f"PIDs: {len(snapshot.pid_info)}",
+                f"Systems: {', '.join(systems_list) if systems_list else 'None detected'}",
+                f"Engine Hours: {snapshot.hours}",
+                f"Idle Time: {snapshot.idle_time}",
+                f"MDP Success: {snapshot.mdp_success_rate}",
+            ])
             
             self.finished_loading.emit(snapshot)
             
