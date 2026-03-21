@@ -25,6 +25,7 @@ from domain.constants import (
     LIVE_METRIC_PID_MAP,
     LIVE_METRIC_META,
     LIVE_METRIC_STATE_LABELS,
+    UNIT_DISPLAY_DECIMALS,
 )
 from ui.color_manager import ColorManager
 from infrastructure import debug, error
@@ -35,12 +36,13 @@ from utils import resource_path
 class PIDCard(QFrame):
     """A single PID value card with color coding for PySide6."""
     
-    def __init__(self, pid_name: str, color: str, initial_value: float = 0.0, parent=None):
+    def __init__(self, pid_name: str, color: str, initial_value: float = 0.0, decimals: int = 2, parent=None):
         super().__init__(parent)
         
         self.pid_name = pid_name
         self.color = QColor(color)
         self.value_label = None
+        self.decimals = decimals
         
         self._build_card(initial_value)
     
@@ -83,7 +85,7 @@ class PIDCard(QFrame):
         layout.addWidget(name_label)
         
         # Value label with clean background
-        self.value_label = QLabel(f"{initial_value:.2f}")
+        self.value_label = QLabel(f"{initial_value:.{self.decimals}f}")
         self.value_label.setFont(QFont("Segoe UI", 9, QFont.Bold))  # Slightly smaller font
         self.value_label.setStyleSheet("""
             QLabel {
@@ -106,7 +108,7 @@ class PIDCard(QFrame):
             if np.isnan(value) or np.isinf(value):
                 self.value_label.setText("--")
             else:
-                self.value_label.setText(f"{value:.2f}")
+                self.value_label.setText(f"{value:.{self.decimals}f}")
     
     def _is_dark_color(self, color: QColor) -> bool:
         """Determine if a color is dark for text contrast."""
@@ -1187,8 +1189,15 @@ class LiveValuesWidget(QWidget):
                 pid_name, is_secondary, series_index, self.chart_config.series_styles
             )
             
+            # Determine display decimals from PID unit
+            decimals = 2
+            if self.chart_config.pid_info:
+                pid_meta = self.chart_config.pid_info.get(pid_name, {})
+                unit = pid_meta.get("Unit", "")
+                decimals = UNIT_DISPLAY_DECIMALS.get(unit, 2)
+            
             # Create card
-            card = PIDCard(pid_name, color, 0.0, self.cards_widget)
+            card = PIDCard(pid_name, color, 0.0, decimals=decimals, parent=self.cards_widget)
             self.cards_layout.insertWidget(self.cards_layout.count() - 1, card)  # Insert before stretch
             
             # Store reference

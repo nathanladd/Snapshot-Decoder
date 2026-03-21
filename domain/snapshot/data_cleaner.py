@@ -108,27 +108,3 @@ def _clean_column_apostrophes(df: pd.DataFrame, col_name: str) -> None:
         df[col_name] = df[col_name].apply(
             lambda x: x[1:] if isinstance(x, str) and x.startswith("'") else x
         )
-
-
-def convert_pid_kpa_to_psi(
-    df: pd.DataFrame,
-    pid_info: Dict[str, Dict[str, str]],
-    pid_name: str,
-) -> pd.DataFrame:
-    """Convert the given PID column from kPa to PSI and update pid_info unit."""
-    if df is None or df.empty:
-        return df
-
-    col_lookup = {str(col).casefold(): str(col) for col in df.columns}
-    resolved_col = col_lookup.get(pid_name.casefold())
-    if not resolved_col:
-        return df
-
-    df[resolved_col] = pd.to_numeric(df[resolved_col], errors="coerce") * 0.145037738
-
-    info_lookup = {str(key).casefold(): str(key) for key in pid_info.keys()}
-    resolved_info_key = info_lookup.get(pid_name.casefold())
-    if resolved_info_key:
-        pid_info.setdefault(resolved_info_key, {})["Unit"] = "PSI"
-
-    return df

@@ -22,7 +22,12 @@ from domain.snapshot.time_processor import (
     find_idle_time,
     calculate_mdp_success,
 )
-from domain.snapshot.value_converter import apply_type_specific_conversions
+from domain.snapshot.value_converter import (
+    apply_type_specific_conversions,
+    convert_temperature_to_us_units,
+    convert_pressure_to_us_units,
+    convert_millivolts_to_volts,
+)
 from domain.snapshot.system_detector import detect_systems
 from file_io.reader_excel import load_xls, load_xlsx
 from infrastructure import log_custody, log_file_loaded, log_file_error, debug, error as log_error, info
@@ -152,6 +157,16 @@ class SnapshotLoader(QThread):
             )
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 7 - Applying conversions")
+                return
+            
+            # Phase 7b: Standardize units to US
+            self.progress.emit(83, "Standardizing units...")
+            debug("Phase 7b: Standardizing units to US")
+            snapshot.snapshot = convert_temperature_to_us_units(snapshot.snapshot, snapshot.pid_info)
+            snapshot.snapshot = convert_pressure_to_us_units(snapshot.snapshot, snapshot.pid_info)
+            snapshot.snapshot = convert_millivolts_to_volts(snapshot.snapshot, snapshot.pid_info)
+            if self._cancelled:
+                log_custody("LOAD_CANCELLED", "Phase 7b - Standardizing units")
                 return
             
             # Phase 8: Extract derived values

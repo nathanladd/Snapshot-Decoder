@@ -250,8 +250,31 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "count": "Counter",
     "mg/stroke": "Milligrams/Stroke",
     "kpa": "Kilopascals",
-    "bar": "Barometric Pressure",  
+    "bar": "Barometric Pressure",
+    "hpa": "Hectopascals",
+    "k": "Kelvin",
     }
+
+# Conversion rules for standardizing metric units to US units.
+# Key: normalized source unit string (from UNIT_NORMALIZATION values)
+# Value: (target_unit, factor, pre_offset, post_offset)
+# Formula: result = (value + pre_offset) * factor + post_offset
+US_UNIT_CONVERSIONS: dict[str, tuple[str, float, float, float]] = {
+    # Temperature → Fahrenheit
+    "Celsius":              ("Fahrenheit", 1.8,      0.0,      32.0),
+    "Kelvin":               ("Fahrenheit", 1.8,      -273.15,  32.0),
+    # Pressure → PSI
+    "Kilopascals":          ("PSI",        0.145038, 0.0,      0.0),
+    "Barometric Pressure":  ("PSI",        14.5038,  0.0,      0.0),
+    "Hectopascals":         ("PSI",        0.0145038, 0.0,     0.0),
+    # Voltage → Volts
+    "Millivolts":           ("Volts",      0.001,    0.0,      0.0),
+}
+
+# Display decimal places per unit string. Default is 2 if not listed.
+UNIT_DISPLAY_DECIMALS: dict[str, int] = {
+    "Volts": 3,
+}
 
 #############################################################################################################################
 ########################################### Snapshot Type Detectors #########################################################

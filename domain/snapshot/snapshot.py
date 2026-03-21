@@ -22,7 +22,12 @@ from domain.snapshot.time_processor import (
     find_idle_time,
     calculate_mdp_success,
 )
-from domain.snapshot.value_converter import apply_type_specific_conversions
+from domain.snapshot.value_converter import (
+    apply_type_specific_conversions,
+    convert_temperature_to_us_units,
+    convert_pressure_to_us_units,
+    convert_millivolts_to_volts,
+)
 from domain.snapshot.system_detector import detect_systems, DetectedSystems
 from file_io.reader_excel import load_xls, load_xlsx
 
@@ -96,6 +101,11 @@ class Snapshot:
         self.snapshot = apply_type_specific_conversions(
             self.snapshot, self.snapshot_type, self.pid_info
         )
+        
+        # Standardize units to US
+        self.snapshot = convert_temperature_to_us_units(self.snapshot, self.pid_info)
+        self.snapshot = convert_pressure_to_us_units(self.snapshot, self.pid_info)
+        self.snapshot = convert_millivolts_to_volts(self.snapshot, self.pid_info)
         
         # Extract derived values
         self.hours = find_engine_hours(self.snapshot, self.snapshot_type, self.pid_info)

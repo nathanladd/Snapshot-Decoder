@@ -14,7 +14,11 @@ from domain.snapshot.pid_extractor import extract_pid_info, _to_str
 from domain.snapshot.data_cleaner import (
     scrub_snapshot,
     remove_unsupported_pids,
-    convert_pid_kpa_to_psi,
+)
+from domain.snapshot.value_converter import (
+    convert_temperature_to_us_units,
+    convert_pressure_to_us_units,
+    convert_millivolts_to_volts,
 )
 from domain.snapshot.time_processor import (
     process_time_column,
@@ -208,21 +212,84 @@ class TestDataCleaner:
         assert "BadPID" not in result.columns
         assert "BadPID" not in pid_info
 
-    def test_convert_pid_kpa_to_psi_updates_data_and_units(self):
-        """Test converting oil pressure from kPa to PSI with case-insensitive PID lookup."""
+    def test_convert_pressure_kpa_to_psi(self):
+        """Test converting pressure from kPa to PSI via generic converter."""
         df = pd.DataFrame({
-            "P_L_Oil_pressure": [0, 100, 200],
+            "P_L_Oil_pressure": [0.0, 100.0, 200.0],
         })
         pid_info = {
-            "P_L_OIL_PRESSURE": {"Unit": "kPa"},
+            "P_L_Oil_pressure": {"Unit": "Kilopascals"},
         }
 
-        result = convert_pid_kpa_to_psi(df, pid_info, "P_L_OIL_PRESSURE")
+        result = convert_pressure_to_us_units(df, pid_info)
 
-        assert math.isclose(result["P_L_Oil_pressure"].iloc[0], 0.0, rel_tol=1e-9)
-        assert math.isclose(result["P_L_Oil_pressure"].iloc[1], 14.5037738, rel_tol=1e-9)
-        assert math.isclose(result["P_L_Oil_pressure"].iloc[2], 29.0075476, rel_tol=1e-9)
-        assert pid_info["P_L_OIL_PRESSURE"]["Unit"] == "PSI"
+        assert math.isclose(result["P_L_Oil_pressure"].iloc[0], 0.0, abs_tol=1e-6)
+        assert math.isclose(result["P_L_Oil_pressure"].iloc[1], 14.5038, rel_tol=1e-4)
+        assert math.isclose(result["P_L_Oil_pressure"].iloc[2], 29.0076, rel_tol=1e-4)
+        assert pid_info["P_L_Oil_pressure"]["Unit"] == "PSI"
+
+    def test_convert_pressure_bar_to_psi(self):
+        """Test converting pressure from bar to PSI."""
+        df = pd.DataFrame({"BoostP": [1.0, 2.0]})
+        pid_info = {"BoostP": {"Unit": "Barometric Pressure"}}
+
+        result = convert_pressure_to_us_units(df, pid_info)
+
+        assert math.isclose(result["BoostP"].iloc[0], 14.5038, rel_tol=1e-4)
+        assert pid_info["BoostP"]["Unit"] == "PSI"
+
+    def test_convert_temperature_celsius_to_fahrenheit(self):
+        """Test converting temperature from Celsius to Fahrenheit."""
+        df = pd.DataFrame({"CoolantTemp": [0.0, 100.0]})
+        pid_info = {"CoolantTemp": {"Unit": "Celsius"}}
+
+        result = convert_temperature_to_us_units(df, pid_info)
+
+        assert math.isclose(result["CoolantTemp"].iloc[0], 32.0, abs_tol=1e-6)
+        assert math.isclose(result["CoolantTemp"].iloc[1], 212.0, abs_tol=1e-6)
+        assert pid_info["CoolantTemp"]["Unit"] == "Fahrenheit"
+
+    def test_convert_temperature_kelvin_to_fahrenheit(self):
+        """Test converting temperature from Kelvin to Fahrenheit."""
+        df = pd.DataFrame({"ExhaustTemp": [273.15, 373.15]})
+        pid_info = {"ExhaustTemp": {"Unit": "Kelvin"}}
+
+        result = convert_temperature_to_us_units(df, pid_info)
+
+        assert math.isclose(result["ExhaustTemp"].iloc[0], 32.0, abs_tol=1e-6)
+        assert math.isclose(result["ExhaustTemp"].iloc[1], 212.0, abs_tol=1e-6)
+        assert pid_info["ExhaustTemp"]["Unit"] == "Fahrenheit"
+
+    def test_convert_millivolts_to_volts(self):
+        """Test converting millivolts to volts."""
+        df = pd.DataFrame({"BattU_u": [12500.0, 13800.0]})
+        pid_info = {"BattU_u": {"Unit": "Millivolts"}}
+
+        result = convert_millivolts_to_volts(df, pid_info)
+
+        assert math.isclose(result["BattU_u"].iloc[0], 12.5, rel_tol=1e-6)
+        assert math.isclose(result["BattU_u"].iloc[1], 13.8, rel_tol=1e-6)
+        assert pid_info["BattU_u"]["Unit"] == "Volts"
+
+    def test_conversion_noop_for_us_units(self):
+        """Test that PIDs already in US units are not modified."""
+        df = pd.DataFrame({"OilP": [50.0], "Temp": [180.0], "Batt": [12.5]})
+        pid_info = {
+            "OilP": {"Unit": "PSI"},
+            "Temp": {"Unit": "Fahrenheit"},
+            "Batt": {"Unit": "Volts"},
+        }
+
+        convert_pressure_to_us_units(df, pid_info)
+        convert_temperature_to_us_units(df, pid_info)
+        convert_millivolts_to_volts(df, pid_info)
+
+        assert df["OilP"].iloc[0] == 50.0
+        assert df["Temp"].iloc[0] == 180.0
+        assert df["Batt"].iloc[0] == 12.5
+        assert pid_info["OilP"]["Unit"] == "PSI"
+        assert pid_info["Temp"]["Unit"] == "Fahrenheit"
+        assert pid_info["Batt"]["Unit"] == "Volts"
 
 
 class TestTimeProcessor:
