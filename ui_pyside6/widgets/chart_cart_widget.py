@@ -396,8 +396,16 @@ class ChartCartWidget(QWidget):
             col = i % cols
             self._grid_layout.addWidget(item, row, col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
     
+    def clear_all(self):
+        """Clear all charts from the cart without confirmation (programmatic use)."""
+        if not self.configs:
+            return
+        self.configs.clear()
+        self._rebuild_ui()
+        self.cart_changed.emit()
+    
     def _clear_cart(self):
-        """Clear all charts from the cart."""
+        """Clear all charts from the cart (with user confirmation)."""
         if not self.configs:
             return
         
@@ -410,9 +418,7 @@ class ChartCartWidget(QWidget):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            self.configs.clear()
-            self._rebuild_ui()
-            self.cart_changed.emit()
+            self.clear_all()
     
     def _export_to_pdf(self):
         """Export all charts in the cart to a PDF file."""

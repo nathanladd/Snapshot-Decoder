@@ -323,6 +323,23 @@ class MainWindow(QMainWindow):
         """Handle file open request via AppController."""
         from pathlib import Path
         
+        # Warn user if a snapshot is already loaded
+        if self.snapshot is not None:
+            reply = QMessageBox.warning(
+                self,
+                "Opening a new file will clear all current data",
+                "All current charts and the chart cart cannot be saved.\n\n"
+                "Please complete all PDF exports before opening a new file.\n\n"
+                "Do you want to continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+            
+            # Clear all snapshot state before loading the new file
+            self._clear_all_snapshot_state()
+        
         # Clear the log console for a fresh start
         if hasattr(self, 'log_console_dock') and self.log_console_dock:
             self.log_console_dock.log_console._clear_console()
@@ -337,6 +354,22 @@ class MainWindow(QMainWindow):
         self._progress_dialog.setValue(0)
 
         self.app_controller.load_snapshot(file_path)
+    
+    def _clear_all_snapshot_state(self):
+        """Clear all snapshot data from the UI and controller."""
+        info("Clearing all snapshot state for new file load")
+        
+        self.snapshot = None
+        self.app_controller.clear_snapshot()
+        
+        self.header_panel.clear()
+        self.system_panel.clear()
+        self.pid_panel.clear()
+        self.quick_chart_panel.clear()
+        self.chart_widget.clear()
+        self.chart_cart_dock.chart_cart.clear_all()
+        
+        self.statusbar.showMessage("Ready - Open a snapshot file to begin")
     
     @Slot(object)
     def _on_snapshot_loaded(self, snapshot: Snapshot):

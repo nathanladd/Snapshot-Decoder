@@ -226,7 +226,7 @@ class SnapshotLoader(QThread):
             
             # Phase 7: Standardize units to US
             self.progress.emit(80, "Standardizing units...")
-            log_phase(7, "Standardizing to FREEDOMUnits")
+            log_phase(7, "Converting to Freedom Units")
             snapshot.snapshot = convert_temperature_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_pressure_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_millivolts_to_volts(snapshot.snapshot, snapshot.pid_info)
@@ -340,6 +340,15 @@ class SnapshotLoader(QThread):
             error_msg = str(e)
             log_error(f"Failed to load snapshot after {load_time:.2f}s: {error_msg}")
             log_file_error(self.file_path, error_msg)
+            
+            # Emit partial snapshot for raw data inspection if raw_table was loaded
+            try:
+                if snapshot.raw_table is not None and not snapshot.raw_table.empty:
+                    info("Raw data available for inspection despite load failure")
+                    self.partial_loading.emit(snapshot)
+            except NameError:
+                pass
+            
             self.error.emit(error_msg)
     
     def _load_raw_file(self):
