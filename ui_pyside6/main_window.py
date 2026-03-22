@@ -10,13 +10,13 @@ import re
 import webbrowser
 from typing import Optional
 
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QMenuBar, QMenu, QStatusBar, QProgressDialog, QMessageBox,
-    QFileDialog, QLabel, QFrame
+    QApplication, QMainWindow, QMessageBox, QProgressDialog, QSplashScreen,
+    QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+    QMenuBar, QMenu, QStatusBar, QFileDialog, QLabel, QFrame
 )
-from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QAction, QIcon, QPixmap
+from PySide6.QtGui import QAction, QIcon, QPixmap, QFont, QColor
 
 from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
@@ -24,6 +24,7 @@ from controllers.app_controller import AppController
 from controllers.chart_controller import ChartController
 from version import APP_VERSION
 from infrastructure import get_logger, info, error, warning, debug
+from infrastructure.logging_config import set_error_signal
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
@@ -43,8 +44,15 @@ from domain.app_settings import app_settings
 class MainWindow(QMainWindow):
     """Main application window with clean controller architecture."""
     
+    # Signal for error notifications (will be connected to logging system)
+    error_notification = Signal()
+    
     def __init__(self):
         super().__init__()
+        
+        # Set up error signal for logging system
+        set_error_signal(self.error_notification)
+        self.error_notification.connect(self._on_error_logged)
         
         # Initialize logging system
         self.logger = get_logger()
@@ -75,6 +83,7 @@ class MainWindow(QMainWindow):
         # AppController signals
         self.app_controller.snapshot_loaded.connect(self._on_snapshot_loaded)
         self.app_controller.snapshot_load_progress.connect(self._on_load_progress)
+        self.app_controller.partial_loading.connect(self._on_partial_loading)
         self.app_controller.error_occurred.connect(self._on_error)
         
         # UI widget signals
@@ -369,6 +378,44 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Error", error_msg)
         self.statusbar.showMessage("Error occurred")
         error(f"Error displayed to user: {error_msg}")
+    
+    @Slot()
+    def _on_error_logged(self):
+        """Handle error notification from logging system - show and focus logger."""
+        if not self.log_console_dock.isVisible():
+            self.log_console_dock.show()
+        self.log_console_dock.raise_()
+        self.log_console_dock.setFocus()
+    
+    @Slot(object)
+    def _on_partial_loading(self, snapshot: Snapshot):
+        """Handle partial snapshot loading when identification fails."""
+        if self._progress_dialog:
+            self._progress_dialog.close()
+        
+        # Load the raw snapshot for inspection but don't populate widgets
+        self.snapshot = snapshot
+        info(f"Raw snapshot loaded for inspection (identification failed): {snapshot.file_path}")
+        
+        # Show user-friendly message
+        QMessageBox.warning(
+            self, 
+            "Low Confidence Snapshot", 
+            f"The snapshot file was loaded but could not be identified with sufficient confidence.\n\n"
+            f"File: {os.path.basename(snapshot.file_path)}\n"
+            f"Reason: Snapshot type detection confidence below 80%\n\n"
+            f"The raw data is available for inspection in the Data Tables menu.\n"
+            f"Check the log console for detailed debugging information."
+        )
+        
+        # Show logger automatically
+        if not self.log_console_dock.isVisible():
+            self.log_console_dock.show()
+        self.log_console_dock.raise_()
+        self.log_console_dock.setFocus()
+        
+        self.statusbar.showMessage("Raw data loaded (identification failed)")
+        info("Raw snapshot loaded for inspection, widgets not populated due to identification failure")
     
     @Slot(str)
     def _on_quick_chart_requested(self, action_id: str):

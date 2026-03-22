@@ -54,7 +54,7 @@ def detect_snapshot_type(
     df: pd.DataFrame, 
     header_row_idx: int,
     match_threshold: float = 0.5
-) -> SnapType:
+) -> tuple[SnapType, float]:
     """
     Identify the snapshot type based on the header row contents.
     
@@ -69,7 +69,7 @@ def detect_snapshot_type(
                         Default 0.5 means at least 50% of listed PIDs must be found.
         
     Returns:
-        SnapType enum value indicating the snapshot type
+        Tuple of (SnapType, confidence) where confidence is the match percentage
     """
     row_values = set(df.iloc[header_row_idx].astype(str).str.strip().str.lower().tolist())
 
@@ -97,17 +97,18 @@ def detect_snapshot_type(
         if missing_pids:
             warning(f"  Missing: {', '.join(missing_pids[:5])}{'...' if len(missing_pids) > 5 else ''}")
         
-        # Update best match if this type has higher percentage and meets threshold
-        if percentage >= match_threshold and percentage > best_percentage:
+        # Track the highest confidence match regardless of threshold
+        if percentage > best_percentage:
             best_percentage = percentage
             best_match = snap_type
     
-    if best_match != SnapType.EMPTY:
+    if best_percentage >= match_threshold:
         info(f"Selected: {best_match.name} ({best_percentage:.1%} confidence)")
     else:
-        error("No snapshot type met the minimum threshold")
+        error(f"No snapshot type met the minimum threshold (best: {best_match.name} at {best_percentage:.1%})")
+        best_match = SnapType.EMPTY
     
-    return best_match
+    return best_match, best_percentage
 
 
 def get_match_percentages(df: pd.DataFrame, header_row_idx: int) -> dict[SnapType, float]:

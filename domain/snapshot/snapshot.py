@@ -79,13 +79,21 @@ class Snapshot:
         if self.raw_table is None or self.raw_table.empty:
             raise ValueError("The workbook loaded but no data table was found.")
         
+        # Find header row and identify snapshot type
+        header_row_idx = find_header_row(self.raw_table)
+        self.snapshot_type, confidence = detect_snapshot_type(self.raw_table, header_row_idx)
+        
+        # Check for minimum 80% confidence
+        min_confidence = 0.8
+        if confidence < min_confidence:
+            error_msg = f"Snapshot type detection failed: {self.snapshot_type.name} only {confidence:.1%} confidence (minimum {min_confidence:.0%} required)"
+            from infrastructure.logging_config import error as log_error
+            log_error(error_msg)
+            raise ValueError(error_msg)
+        
         # Parse header information
         self.header_list = parse_header(self.raw_table, max_rows=5)
         self.date_time = find_date_time(self.header_list)
-        
-        # Find header row and identify snapshot type
-        header_row_idx = find_header_row(self.raw_table)
-        self.snapshot_type = detect_snapshot_type(self.raw_table, header_row_idx)
         
         # Extract PID descriptions
         self.pid_info = extract_pid_info(self.raw_table, header_row_idx)

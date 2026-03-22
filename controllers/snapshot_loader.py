@@ -46,6 +46,7 @@ class SnapshotLoader(QThread):
     # Signals
     progress = Signal(int, str)           # (percent, message)
     finished_loading = Signal(object)     # Snapshot on success
+    partial_loading = Signal(object)       # Raw snapshot on identification failure
     error = Signal(str)                   # Error message on failure
     
     def __init__(self, file_path: str, parent=None):
@@ -90,9 +91,70 @@ class SnapshotLoader(QThread):
                 self.error.emit(error_msg)
                 return
             
-            # Phase 2: Parse header information
-            self.progress.emit(20, "Parsing headers...")
-            log_phase(2, "Parsing Headers")
+            # Phase 2: Find header row and identify snapshot type
+            self.progress.emit(20, "Identifying snapshot type...")
+            log_phase(2, "Identifying Snapshot Type")
+            
+            try:
+                header_row_idx = find_header_row(snapshot.raw_table)
+                debug(f"Found header row at index: {header_row_idx}")
+                
+                snapshot.snapshot_type, confidence = detect_snapshot_type(snapshot.raw_table, header_row_idx)
+                debug(f"Detected snapshot type: {snapshot.snapshot_type} with {confidence:.1%} confidence")
+                
+                # Check for minimum 80% confidence
+                min_confidence = 0.8
+                if confidence < min_confidence:
+                    error_msg = f"Snapshot type detection failed: {snapshot.snapshot_type.name} only {confidence:.1%} confidence (minimum {min_confidence:.0%} required)"
+                    log_error(error_msg)
+                    log_file_error(self.file_path, error_msg)
+                    
+                    # Enhanced error logging
+                    log_error(f"TYPE DETECTION FAILED - Confidence too low:")
+                    log_error(f"  File: {self.file_path}")
+                    log_error(f"  Detected Type: {snapshot.snapshot_type.name}")
+                    log_error(f"  Confidence: {confidence:.1%}")
+                    log_error(f"  Required: {min_confidence:.0%}")
+                    log_error(f"  Header Row Index: {header_row_idx}")
+                    
+                    # Log available PIDs for debugging
+                    try:
+                        header_pids = snapshot.raw_table.iloc[header_row_idx].astype(str).str.strip().str.lower().tolist()
+                        log_error(f"  Available PIDs ({len(header_pids)}): {', '.join(header_pids[:10])}{'...' if len(header_pids) > 10 else ''}")
+                    except Exception as pid_error:
+                        log_error(f"  Could not log header PIDs: {pid_error}")
+                    
+                    # Load raw data for inspection despite identification failure
+                    log_error(f"Loading raw data for inspection despite identification failure")
+                    self.progress.emit(100, "Raw data loaded (identification failed)")
+                    
+                    # Emit partial loading signal instead of error
+                    self.partial_loading.emit(snapshot)
+                    return
+                else:
+                    info(f"Type detection passed: {snapshot.snapshot_type.name} with {confidence:.1%} confidence")
+                    
+            except Exception as e:
+                error_msg = f"Snapshot type detection failed with error: {str(e)}"
+                log_error(error_msg)
+                log_file_error(self.file_path, error_msg)
+                
+                # Enhanced error logging for exceptions
+                log_error(f"TYPE DETECTION ERROR:")
+                log_error(f"  File: {self.file_path}")
+                log_error(f"  Error: {str(e)}")
+                log_error(f"  Error Type: {type(e).__name__}")
+                
+                self.error.emit(error_msg)
+                return
+            
+            if self._cancelled:
+                log_custody("LOAD_CANCELLED", "Phase 2 - Identifying snapshot type")
+                return
+            
+            # Phase 3: Parse header information
+            self.progress.emit(35, "Parsing headers...")
+            log_phase(3, "Parsing Headers")
             snapshot.header_list = parse_header(snapshot.raw_table, max_rows=5)
             snapshot.date_time = find_date_time(snapshot.header_list)
             
@@ -107,17 +169,7 @@ class SnapshotLoader(QThread):
                 warning("HEADERS_PARSED", "Count: 0 | No headers found")
             
             if self._cancelled:
-                warning("LOAD_CANCELLED", "Phase 2 - Parsing headers")
-                return
-            
-            # Phase 3: Find header row and identify snapshot type
-            self.progress.emit(35, "Identifying snapshot type...")
-            log_phase(3, "Identifying Snapshot Type")
-            header_row_idx = find_header_row(snapshot.raw_table)
-            snapshot.snapshot_type = detect_snapshot_type(snapshot.raw_table, header_row_idx)
-            debug(f"Detected snapshot type: {snapshot.snapshot_type}")
-            if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 3 - Identifying snapshot type")
+                warning("LOAD_CANCELLED", "Phase 3 - Parsing headers")
                 return
             
             # Phase 4: Extract PID metadata

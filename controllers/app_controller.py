@@ -29,6 +29,7 @@ class AppController(QObject):
     # Signals for UI to connect to
     snapshot_loaded = Signal(object)          # emits Snapshot
     snapshot_load_progress = Signal(int, str) # emits (percent, message)
+    partial_loading = Signal(object)          # emits raw Snapshot on identification failure
     error_occurred = Signal(str)              # emits error message
     chart_updated = Signal(object)            # emits ChartConfig
     
@@ -63,6 +64,7 @@ class AppController(QObject):
         # Connect signals
         self.loader.progress.connect(self._on_load_progress)
         self.loader.finished_loading.connect(self._on_load_finished)
+        self.loader.partial_loading.connect(self._on_partial_loading)
         self.loader.error.connect(self._on_load_error)
         
         # Start loading
@@ -79,6 +81,14 @@ class AppController(QObject):
         
         # Emit to UI
         self.snapshot_loaded.emit(snapshot)
+    
+    def _on_partial_loading(self, snapshot: Snapshot):
+        """Handle partial snapshot loading when identification fails."""
+        self.snapshot = snapshot
+        info(f"Raw snapshot loaded for inspection (identification failed): {snapshot.file_path}")
+        
+        # Emit to UI for partial loading handling
+        self.partial_loading.emit(snapshot)
     
     def _on_load_error(self, error_msg: str):
         """Handle snapshot load error."""

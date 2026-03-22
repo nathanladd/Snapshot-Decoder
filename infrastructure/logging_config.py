@@ -8,6 +8,22 @@ No file logging - all output goes to the in-app log console.
 import logging
 from typing import Optional
 
+# Global signal for error notifications (will be set by main window)
+_error_signal = None
+
+
+def set_error_signal(signal):
+    """Set the global error signal from the main window."""
+    global _error_signal
+    _error_signal = signal
+
+
+def notify_error_logged():
+    """Notify that an error was logged (shows logger)."""
+    global _error_signal
+    if _error_signal:
+        _error_signal.emit()
+
 
 class SnapshotLogger:
     """Centralized logging configuration for the application (console only)."""
@@ -177,9 +193,10 @@ def warning(message: str):
 
 
 def error(message: str):
-    """Log error message."""
+    """Log error message and notify main window to show logger."""
     logger = get_logger()
     logger.logger.error(message)
+    notify_error_logged()
 
 
 def critical(message: str):
