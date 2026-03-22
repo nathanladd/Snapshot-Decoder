@@ -9,6 +9,7 @@ import os
 import time
 from typing import Optional
 
+import pandas as pd
 from PySide6.QtCore import QThread, Signal
 
 from domain.snapshot import Snapshot
@@ -23,14 +24,13 @@ from domain.snapshot.time_processor import (
     calculate_mdp_success,
 )
 from domain.snapshot.value_converter import (
-    apply_type_specific_conversions,
     convert_temperature_to_us_units,
     convert_pressure_to_us_units,
     convert_millivolts_to_volts,
 )
 from domain.snapshot.system_detector import detect_systems
 from file_io.reader_excel import load_xls, load_xlsx
-from infrastructure import log_custody, log_file_loaded, log_file_error, log_phase, log_summary, debug, error as log_error, info
+from infrastructure import log_custody, log_file_loaded, log_file_error, log_phase, log_summary, debug, error as log_error, info, warning
 
 
 class SnapshotLoader(QThread):
@@ -163,10 +163,10 @@ class SnapshotLoader(QThread):
                 info(f"Parsed {len(snapshot.header_list)} header fields:")
                 for label, value in snapshot.header_list:
                     info(f"  Header: {label} = {value}")
-                log_custody("HEADERS_PARSED", f"Count: {len(snapshot.header_list)} | DateTime: {snapshot.date_time}")
             else:
                 info("No header information found")
                 warning("HEADERS_PARSED", "Count: 0 | No headers found")
+
             
             if self._cancelled:
                 warning("LOAD_CANCELLED", "Phase 3 - Parsing headers")
@@ -176,6 +176,7 @@ class SnapshotLoader(QThread):
             self.progress.emit(50, "Extracting PID metadata...")
             log_phase(4, "Extracting PID Metadata")
             snapshot.pid_info = extract_pid_info(snapshot.raw_table, header_row_idx)
+            info(f"Successfully extracted PID names, descriptions, and units for {len(snapshot.pid_info)} PIDs")
             debug(f"Extracted {len(snapshot.pid_info)} PIDs")
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 4 - Extracting PID metadata")
@@ -184,9 +185,21 @@ class SnapshotLoader(QThread):
             # Phase 5: Clean the snapshot data
             self.progress.emit(65, "Cleaning data...")
             log_phase(5, "Cleaning Data")
+            
+            debug("  Setting column headers from header row")
+            debug("  Normalizing column names")
+            debug("  Ensuring Frame and Time columns")
+            debug("  Converting Frame to numeric and trimming to Frame == 0")
             snapshot.snapshot = scrub_snapshot(snapshot.raw_table, header_row_idx, snapshot.pid_info)
+            debug(f"  Scrubbed snapshot: {snapshot.snapshot.shape[0]} rows × {snapshot.snapshot.shape[1]} columns")
+            
+            pre_remove_cols = snapshot.snapshot.shape[1]
+            debug("  Scanning for 'Not supported' PIDs")
             snapshot.snapshot = remove_unsupported_pids(snapshot.snapshot, snapshot.pid_info)
-            debug(f"Data cleaned, shape: {snapshot.snapshot.shape}")
+            removed_count = pre_remove_cols - snapshot.snapshot.shape[1]
+            debug(f"  Removed {removed_count} unsupported PID column(s)")
+            
+            info(f"Successfully cleaned snapshot data: {snapshot.snapshot.shape[0]} rows × {snapshot.snapshot.shape[1]} columns")
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 5 - Cleaning data")
                 return
@@ -194,52 +207,76 @@ class SnapshotLoader(QThread):
             # Phase 6: Process time column
             self.progress.emit(75, "Processing time data...")
             log_phase(6, "Processing Time Column")
-            snapshot.snapshot = process_time_column(snapshot.snapshot)
+            
+            # Log individual time processing steps
+            if "Time" in snapshot.snapshot.columns:
+                debug("  Converting Time column to numeric format")
+                snapshot.snapshot["Time"] = pd.to_numeric(snapshot.snapshot["Time"], errors="coerce")
+                debug("  Converting Time column to timedelta format")
+                snapshot.snapshot["Time"] = pd.to_timedelta(snapshot.snapshot["Time"], unit="s")
+                debug("  Extracting total seconds from timedelta")
+                snapshot.snapshot["Time"] = snapshot.snapshot["Time"].dt.total_seconds()
+                info("Successfully processed time column: converted to seconds format")
+            else:
+                info("No Time column found - skipping time processing")
+                
             if self._cancelled:
                 log_custody("LOAD_CANCELLED", "Phase 6 - Processing time data")
                 return
             
-            # Phase 7: Apply type-specific conversions
-            self.progress.emit(80, "Applying conversions...")
-            log_phase(7, "Applying Conversions")
-            snapshot.snapshot = apply_type_specific_conversions(
-                snapshot.snapshot, snapshot.snapshot_type, snapshot.pid_info
-            )
-            if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 7 - Applying conversions")
-                return
-            
-            # Phase 7b: Standardize units to US
-            self.progress.emit(83, "Standardizing units...")
-            log_phase("7b", "Standardizing Units")
+            # Phase 7: Standardize units to US
+            self.progress.emit(80, "Standardizing units...")
+            log_phase(7, "Standardizing to FREEDOMUnits")
             snapshot.snapshot = convert_temperature_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_pressure_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_millivolts_to_volts(snapshot.snapshot, snapshot.pid_info)
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 7b - Standardizing units")
+                log_custody("LOAD_CANCELLED", "Phase 7 - Standardizing units")
                 return
             
             # Phase 8: Extract derived values
-            self.progress.emit(90, "Calculating derived values...")
-            log_phase(8, "Calculating Derived Values")
+            self.progress.emit(90, "Extracting key PIDs...")
+            log_phase(8, "Key PIDs")
             snapshot.hours = find_engine_hours(
                 snapshot.snapshot, snapshot.snapshot_type, snapshot.pid_info
             )
+            
+            # Check if idle time PID exists before calling find_idle_time
+            idle_time_column = "EUD_Engine_idle_time_nvv"
+            if idle_time_column not in snapshot.snapshot.columns:
+                warning(f"Idle time PID '{idle_time_column}' not found - setting to 0.0")
             snapshot.idle_time = find_idle_time(snapshot.snapshot, snapshot.pid_info)
+            
+            # Debug logging for MDP calculation
+            success_col = "I_C_Mdp_nb_update_success_nvv"
+            failure_col = "I_C_Mdp_nb_update_failure_nvv"
+            if success_col in snapshot.snapshot.columns and failure_col in snapshot.snapshot.columns:
+                if "Frame" in snapshot.snapshot.columns:
+                    frame_zero_row = snapshot.snapshot[snapshot.snapshot["Frame"] == 0]
+                    if not frame_zero_row.empty:
+                        try:
+                            mdp_success = int(frame_zero_row[success_col].iloc[0])
+                            mdp_failure = int(frame_zero_row[failure_col].iloc[0])
+                            debug(f"  MDP calculation: Success={mdp_success}, Failure={mdp_failure}, Total={mdp_success + mdp_failure}")
+                        except (ValueError, IndexError, TypeError):
+                            debug("  MDP calculation: Could not parse success/failure values")
+                    else:
+                        debug("  MDP calculation: No Frame==0 row found")
+                else:
+                    debug("  MDP calculation: No Frame column found")
+            else:
+                debug("  MDP calculation: Success/failure columns not found")
+            
             snapshot.mdp_success_rate = calculate_mdp_success(snapshot.snapshot)
             
-            # Log derived values calculation
-            info(f"Derived values calculated:")
+            # Log key PIDs extraction
+            info(f"Key PIDs extracted:")
             info(f"  Engine Hours: {snapshot.hours}")
             info(f"  Idle Time: {snapshot.idle_time}")
             info(f"  MDP Success Rate: {snapshot.mdp_success_rate}")
             
-            # Log custody event for derived values
-            derived_details = f"Hours: {snapshot.hours} | Idle: {snapshot.idle_time} | MDP: {snapshot.mdp_success_rate}"
-            log_custody("DERIVED_VALUES_CALCULATED", derived_details)
-            
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 8 - Calculating derived values")
+                log_custody("LOAD_CANCELLED", "Phase 8 - Extracting key PIDs")
                 return
             
             # Phase 9: Detect engine systems
@@ -261,6 +298,32 @@ class SnapshotLoader(QThread):
             
             self.progress.emit(100, "Complete")
             
+            # Summary block (debug level)
+            systems_list = [s for s, v in [
+                ("EGR", systems.egr), ("DOC", systems.doc),
+                ("DPF", systems.dpf), ("SCR", systems.scr),
+                ("MDP", systems.mdp), ("Air Throttle", systems.air_throttle),
+            ] if v]
+            log_summary([
+
+                f"Snapshot loaded successfully in {load_time:.2f}s",
+
+                f"Type: {snapshot.snapshot_type}",
+
+                f"Records: {record_count:,}",
+
+                f"PIDs: {len(snapshot.pid_info)}",
+
+                f"Systems: {', '.join(systems_list) if systems_list else 'None detected'}",
+
+                f"Engine Hours: {snapshot.hours}",
+
+                f"Idle Time: {snapshot.idle_time}",
+
+                f"MDP Success: {snapshot.mdp_success_rate}",
+
+            ])
+            
             # Log chain of custody
             log_file_loaded(
                 self.file_path, 
@@ -269,24 +332,7 @@ class SnapshotLoader(QThread):
                 load_time, 
                 record_count
             )
-            
-            # Summary block
-            systems_list = [s for s, v in [
-                ("EGR", systems.egr), ("DOC", systems.doc),
-                ("DPF", systems.dpf), ("SCR", systems.scr),
-                ("MDP", systems.mdp), ("Air Throttle", systems.air_throttle),
-            ] if v]
-            log_summary([
-                f"Snapshot loaded successfully in {load_time:.2f}s",
-                f"Type: {snapshot.snapshot_type}",
-                f"Records: {record_count:,}",
-                f"PIDs: {len(snapshot.pid_info)}",
-                f"Systems: {', '.join(systems_list) if systems_list else 'None detected'}",
-                f"Engine Hours: {snapshot.hours}",
-                f"Idle Time: {snapshot.idle_time}",
-                f"MDP Success: {snapshot.mdp_success_rate}",
-            ])
-            
+
             self.finished_loading.emit(snapshot)
             
         except Exception as e:

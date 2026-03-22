@@ -23,7 +23,6 @@ from domain.snapshot.time_processor import (
     calculate_mdp_success,
 )
 from domain.snapshot.value_converter import (
-    apply_type_specific_conversions,
     convert_temperature_to_us_units,
     convert_pressure_to_us_units,
     convert_millivolts_to_volts,
@@ -73,13 +72,13 @@ class Snapshot:
     
     def _load_and_parse(self) -> None:
         """Internal method to load the file and perform all parsing steps."""
-        # Load raw data based on file type
+        # (Phase 1) Load raw data based on file type
         self.raw_table = self._load_file()
         
         if self.raw_table is None or self.raw_table.empty:
             raise ValueError("The workbook loaded but no data table was found.")
         
-        # Find header row and identify snapshot type
+        # (Phase 2) Find header row and identify snapshot type
         header_row_idx = find_header_row(self.raw_table)
         self.snapshot_type, confidence = detect_snapshot_type(self.raw_table, header_row_idx)
         
@@ -91,36 +90,31 @@ class Snapshot:
             log_error(error_msg)
             raise ValueError(error_msg)
         
-        # Parse header information
+        # (Phase 3) Parse header information
         self.header_list = parse_header(self.raw_table, max_rows=5)
         self.date_time = find_date_time(self.header_list)
         
-        # Extract PID descriptions
+        # (Phase 4) Extract PID descriptions
         self.pid_info = extract_pid_info(self.raw_table, header_row_idx)
         
-        # Clean the snapshot
+        # (Phase 5) Clean the snapshot
         self.snapshot = scrub_snapshot(self.raw_table, header_row_idx, self.pid_info)
         self.snapshot = remove_unsupported_pids(self.snapshot, self.pid_info)
         
-        # Process time column
+        # (Phase 6) Process time column
         self.snapshot = process_time_column(self.snapshot)
         
-        # Apply type-specific conversions
-        self.snapshot = apply_type_specific_conversions(
-            self.snapshot, self.snapshot_type, self.pid_info
-        )
-        
-        # Standardize units to US
+        # (Phase 7) Standardize units to US
         self.snapshot = convert_temperature_to_us_units(self.snapshot, self.pid_info)
         self.snapshot = convert_pressure_to_us_units(self.snapshot, self.pid_info)
         self.snapshot = convert_millivolts_to_volts(self.snapshot, self.pid_info)
         
-        # Extract derived values
+        # (Phase 8) Key PIDs
         self.hours = find_engine_hours(self.snapshot, self.snapshot_type, self.pid_info)
         self.idle_time = find_idle_time(self.snapshot, self.pid_info)
         self.mdp_success_rate = calculate_mdp_success(self.snapshot)
         
-        # Detect engine systems
+        # (Phase 9) Detect engine systems
         self._detect_systems()
 
     def _detect_systems(self) -> None:

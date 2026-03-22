@@ -1,44 +1,14 @@
 """
 Value conversion logic for specific PIDs.
 
-Handles type-specific conversions (e.g. engine state labels)
-and unit standardization (temperature, pressure, voltage).
+Handles unit standardization (temperature, pressure, voltage).
 """
 
 from typing import Dict
 import pandas as pd
 
-from domain.snaptypes import SnapType
 from domain.constants import US_UNIT_CONVERSIONS
 from infrastructure.logging_config import info, debug
-
-
-def apply_type_specific_conversions(
-    df: pd.DataFrame,
-    snapshot_type: SnapType,
-    pid_info: Dict[str, Dict[str, str]]
-) -> pd.DataFrame:
-    """
-    Apply snapshot-type-specific value conversions.
-    
-    Args:
-        df: Cleaned snapshot DataFrame
-        snapshot_type: Type of snapshot
-        pid_info: PID metadata dictionary (may be modified)
-        
-    Returns:
-        DataFrame with conversions applied
-    """
-    if snapshot_type == SnapType.ECU_V1:
-        _update_v1_engine_state_unit(pid_info)
-    
-    return df
-
-
-def _update_v1_engine_state_unit(pid_info: Dict[str, Dict[str, str]]) -> None:
-    """Update the SMC_ENGINE_STATE PID unit for V1 snapshots."""
-    if "SMC_ENGINE_STATE" in pid_info:
-        pid_info["SMC_ENGINE_STATE"]["Unit"] = "[0]Off   [1]Cranking   [2]Running   [3]Stalling"
 
 
 def _apply_unit_conversion(

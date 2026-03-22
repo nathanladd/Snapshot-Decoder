@@ -365,9 +365,10 @@ class MainWindow(QMainWindow):
     @Slot(int, str)
     def _on_load_progress(self, percent: int, message: str):
         """Handle load progress from AppController."""
-        if self._progress_dialog:
-            self._progress_dialog.setValue(percent)
-            self._progress_dialog.setLabelText(message)
+        dialog = self._progress_dialog
+        if dialog:
+            dialog.setValue(percent)
+            dialog.setLabelText(message)
     
     @Slot(str)
     def _on_error(self, error_msg: str):
