@@ -20,7 +20,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from domain.chart_config import ChartConfig
 from ui.chart_renderer import ChartRenderer
 from version import APP_VERSION
-from infrastructure import info, error
+from infrastructure import log_info, log_error
 
 
 class ChartCartItem(QFrame):
@@ -309,14 +309,14 @@ class ChartCartWidget(QWidget):
         config_copy = copy.deepcopy(config)
         self.configs.append(config_copy)
         self._rebuild_ui()
-        info(f"Chart added to cart: {config.title} ({len(self.configs)} total)")
+        log_info(f"Chart added to cart: {config.title} ({len(self.configs)} total)")
         self.cart_changed.emit()
     
     def remove_config(self, index: int):
         """Remove config at index."""
         if 0 <= index < len(self.configs):
             removed = self.configs.pop(index)
-            info(f"Chart removed from cart: {removed.title} ({len(self.configs)} remaining)")
+            log_info(f"Chart removed from cart: {removed.title} ({len(self.configs)} remaining)")
             self._rebuild_ui()
             self.cart_changed.emit()
     
@@ -461,7 +461,7 @@ class ChartCartWidget(QWidget):
                 "Export Complete",
                 f"Successfully exported {len(self.configs)} charts to:\n{filepath}"
             )
-            info(f"Chart cart exported to PDF: {filepath}")
+            log_info(f"Chart cart exported to PDF: {filepath}")
         except Exception as e:
             QMessageBox.critical(
                 self,

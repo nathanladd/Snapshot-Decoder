@@ -12,7 +12,7 @@ import time
 
 from domain.snapshot import Snapshot
 from controllers.snapshot_loader import SnapshotLoader
-from infrastructure import get_logger, log_file_loaded, log_file_error, info, error, warning
+from infrastructure import get_logger, log_file_loaded, log_file_error, log_info, log_error, log_warning
 
 
 class AppController(QObject):
@@ -36,7 +36,7 @@ class AppController(QObject):
     def __init__(self):
         super().__init__()
         self.logger = get_logger()
-        info("AppController initialized")
+        log_info("AppController initialized")
         self.snapshot: Optional[Snapshot] = None
         self.loader: Optional[SnapshotLoader] = None
     
@@ -51,7 +51,7 @@ class AppController(QObject):
             self.error_occurred.emit(f"File not found: {file_path}")
             return
         
-        info(f"Starting snapshot load: {file_path}")
+        log_info(f"Starting snapshot load: {file_path}")
         
         # Cancel any existing load
         if self.loader and self.loader.isRunning():
@@ -77,7 +77,7 @@ class AppController(QObject):
     def _on_load_finished(self, snapshot: Snapshot):
         """Handle successful snapshot load."""
         self.snapshot = snapshot
-        info(f"Snapshot loaded successfully: {snapshot.snapshot_type}")
+        log_info(f"Snapshot loaded successfully: {snapshot.snapshot_type}")
         
         # Emit to UI
         self.snapshot_loaded.emit(snapshot)
@@ -85,14 +85,14 @@ class AppController(QObject):
     def _on_partial_loading(self, snapshot: Snapshot):
         """Handle partial snapshot loading when identification fails."""
         self.snapshot = snapshot
-        info(f"Raw snapshot loaded for inspection (identification failed): {snapshot.file_path}")
+        log_info(f"Raw snapshot loaded for inspection (identification failed): {snapshot.file_path}")
         
         # Emit to UI for partial loading handling
         self.partial_loading.emit(snapshot)
     
     def _on_load_error(self, error_msg: str):
         """Handle snapshot load error."""
-        error(f"Snapshot load failed: {error_msg}")
+        log_error(f"Snapshot load failed: {error_msg}")
         
         # Log error for chain of custody
         file_path = self.loader.file_path if self.loader else "unknown"
@@ -112,7 +112,7 @@ class AppController(QObject):
     def clear_snapshot(self):
         """Clear the current snapshot."""
         self.snapshot = None
-        info("Snapshot cleared")
+        log_info("Snapshot cleared")
     
     def shutdown(self):
         """Clean shutdown - cancel any operations."""
@@ -120,4 +120,4 @@ class AppController(QObject):
             self.loader.cancel()
             self.loader.wait()
         
-        info("AppController shutdown complete")
+        log_info("AppController shutdown complete")

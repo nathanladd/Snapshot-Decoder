@@ -28,7 +28,7 @@ from domain.constants import (
     UNIT_DISPLAY_DECIMALS,
 )
 from ui.color_manager import ColorManager
-from infrastructure import debug, error
+from infrastructure import log_debug, log_error
 from domain.pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
 from utils import resource_path
 

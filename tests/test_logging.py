@@ -11,8 +11,8 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from infrastructure import (
-    get_logger, set_verbose, log_custody, log_file_loaded, 
-    log_file_error, log_chart_generated, debug, info, warning, error
+    get_logger, set_verbose, log_chain_of_custody, log_file_loaded, 
+    log_file_error, log_chart_generated, log_debug, log_info, log_warning, log_error
 )
 
 
@@ -27,14 +27,14 @@ def test_logging_infrastructure():
     print(f"✅ Logs directory: {logger.logs_dir}")
     
     # Test logging functions
-    debug("Debug message test")
-    info("Info message test")
-    warning("Warning message test")
-    error("Error message test")
+    log_debug("Debug message test")
+    log_info("Info message test")
+    log_warning("Warning message test")
+    log_error("Error message test")
     
     # Test custody logging
-    log_custody("TEST_EVENT", "Test details for logging")
-    log_custody("ANOTHER_EVENT", "More details", "WARNING")
+    log_chain_of_custody("TEST_EVENT", "Test details for logging")
+    log_chain_of_custody("ANOTHER_EVENT", "More details", "WARNING")
     
     # Test file loading logging
     log_file_loaded("test_file.xlsx", 1024000, "ECU_V1", 2.5, 1500)

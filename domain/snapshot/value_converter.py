@@ -8,7 +8,7 @@ from typing import Dict
 import pandas as pd
 
 from domain.constants import US_UNIT_CONVERSIONS
-from infrastructure.logging_config import info, debug
+from infrastructure.logging_config import log_info, log_debug
 
 
 def _apply_unit_conversion(
@@ -56,9 +56,9 @@ def _apply_unit_conversion(
         df[resolved_col] = (df[resolved_col] + pre_offset) * factor + post_offset
         meta["Unit"] = target_unit
         converted += 1
-        info(f"  Converted {resolved_col}: {unit} \u2192 {target_unit}")
+        log_info(f"  Converted {resolved_col}: {unit} \u2192 {target_unit}")
 
-    info(f"{conversion_label}: {converted} PID(s) converted")
+    log_info(f"{conversion_label}: {converted} PID(s) converted")
     return df
 
 
@@ -71,7 +71,7 @@ def convert_temperature_to_us_units(
 
     Handles Celsius and Kelvin source units.
     """
-    info("Unit standardization: Temperature \u2192 Fahrenheit")
+    log_info("Unit standardization: Temperature \u2192 Fahrenheit")
     return _apply_unit_conversion(
         df, pid_info,
         source_units={"Celsius", "Kelvin"},
@@ -88,7 +88,7 @@ def convert_pressure_to_us_units(
 
     Handles Kilopascals, Barometric Pressure (bar), and Hectopascals.
     """
-    info("Unit standardization: Pressure \u2192 PSI")
+    log_info("Unit standardization: Pressure \u2192 PSI")
     return _apply_unit_conversion(
         df, pid_info,
         source_units={"Kilopascals", "Barometric Pressure", "Hectopascals"},
@@ -103,7 +103,7 @@ def convert_millivolts_to_volts(
     """
     Convert all millivolt PIDs to Volts.
     """
-    info("Unit standardization: Millivolts \u2192 Volts")
+    log_info("Unit standardization: Millivolts \u2192 Volts")
     return _apply_unit_conversion(
         df, pid_info,
         source_units={"Millivolts"},

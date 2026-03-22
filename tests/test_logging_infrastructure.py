@@ -105,16 +105,16 @@ class TestLoggingInfrastructure(unittest.TestCase):
         self.assertIs(logger1, logger2)  # Should return same instance
         
         # Test convenience functions
-        from infrastructure import debug, info, warning, error
-        from infrastructure import log_custody, log_file_loaded
+        from infrastructure import log_debug, log_info, log_warning, log_error
+        from infrastructure import log_chain_of_custody, log_file_loaded
         
         # These should not raise exceptions
-        debug("Test debug")
-        info("Test info")
-        warning("Test warning")
-        error("Test error")
+        log_debug("Test debug")
+        log_info("Test info")
+        log_warning("Test warning")
+        log_error("Test error")
         
-        log_custody("TEST", "Test details")
+        log_chain_of_custody("TEST", "Test details")
         log_file_loaded("test.xlsx", 1024, "ECU_V1", 1.0, 100)
     
     def test_log_file_rotation(self):

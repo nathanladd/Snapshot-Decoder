@@ -21,7 +21,7 @@ import mplcursors
 from domain.chart_config import ChartConfig
 from ui.color_manager import ColorManager
 from ui.chart_renderer import ChartRenderer
-from infrastructure import debug
+from infrastructure import log_debug
 from utils import resource_path
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 from ui_pyside6.widgets.live_values_widget import LiveValuesWidget

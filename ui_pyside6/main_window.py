@@ -23,7 +23,7 @@ from domain.constants import APP_TITLE
 from controllers.app_controller import AppController
 from controllers.chart_controller import ChartController
 from version import APP_VERSION
-from infrastructure import get_logger, info, error, warning, debug
+from infrastructure import get_logger, log_info, log_error, log_warning, log_debug
 from infrastructure.logging_config import set_error_signal
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
@@ -44,19 +44,19 @@ from domain.app_settings import app_settings
 class MainWindow(QMainWindow):
     """Main application window with clean controller architecture."""
     
-    # Signal for error notifications (will be connected to logging system)
+    # Signal for log_error notifications (will be connected to logging system)
     error_notification = Signal()
     
     def __init__(self):
         super().__init__()
         
-        # Set up error signal for logging system
+        # Set up log_error signal for logging system
         set_error_signal(self.error_notification)
         self.error_notification.connect(self._on_error_logged)
         
         # Initialize logging system
         self.logger = get_logger()
-        info(f"Starting {APP_TITLE} v{APP_VERSION}")
+        log_info(f"Starting {APP_TITLE} v{APP_VERSION}")
         
         # Initialize controllers (UI-agnostic business logic)
         self.app_controller = AppController()
@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         self._setup_quick_iq()
         self._connect_signals()
         
-        info("MainWindow initialized with controller architecture")
+        log_info("MainWindow initialized with controller architecture")
     
     def _connect_signals(self):
         """Connect controller signals to UI slots."""
@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'log_console_dock') and self.log_console_dock:
             self.log_console_dock.log_console._clear_console()
         
-        info(f"Opening file: {Path(file_path).name}")
+        log_info(f"Opening file: {Path(file_path).name}")
 
         # Show progress dialog while the background loader runs
         self._progress_dialog = QProgressDialog("Loading snapshot...", None, 0, 100, self)
@@ -357,7 +357,7 @@ class MainWindow(QMainWindow):
     
     def _clear_all_snapshot_state(self):
         """Clear all snapshot data from the UI and controller."""
-        info("Clearing all snapshot state for new file load")
+        log_info("Clearing all snapshot state for new file load")
         
         self.snapshot = None
         self.app_controller.clear_snapshot()
@@ -393,7 +393,7 @@ class MainWindow(QMainWindow):
             f"Hours: {snapshot.hours}"
         )
         
-        info(f"UI updated with loaded snapshot: {snapshot.snapshot_type}")
+        log_info(f"UI updated with loaded snapshot: {snapshot.snapshot_type}")
     
     @Slot(int, str)
     def _on_load_progress(self, percent: int, message: str):
@@ -404,18 +404,18 @@ class MainWindow(QMainWindow):
             dialog.setLabelText(message)
     
     @Slot(str)
-    def _on_error(self, error_msg: str):
-        """Handle error from AppController."""
+    def _on_error(self, log_error_msg: str):
+        """Handle log_error from AppController."""
         if self._progress_dialog:
             self._progress_dialog.close()
         
-        QMessageBox.critical(self, "Error", error_msg)
+        QMessageBox.critical(self, "Error", log_error_msg)
         self.statusbar.showMessage("Error occurred")
-        error(f"Error displayed to user: {error_msg}")
+        log_error(f"Error displayed to user: {log_error_msg}")
     
     @Slot()
     def _on_error_logged(self):
-        """Handle error notification from logging system - show and focus logger."""
+        """Handle log_error notification from logging system - show and focus logger."""
         if not self.log_console_dock.isVisible():
             self.log_console_dock.show()
         self.log_console_dock.raise_()
@@ -429,7 +429,7 @@ class MainWindow(QMainWindow):
         
         # Load the raw snapshot for inspection but don't populate widgets
         self.snapshot = snapshot
-        info(f"Raw snapshot loaded for inspection (identification failed): {snapshot.file_path}")
+        log_info(f"Raw snapshot loaded for inspection (identification failed): {snapshot.file_path}")
         
         # Show user-friendly message
         QMessageBox.warning(
@@ -439,7 +439,7 @@ class MainWindow(QMainWindow):
             f"File: {os.path.basename(snapshot.file_path)}\n"
             f"Reason: Snapshot type detection confidence below 80%\n\n"
             f"The raw data is available for inspection in the Data Tables menu.\n"
-            f"Check the log console for detailed debugging information."
+            f"Check the log console for detailed debugging log_information."
         )
         
         # Show logger automatically
@@ -449,16 +449,16 @@ class MainWindow(QMainWindow):
         self.log_console_dock.setFocus()
         
         self.statusbar.showMessage("Raw data loaded (identification failed)")
-        info("Raw snapshot loaded for inspection, widgets not populated due to identification failure")
+        log_info("Raw snapshot loaded for inspection, widgets not populated due to identification failure")
     
     @Slot(str)
     def _on_quick_chart_requested(self, action_id: str):
         """Handle quick chart request via AppController."""
         if not self.app_controller.has_snapshot():
-            warning("Quick chart requested but no snapshot loaded")
+            log_warning("Quick chart requested but no snapshot loaded")
             return
         
-        info(f"Quick chart requested: {action_id}")
+        log_info(f"Quick chart requested: {action_id}")
         
         # Handle special reference PDF generation
         if action_id == "REF_GENERATE_PDF":
@@ -524,9 +524,9 @@ class MainWindow(QMainWindow):
             try:
                 self.chart_controller.render(config, self.chart_widget.figure)
                 self.chart_widget.canvas.draw()
-                debug("Chart re-rendered from config change")
+                log_debug("Chart re-rendered from config change")
             except Exception as e:
-                error(f"Failed to re-render chart: {str(e)}")
+                log_error(f"Failed to re-render chart: {str(e)}")
                 self.app_controller.error_occurred.emit(f"Chart rendering failed: {str(e)}")
             self.chart_widget.clear_axis_controls()
     
@@ -865,7 +865,7 @@ class MainWindow(QMainWindow):
         if not self.chart_cart_dock.isVisible():
             self.chart_cart_dock.show()
         self.chart_cart_dock.raise_()
-        info(f"Added chart to cart: {config.title}")
+        log_info(f"Added chart to cart: {config.title}")
     
     
     @Slot(bool)
@@ -985,7 +985,7 @@ class MainWindow(QMainWindow):
         
         snapshot = self.app_controller.get_snapshot()
         if not snapshot:
-            warning("No snapshot available for reference PDF generation")
+            log_warning("No snapshot available for reference PDF generation")
             return
         
         # Create reference builder
@@ -1000,6 +1000,6 @@ class MainWindow(QMainWindow):
                 "Reference PDF Generated",
                 f"Reference charts PDF saved to:\n{file_path}"
             )
-            info(f"Reference PDF generated: {file_path}")
+            log_info(f"Reference PDF generated: {file_path}")
         else:
-            info("Reference PDF generation cancelled or failed")
+            log_info("Reference PDF generation cancelled or failed")

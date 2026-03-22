@@ -86,7 +86,7 @@ class Snapshot:
         min_confidence = 0.8
         if confidence < min_confidence:
             error_msg = f"Snapshot type detection failed: {self.snapshot_type.name} only {confidence:.1%} confidence (minimum {min_confidence:.0%} required)"
-            from infrastructure.logging_config import error as log_error
+            from infrastructure.logging_config import log_error
             log_error(error_msg)
             raise ValueError(error_msg)
         

@@ -10,7 +10,7 @@ from typing import Set
 import pandas as pd
 
 from domain.constants import SYSTEM_PIDS
-from infrastructure.logging_config import debug, info, warning
+from infrastructure.logging_config import log_debug, log_info, log_warning
 
 
 @dataclass
@@ -55,7 +55,7 @@ def detect_systems(df: pd.DataFrame) -> DetectedSystems:
         col.lower().strip() for col in df.columns
     )
     
-    debug(f"System Detection: Found {len(columns_lower)} total columns in snapshot")
+    log_debug(f"System Detection: Found {len(columns_lower)} total columns in snapshot")
     
     systems = DetectedSystems()
     
@@ -68,9 +68,9 @@ def detect_systems(df: pd.DataFrame) -> DetectedSystems:
             # Set the corresponding attribute to True
             setattr(systems, system_name, True)
             systems.matched_pids[system_name] = matched
-            info(f"System Detection: {system_name.upper()} DETECTED - Found PIDs: {matched}")
+            log_info(f"System Detection: {system_name.upper()} DETECTED - Found PIDs: {matched}")
         else:
-            warning(f"System Detection: {system_name.upper()} NOT DETECTED - Missing PIDs: {missing}")
+            log_warning(f"System Detection: {system_name.upper()} NOT DETECTED - Missing PIDs: {missing}")
     
     return systems
 

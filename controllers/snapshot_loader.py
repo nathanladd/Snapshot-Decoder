@@ -30,7 +30,7 @@ from domain.snapshot.value_converter import (
 )
 from domain.snapshot.system_detector import detect_systems
 from file_io.reader_excel import load_xls, load_xlsx
-from infrastructure import log_custody, log_file_loaded, log_file_error, log_phase, log_summary, debug, error as log_error, info, warning
+from infrastructure import log_chain_of_custody, log_file_loaded, log_file_error, log_phase, log_summary, log_debug, log_error, log_info, log_warning
 
 
 class SnapshotLoader(QThread):
@@ -69,20 +69,20 @@ class SnapshotLoader(QThread):
             log_phase(1, "Reading File")
             
             # Log loading attempt
-            log_custody("LOAD_STARTED", f"File: {self.file_path}")
-            debug(f"Starting to load snapshot: {self.file_path}")
+            log_chain_of_custody("LOAD_STARTED", f"File: {self.file_path}")
+            log_debug(f"Starting to load snapshot: {self.file_path}")
             
             # Get file size for logging
             try:
                 file_size = os.path.getsize(self.file_path)
-                debug(f"File size: {file_size:,} bytes")
+                log_debug(f"File size: {file_size:,} bytes")
             except OSError:
-                warning("Could not determine file size")
+                log_warning("Could not determine file size")
             
             snapshot = Snapshot(self.file_path)
             snapshot.raw_table = self._load_raw_file()
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 1 - Reading file")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 1 - Reading file")
                 return
             
             if snapshot.raw_table is None or snapshot.raw_table.empty:
@@ -97,10 +97,10 @@ class SnapshotLoader(QThread):
             
             try:
                 header_row_idx = find_header_row(snapshot.raw_table)
-                debug(f"Found header row at index: {header_row_idx}")
+                log_debug(f"Found header row at index: {header_row_idx}")
                 
                 snapshot.snapshot_type, confidence = detect_snapshot_type(snapshot.raw_table, header_row_idx)
-                debug(f"Detected snapshot type: {snapshot.snapshot_type} with {confidence:.1%} confidence")
+                log_debug(f"Detected snapshot type: {snapshot.snapshot_type} with {confidence:.1%} confidence")
                 
                 # Check for minimum 80% confidence
                 min_confidence = 0.8
@@ -117,7 +117,7 @@ class SnapshotLoader(QThread):
                     log_error(f"  Required: {min_confidence:.0%}")
                     log_error(f"  Header Row Index: {header_row_idx}")
                     
-                    # Log available PIDs for debugging
+                    # Log available PIDs for log_debugging
                     try:
                         header_pids = snapshot.raw_table.iloc[header_row_idx].astype(str).str.strip().str.lower().tolist()
                         log_error(f"  Available PIDs ({len(header_pids)}): {', '.join(header_pids[:10])}{'...' if len(header_pids) > 10 else ''}")
@@ -132,7 +132,7 @@ class SnapshotLoader(QThread):
                     self.partial_loading.emit(snapshot)
                     return
                 else:
-                    info(f"Type detection passed: {snapshot.snapshot_type.name} with {confidence:.1%} confidence")
+                    log_info(f"Type detection passed: {snapshot.snapshot_type.name} with {confidence:.1%} confidence")
                     
             except Exception as e:
                 error_msg = f"Snapshot type detection failed with error: {str(e)}"
@@ -149,7 +149,7 @@ class SnapshotLoader(QThread):
                 return
             
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 2 - Identifying snapshot type")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 2 - Identifying snapshot type")
                 return
             
             # Phase 3: Parse header information
@@ -160,48 +160,48 @@ class SnapshotLoader(QThread):
             
             # Log all parsed header information
             if snapshot.header_list:
-                info(f"Parsed {len(snapshot.header_list)} header fields:")
+                log_info(f"Parsed {len(snapshot.header_list)} header fields:")
                 for label, value in snapshot.header_list:
-                    info(f"  Header: {label} = {value}")
+                    log_info(f"  Header: {label} = {value}")
             else:
-                info("No header information found")
-                warning("HEADERS_PARSED", "Count: 0 | No headers found")
+                log_info("No header information found")
+                log_warning("HEADERS_PARSED", "Count: 0 | No headers found")
 
             
             if self._cancelled:
-                warning("LOAD_CANCELLED", "Phase 3 - Parsing headers")
+                log_warning("LOAD_CANCELLED", "Phase 3 - Parsing headers")
                 return
             
             # Phase 4: Extract PID metadata
-            self.progress.emit(50, "Extracting PID metadata...")
-            log_phase(4, "Extracting PID Metadata")
+            self.progress.emit(50, "Extracting PIDs...")
+            log_phase(4, "Extracting PIDs")
             snapshot.pid_info = extract_pid_info(snapshot.raw_table, header_row_idx)
-            info(f"Successfully extracted PID names, descriptions, and units for {len(snapshot.pid_info)} PIDs")
-            debug(f"Extracted {len(snapshot.pid_info)} PIDs")
+            log_info(f"Successfully extracted PID names, descriptions, and units for {len(snapshot.pid_info)} PIDs")
+            log_debug(f"Extracted {len(snapshot.pid_info)} PIDs")
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 4 - Extracting PID metadata")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 4 - Extracting PID metadata")
                 return
             
             # Phase 5: Clean the snapshot data
             self.progress.emit(65, "Cleaning data...")
             log_phase(5, "Cleaning Data")
             
-            debug("  Setting column headers from header row")
-            debug("  Normalizing column names")
-            debug("  Ensuring Frame and Time columns")
-            debug("  Converting Frame to numeric and trimming to Frame == 0")
+            log_debug("  Setting column headers from header row")
+            log_debug("  Normalizing column names")
+            log_debug("  Ensuring Frame and Time columns")
+            log_debug("  Converting Frame to numeric and trimming to Frame == 0")
             snapshot.snapshot = scrub_snapshot(snapshot.raw_table, header_row_idx, snapshot.pid_info)
-            debug(f"  Scrubbed snapshot: {snapshot.snapshot.shape[0]} rows × {snapshot.snapshot.shape[1]} columns")
+            log_debug(f"  Scrubbed snapshot: {snapshot.snapshot.shape[0]} rows × {snapshot.snapshot.shape[1]} columns")
             
             pre_remove_cols = snapshot.snapshot.shape[1]
-            debug("  Scanning for 'Not supported' PIDs")
+            log_debug("  Scanning for 'Not supported' PIDs")
             snapshot.snapshot = remove_unsupported_pids(snapshot.snapshot, snapshot.pid_info)
             removed_count = pre_remove_cols - snapshot.snapshot.shape[1]
-            debug(f"  Removed {removed_count} unsupported PID column(s)")
+            log_debug(f"  Removed {removed_count} unsupported PID column(s)")
             
-            info(f"Successfully cleaned snapshot data: {snapshot.snapshot.shape[0]} rows × {snapshot.snapshot.shape[1]} columns")
+            log_info(f"Successfully cleaned snapshot data: {snapshot.snapshot.shape[0]} rows × {snapshot.snapshot.shape[1]} columns")
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 5 - Cleaning data")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 5 - Cleaning data")
                 return
             
             # Phase 6: Process time column
@@ -210,18 +210,18 @@ class SnapshotLoader(QThread):
             
             # Log individual time processing steps
             if "Time" in snapshot.snapshot.columns:
-                debug("  Converting Time column to numeric format")
+                log_debug("  Converting Time column to numeric format")
                 snapshot.snapshot["Time"] = pd.to_numeric(snapshot.snapshot["Time"], errors="coerce")
-                debug("  Converting Time column to timedelta format")
+                log_debug("  Converting Time column to timedelta format")
                 snapshot.snapshot["Time"] = pd.to_timedelta(snapshot.snapshot["Time"], unit="s")
-                debug("  Extracting total seconds from timedelta")
+                log_debug("  Extracting total seconds from timedelta")
                 snapshot.snapshot["Time"] = snapshot.snapshot["Time"].dt.total_seconds()
-                info("Successfully processed time column: converted to seconds format")
+                log_info("Successfully processed time column: converted to seconds format")
             else:
-                info("No Time column found - skipping time processing")
+                log_info("No Time column found - skipping time processing")
                 
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 6 - Processing time data")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 6 - Processing time data")
                 return
             
             # Phase 7: Standardize units to US
@@ -231,7 +231,7 @@ class SnapshotLoader(QThread):
             snapshot.snapshot = convert_pressure_to_us_units(snapshot.snapshot, snapshot.pid_info)
             snapshot.snapshot = convert_millivolts_to_volts(snapshot.snapshot, snapshot.pid_info)
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 7 - Standardizing units")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 7 - Standardizing units")
                 return
             
             # Phase 8: Extract derived values
@@ -244,7 +244,7 @@ class SnapshotLoader(QThread):
             # Check if idle time PID exists before calling find_idle_time
             idle_time_column = "EUD_Engine_idle_time_nvv"
             if idle_time_column not in snapshot.snapshot.columns:
-                warning(f"Idle time PID '{idle_time_column}' not found - setting to 0.0")
+                log_warning(f"Idle time PID '{idle_time_column}' not found - setting to 0.0")
             snapshot.idle_time = find_idle_time(snapshot.snapshot, snapshot.pid_info)
             
             # Debug logging for MDP calculation
@@ -257,26 +257,26 @@ class SnapshotLoader(QThread):
                         try:
                             mdp_success = int(frame_zero_row[success_col].iloc[0])
                             mdp_failure = int(frame_zero_row[failure_col].iloc[0])
-                            debug(f"  MDP calculation: Success={mdp_success}, Failure={mdp_failure}, Total={mdp_success + mdp_failure}")
+                            log_debug(f"  MDP calculation: Success={mdp_success}, Failure={mdp_failure}, Total={mdp_success + mdp_failure}")
                         except (ValueError, IndexError, TypeError):
-                            debug("  MDP calculation: Could not parse success/failure values")
+                            log_warning("  MDP calculation: Could not parse success/failure values")
                     else:
-                        debug("  MDP calculation: No Frame==0 row found")
+                        log_warning("  MDP calculation: No Frame==0 row found")
                 else:
-                    debug("  MDP calculation: No Frame column found")
+                    log_warning("  MDP calculation: No Frame column found")
             else:
-                debug("  MDP calculation: Success/failure columns not found")
+                log_warning("  MDP calculation: Success/failure columns not found")
             
             snapshot.mdp_success_rate = calculate_mdp_success(snapshot.snapshot)
             
             # Log key PIDs extraction
-            info(f"Key PIDs extracted:")
-            info(f"  Engine Hours: {snapshot.hours}")
-            info(f"  Idle Time: {snapshot.idle_time}")
-            info(f"  MDP Success Rate: {snapshot.mdp_success_rate}")
+            log_info(f"Key PIDs extracted:")
+            log_info(f"  Engine Hours: {snapshot.hours}")
+            log_info(f"  Idle Time: {snapshot.idle_time}")
+            log_info(f"  MDP Success Rate: {snapshot.mdp_success_rate}")
             
             if self._cancelled:
-                log_custody("LOAD_CANCELLED", "Phase 8 - Extracting key PIDs")
+                log_chain_of_custody("LOAD_CANCELLED", "Phase 8 - Extracting key PIDs")
                 return
             
             # Phase 9: Detect engine systems
@@ -290,7 +290,7 @@ class SnapshotLoader(QThread):
             snapshot.has_air_throttle = systems.air_throttle
             snapshot.has_mdp = systems.mdp
             snapshot._detected_systems = systems
-            debug(f"Detected systems: EGR={systems.egr}, DOC={systems.doc}, DPF={systems.dpf}, SCR={systems.scr}, MDP={systems.mdp}")
+            log_debug(f"Detected systems: EGR={systems.egr}, DOC={systems.doc}, DPF={systems.dpf}, SCR={systems.scr}, MDP={systems.mdp}")
             
             # Calculate load time and log success
             load_time = time.time() - start_time
@@ -298,7 +298,7 @@ class SnapshotLoader(QThread):
             
             self.progress.emit(100, "Complete")
             
-            # Summary block (debug level)
+            # Summary block (log_debug level)
             systems_list = [s for s, v in [
                 ("EGR", systems.egr), ("DOC", systems.doc),
                 ("DPF", systems.dpf), ("SCR", systems.scr),
@@ -344,7 +344,7 @@ class SnapshotLoader(QThread):
             # Emit partial snapshot for raw data inspection if raw_table was loaded
             try:
                 if snapshot.raw_table is not None and not snapshot.raw_table.empty:
-                    info("Raw data available for inspection despite load failure")
+                    log_info("Raw data available for inspection despite load failure")
                     self.partial_loading.emit(snapshot)
             except NameError:
                 pass

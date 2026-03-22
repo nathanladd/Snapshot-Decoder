@@ -11,7 +11,7 @@ from typing import Dict, Optional, List
 import time
 
 from domain.chart_config import ChartConfig
-from infrastructure import debug, error
+from infrastructure import log_debug, log_error
 from domain.pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
 
 

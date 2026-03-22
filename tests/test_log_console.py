@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, Q
 from PySide6.QtCore import Qt
 
 from ui_pyside6.widgets.log_console import LogConsole
-from infrastructure import debug, info, warning, error
+from infrastructure import log_debug, log_info, log_warning, log_error
 
 
 class TestWindow(QMainWindow):

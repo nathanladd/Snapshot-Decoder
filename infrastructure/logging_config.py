@@ -117,8 +117,8 @@ def get_logger() -> SnapshotLogger:
     return _global_logger
 
 
-def log_custody(event_type: str, details: str, level: str = "INFO"):
-    """Convenience function for custody logging."""
+def log_chain_of_custody(event_type: str, details: str, level: str = "INFO"):
+    """Convenience function for chain of custody logging."""
     logger = get_logger()
     logger.log_custody_event(event_type, details, level)
 
@@ -174,32 +174,32 @@ def log_summary(lines: list):
 
 
 # Standard logging functions
-def debug(message: str):
+def log_debug(message: str):
     """Log debug message."""
     logger = get_logger()
     logger.logger.debug(message)
 
 
-def info(message: str):
+def log_info(message: str):
     """Log info message."""
     logger = get_logger()
     logger.logger.info(message)
 
 
-def warning(message: str):
+def log_warning(message: str):
     """Log warning message."""
     logger = get_logger()
     logger.logger.warning(message)
 
 
-def error(message: str):
+def log_error(message: str):
     """Log error message and notify main window to show logger."""
     logger = get_logger()
     logger.logger.error(message)
     notify_error_logged()
 
 
-def critical(message: str):
+def log_critical(message: str):
     """Log critical message."""
     logger = get_logger()
     logger.logger.critical(message)
