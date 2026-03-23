@@ -10,7 +10,7 @@ only output is charts in pdf files.
 
 Snapshot PIDs can be searched, selected, and charted. There are also 'Quick Chart' commands with PIDs pre-selected based 
 on troubleshooting success for common diagnostic tasks available at a click of a button. Charts can be zoomed and paned.
-Charts can be scrubed through time like a video while monitoring live data in analog type gauges and indicators. Multiple 
+Charts can be scrubbed through time like a video while monitoring live data in analog type gauges and indicators. Multiple 
 charts can be broken out into separate windows for comparison. With one click, a multi-page pdf 'Reference Snapshot'
 file can be saved for comparison to known-good snapshot charts produces by Bobcat.
 
