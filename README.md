@@ -1,14 +1,20 @@
 # Snapshot-Decoder [![License: MIT/GPL-3.0](https://img.shields.io/badge/License-%20GPL--3.0-blue.svg)](#License)  ![Total Downloads](https://img.shields.io/github/downloads/nathanladd/Snapshot-Decoder/total)
 
-Windows desktop app to interpret engine data saved in a Bobcat Engine Analyzer Snapshot. 
+Snapshot Decoder is a windows desktop app built to interpret engine data saved in a Bobcat Engine Analyzer Snapshot. 
 This app can open specific .xls and .xlsx files previously saved by Bobcat Engine Analyzer, parse the Snapshot data 
-in order to determine what type of Snapshot file has been opened and pull useful general machine information from the 
+in order to determine what type of Snapshot file has been opened and pull useful general header information from the 
 Snapshot file. Snapshot Decoder can then read-in all frames of all PIDs in the Snapshot delineated file and store 
-them in a Data Frame. Snapshot Decoder currently reads V1 Delphi ECUs, V2 Bosch ECUs, and V1 Engine Use Data. 
+them temporarely. Snapshot Decoder currently reads V1 Delphi ECUs, V2 Bosch ECUs, and V1 Engine Use Data. BEA (Bobcat
+Engine Analyzer) Snapshot files are not modified and Snapshot Decoder does not save snapshot files. Snapshot Decoder's
+only output is charts in pdf files.
 
-The PIDs can be searched, selected, and charted. There are also 'Quick Chart' commands with PIDs pre-selected based 
+Snapshot PIDs can be searched, selected, and charted. There are also 'Quick Chart' commands with PIDs pre-selected based 
 on troubleshooting success for common diagnostic tasks available at a click of a button. Charts can be zoomed and paned.
-Multiple charts can be broken out into separate windows for comparison. 
+Charts can be scrubed through time like a video while monitoring live data in analog type gauges and indicators. Multiple 
+charts can be broken out into separate windows for comparison. With one click, a multi-page pdf 'Reference Snapshot'
+file can be saved for comparison to known-good snapshot charts produces by Bobcat.
+
+
 
 <h2>Key Features</h2>
     <ul>
@@ -16,6 +22,8 @@ Multiple charts can be broken out into separate windows for comparison.
         <li><strong>Quick Charts</strong> - One-click diagnostic Quick Charts for common diagnostics</li>
         <li><strong>Custom Charting</strong> - Quickly search PIDs by description to create custom charts</li>
         <li><strong>Powerful Chart Views</strong> -Zoom, pan, and compare actual PID values with time converted to minutes and seconds</li>
+        <li><strong>Reference Snapshot</strong> - one-click complete reference snapshot
+        <li><strong>Time Slider</strong> - Scrub through a chart like a video editor while monitoring gauges and indicators
         <li><strong>Chart Cart</strong> - Export single or multiple charts to pdf for documentation</li>
     </ul>
 This project is dual-licensed.
