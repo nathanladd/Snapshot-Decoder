@@ -10,7 +10,7 @@ import re
 import webbrowser
 from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot, QEvent
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox, QProgressDialog, QSplashScreen,
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         # UI state
         self.snapshot: Optional[Snapshot] = None
         self._progress_dialog: Optional[QProgressDialog] = None
+        self._is_minimizing: bool = False
         
         # Setup UI and connect signals
         self._setup_ui()
@@ -93,6 +94,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{APP_TITLE} {APP_VERSION}")
         self.resize(1600, 900)
     
+    def changeEvent(self, event):
+        """Detect minimize/restore to guard dock visibility sync."""
+        if event.type() == QEvent.Type.WindowStateChange:
+            if self.windowState() & Qt.WindowState.WindowMinimized:
+                self._is_minimizing = True
+            elif self._is_minimizing:
+                self._is_minimizing = False
+                # Defer sync until Qt has fully restored the window
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(0, self._sync_view_menu_checks)
+        super().changeEvent(event)
+
     def _setup_ui(self):
         """Set up the main UI layout."""
         central_widget = QWidget()
@@ -244,28 +257,35 @@ class MainWindow(QMainWindow):
 
         self._controls_panel_action = QAction("&Snapshot Data Panel", self)
         self._controls_panel_action.setCheckable(True)
-        self._controls_panel_action.toggled.connect(self._on_toggle_controls_panel)
+        self._controls_panel_action.triggered.connect(self._on_toggle_controls_panel)
         view_menu.addAction(self._controls_panel_action)
         
         self._chart_cart_action = QAction("&Chart Cart", self)
         self._chart_cart_action.setCheckable(True)
-        self._chart_cart_action.toggled.connect(self._on_toggle_chart_cart)
+        self._chart_cart_action.triggered.connect(self._on_toggle_chart_cart)
         view_menu.addAction(self._chart_cart_action)
         
         self._help_browser_action = QAction("&Help Browser", self)
         self._help_browser_action.setCheckable(True)
-        self._help_browser_action.toggled.connect(self._on_toggle_help_browser)
+        self._help_browser_action.triggered.connect(self._on_toggle_help_browser)
         view_menu.addAction(self._help_browser_action)
         
         self._log_console_action = QAction("&Log Console", self)
         self._log_console_action.setCheckable(True)
-        self._log_console_action.toggled.connect(self._on_toggle_log_console)
+        self._log_console_action.triggered.connect(self._on_toggle_log_console)
         view_menu.addAction(self._log_console_action)
 
         self._quick_iq_action = QAction("&Quick IQ", self)
         self._quick_iq_action.setCheckable(True)
-        self._quick_iq_action.toggled.connect(self._on_toggle_quick_iq)
+        self._quick_iq_action.triggered.connect(self._on_toggle_quick_iq)
         view_menu.addAction(self._quick_iq_action)
+
+        view_menu.addSeparator()
+
+        default_view_action = QAction("&Default View", self)
+        default_view_action.setShortcut("Ctrl+Shift+D")
+        default_view_action.triggered.connect(self._restore_default_layout)
+        view_menu.addAction(default_view_action)
         
         # Help menu
         help_menu = menubar.addMenu("&Help")
@@ -788,6 +808,8 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_toggle_log_console(self, enabled: bool):
         """Enable/disable the log console dock from the View menu."""
+        if self._is_minimizing:
+            return
         self.log_console_dock.setVisible(enabled)
         if enabled:
             self.log_console_dock.raise_()
@@ -795,6 +817,8 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_toggle_quick_iq(self, enabled: bool):
         """Enable/disable the Quick IQ dock from the View menu."""
+        if self._is_minimizing:
+            return
         self.quick_iq_dock.setVisible(enabled)
         if enabled:
             self.quick_iq_dock.raise_()
@@ -802,6 +826,8 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_toggle_controls_panel(self, enabled: bool):
         """Enable/disable the controls panel dock from the View menu."""
+        if self._is_minimizing:
+            return
         self.controls_dock.setVisible(enabled)
         if enabled:
             self.controls_dock.raise_()
@@ -809,22 +835,26 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_toggle_chart_cart(self, enabled: bool):
         """Enable/disable the chart cart dock from the View menu."""
+        if self._is_minimizing:
+            return
         self.chart_cart_dock.setVisible(enabled)
         if enabled:
             self.chart_cart_dock.raise_()
 
     def _sync_view_menu_checks(self):
         """Sync View menu checks with dock enabled states (independent of tab focus)."""
+        if self._is_minimizing:
+            return
         if hasattr(self, 'controls_dock') and hasattr(self, '_controls_panel_action'):
-            self._controls_panel_action.setChecked(self.controls_dock.toggleViewAction().isChecked())
+            self._controls_panel_action.setChecked(self.controls_dock.isVisible())
         if hasattr(self, 'chart_cart_dock') and hasattr(self, '_chart_cart_action'):
-            self._chart_cart_action.setChecked(self.chart_cart_dock.toggleViewAction().isChecked())
+            self._chart_cart_action.setChecked(self.chart_cart_dock.isVisible())
         if hasattr(self, 'help_browser_dock') and hasattr(self, '_help_browser_action'):
-            self._help_browser_action.setChecked(self.help_browser_dock.toggleViewAction().isChecked())
+            self._help_browser_action.setChecked(self.help_browser_dock.isVisible())
         if hasattr(self, 'log_console_dock') and hasattr(self, '_log_console_action'):
-            self._log_console_action.setChecked(self.log_console_dock.toggleViewAction().isChecked())
+            self._log_console_action.setChecked(self.log_console_dock.isVisible())
         if hasattr(self, 'quick_iq_dock') and hasattr(self, '_quick_iq_action'):
-            self._quick_iq_action.setChecked(self.quick_iq_dock.toggleViewAction().isChecked())
+            self._quick_iq_action.setChecked(self.quick_iq_dock.isVisible())
 
     @Slot(bool)
     def _on_controls_panel_visibility_changed(self, _visible: bool):
@@ -849,6 +879,8 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_toggle_help_browser(self, enabled: bool):
         """Enable/disable the help browser dock from the View menu."""
+        if self._is_minimizing:
+            return
         self.help_browser_dock.setVisible(enabled)
         if enabled:
             self.help_browser_dock.raise_()  # Bring to front
@@ -873,6 +905,50 @@ class MainWindow(QMainWindow):
         """Sync menu check state with help browser dock visibility."""
         self._sync_view_menu_checks()
     
+    @Slot()
+    def _restore_default_layout(self):
+        """Reset all dock widgets to their default positions and visibility."""
+        docks = [
+            self.controls_dock,
+            self.chart_cart_dock,
+            self.help_browser_dock,
+            self.log_console_dock,
+            self.quick_iq_dock,
+        ]
+
+        # Unfloat and remove all docks
+        for dock in docks:
+            dock.setFloating(False)
+            self.removeDockWidget(dock)
+
+        # Re-add to default areas
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.controls_dock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.chart_cart_dock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_browser_dock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_console_dock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.quick_iq_dock)
+
+        # Re-tab the right-side docks
+        self.tabifyDockWidget(self.chart_cart_dock, self.help_browser_dock)
+        self.tabifyDockWidget(self.help_browser_dock, self.log_console_dock)
+        self.tabifyDockWidget(self.log_console_dock, self.quick_iq_dock)
+
+        # Set default visibility
+        self.controls_dock.show()
+        self.chart_cart_dock.show()
+        self.help_browser_dock.hide()
+        self.log_console_dock.hide()
+        self.quick_iq_dock.hide()
+
+        # Expand controls dock if collapsed
+        if hasattr(self.controls_dock, 'is_expanded') and not self.controls_dock.is_expanded():
+            self.controls_dock.expand()
+
+        # Raise chart cart as the active right-side tab
+        self.chart_cart_dock.raise_()
+
+        self._sync_view_menu_checks()
+
     @Slot()
     def _on_snapshot_decoder_home(self):
         """Open Snapshot Decoder Home in web browser."""
