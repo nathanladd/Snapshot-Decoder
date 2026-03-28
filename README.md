@@ -4,13 +4,13 @@ Snapshot Decoder is a windows desktop app built to interpret engine data saved i
 This app can open specific .xls and .xlsx files previously saved by Bobcat Engine Analyzer, parse the Snapshot data 
 in order to determine what type of Snapshot file has been opened and pull useful general header information from the 
 Snapshot file. Snapshot Decoder can then read-in all frames of all PIDs in the Snapshot delineated file and store 
-them temporarely. Snapshot Decoder currently reads V1 Delphi ECUs, V2 Bosch ECUs, and V1 Engine Use Data. BEA (Bobcat
+them temporarily. Snapshot Decoder currently reads V1 Delphi ECUs, V2 Bosch ECUs, and V1 Engine Use Data. BEA (Bobcat
 Engine Analyzer) Snapshot files are not modified and Snapshot Decoder does not save snapshot files. Snapshot Decoder's
 only output is charts in pdf files.
 
 Snapshot PIDs can be searched, selected, and charted. There are also 'Quick Chart' commands with PIDs pre-selected based 
 on troubleshooting success for common diagnostic tasks available at a click of a button. Charts can be zoomed and paned.
-Charts can be scrubed through time like a video while monitoring live data in analog type gauges and indicators. Multiple 
+Charts can be scrubbed through time like a video while monitoring live data in analog type gauges and indicators. Multiple 
 charts can be broken out into separate windows for comparison. With one click, a multi-page pdf 'Reference Snapshot'
 file can be saved for comparison to known-good snapshot charts produces by Bobcat.
 
