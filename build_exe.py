@@ -49,9 +49,6 @@ hidden_imports = [
     'PySide6.QtCore',
     'PySide6.QtGui',
     'PySide6.QtWidgets',
-    'PySide6.QtWebEngineWidgets',
-    'PySide6.QtWebEngineCore',
-    'PySide6.QtWebChannel',
     'pandas',
     'matplotlib',
     'matplotlib.backends.backend_qtagg',
@@ -87,6 +84,9 @@ pyinstaller_args.extend([
     '--collect-all=matplotlib',  # Collect all matplotlib data files
     '--collect-all=pandas',  # Collect all pandas data files
     '--collect-all=PySide6',  # Collect all PySide6 modules and plugins
+    '--exclude-module=PySide6.QtWebEngineWidgets',  # Not used – exclude Chromium
+    '--exclude-module=PySide6.QtWebEngineCore',
+    '--exclude-module=PySide6.QtWebChannel',
 ])
 
 print("=" * 70)

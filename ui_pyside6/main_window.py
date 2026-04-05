@@ -35,8 +35,6 @@ from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
-from ui_pyside6.widgets.help_browser_dock import HelpBrowserDock
-from ui_pyside6.widgets.quick_iq_dock import QuickIQDock
 from ui_pyside6.widgets.settings import SettingsDialog
 from domain.app_settings import app_settings
     
@@ -73,8 +71,6 @@ class MainWindow(QMainWindow):
         self._setup_statusbar()
         self._setup_log_console()
         self._setup_chart_cart()
-        self._setup_help_browser()
-        self._setup_quick_iq()
         self._connect_signals()
         
         log_info("MainWindow initialized with controller architecture")
@@ -265,20 +261,10 @@ class MainWindow(QMainWindow):
         self._chart_cart_action.triggered.connect(self._on_toggle_chart_cart)
         view_menu.addAction(self._chart_cart_action)
         
-        self._help_browser_action = QAction("&Help Browser", self)
-        self._help_browser_action.setCheckable(True)
-        self._help_browser_action.triggered.connect(self._on_toggle_help_browser)
-        view_menu.addAction(self._help_browser_action)
-        
         self._log_console_action = QAction("&Log Console", self)
         self._log_console_action.setCheckable(True)
         self._log_console_action.triggered.connect(self._on_toggle_log_console)
         view_menu.addAction(self._log_console_action)
-
-        self._quick_iq_action = QAction("&Quick IQ", self)
-        self._quick_iq_action.setCheckable(True)
-        self._quick_iq_action.triggered.connect(self._on_toggle_quick_iq)
-        view_menu.addAction(self._quick_iq_action)
 
         view_menu.addSeparator()
 
@@ -756,54 +742,11 @@ class MainWindow(QMainWindow):
         self.chart_cart_dock.visibilityChanged.connect(self._on_chart_cart_visibility_changed)
         self.chart_cart_dock.toggleViewAction().toggled.connect(self._on_chart_cart_visibility_changed)
         
+        # Tab the chart cart and log console together in the right dock area
+        self.tabifyDockWidget(self.chart_cart_dock, self.log_console_dock)
+        
         # Listen for cart changes to sync PID panel
         self.chart_cart_dock.chart_cart.cart_changed.connect(self._on_chart_cart_changed)
-    
-    def _setup_help_browser(self):
-        """Setup the help browser dock widget."""
-        self.help_browser_dock = HelpBrowserDock(self)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_browser_dock)
-        
-        # Hidden by default (auto-shows when a help link is clicked)
-        self.help_browser_dock.hide()
-        
-        # Tab the help browser and log console together in the right dock area
-        self.tabifyDockWidget(self.chart_cart_dock, self.help_browser_dock)
-        self.tabifyDockWidget(self.help_browser_dock, self.log_console_dock)
-        
-        # Set up dock widget visibility changes to raise the active tab
-        self.help_browser_dock.visibilityChanged.connect(self._on_help_browser_visibility_changed)
-        self.help_browser_dock.toggleViewAction().toggled.connect(self._on_help_browser_visibility_changed)
-        
-        # When help browser is shown, raise it to the front
-        def raise_help_browser():
-            if self.help_browser_dock.isVisible():
-                self.help_browser_dock.raise_()
-        
-        # Connect menu action to raise help browser when shown
-        if hasattr(self, '_help_browser_action'):
-            self._help_browser_action.triggered.connect(raise_help_browser)
-
-        # Ensure initial menu checks match actual dock enabled states
-        self._sync_view_menu_checks()
-
-    def _setup_quick_iq(self):
-        """Setup the Quick IQ dock widget."""
-        self.quick_iq_dock = QuickIQDock(self)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.quick_iq_dock)
-
-        # Hidden by default (shows when Quick IQ is requested)
-        self.quick_iq_dock.hide()
-
-        # Tab with existing right-side docks
-        self.tabifyDockWidget(self.help_browser_dock, self.quick_iq_dock)
-
-        # Sync menu check state when dock visibility changes
-        self.quick_iq_dock.visibilityChanged.connect(self._on_quick_iq_visibility_changed)
-        self.quick_iq_dock.toggleViewAction().toggled.connect(self._on_quick_iq_visibility_changed)
-
-        # Ensure initial menu checks match actual dock enabled states
-        self._sync_view_menu_checks()
     
     @Slot(bool)
     def _on_toggle_log_console(self, enabled: bool):
@@ -813,15 +756,6 @@ class MainWindow(QMainWindow):
         self.log_console_dock.setVisible(enabled)
         if enabled:
             self.log_console_dock.raise_()
-
-    @Slot(bool)
-    def _on_toggle_quick_iq(self, enabled: bool):
-        """Enable/disable the Quick IQ dock from the View menu."""
-        if self._is_minimizing:
-            return
-        self.quick_iq_dock.setVisible(enabled)
-        if enabled:
-            self.quick_iq_dock.raise_()
 
     @Slot(bool)
     def _on_toggle_controls_panel(self, enabled: bool):
@@ -849,12 +783,8 @@ class MainWindow(QMainWindow):
             self._controls_panel_action.setChecked(self.controls_dock.isVisible())
         if hasattr(self, 'chart_cart_dock') and hasattr(self, '_chart_cart_action'):
             self._chart_cart_action.setChecked(self.chart_cart_dock.isVisible())
-        if hasattr(self, 'help_browser_dock') and hasattr(self, '_help_browser_action'):
-            self._help_browser_action.setChecked(self.help_browser_dock.isVisible())
         if hasattr(self, 'log_console_dock') and hasattr(self, '_log_console_action'):
             self._log_console_action.setChecked(self.log_console_dock.isVisible())
-        if hasattr(self, 'quick_iq_dock') and hasattr(self, '_quick_iq_action'):
-            self._quick_iq_action.setChecked(self.quick_iq_dock.isVisible())
 
     @Slot(bool)
     def _on_controls_panel_visibility_changed(self, _visible: bool):
@@ -867,23 +797,9 @@ class MainWindow(QMainWindow):
         self._sync_view_menu_checks()
 
     @Slot(bool)
-    def _on_quick_iq_visibility_changed(self, _visible: bool):
-        """Sync menu check state when Quick IQ dock state changes."""
-        self._sync_view_menu_checks()
-    
-    @Slot(bool)
     def _on_chart_cart_visibility_changed(self, _visible: bool):
         """Sync menu check state with chart cart dock visibility."""
         self._sync_view_menu_checks()
-    
-    @Slot(bool)
-    def _on_toggle_help_browser(self, enabled: bool):
-        """Enable/disable the help browser dock from the View menu."""
-        if self._is_minimizing:
-            return
-        self.help_browser_dock.setVisible(enabled)
-        if enabled:
-            self.help_browser_dock.raise_()  # Bring to front
     
     def add_current_chart_to_cart(self):
         """Add the current chart configuration to the chart cart."""
@@ -900,20 +816,13 @@ class MainWindow(QMainWindow):
         log_info(f"Added chart to cart: {config.title}")
     
     
-    @Slot(bool)
-    def _on_help_browser_visibility_changed(self, _visible: bool):
-        """Sync menu check state with help browser dock visibility."""
-        self._sync_view_menu_checks()
-    
     @Slot()
     def _restore_default_layout(self):
         """Reset all dock widgets to their default positions and visibility."""
         docks = [
             self.controls_dock,
             self.chart_cart_dock,
-            self.help_browser_dock,
             self.log_console_dock,
-            self.quick_iq_dock,
         ]
 
         # Unfloat and remove all docks
@@ -924,21 +833,15 @@ class MainWindow(QMainWindow):
         # Re-add to default areas
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.controls_dock)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.chart_cart_dock)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_browser_dock)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_console_dock)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.quick_iq_dock)
 
         # Re-tab the right-side docks
-        self.tabifyDockWidget(self.chart_cart_dock, self.help_browser_dock)
-        self.tabifyDockWidget(self.help_browser_dock, self.log_console_dock)
-        self.tabifyDockWidget(self.log_console_dock, self.quick_iq_dock)
+        self.tabifyDockWidget(self.chart_cart_dock, self.log_console_dock)
 
         # Set default visibility
         self.controls_dock.show()
         self.chart_cart_dock.show()
-        self.help_browser_dock.hide()
         self.log_console_dock.hide()
-        self.quick_iq_dock.hide()
 
         # Expand controls dock if collapsed
         if hasattr(self.controls_dock, 'is_expanded') and not self.controls_dock.is_expanded():
@@ -963,20 +866,24 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_what_are_reference_charts(self):
-        """Open the Reference Charts help page in the help browser dock."""
-        self.help_browser_dock.navigate(
+        """Open the Reference Charts help page in the default browser."""
+        webbrowser.open(
             "https://berrycompanies.sharepoint.com/:u:/r/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages/Reference-Snapshot.aspx?csf=1&web=1&e=HyLXbK"
         )
     
     @Slot()
     def _on_show_help_home(self):
-        """Show the help browser with the home page."""
-        self.help_browser_dock.navigate("index.html")
+        """Open the help home page in the default browser."""
+        help_dir = os.path.join(os.path.dirname(__file__), "..", "data", "help")
+        home = os.path.normpath(os.path.join(help_dir, "index.html"))
+        webbrowser.open(f"file:///{home}")
 
     @Slot()
     def _on_show_seven_step(self):
-        """Show the Seven Step Diagnostic Process help page."""
-        self.help_browser_dock.navigate("seven_step.html")
+        """Open the Seven Step Diagnostic Process help page in the default browser."""
+        help_dir = os.path.join(os.path.dirname(__file__), "..", "data", "help")
+        page = os.path.normpath(os.path.join(help_dir, "seven_step.html"))
+        webbrowser.open(f"file:///{page}")
 
     def _build_quick_iq_url(self, chart_title: str) -> str:
         """Build a Quick IQ SharePoint page URL from chart title."""
@@ -992,13 +899,13 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _on_quick_iq_requested(self, chart_title: str):
-        """Open Quick IQ dock for the provided chart title."""
+        """Open Quick IQ page in the default browser."""
         if not chart_title:
             QMessageBox.information(self, "Quick IQ", "Create or select a chart first.")
             return
 
         url = self._build_quick_iq_url(chart_title)
-        self.quick_iq_dock.navigate(url)
+        webbrowser.open(url)
     
     @Slot()
     def _on_chart_cart_changed(self):
@@ -1046,13 +953,6 @@ class MainWindow(QMainWindow):
                 if hasattr(self.chart_widget, '_live_values_widget'):
                     self.chart_widget._live_values_widget.update_settings(debug_settings)
 
-            # Propagate web browser zoom changes to docked web panels
-            if original.get('web_zoom_factor') != new.get('web_zoom_factor'):
-                zoom = new['web_zoom_factor']
-                if hasattr(self, 'help_browser_dock'):
-                    self.help_browser_dock.set_zoom_factor(zoom)
-                if hasattr(self, 'quick_iq_dock'):
-                    self.quick_iq_dock.set_zoom_factor(zoom)
     
     def _generate_reference_pdf(self):
         """Generate reference PDF using V2 architecture."""

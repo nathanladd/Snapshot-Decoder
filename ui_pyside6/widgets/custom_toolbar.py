@@ -165,7 +165,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
         # Add Quick IQ button
         self._quick_iq_btn = QToolButton(self)
-        self._quick_iq_btn.setToolTip("Open Quick IQ panel for this chart")
+        self._quick_iq_btn.setToolTip("Open Quick IQ in your default browser")
 
         # Load brain icon
         from PySide6.QtCore import QSize
