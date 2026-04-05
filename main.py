@@ -41,7 +41,25 @@ def main():
         print("Warning: Could not load splash.png")
         splash = None
     else:
-        splash = QSplashScreen(splash_pixmap)
+        # Scale down to 70% of original size
+        scaled_w = int(splash_pixmap.width() * 0.70)
+        scaled_h = int(splash_pixmap.height() * 0.70)
+        splash_pixmap = splash_pixmap.scaled(
+            scaled_w, scaled_h, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
+        )
+        
+        # Add padding below the image so text doesn't overlap
+        padding_height = 60
+        padded_pixmap = QPixmap(scaled_w, scaled_h + padding_height)
+        padded_pixmap.fill(QColor(255, 255, 255))  # White background
+        
+        from PySide6.QtGui import QPainter
+        painter = QPainter(padded_pixmap)
+        painter.drawPixmap(0, 0, splash_pixmap)
+        painter.end()
+        
+        splash = QSplashScreen(padded_pixmap)
         
         # Set font for splash messages
         font = QFont()
