@@ -7,7 +7,7 @@ Provides PDF export with chain of custody metadata.
 import os
 from typing import Optional
 
-from PySide6.QtWidgets import QFileDialog, QMessageBox, QToolButton
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QToolButton, QWidget, QSizePolicy
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 
@@ -190,9 +190,15 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         self._quick_iq_btn.clicked.connect(self.quick_iq_requested.emit)
         self.addWidget(self._quick_iq_btn)
 
+        # Spacer to push axis controls to the right
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.addWidget(spacer)
+
         # Add compact axis controls directly on the chart toolbar
         self.addSeparator()
         self._axis_controls = AxisControlsPanel(self, compact=True)
+        self._axis_controls.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         self._axis_controls.settings_changed.connect(self.axis_settings_changed.emit)
         self.addWidget(self._axis_controls)
         
