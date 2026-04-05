@@ -48,7 +48,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     # Signal emitted when axis controls are changed
     axis_settings_changed = Signal()
     
-    def __init__(self, canvas, parent, *, coordinates=True, chart_config: Optional[ChartConfig] = None, show_popout=True):
+    def __init__(self, canvas, parent, *, coordinates=False, chart_config: Optional[ChartConfig] = None, show_popout=True):
         """
         Initialize the custom toolbar.
         
