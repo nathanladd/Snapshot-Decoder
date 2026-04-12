@@ -29,7 +29,7 @@ def find_header_row(df: pd.DataFrame, max_scan_rows: int = 10) -> int:
     # Collect all identifying PIDs from all snapshot types
     all_pids = set()
     for pids in SNAPSHOT_TYPE_PIDS.values():
-        all_pids.update(pids)
+        all_pids.update(p.lower() for p in pids)
     
     log_info(f"Scanning {max_scan_rows} rows for header containing known PIDs...")
     log_info(f"Looking for {len(all_pids)} known identifying PIDs")
@@ -82,12 +82,12 @@ def detect_snapshot_type(
             continue
             
         # Count how many PIDs from this type are found in the row
-        matched = sum(1 for pid in pids if pid in row_values)
+        matched = sum(1 for pid in pids if pid.lower() in row_values)
         percentage = matched / len(pids)
         
         # Log detailed information for this type
-        found_pids = [pid for pid in pids if pid in row_values]
-        missing_pids = [pid for pid in pids if pid not in row_values]
+        found_pids = [pid for pid in pids if pid.lower() in row_values]
+        missing_pids = [pid for pid in pids if pid.lower() not in row_values]
         
         log_info(f"TYPE {snap_type.name}: {percentage:.1%} confidence ({matched}/{len(pids)} PIDs)")
         if found_pids:
@@ -131,7 +131,7 @@ def get_match_percentages(df: pd.DataFrame, header_row_idx: int) -> dict[SnapTyp
             percentages[snap_type] = 0.0
             continue
             
-        matched = sum(1 for pid in pids if pid in row_values)
+        matched = sum(1 for pid in pids if pid.lower() in row_values)
         percentages[snap_type] = matched / len(pids)
     
     return percentages
