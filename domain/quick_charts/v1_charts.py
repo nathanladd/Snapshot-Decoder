@@ -62,9 +62,9 @@ V1_EGR_FLOW = QuickChartDef(
     secondary_range=(-10, 400),
 )
 
-V1_EGR_POSITION = QuickChartDef(
-    action_id="V1_EGR_POSITION",
-    title="EGR Position",
+V1_EGR_CALIBRATION = QuickChartDef(
+    action_id="V1_EGR_CALIBRATION",
+    title="EGR Calibration",
     primary_pids=["P_L_Egr_close_pos_mean_nvv", "P_L_Egr_feedback_pos_cnts"],
     primary_range=(0, 1000),
     secondary_pids=["ACM_Egr_position_dmnd"],
@@ -114,7 +114,7 @@ V1_CHARTS: dict[str, QuickChartDef] = {
     "V1_IMV_CURRENT": V1_IMV_CURRENT,               # IMV Current
     "V1_TURBO": V1_TURBO,                           # Manifold Pressure vs Atmospheric Pressure
     "V1_EGR_FLOW": V1_EGR_FLOW,                     # Speed density vs MAF
-    "V1_EGR_POSITION": V1_EGR_POSITION,             # EGR Position
+    "V1_EGR_CALIBRATION": V1_EGR_CALIBRATION,       # EGR Calibration
     "V1_PISTON_DELTA": V1_PISTON_DELTA,             # Piston Delta Speed
     "V1_TORQUE_CONTROL": V1_TORQUE_CONTROL,         # Torque and Torque Limit
 }
