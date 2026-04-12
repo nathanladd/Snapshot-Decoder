@@ -7,8 +7,8 @@ from typing import Optional
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QGridLayout, QLabel, QGroupBox, QToolBar, QToolButton
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtCore import Qt, Signal, QMimeData
+from PySide6.QtGui import QAction, QIcon, QPixmap, QDragEnterEvent, QDragLeaveEvent, QDropEvent
 
 from domain.snapshot import Snapshot
 from utils import resource_path
@@ -24,9 +24,25 @@ class HeaderPanel(QWidget):
     clean_table_requested = Signal()
     chart_table_requested = Signal()
     help_requested = Signal()
+    file_dropped = Signal(str)
+    
+    _VALID_EXTENSIONS = ('.xlsx', '.xls')
+    
+    _GROUP_STYLE_DEFAULT = "QGroupBox { font-weight: bold; }"
+    _GROUP_STYLE_EMPTY = (
+        "QGroupBox { font-weight: bold; border: 2px dashed #0078d4; "
+        "border-radius: 4px; margin-top: 0.5em; padding-top: 0.6em; }"
+    )
+    _GROUP_STYLE_HOVER = (
+        "QGroupBox { font-weight: bold; border: 2px solid #0078d4; "
+        "border-radius: 4px; margin-top: 0.5em; padding-top: 0.6em; "
+        "background-color: rgba(0, 120, 212, 13); }"
+    )
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setAcceptDrops(True)
+        self._snapshot_loaded = False
         self._setup_ui()
     
     def _setup_ui(self):
@@ -40,12 +56,44 @@ class HeaderPanel(QWidget):
         
         # Group box for header info
         self._group = QGroupBox("Header Info")
-        self._group.setStyleSheet("QGroupBox { font-weight: bold; }")
-        self._group_layout = QGridLayout(self._group)
+        self._group.setToolTip("Drag and drop a snapshot file here to open it")
+        self._group_layout = QVBoxLayout(self._group)
         self._group_layout.setSpacing(4)
+        
+        # Grid for dynamic header rows
+        self._grid_widget = QWidget()
+        self._grid_layout = QGridLayout(self._grid_widget)
+        self._grid_layout.setContentsMargins(0, 0, 0, 0)
+        self._grid_layout.setSpacing(4)
+        self._group_layout.addWidget(self._grid_widget)
         
         # Container for dynamic header labels
         self._header_labels = []
+        
+        # Empty-state placeholder (icon + prompt text)
+        self._placeholder = QLabel()
+        self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_path = resource_path("data/images/folder-open.png")
+        self._placeholder.setText(
+            f'<div style="text-align:center; padding:12px;">'
+            f'<img src="{icon_path}" width="32" height="32" '
+            f'style="opacity:0.4;"><br>'
+            f'<span style="color:#888; font-size:9pt;">'
+            f'Drop snapshot file here &mdash; or click Open</span></div>'
+        )
+        self._group_layout.addWidget(self._placeholder)
+        
+        # Persistent hint label (visible when snapshot is loaded)
+        self._drop_hint = QLabel("Drop a file here to open")
+        self._drop_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._drop_hint.setStyleSheet(
+            "color: #888; font-size: 8pt; font-style: italic; padding: 2px 0;"
+        )
+        self._drop_hint.hide()
+        self._group_layout.addWidget(self._drop_hint)
+        
+        # Start in empty state
+        self._set_empty_state()
         
         layout.addWidget(self._group)
     
@@ -56,6 +104,9 @@ class HeaderPanel(QWidget):
         
         if snapshot is None:
             return
+        
+        # Switch to loaded state
+        self._set_loaded_state()
         
         # Add file name as first entry
         self._add_header_row("File:", snapshot.file_name)
@@ -77,12 +128,13 @@ class HeaderPanel(QWidget):
     def clear(self):
         """Clear all displayed data."""
         self._clear_header_labels()
+        self._set_empty_state()
     
     def _clear_header_labels(self):
         """Clear all dynamic header labels."""
-        # Remove all widgets from the layout
-        while self._group_layout.count():
-            child = self._group_layout.takeAt(0)
+        # Remove all widgets from the grid layout
+        while self._grid_layout.count():
+            child = self._grid_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
         
@@ -91,7 +143,7 @@ class HeaderPanel(QWidget):
     
     def _add_header_row(self, label_text: str, value_text: str):
         """Add a new header row to the layout."""
-        row = self._group_layout.rowCount()
+        row = self._grid_layout.rowCount()
         
         label = QLabel(label_text)
         # Use QFont for bold instead of stylesheet to preserve palette colors
@@ -102,14 +154,14 @@ class HeaderPanel(QWidget):
         value_label = QLabel(value_text or "-")
         value_label.setWordWrap(True)
         
-        self._group_layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-        self._group_layout.addWidget(value_label, row, 1, Qt.AlignmentFlag.AlignTop)
+        self._grid_layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        self._grid_layout.addWidget(value_label, row, 1, Qt.AlignmentFlag.AlignTop)
         
         # Store references to the labels
         self._header_labels.append((label, value_label))
         
         # Ensure the value column stretches
-        self._group_layout.setColumnStretch(1, 1)
+        self._grid_layout.setColumnStretch(1, 1)
     
     def _setup_toolbar(self):
         """Set up the toolbar with common actions."""
@@ -175,3 +227,66 @@ class HeaderPanel(QWidget):
         help_btn.setToolTip("Show help documentation (F1)")
         help_btn.clicked.connect(self.help_requested.emit)
         self._toolbar.addWidget(help_btn)
+    
+    # ------------------------------------------------------------------
+    # Drag-and-drop support
+    # ------------------------------------------------------------------
+    
+    def _set_empty_state(self):
+        """Switch to empty-state visuals (dashed border, placeholder)."""
+        self._snapshot_loaded = False
+        self._group.setStyleSheet(self._GROUP_STYLE_EMPTY)
+        self._placeholder.show()
+        self._drop_hint.hide()
+    
+    def _set_loaded_state(self):
+        """Switch to loaded-state visuals (default border, hint label)."""
+        self._snapshot_loaded = True
+        self._group.setStyleSheet(self._GROUP_STYLE_DEFAULT)
+        self._placeholder.hide()
+        self._drop_hint.show()
+    
+    def _apply_hover_style(self):
+        """Apply drag-hover highlight."""
+        self._group.setStyleSheet(self._GROUP_STYLE_HOVER)
+    
+    def _remove_hover_style(self):
+        """Revert to the appropriate non-hover style."""
+        if self._snapshot_loaded:
+            self._group.setStyleSheet(self._GROUP_STYLE_DEFAULT)
+        else:
+            self._group.setStyleSheet(self._GROUP_STYLE_EMPTY)
+    
+    @staticmethod
+    def _valid_file_urls(mime_data: QMimeData) -> list:
+        """Return list of local file paths with valid snapshot extensions."""
+        if not mime_data.hasUrls():
+            return []
+        return [
+            url.toLocalFile() for url in mime_data.urls()
+            if url.isLocalFile()
+            and url.toLocalFile().lower().endswith(HeaderPanel._VALID_EXTENSIONS)
+        ]
+    
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        """Accept drag if it contains valid snapshot file URLs."""
+        if self._valid_file_urls(event.mimeData()):
+            event.acceptProposedAction()
+            self._apply_hover_style()
+        else:
+            event.ignore()
+    
+    def dragLeaveEvent(self, event: QDragLeaveEvent):
+        """Remove hover highlight when drag leaves."""
+        self._remove_hover_style()
+        event.accept()
+    
+    def dropEvent(self, event: QDropEvent):
+        """Handle file drop — emit file_dropped with the first valid path."""
+        self._remove_hover_style()
+        paths = self._valid_file_urls(event.mimeData())
+        if paths:
+            event.acceptProposedAction()
+            self.file_dropped.emit(paths[0])
+        else:
+            event.ignore()

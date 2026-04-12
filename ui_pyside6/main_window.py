@@ -140,6 +140,7 @@ class MainWindow(QMainWindow):
         self.header_panel.clean_table_requested.connect(self._on_show_clean_table)
         self.header_panel.chart_table_requested.connect(self._on_show_chart_table)
         self.header_panel.help_requested.connect(self._on_show_help_home)
+        self.header_panel.file_dropped.connect(self._on_open_file)
         
         self.system_panel = SystemPanel()
         # Vertically center the system panel relative to header panel
