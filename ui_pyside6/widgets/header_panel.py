@@ -19,6 +19,7 @@ class HeaderPanel(QWidget):
     
     # Signals for toolbar actions
     open_requested = Signal()
+    close_requested = Signal()
     raw_data_requested = Signal()
     clean_table_requested = Signal()
     chart_table_requested = Signal()
@@ -139,6 +140,13 @@ class HeaderPanel(QWidget):
         open_btn.setToolTip("Open snapshot file (Ctrl+O)")
         open_btn.clicked.connect(self.open_requested.emit)
         self._toolbar.addWidget(open_btn)
+        
+        # Close action
+        close_btn = QToolButton()
+        close_btn.setIcon(QIcon(resource_path("data/images/folder-close.png")))
+        close_btn.setToolTip("Close snapshot")
+        close_btn.clicked.connect(self.close_requested.emit)
+        self._toolbar.addWidget(close_btn)
         
         # Raw Data action
         raw_data_btn = QToolButton()

@@ -567,3 +567,5 @@ class IntegratedPidWidget(QWidget):
     def clear(self):
         """Reset all controls to default values."""
         self._clear_all_selections()
+        self.set_snapshot(None)
+        self.search_entry.clear()

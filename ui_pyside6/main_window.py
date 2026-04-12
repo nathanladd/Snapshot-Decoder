@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         
         # Connect toolbar signals to existing handler methods
         self.header_panel.open_requested.connect(self._on_open_file_dialog)
+        self.header_panel.close_requested.connect(self._on_close_snapshot)
         self.header_panel.raw_data_requested.connect(self._on_show_raw_table)
         self.header_panel.clean_table_requested.connect(self._on_show_clean_table)
         self.header_panel.chart_table_requested.connect(self._on_show_chart_table)
@@ -360,6 +361,32 @@ class MainWindow(QMainWindow):
         self._progress_dialog.setValue(0)
 
         self.app_controller.load_snapshot(file_path)
+    
+    @Slot()
+    def _on_close_snapshot(self):
+        """Handle close snapshot request - reset app to freshly-loaded state."""
+        if self.snapshot is None:
+            return
+        
+        reply = QMessageBox.warning(
+            self,
+            "Close Snapshot",
+            "All current charts and the chart cart cannot be saved.\n\n"
+            "Please complete all PDF exports before closing.\n\n"
+            "Do you want to continue?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        
+        self._clear_all_snapshot_state()
+        
+        # Clear the log console
+        if hasattr(self, 'log_console_dock') and self.log_console_dock:
+            self.log_console_dock.log_console._clear_console()
+        
+        log_info("Snapshot closed by user")
     
     def _clear_all_snapshot_state(self):
         """Clear all snapshot data from the UI and controller."""
