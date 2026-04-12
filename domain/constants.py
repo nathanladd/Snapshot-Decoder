@@ -304,6 +304,10 @@ SNAPSHOT_TYPE_PIDS: dict[SnapType, list[str]] = {
         "eud_atmos_pres_timer_nvv[1]",
         "eud_engine_idle_time_nvv",
         "i_c_mdp_correction_dat_i_0",
+        "EUD_Engine_idle_time_nvv",
+        "EUD_Engine_run_time_spdbnd1_nvv",
+        "EUD_Inlet_air_flow_timer_nvv[0]",
+        "EUD_Rail_pressure_1_time_nvv",
     ],
     SnapType.EUD_V2: [
        "FlSys_volFlConsTot",
