@@ -347,7 +347,6 @@ SYSTEM_PIDS: dict[str, list[str]] = {
     ],
     "scr": [
         "scr_pupmpp",                  #ECU_V2
-        "P_T_Dpf_model_soot_mass_nvv", #ECU_V1 (SCR PIDs in V1 seem to be labeled DPF)
     ],
     "air_throttle": [
         "ThrVlv_rAct",                 #ECU_V2
