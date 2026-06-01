@@ -358,3 +358,27 @@ SYSTEM_PIDS: dict[str, list[str]] = {
     ],
 }
 
+# V1 SCR identification via inlet/outlet temperature comparison.
+# V1 snapshots expose SCR PIDs wether there is actually an SCR or not. An engine 
+# with a real SCR shows inlet and outlet temps that diverge as the SCR operates, 
+# while an engine without SCR has them pegged at the same value.
+#cdetect_scr_by_temperature() reads these and
+# turns the SCR system on when the temps differ on a high fraction of rows.
+
+V1_SCR_TEMP_PIDS: dict[str, str] = {
+    "inlet": "TSE_Dpf_in_temp",        # SCR inlet temperature (ECU_V1)
+    "outlet": "TSE_Dpf_out_temp",      # SCR outlet temperature (ECU_V1)
+}
+
+# Fraction of valid rows (both temps present) where temps are "different" (as
+# defined by V1_SCR_TEMP_DIFF_MIN_PCT below) required to conclude a real SCR is
+# fitted. 0.95 cleanly separates studied examples: the no-SCR 740 stayed
+# identical while the SCR-equipped 770 differed on essentially every row.
+V1_SCR_DIFF_THRESHOLD: float = 0.95
+
+# Minimum relative difference between inlet and outlet temps for a row to count
+# as "different". |inlet - outlet| / avg(inlet, outlet) must exceed this value.
+# 5% filters out sensor noise while remaining well below the 20-100F spreads
+# seen on a real SCR (550-600F range → ~3-17% spread).
+V1_SCR_TEMP_DIFF_MIN_PCT: float = 0.05
+
