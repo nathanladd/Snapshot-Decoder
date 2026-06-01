@@ -374,7 +374,7 @@ V1_SCR_TEMP_PIDS: dict[str, str] = {
 # defined by V1_SCR_TEMP_DIFF_MIN_PCT below) required to conclude a real SCR is
 # fitted. 0.95 cleanly separates studied examples: the no-SCR 740 stayed
 # identical while the SCR-equipped 770 differed on essentially every row.
-V1_SCR_DIFF_THRESHOLD: float = 0.95
+V1_SCR_DIFF_THRESHOLD: float = 0.50
 
 # Minimum relative difference between inlet and outlet temps for a row to count
 # as "different". |inlet - outlet| / avg(inlet, outlet) must exceed this value.
