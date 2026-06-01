@@ -382,3 +382,10 @@ V1_SCR_DIFF_THRESHOLD: float = 0.50
 # seen on a real SCR (550-600F range → ~3-17% spread).
 V1_SCR_TEMP_DIFF_MIN_PCT: float = 0.05
 
+# Fallback signal: some real-SCR 770s keep inlet and outlet within 5% of each
+# other (so the divergence test above fails), yet the pair still heats up and
+# cools down over the run. If the paired temperature swings across the snapshot
+# by at least this fraction ((max - min) / mean), the SCR is real. A no-SCR
+# engine sits pegged at a constant temperature (≈0% swing).
+V1_SCR_TEMP_SWING_MIN_PCT: float = 0.10
+

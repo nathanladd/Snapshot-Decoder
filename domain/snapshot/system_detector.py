@@ -9,7 +9,13 @@ from dataclasses import dataclass, field
 from typing import Optional, Set, Tuple
 import pandas as pd
 
-from domain.constants import SYSTEM_PIDS, V1_SCR_TEMP_PIDS, V1_SCR_DIFF_THRESHOLD, V1_SCR_TEMP_DIFF_MIN_PCT
+from domain.constants import (
+    SYSTEM_PIDS,
+    V1_SCR_TEMP_PIDS,
+    V1_SCR_DIFF_THRESHOLD,
+    V1_SCR_TEMP_DIFF_MIN_PCT,
+    V1_SCR_TEMP_SWING_MIN_PCT,
+)
 from infrastructure.logging_config import log_debug, log_info, log_warning
 
 
@@ -100,21 +106,30 @@ def detect_scr_by_temperature(
     """
     Detect an SCR on V1 engines by comparing inlet and outlet temperatures.
 
-    V1 snapshots lack a dedicated SCR PID (unlike V2's scr_pupmpp). However, an
-    engine with a real SCR shows its inlet and outlet temperatures diverging as
-    exhaust passes through, while an engine without one leaves both readings
-    pegged at the same value. This computes the fraction of rows (where both
-    temps are present) on which the two differ; a high fraction means the SCR
-    is real and should be switched on.
+    V1 snapshots lack a dedicated SCR PID (unlike V2's scr_pupmpp), so SCR
+    presence is inferred from the inlet/outlet temperatures via two signals:
+
+    1. Divergence: an engine with a real SCR usually shows inlet and outlet
+       diverging as exhaust passes through, while an engine without one leaves
+       both pegged at the same value. If the two differ by more than
+       V1_SCR_TEMP_DIFF_MIN_PCT on at least ``threshold`` of the valid rows,
+       the SCR is real.
+    2. Swing (fallback): some real SCRs keep inlet and outlet within 5% of each
+       other, so signal 1 fails. But the pair still heats up and cools down over
+       the run, whereas a no-SCR engine sits pegged at a constant temperature.
+       If the paired (averaged) temperature swings across the snapshot by at
+       least V1_SCR_TEMP_SWING_MIN_PCT, the SCR is real.
+
+    Either signal is sufficient to switch the SCR on.
 
     Args:
         df: Cleaned snapshot DataFrame
-        threshold: Minimum fraction of differing rows to conclude an SCR exists
+        threshold: Minimum fraction of differing rows for the divergence signal
 
     Returns:
-        Tuple of (scr_present, diff_fraction). diff_fraction is None when the
-        comparison could not run (one or both temp PIDs absent, or no rows had
-        both values present).
+        Tuple of (scr_present, diff_fraction). diff_fraction is the fraction of
+        rows that diverged (signal 1), or None when the comparison could not run
+        (one or both temp PIDs absent, or no rows had both values present).
     """
     # Map lowercased -> actual column name to match PIDs case-insensitively.
     columns_by_lower = {col.lower().strip(): col for col in df.columns}
@@ -143,15 +158,26 @@ def detect_scr_by_temperature(
         return False, None
 
     avg = (inlet[valid] + outlet[valid]) / 2
+
+    # Signal 1: inlet vs outlet divergence per row.
     rel_diff = (inlet[valid] - outlet[valid]).abs() / avg.abs()
     different_count = int((rel_diff > V1_SCR_TEMP_DIFF_MIN_PCT).sum())
     diff_fraction = different_count / valid_count
-    scr_present = diff_fraction >= threshold
+    diverge_detected = diff_fraction >= threshold
+
+    # Signal 2 (fallback): the paired temperature swinging across the snapshot.
+    temp_mean = avg.mean()
+    temp_swing = (avg.max() - avg.min()) / abs(temp_mean) if temp_mean else 0.0
+    swing_detected = temp_swing >= V1_SCR_TEMP_SWING_MIN_PCT
+
+    scr_present = bool(diverge_detected or swing_detected)
 
     log_info(
         f"V1 SCR Temp Detection: inlet/outlet differ by >{V1_SCR_TEMP_DIFF_MIN_PCT:.0%} on "
-        f"{diff_fraction:.1%} of {valid_count} valid rows (threshold {threshold:.0%}) -> "
+        f"{diff_fraction:.1%} of {valid_count} valid rows (threshold {threshold:.0%}); "
+        f"paired temp swing {temp_swing:.1%} (threshold {V1_SCR_TEMP_SWING_MIN_PCT:.0%}) -> "
         f"V1 SCR {'DETECTED' if scr_present else 'NOT detected'}"
+        f"{' [swing]' if swing_detected and not diverge_detected else ''}"
     )
 
     return scr_present, diff_fraction
