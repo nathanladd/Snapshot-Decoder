@@ -70,55 +70,51 @@
     </div>
     
     <script>
-        // Version comparison function
+        // Version passed by the app as ?version=X.Y.Z in the URL
+        const currentVersion = new URLSearchParams(window.location.search).get('version') || 'unknown';
+
+        document.getElementById('current-version').textContent = currentVersion;
+
         function compareVersions(v1, v2) {
             const parts1 = v1.split('.').map(Number);
             const parts2 = v2.split('.').map(Number);
-            
+
             for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
                 const part1 = parts1[i] || 0;
                 const part2 = parts2[i] || 0;
-                
+
                 if (part1 > part2) return 1;
                 if (part1 < part2) return -1;
             }
             return 0;
         }
-        
-        // Update checking with fallback to manual link
+
         async function checkForUpdates() {
             const statusDiv = document.getElementById('update-status');
             const lastCheckedDiv = document.getElementById('last-checked');
             const downloadSection = document.getElementById('download-section');
             const downloadInfo = document.getElementById('download-info');
-            
+
             statusDiv.innerHTML = '<p>Checking for updates...</p>';
             downloadSection.style.display = 'none';
-            
+
             try {
-                // Try GitHub API directly (may fail due to CORS restrictions in embedded browser)
                 const response = await fetch('https://api.github.com/repos/nathanladd/Snapshot-Decoder/releases/latest');
-                
+
                 if (!response.ok) {
                     throw new Error('GitHub API not accessible');
                 }
-                
+
                 const release = await response.json();
-                const latestVersion = release.tag_name.replace('v', ''); // Remove 'v' prefix if present
+                const latestVersion = release.tag_name.replace('v', '');
                 const downloadUrl = 'https://nathanladd.github.io/Snapshot-Decoder/';
                 const releaseNotes = release.body || 'No release notes available.';
                 const publishedDate = new Date(release.published_at).toLocaleDateString();
-                
-                // Get current version (this should be passed from the application)
-                const currentVersion = '2.3.1'; // This should come from the app
-                
-                // Update last checked time
-                const now = new Date();
-                lastCheckedDiv.textContent = now.toLocaleString();
-                
-                // Compare versions
+
+                lastCheckedDiv.textContent = new Date().toLocaleString();
+
                 const comparison = compareVersions(latestVersion, currentVersion);
-                
+
                 if (comparison === 0) {
                     statusDiv.innerHTML = `
                         <div class="success">
@@ -136,8 +132,6 @@
                             <p>Released: ${publishedDate}</p>
                         </div>
                     `;
-                    
-                    // Show download section
                     downloadInfo.innerHTML = `
                         <div class="info">
                             <p><strong>Version ${latestVersion}</strong> is now available!</p>
@@ -158,13 +152,11 @@
                         </div>
                     `;
                 }
-                
+
             } catch (error) {
                 console.error('Error checking for updates:', error);
-                
-                // Provide manual update option when API fails
+
                 const downloadUrl = 'https://nathanladd.github.io/Snapshot-Decoder/';
-                const currentVersion = '2.3.1';
 
                 statusDiv.innerHTML = `
                     <div class="note">
@@ -173,8 +165,6 @@
                         <p>Please check for updates manually by visiting the download page.</p>
                     </div>
                 `;
-                
-                // Show download section with manual check
                 downloadInfo.innerHTML = `
                     <div class="info">
                         <p><strong>Current Version:</strong> ${currentVersion}</p>
@@ -187,16 +177,10 @@
                     </div>
                 `;
                 downloadSection.style.display = 'block';
-                
-                const now = new Date();
-                lastCheckedDiv.textContent = now.toLocaleString();
+                lastCheckedDiv.textContent = new Date().toLocaleString();
             }
         }
-        
-        // Set current version (this would be passed from the application)
-        document.getElementById('current-version').textContent = '2.3.1';
-        
-        // Check for updates on page load
+
         window.onload = function() {
             checkForUpdates();
         };
