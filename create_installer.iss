@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Snapshot Decoder"
-#define MyAppVersion "2.2.1"
+#define MyAppVersion "2.3.1"
 #define MyAppPublisher "Nathan Ladd"
 #define MyAppURL "https://github.com/nathanladd/Snapshot-Decoder"
 #define MyAppExeName "Snapshot Decoder.exe"

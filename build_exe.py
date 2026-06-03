@@ -30,6 +30,16 @@ iss_content = re.sub(r'#define MyAppVersion ".*?"', f'#define MyAppVersion "{ver
 with open('create_installer.iss', 'w') as f:
     f.write(iss_content)
 
+# Update the hardcoded version in docs/updating.html
+html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs', 'updating.html')
+with open(html_path, 'r') as f:
+    html_content = f.read()
+html_content = re.sub(r"const currentVersion = '[^']*'", f"const currentVersion = '{version}'", html_content)
+html_content = re.sub(r"document\.getElementById\('current-version'\)\.textContent = '[^']*'",
+                      f"document.getElementById('current-version').textContent = '{version}'", html_content)
+with open(html_path, 'w') as f:
+    f.write(html_content)
+
 # Get the directory where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
 

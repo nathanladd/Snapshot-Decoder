@@ -110,7 +110,7 @@
                 const publishedDate = new Date(release.published_at).toLocaleDateString();
                 
                 // Get current version (this should be passed from the application)
-                const currentVersion = '2.0.0'; // This should come from the app
+                const currentVersion = '2.3.1'; // This should come from the app
                 
                 // Update last checked time
                 const now = new Date();
@@ -164,8 +164,8 @@
                 
                 // Provide manual update option when API fails
                 const downloadUrl = 'https://nathanladd.github.io/Snapshot-Decoder/';
-                const currentVersion = '2.0.0';
-                
+                const currentVersion = '2.3.1';
+
                 statusDiv.innerHTML = `
                     <div class="note">
                         <p><strong>Unable to check for updates automatically.</strong></p>
@@ -194,7 +194,7 @@
         }
         
         // Set current version (this would be passed from the application)
-        document.getElementById('current-version').textContent = '2.0.0';
+        document.getElementById('current-version').textContent = '2.3.1';
         
         // Check for updates on page load
         window.onload = function() {
