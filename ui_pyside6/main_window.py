@@ -950,7 +950,7 @@ class MainWindow(QMainWindow):
         slug = re.sub(r"[^A-Za-z0-9\-]", "", slug)
         slug = re.sub(r"-+", "-", slug).strip("-")
 
-        return f"https://decoder.rudi-hq.com/quick_iq/{slug}.html"
+        return f"https://decoder.rudi-hq.com/quick-iq/{slug}.html"
 
     @Slot(str)
     def _on_quick_iq_requested(self, chart_title: str):
