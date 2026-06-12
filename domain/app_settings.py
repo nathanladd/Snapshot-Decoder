@@ -20,6 +20,9 @@ _DEFAULTS: Dict[str, Any] = {
     "grid_linewidth": 0.6,
     "marker_size": 6.0,
     
+    # Updates
+    "auto_check_updates": True,
+
     # Debug / Logging
     "enable_pid_debug": False,
     "log_interval": 1.0,

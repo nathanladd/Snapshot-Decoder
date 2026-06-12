@@ -10,7 +10,7 @@ import re
 import webbrowser
 from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, Slot, QEvent
+from PySide6.QtCore import Qt, Signal, Slot, QEvent, QTimer
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox, QProgressDialog, QSplashScreen,
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         self.snapshot: Optional[Snapshot] = None
         self._progress_dialog: Optional[QProgressDialog] = None
         self._is_minimizing: bool = False
+        self._update_checkers: list = []
         
         # Setup UI and connect signals
         self._setup_ui()
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
         self._connect_signals()
         
         log_info("MainWindow initialized with controller architecture")
+        QTimer.singleShot(4000, self._auto_check_updates)
     
     def _connect_signals(self):
         """Connect controller signals to UI slots."""
@@ -887,11 +889,42 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_check_for_updates(self):
-        """Open the update checking page in the default browser."""
-        # Open the updating page on GitHub Pages, passing installed version so the
-        # page can display it without relying on a hardcoded value.
-        update_url = f"https://nathanladd.github.io/Snapshot-Decoder/updating.html?version={APP_VERSION}"
-        webbrowser.open(update_url)
+        self._run_update_check(silent_if_current=False)
+
+    def _auto_check_updates(self) -> None:
+        if not app_settings._data.get("auto_check_updates", True):
+            return
+        self._run_update_check(silent_if_current=True)
+
+    def _run_update_check(self, *, silent_if_current: bool) -> None:
+        from ui_pyside6.widgets.update_checker import UpdateChecker
+        checker = UpdateChecker()
+        self._update_checkers.append(checker)
+
+        def _cleanup() -> None:
+            try:
+                self._update_checkers.remove(checker)
+            except ValueError:
+                pass
+            checker.deleteLater()
+
+        checker.update_available.connect(self._on_update_available)
+        if not silent_if_current:
+            checker.up_to_date.connect(
+                lambda: QMessageBox.information(
+                    self, "No Updates", f"Snapshot Decoder v{APP_VERSION} is up to date."
+                )
+            )
+        checker.check_failed.connect(
+            lambda msg: QMessageBox.warning(self, "Update Check Failed", msg)
+        )
+        checker.finished.connect(_cleanup)
+        checker.start()
+
+    def _on_update_available(self, ver: str, notes: str, url: str, sha: str) -> None:
+        from ui_pyside6.widgets.update_dialog import UpdateDialog
+        dlg = UpdateDialog(ver, notes, url, sha, parent=self)
+        dlg.exec()
     
     @Slot()
     def _on_what_are_reference_charts(self):
