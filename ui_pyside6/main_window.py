@@ -942,7 +942,7 @@ class MainWindow(QMainWindow):
         webbrowser.open("https://decoder.rudi-hq.com/seven_step.html")
 
     def _build_quick_iq_url(self, chart_title: str) -> str:
-        """Build a Quick IQ SharePoint page URL from chart title."""
+        """Build a Quick IQ URL from chart title."""
         slug = chart_title.strip()
         slug = slug.replace("&", " and ")
         slug = slug.replace("/", "-")
@@ -950,8 +950,7 @@ class MainWindow(QMainWindow):
         slug = re.sub(r"[^A-Za-z0-9\-]", "", slug)
         slug = re.sub(r"-+", "-", slug).strip("-")
 
-        base = "https://berrycompanies.sharepoint.com/:u:/r/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages"
-        return f"{base}/{slug}.aspx"
+        return f"https://decoder.rudi-hq.com/quick_iq/{slug}.html"
 
     @Slot(str)
     def _on_quick_iq_requested(self, chart_title: str):

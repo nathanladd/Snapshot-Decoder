@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battery Voltage — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Battery Voltage</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>P_L_Battery_raw</code></td>
+                <td>Battery voltage</td>
+                <td>Volts</td>
+            </tr>
+            <tr>
+                <td><code>IN_Engine_cycle_speed</code></td>
+                <td>Engine speed</td>
+                <td>RPM</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Background</h2>
+
+    <p>For a 12V system, battery voltage is generally maintained between <strong>12 – 15V</strong> while the engine is running. The ECU can operate normally above <strong>6V</strong>. If battery voltage drops too low — as can happen during a cold start — power-related faults may occur.</p>
+
+    <div class="info">
+        <strong>Key thresholds</strong>
+        <ul style="margin: 6px 0 0 0;">
+            <li><span class="chip-good">Normal running</span> &nbsp;12 – 15V</li>
+            <li><span class="chip-caution">ECU minimum</span> &nbsp;Above 6V</li>
+            <li><span class="chip-warn">Problem range</span> &nbsp;Below 9V during cranking — battery needs testing</li>
+        </ul>
+    </div>
+
+    <h2>How to Use This Quick Chart</h2>
+
+    <p>This chart is most useful for diagnosing an engine that will not start. The ECU requires a minimum cranking speed before it will begin to deliver fuel — and that cranking speed depends heavily on battery voltage.</p>
+
+    <div class="step">
+        <strong>Step 1 — Load your snapshot and open the Battery Voltage Quick Chart.</strong>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Enable the Time Slider.</strong>
+        <p style="margin: 6px 0 0 0;">Use the Time Slider to scrub through the snapshot and monitor the engine state in real time.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Observe engine speed while the engine state is <code>Cranking</code>.</strong>
+        <p style="margin: 6px 0 0 0;">Watch both battery voltage and engine RPM together. A healthy crank will reach sufficient speed before the ECU enables fuel delivery.</p>
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <div class="card-accent">
+        <div class="card-title">Typical Start Sequence <span class="chip-good">Normal</span></div>
+        <p>Battery voltage drops to around <strong>10V</strong> while the engine cranks at approximately <strong>369 RPM</strong>. After the engine fires, voltage climbs back to a healthy charging voltage around <strong>14.11V</strong>.</p>
+        <p>This is the expected pattern — a brief voltage sag during cranking followed by a recovery once the alternator takes over.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Weak Battery — Cranking Failure <span class="chip-warn">Problem</span></div>
+        <p>The ECU can operate above 6V, but at only <strong>8.5V</strong> this engine could not achieve the minimum cranking speed needed for the ECU to deliver fuel. The engine will not start.</p>
+        <div class="warning" style="margin-top: 10px;">
+            <strong>Action required:</strong> This battery needs load testing. A battery that cannot sustain adequate voltage under the cranking load must be replaced before further diagnosis.
+        </div>
+    </div>
+
+    <div class="note">
+        <strong>Note:</strong> Battery voltage problems can generate multiple fault codes — especially power-supply or sensor-reference faults. Always confirm battery health before chasing fault codes on an engine that would not start.
+    </div>
+
+</div>
+</body>
+</html>
