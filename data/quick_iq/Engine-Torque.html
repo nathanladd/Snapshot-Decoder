@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Engine Torque — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Engine Torque</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>PthSet_TrqInrSet</code></td>
+                <td>Engine actual brake torque</td>
+                <td>Newton Meters (N·m)</td>
+            </tr>
+            <tr>
+                <td><code>Oil_tSwmp</code></td>
+                <td>Oil temperature</td>
+                <td>°F</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>What Is Brake Torque?</h2>
+
+    <p><strong>Brake torque</strong> is the twisting force measured at the engine's output shaft while the engine is under load. The word "brake" comes from dynamometer testing, where a controlled load — a "brake" — resists the engine. What gets measured is the torque that survives combustion, friction, pumping losses, and accessory drag.</p>
+
+    <p>In practical terms, brake torque is what's available to do work: turn a transmission, spin a pump, move iron.</p>
+
+    <div class="info">
+        <strong>No physical torque sensor exists on this engine.</strong> The ECU uses <em>static torque modeling</em> — internal maps that relate air mass, fuel quantity, boost pressure, and timing to an expected torque output. This is a mathematical model, not a measurement from a sensor on the crankshaft.
+    </div>
+
+    <h2>Understanding the ECU's Torque Calculation</h2>
+
+    <p>Because the ECU calculates torque from a model rather than measuring it directly, a few behaviors are worth knowing:</p>
+
+    <div class="card-accent">
+        <div class="card-title">~29 N·m reported at rest — this is normal</div>
+        <p>You may see approximately 29 N·m reported when the engine is not running. This is an artifact of the model being evaluated at zero RPM and zero fuel. It does <strong>not</strong> indicate a problem and should not affect your confidence in this PID.</p>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">Cold engines appear to produce more torque</div>
+        <p>A cold engine will report higher torque values than a fully warmed engine. This is likely because ignition timing is advanced during warm-up, and the ECU's model includes timing as an input. The torque <em>appears</em> higher — it does not necessarily reflect a higher actual output measured by a dynamometer.</p>
+        <p>This is why oil temperature must be considered when interpreting any torque reading.</p>
+    </div>
+
+    <h2>Operating Temperature</h2>
+
+    <p>Bobcat reference snapshots are recorded at operating temperature. Do not compare torque readings from a cold snapshot against reference values — the comparison will not be valid.</p>
+
+    <table>
+        <thead>
+            <tr><th>Parameter</th><th>Operating Temperature</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Coolant temperature</td><td>≈ 180°F</td></tr>
+            <tr><td>Oil temperature</td><td>≈ 140°F</td></tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        <strong>Both conditions must be met.</strong> An engine can reach 180°F coolant temp while the oil is still well below 140°F, especially after short run cycles. Check the oil temperature PID — not just the coolant — before making a torque comparison.
+    </div>
+
+    <h2>Units — Newton Meters vs. Pound-Feet</h2>
+
+    <p>Even with Bobcat Engine Analyzer configured for US units, engine torque is reported in Newton Meters. A newton-meter (N·m) and a pound-foot (lb-ft) measure the same thing with different rulers.</p>
+
+    <table>
+        <thead>
+            <tr><th>To convert</th><th>Multiply by</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>lb-ft → N·m</td><td>1.36</td></tr>
+            <tr><td>N·m → lb-ft</td><td>0.74</td></tr>
+        </tbody>
+    </table>
+
+    <h2>How to Use This Quick Chart</h2>
+
+    <p>This chart is most valuable for diagnosing <strong>no-start conditions</strong> or engines that seem to be running under an unexpected load.</p>
+
+    <div class="step">
+        <strong>Step 1 — Confirm oil temperature before interpreting torque.</strong>
+        <p style="margin: 6px 0 0 0;">Monitor <code>Oil_tSwmp</code> alongside the torque trace. If the engine has not reached operating temperature, torque values will read artificially high.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Compare against reference values for the machine model.</strong>
+        <p style="margin: 6px 0 0 0;">Bobcat reference charts document expected torque ranges at operating temperature. Use these as your baseline. A torque value that is significantly above reference — at the correct temperature — indicates unwanted mechanical load on the engine.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Use the Time Slider to correlate torque spikes with machine events.</strong>
+        <p style="margin: 6px 0 0 0;">Scrub through the snapshot and watch for periods where torque is unexpectedly high. This can reveal intermittent load sources that are difficult to observe in real time.</p>
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <div class="card-accent">
+        <div class="card-title">Torque well above reference at operating temperature <span class="chip-warn">Unwanted load</span></div>
+        <p>With oil temperature above 150°F and the engine at idle, torque values above <strong>~100 N·m</strong> suggest the engine is fighting a load it should not have. Possible sources include seized drive components, a stuck brake, hydraulic back-pressure, or internal engine binding.</p>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">Engine cranks but torque stays near 29 N·m baseline <span class="chip-caution">No-start evaluation</span></div>
+        <p>Even during a no-start condition, the torque model can still be evaluated at cranking speed. This PID is useful for confirming whether the ECU is receiving the inputs it needs to calculate a realistic torque value — helping distinguish a fuel or ignition issue from a mechanical load issue.</p>
+    </div>
+
+    <div class="tip">
+        <strong>Subtle load example:</strong> A machine that occasionally starts but never builds to low idle may show abnormally high torque at idle — evidence of a load the technician cannot directly observe, such as a track pressing against a brake or a hydraulic circuit under back-pressure.
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rail Pressure — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Rail Pressure</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>P_L_Rail_pres_raw</code></td>
+                <td>Common rail pressure — actual (raw)</td>
+                <td>PSI</td>
+            </tr>
+            <tr>
+                <td><code>RPC_Rail_pressure_dmnd</code></td>
+                <td>Common rail pressure — demand</td>
+                <td>PSI</td>
+            </tr>
+            <tr>
+                <td><code>FQD_Chkd_inj_fuel_dmnd</code></td>
+                <td>Total fuel injection quantity</td>
+                <td>mg/stroke</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>PID Details</h2>
+
+    <div class="panel">
+        <div class="panel-title">P_L_Rail_pres_raw — Actual Rail Pressure</div>
+        <div class="panel-body">
+            <p>The measured fuel pressure in the common rail, as reported by the rail pressure sensor. This is the <strong>real-time pressure available for injection</strong> — what the fuel system is actually delivering.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">RPC_Rail_pressure_dmnd — Demanded Rail Pressure</div>
+        <div class="panel-body">
+            <p>The ECU's <strong>target fuel pressure</strong>, calculated from engine speed, load, and temperature. The ECU adjusts the Inlet Metering Valve (IMV) on the high-pressure pump to achieve this target.</p>
+            <p>Under healthy conditions, actual and demanded pressure <strong>track closely together</strong>. A persistent gap between them points to a fuel system problem.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">FQD_Chkd_inj_fuel_dmnd — Total Fuel Injection Quantity</div>
+        <div class="panel-body">
+            <p>Use this PID to identify <strong>steady-state periods</strong> in the snapshot — times when the engine is running at consistent speed and load. Look for sections of the chart where fuel injection quantity is <strong>flat or consistent</strong>.</p>
+            <p>Rail pressure should only be evaluated during steady state. Transient periods (acceleration, deceleration) cause both actual and demanded pressure to fluctuate naturally.</p>
+        </div>
+    </div>
+
+    <h2>Critical Thresholds — Bobcat V1 Engines</h2>
+
+    <div class="warning">
+        <strong>Minimum cranking pressure:</strong> Rail pressure must reach <strong>1,450 PSI</strong> before the ECU will begin fuel delivery. The engine will not start if this threshold is not met during cranking.
+    </div>
+
+    <div class="warning">
+        <strong>Maximum allowable gap:</strong> If the difference between actual and demanded rail pressure exceeds <strong>2,175 PSI for 5 seconds</strong>, the ECU will <strong>shut down fuel injection</strong>.
+    </div>
+
+    <h2>Normal Operating Range</h2>
+
+    <table>
+        <thead>
+            <tr><th>Engine Condition</th><th>Expected Rail Pressure</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Cranking (minimum for fuel delivery)</td><td>≥ 1,450 PSI</td></tr>
+            <tr><td>Idle</td><td>3,000 – 5,000 PSI</td></tr>
+            <tr><td>Under load</td><td>Up to 20,000+ PSI</td></tr>
+        </tbody>
+    </table>
+
+    <h2>How to Use This Quick Chart</h2>
+
+    <div class="step">
+        <strong>Step 1 — Load your snapshot and open the Rail Pressure Quick Chart.</strong>
+        <p style="margin: 6px 0 0 0;">Actual and demanded rail pressure plot on the left axis. Total fuel injection quantity plots on the right axis.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Use total fuel injection quantity to find steady-state periods.</strong>
+        <p style="margin: 6px 0 0 0;">Look for sections where the fuel quantity line is flat. These are the valid windows for evaluating pressure control. Ignore pressure fluctuations that coincide with changes in fuel delivery.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Compare actual vs. demanded pressure during steady state.</strong>
+        <p style="margin: 6px 0 0 0;">Use the Vertical Cursor, Rulers, or Time Scrubber to read exact values. The two lines should track closely. Calculate the gap — a persistent difference points to a fuel system fault.</p>
+    </div>
+
+    <h2>Identifying Problems</h2>
+
+    <div class="card-accent">
+        <div class="card-title">Large gap — Actual below Demanded <span class="chip-warn">Supply problem</span></div>
+        <p>The fuel system cannot keep up with demand. Possible causes:</p>
+        <ul>
+            <li>Fuel supply restriction (filter, lift pump, low tank)</li>
+            <li>IMV stuck open or IMV circuit fault</li>
+            <li>High-pressure pump worn or failing</li>
+            <li>Injectors leaking or blocked (return fuel reducing net rail pressure)</li>
+        </ul>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">Actual above Demanded during steady state <span class="chip-caution">IMV / circuit issue</span></div>
+        <p>The system is over-pressurizing — the IMV is not reducing pressure as commanded. Possible causes:</p>
+        <ul>
+            <li>IMV stuck closed or mechanically binding</li>
+            <li>No 12V supply to the IMV — check the engine cross-over connector</li>
+            <li>Blocked injector(s) preventing fuel from returning</li>
+        </ul>
+    </div>
+
+    <h2>Tips</h2>
+
+    <div class="tip">
+        <strong>Use Rulers to calculate the gap.</strong> Place two rulers on the actual and demanded lines at the same time point to read exact values and quickly calculate the pressure difference.
+    </div>
+
+    <div class="tip">
+        <strong>Zoom into steady-state periods.</strong> Transient pressure swings during load changes are normal. Zoom in on flat sections of the fuel delivery line for reliable pressure control analysis.
+    </div>
+
+</div>
+</body>
+</html>

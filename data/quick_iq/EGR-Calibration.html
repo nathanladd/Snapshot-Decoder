@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EGR Calibration — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>EGR Calibration</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>P_L_Egr_feedback_pos_cnts</code></td>
+                <td>EGR valve position (AD Conversion)</td>
+                <td>Counts</td>
+            </tr>
+            <tr>
+                <td><code>P_L_Egr_close_pos_mean_nvv</code></td>
+                <td>Average EGR closed position learning value (AD Conversion)</td>
+                <td>Counts</td>
+            </tr>
+            <tr>
+                <td><code>IN_Egr_position</code></td>
+                <td>EGR valve position</td>
+                <td>Percent</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>PID Details</h2>
+
+    <div class="panel">
+        <div class="panel-title">P_L_Egr_feedback_pos_cnts — EGR Valve Position</div>
+        <div class="panel-body">
+            <p>The operating range of the EGR valve is <strong>6mm</strong>, with a sensor resolution of <strong>0.5V/mm</strong> or <strong>102 counts/mm</strong>.</p>
+            <table>
+                <thead>
+                    <tr><th>Position</th><th>Counts</th><th>Voltage</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Closed (nominal)</td><td>780 – 820 cnts</td><td>~3.8 – 4.0V</td></tr>
+                    <tr><td>Full open</td><td>168 – 208 cnts</td><td>0.82 – 1.02V</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">P_L_Egr_close_pos_mean_nvv — EGR Closed Position Learning Value</div>
+        <div class="panel-body">
+            <p>This PID represents the ECU's learned closed position for the EGR valve. It drifts over time due to carbon buildup or contamination.</p>
+            <table>
+                <thead>
+                    <tr><th>Condition</th><th>Counts</th><th>Voltage</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Normal range</td><td>690 – 910 cnts</td><td>3.6 – 4.3V</td></tr>
+                    <tr><td>Typical range</td><td>780 – 820 cnts</td><td>3.8 – 4.0V</td></tr>
+                    <tr><td>Min threshold (fault)</td><td>&lt; 690 cnts</td><td>&lt; 3.37V</td></tr>
+                </tbody>
+            </table>
+            <div class="warning" style="margin-top: 12px;">
+                <strong>P0C18 — EGR Close Position Learning Range Fault</strong><br>
+                Set when the learning value drops below <strong>690 counts (3.37V)</strong> — typically caused by carbon buildup or foreign matter preventing full closure.
+            </div>
+            <div class="warning">
+                <strong>P0C17 — EGR Close Position Learning Drift Fault</strong><br>
+                Set when the learning value drifts more than <strong>100 counts (0.49V / 0.98mm)</strong> from its baseline — also caused by carbon or foreign matter.
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">IN_Egr_position — EGR Position Percent</div>
+        <div class="panel-body">
+            <p>Reports EGR valve position as 0 – 100%. The value itself is less important than whether <strong>feedback follows demand</strong>.</p>
+            <div class="info">
+                Compare <code>IN_Egr_position</code> (feedback) against <code>ACM_Egr_position_dmnd</code> (demand). If the position error exceeds <strong>5% for more than 20 seconds</strong>, fault <strong>P0404 (EGR Position Control Fault)</strong> will set.
+            </div>
+            <p>P0404 is grouped with many other EGR position-related faults in MyMachine.</p>
+        </div>
+    </div>
+
+    <h2>How to Use This Quick Chart</h2>
+
+    <p>This chart is used to evaluate EGR valve calibration health — specifically whether the valve's actual closed position still matches its learned closed position.</p>
+
+    <div class="step">
+        <strong>Step 1 — Load your snapshot and open the EGR Calibration Quick Chart.</strong>
+        <p style="margin: 6px 0 0 0;">The chart plots <code>P_L_Egr_feedback_pos_cnts</code> and <code>P_L_Egr_close_pos_mean_nvv</code> on the same axis.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Find a period when the EGR valve is closed.</strong>
+        <p style="margin: 6px 0 0 0;">During closed periods, the two lines should <strong>match closely</strong>. The actual position (feedback) and the learned closed position should overlap.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Watch the gap as the valve opens.</strong>
+        <p style="margin: 6px 0 0 0;">As the EGR valve opens, the actual position count decreases while the learned closed position stays fixed. The distance between the two lines reflects how far the valve has opened.</p>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">What to Look For</div>
+        <ul style="margin: 0;">
+            <li>Lines that <strong>match at closed</strong> — healthy calibration</li>
+            <li>Lines that <strong>diverge at closed</strong> — carbon buildup is preventing full closure, learning value has drifted</li>
+            <li>Learning value trending below <strong>690 cnts</strong> — approaching or past fault threshold</li>
+        </ul>
+    </div>
+
+    <div class="note">
+        <strong>Diagnostic tip:</strong> The EGR valve circuit can be diagnosed from the ECU connector, which is more accessible than the valve itself. An H-Bridge circuit drives the EGR motor — faults in that circuit produce EGR position or motor-related codes.
+    </div>
+
+</div>
+</body>
+</html>
