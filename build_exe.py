@@ -39,7 +39,8 @@ main_script = os.path.join(script_dir, 'main.py')
 # Define data files to include (format: 'source:destination')
 # These files will be bundled with the executable
 datas = [
-    (os.path.join(script_dir, 'data/images'), 'data/images'),  # All images (logo, icons, help screenshots)
+    (os.path.join(script_dir, 'data/app_images'), 'data/app_images'),  # App UI images (icons, splash, logo)
+    (os.path.join(script_dir, 'data/images'), 'data/images'),  # Help page screenshots
     (os.path.join(script_dir, 'data/help'), 'data/help'),  # Help files
 ]
 
@@ -65,7 +66,7 @@ pyinstaller_args = [
     '--name=Snapshot Decoder',  # Name of the executable
     '--onedir',  # Create a directory with executable and dependencies
     '--windowed',  # No console window (GUI app)
-    f'--icon={os.path.join(script_dir, "data/images/Snapshot_Decoder_Icon.ico")}',  # App icon
+    f'--icon={os.path.join(script_dir, "data/app_images/Snapshot_Decoder_Icon.ico")}',  # App icon
     '--clean',  # Clean PyInstaller cache before building
     '--noconfirm',  # Replace output directory without asking
 ]

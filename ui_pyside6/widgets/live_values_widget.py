@@ -1008,7 +1008,7 @@ class LiveValuesWidget(QWidget):
             chip_inner.setSpacing(0)
             icon_label = QLabel(chip_frame)
             icon_label.setAlignment(Qt.AlignCenter)
-            pix = QPixmap(resource_path(f"data/images/{image_file}"))
+            pix = QPixmap(resource_path(f"data/app_images/{image_file}"))
             if not pix.isNull():
                 pix = pix.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             icon_label.setPixmap(pix)

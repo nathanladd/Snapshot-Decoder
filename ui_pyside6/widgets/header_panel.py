@@ -73,7 +73,7 @@ class HeaderPanel(QWidget):
         # Empty-state placeholder (icon + prompt text)
         self._placeholder = QLabel()
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_path = resource_path("data/images/folder-open.png")
+        icon_path = resource_path("data/app_images/folder-open.png")
         self._placeholder.setText(
             f'<div style="text-align:center; padding:12px;">'
             f'<img src="{icon_path}" width="32" height="32" '
@@ -188,42 +188,42 @@ class HeaderPanel(QWidget):
         
         # Open action
         open_btn = QToolButton()
-        open_btn.setIcon(QIcon(resource_path("data/images/folder-open.png")))
+        open_btn.setIcon(QIcon(resource_path("data/app_images/folder-open.png")))
         open_btn.setToolTip("Open snapshot file (Ctrl+O)")
         open_btn.clicked.connect(self.open_requested.emit)
         self._toolbar.addWidget(open_btn)
         
         # Close action
         close_btn = QToolButton()
-        close_btn.setIcon(QIcon(resource_path("data/images/folder-close.png")))
+        close_btn.setIcon(QIcon(resource_path("data/app_images/folder-close.png")))
         close_btn.setToolTip("Close snapshot")
         close_btn.clicked.connect(self.close_requested.emit)
         self._toolbar.addWidget(close_btn)
         
         # Raw Data action
         raw_data_btn = QToolButton()
-        raw_data_btn.setIcon(QIcon(resource_path("data/images/raw-table.png")))
+        raw_data_btn.setIcon(QIcon(resource_path("data/app_images/raw-table.png")))
         raw_data_btn.setToolTip("Show raw data table")
         raw_data_btn.clicked.connect(self.raw_data_requested.emit)
         self._toolbar.addWidget(raw_data_btn)
         
         # Clean Table action
         clean_table_btn = QToolButton()
-        clean_table_btn.setIcon(QIcon(resource_path("data/images/data-cleaning.png")))
+        clean_table_btn.setIcon(QIcon(resource_path("data/app_images/data-cleaning.png")))
         clean_table_btn.setToolTip("Show clean data table")
         clean_table_btn.clicked.connect(self.clean_table_requested.emit)
         self._toolbar.addWidget(clean_table_btn)
         
         # Chart Table action
         chart_table_btn = QToolButton()
-        chart_table_btn.setIcon(QIcon(resource_path("data/images/chart-table.png")))
+        chart_table_btn.setIcon(QIcon(resource_path("data/app_images/chart-table.png")))
         chart_table_btn.setToolTip("Show chart data table")
         chart_table_btn.clicked.connect(self.chart_table_requested.emit)
         self._toolbar.addWidget(chart_table_btn)
         
         # Help action
         help_btn = QToolButton()
-        help_btn.setIcon(QIcon(resource_path("data/images/information.png")))
+        help_btn.setIcon(QIcon(resource_path("data/app_images/information.png")))
         help_btn.setToolTip("Show help documentation (F1)")
         help_btn.clicked.connect(self.help_requested.emit)
         self._toolbar.addWidget(help_btn)

@@ -133,7 +133,7 @@ class ChartPopoutWindow(QMainWindow):
         self._ruler_icon_label = QLabel()
         self._ruler_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._ruler_icon_label.setToolTip("Y-axis ruler controls")
-        ruler_icon_path = resource_path('data/images/ruler.png')
+        ruler_icon_path = resource_path('data/app_images/ruler.png')
         if os.path.exists(ruler_icon_path):
             icon_pixmap = QPixmap(ruler_icon_path).scaled(
                 16,

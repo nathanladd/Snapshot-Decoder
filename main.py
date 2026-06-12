@@ -35,7 +35,7 @@ def main():
     app.setOrganizationName("Snapshot Decoder")
     
     # Phase 2: Create and show splash screen
-    splash_pixmap = QPixmap(resource_path("data/images/splash.png"))
+    splash_pixmap = QPixmap(resource_path("data/app_images/splash.png"))
     if splash_pixmap.isNull():
         # Fallback if image doesn't load
         print("Warning: Could not load splash.png")

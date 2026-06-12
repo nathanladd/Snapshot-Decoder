@@ -69,7 +69,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         # Load cart icon
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        self._cart_btn.setIcon(QIcon(resource_path('data/images/online-shopping.png')))
+        self._cart_btn.setIcon(QIcon(resource_path('data/app_images/online-shopping.png')))
         self._cart_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         
         self._cart_btn.setStyleSheet("""
@@ -99,7 +99,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         # Load value popup icon
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        self._value_display_btn.setIcon(QIcon(resource_path('data/images/value-popup.png')))
+        self._value_display_btn.setIcon(QIcon(resource_path('data/app_images/value-popup.png')))
         self._value_display_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         
         self._value_display_btn.setStyleSheet("""
@@ -135,7 +135,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         # Load vertical cursor icon
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        self._time_slider_btn.setIcon(QIcon(resource_path('data/images/time.png')))
+        self._time_slider_btn.setIcon(QIcon(resource_path('data/app_images/time.png')))
         self._time_slider_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
         
         self._time_slider_btn.setStyleSheet("""
@@ -169,7 +169,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
         # Load brain icon
         from PySide6.QtCore import QSize
-        self._quick_iq_btn.setIcon(QIcon(resource_path('data/images/brain.png')))
+        self._quick_iq_btn.setIcon(QIcon(resource_path('data/app_images/brain.png')))
         self._quick_iq_btn.setIconSize(QSize(20, 20))
 
         self._quick_iq_btn.setStyleSheet("""
@@ -210,7 +210,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             # Load icon
             from PySide6.QtGui import QIcon
             from PySide6.QtCore import QSize
-            self._popout_btn.setIcon(QIcon(resource_path('data/images/expand-in-new-window.png')))
+            self._popout_btn.setIcon(QIcon(resource_path('data/app_images/expand-in-new-window.png')))
             self._popout_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
             
             self._popout_btn.setStyleSheet("""
