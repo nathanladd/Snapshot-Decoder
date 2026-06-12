@@ -935,17 +935,11 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_show_help_home(self):
-        """Open the help home page in the default browser."""
-        help_dir = os.path.join(os.path.dirname(__file__), "..", "data", "help")
-        home = os.path.normpath(os.path.join(help_dir, "index.html"))
-        webbrowser.open(f"file:///{home}")
+        webbrowser.open("https://decoder.rudi-hq.com/")
 
     @Slot()
     def _on_show_seven_step(self):
-        """Open the Seven Step Diagnostic Process help page in the default browser."""
-        help_dir = os.path.join(os.path.dirname(__file__), "..", "data", "help")
-        page = os.path.normpath(os.path.join(help_dir, "seven_step.html"))
-        webbrowser.open(f"file:///{page}")
+        webbrowser.open("https://decoder.rudi-hq.com/seven_step.html")
 
     def _build_quick_iq_url(self, chart_title: str) -> str:
         """Build a Quick IQ SharePoint page URL from chart title."""
