@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Battery Voltage — Quick IQ</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="../app_images/Snapshot_Decoder_Icon.ico">
 </head>
 <body>
 <div class="page-content">
@@ -67,18 +68,24 @@
 
     <h2>What to Look For</h2>
 
-    <div class="card-accent">
-        <div class="card-title">Typical Start Sequence <span class="chip-good">Normal</span></div>
-        <p>Battery voltage drops to around <strong>10V</strong> while the engine cranks at approximately <strong>369 RPM</strong>. After the engine fires, voltage climbs back to a healthy charging voltage around <strong>14.11V</strong>.</p>
-        <p>This is the expected pattern — a brief voltage sag during cranking followed by a recovery once the alternator takes over.</p>
+    <div class="card-accent" style="display: flex; align-items: flex-start; gap: 16px;">
+        <div style="flex: 1;">
+            <div class="card-title">Typical Start Sequence <span class="chip-good">Normal</span></div>
+            <p>Battery voltage drops to around <strong>10V</strong> while the engine cranks at approximately <strong>369 RPM</strong>. After the engine fires, voltage climbs back to a healthy charging voltage around <strong>14.11V</strong>.</p>
+            <p>This is the expected pattern — a brief voltage sag during cranking followed by a recovery once the alternator takes over.</p>
+        </div>
+        <img src="../images/Battery Voltage typical starting.webp" alt="Battery Voltage typical start" style="max-width: 340px; width: 40%; border-radius: 6px;">
     </div>
 
-    <div class="card-accent" style="border-left-color: #E53935;">
-        <div class="card-title" style="color: #C62828;">Weak Battery — Cranking Failure <span class="chip-warn">Problem</span></div>
-        <p>The ECU can operate above 6V, but at only <strong>8.5V</strong> this engine could not achieve the minimum cranking speed needed for the ECU to deliver fuel. The engine will not start.</p>
-        <div class="warning" style="margin-top: 10px;">
-            <strong>Action required:</strong> This battery needs load testing. A battery that cannot sustain adequate voltage under the cranking load must be replaced before further diagnosis.
+    <div class="card-accent" style="border-left-color: #E53935; display: flex; align-items: flex-start; gap: 16px;">
+        <div style="flex: 1;">
+            <div class="card-title" style="color: #C62828;">Weak Battery — Cranking Failure <span class="chip-warn">Problem</span></div>
+            <p>The ECU can operate above 6V, but at only <strong>8.5V</strong> this engine could not achieve the minimum cranking speed needed for the ECU to deliver fuel. The engine will not start.</p>
+            <div class="warning" style="margin-top: 10px;">
+                <strong>Action required:</strong> This battery needs load testing. A battery that cannot sustain adequate voltage under the cranking load must be replaced before further diagnosis.
+            </div>
         </div>
+        <img src="../images/Battery Voltage weak starting.webp" alt="Battery Voltage weak battery" style="max-width: 340px; width: 40%; border-radius: 6px;">
     </div>
 
     <div class="note">

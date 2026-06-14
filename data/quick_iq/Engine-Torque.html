@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Engine Torque — Quick IQ</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="../app_images/Snapshot_Decoder_Icon.ico">
 </head>
 <body>
 <div class="page-content">
@@ -122,8 +123,15 @@
         <p>Even during a no-start condition, the torque model can still be evaluated at cranking speed. This PID is useful for confirming whether the ECU is receiving the inputs it needs to calculate a realistic torque value — helping distinguish a fuel or ignition issue from a mechanical load issue.</p>
     </div>
 
-    <div class="tip">
-        <strong>Subtle load example:</strong> A machine that occasionally starts but never builds to low idle may show abnormally high torque at idle — evidence of a load the technician cannot directly observe, such as a track pressing against a brake or a hydraulic circuit under back-pressure.
+    <div class="tip" style="display: flex; align-items: flex-start; gap: 16px;">
+        <div style="flex: 1;">
+            <strong>Subtle load example:</strong> A machine that occasionally starts but never builds to low idle may show abnormally high torque at idle — evidence of a load the technician cannot directly observe, such as a track pressing against a brake or a hydraulic circuit under back-pressure.
+            <img src="../images/T450 engine load.webp" alt="T450 engine load" style="display: block; margin-top: 12px; width: 100%; border-radius: 6px;">
+            <img src="../images/swashplate feedback voltage.png" alt="Swashplate feedback voltage" style="display: block; margin-top: 12px; width: 50%; border-radius: 6px;">
+        </div>
+        <video controls style="max-width: 280px; width: 35%; border-radius: 6px; flex-shrink: 0;">
+            <source src="../images/Loader Drives Against Brake.mp4" type="video/mp4">
+        </video>
     </div>
 
 </div>
