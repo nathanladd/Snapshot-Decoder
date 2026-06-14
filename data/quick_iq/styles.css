@@ -4,7 +4,7 @@
 
 body {
     font-family: 'Segoe UI', sans-serif;
-    font-size: clamp(12px, 2.5vw, 16px);
+    font-size: clamp(12px, 1.78vw, 16px);
     line-height: 1.6;
     color: #333333;
     background-color: #ffffff;
