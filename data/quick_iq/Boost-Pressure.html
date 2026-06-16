@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Boost Pressure — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Boost Pressure</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Air_pIntkVUs</code></td>
+                <td>Intake manifold pressure</td>
+                <td>kPa (absolute)</td>
+            </tr>
+            <tr>
+                <td><code>Air_pSensPIntkVUs</code></td>
+                <td>Intake manifold pressure (unfiltered)</td>
+                <td>kPa (absolute)</td>
+            </tr>
+            <tr>
+                <td><code>P_L_Atmosp_raw</code></td>
+                <td>Atmospheric pressure</td>
+                <td>kPa (absolute)</td>
+            </tr>
+            <tr>
+                <td><code>IN_Engine_cycle_speed</code></td>
+                <td>Engine speed</td>
+                <td>RPM</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Background</h2>
+
+    <p>The Boost Pressure chart overlays intake manifold pressure, atmospheric pressure, and engine speed on a common time axis. This makes it possible to evaluate turbocharger performance across all engine states — key-on/engine-off baseline, cranking, idle, and loaded operation — in a single view.</p>
+
+    <p>Because both manifold pressure and atmospheric pressure are reported in <strong>absolute kPa</strong>, boost (gauge pressure) must be read as the difference between the two. When the manifold pressure line sits <em>below</em> atmospheric, the intake is in vacuum — the signature of a cranking engine or a dragging turbo. When it rises <em>above</em> atmospheric, the turbocharger is producing boost.</p>
+
+    <div class="info">
+        <strong>Altitude note:</strong> <code>P_L_Atmosp_raw</code> is measured by a sensor inside the ECU. Atmospheric pressure drops roughly <strong>0.5 PSI per 1,000 ft</strong> of elevation. At the Colorado Front Range (~5,000–5,500 ft), atmospheric pressure is typically <strong>12.0–12.3 PSI</strong>, compared to ~14.5 PSI at sea level. The PIDs report in kPa (absolute), but all boost and vacuum thresholds on this page are expressed in PSI gauge relative to the local atmospheric baseline.
+    </div>
+
+    <h2>How to Capture Turbo Data</h2>
+
+    <p>To evaluate turbocharger performance during cranking, the snapshot must begin before the engine starts. If the capture starts after the engine is already running, the cranking event — where turbo drag is most visible — will be missing.</p>
+
+    <div class="step">
+        <strong>Step 1 — Turn the key to ON (do not start the engine).</strong>
+        <p style="margin: 6px 0 0 0;">With the engine off, manifold pressure will equalize to atmospheric. The gap between <code>Air_pIntkVUs</code> and <code>P_L_Atmosp_raw</code> should be near zero — this is your baseline.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Start the snapshot capture.</strong>
+        <p style="margin: 6px 0 0 0;">Begin recording in Bobcat Engine Analyzer before cranking.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Crank and start the engine.</strong>
+        <p style="margin: 6px 0 0 0;">Watch manifold pressure during cranking. A healthy turbo allows air to flow freely through the compressor, producing only a slight vacuum. A dragging turbo restricts that flow, creating a deeper vacuum.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 4 — Allow the engine to run under load.</strong>
+        <p style="margin: 6px 0 0 0;">After startup, monitor how manifold pressure climbs as load increases. This confirms whether the turbo is building boost as expected under working conditions.</p>
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">Key On / Engine Off — Baseline <span class="chip-good">Normal</span></div>
+        <p>With the key on and engine off, <code>Air_pIntkVUs</code> and <code>P_L_Atmosp_raw</code> should read the same value — typically <strong>12.0–12.3 PSI</strong> at Front Range elevations, <strong>~14.5 PSI</strong> at sea level. The two lines should overlap. Any gap here indicates a sensor issue or a leak in the intake system.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">Cranking — Healthy Turbo <span class="chip-good">Normal</span></div>
+        <p>During cranking, the engine acts as an air pump. A healthy turbocharger allows air to pass freely through the compressor wheel, so manifold pressure drops only slightly below atmospheric — typically <strong>0.2 to 0.5 PSI of vacuum</strong> at a cranking speed around 300–370 RPM.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Cranking — Turbo Drag <span class="chip-warn">Problem</span></div>
+        <p>If the intake manifold pulls <strong>0.9 PSI or more below atmospheric</strong> during cranking, the turbocharger is dragging. The compressor wheel is resisting airflow rather than allowing it to pass freely — the classic sign of worn bearings, a damaged compressor wheel, or coking on the shaft.</p>
+        <div class="warning" style="margin-top: 10px;">
+            <strong>Severe drag:</strong> A vacuum drop of <strong>1.5 PSI or more</strong> indicates significant mechanical resistance in the turbocharger. This level of drag will make the engine hard to start and reduce performance once running. Turbocharger service or replacement is required before further diagnosis.
+        </div>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">Running — Boost Under Load <span class="chip-caution">Reference</span></div>
+        <p>Under load, manifold pressure rises above atmospheric as the turbocharger compresses intake air. Expected boost pressure at the Colorado Front Range at full load is approximately:</p>
+        <ul style="margin: 8px 0 0 0;">
+            <li><strong>2.4L engine:</strong> ~25 PSI at full load</li>
+            <li><strong>3.4L engine:</strong> ~30 PSI at full load</li>
+        </ul>
+        <p style="margin-top: 8px;">Lower-than-expected boost under load — with RPM and fuel delivery normal — points to a turbocharger that is not spooling correctly, an intake air leak, or a boost leak downstream of the compressor.</p>
+    </div>
+
+    <h2>Turbo Drag Thresholds</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Condition</th>
+                <th>Vacuum Below Atmospheric</th>
+                <th>Assessment</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Typical cranking vacuum</strong></td>
+                <td>0.2 – 0.5 PSI</td>
+                <td><span class="chip-good">Normal</span></td>
+            </tr>
+            <tr>
+                <td><strong>Borderline drag</strong></td>
+                <td>0.5 – 0.9 PSI</td>
+                <td><span class="chip-caution">Monitor</span></td>
+            </tr>
+            <tr>
+                <td><strong>Turbo drag</strong></td>
+                <td>≥ 0.9 PSI</td>
+                <td><span class="chip-warn">Problem</span></td>
+            </tr>
+            <tr>
+                <td><strong>Severe drag</strong></td>
+                <td>≥ 1.5 PSI</td>
+                <td><span class="chip-warn">Severe</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        <strong>Measurement tip:</strong> Use the <strong>Vertical Cursor</strong> to align a moment during cranking where <code>IN_Engine_cycle_speed</code> is stable and at its typical cranking speed (300–370 RPM). Then use the <strong>Values</strong> tool to read <code>Air_pIntkVUs</code> and <code>P_L_Atmosp_raw</code> simultaneously and calculate the vacuum delta. Cranking speed matters — a very slow crank will produce less vacuum even on a dragging turbo.
+    </div>
+
+    <h2>Additional Diagnostic Tips</h2>
+
+    <div class="tip">
+        <strong>Cold starts:</strong> Turbo drag is most pronounced when the engine and oil are cold. If the snap is taken cold, drag readings may be slightly higher than a hot test and should be interpreted with that in mind. Multiple cold-start snapshots are more valuable than a single data point.
+    </div>
+
+    <div class="tip">
+        <strong>Oil pressure and turbo health:</strong> Check <code>IN_Oil_pressure</code> alongside the boost data. The ECU uses oil pressure to protect the turbocharger — low oil pressure during and after startup is a leading cause of turbo bearing damage and eventual drag. Nominal oil pressure at running conditions is <strong>25–100 PSI</strong>.
+    </div>
+
+    <div class="note">
+        <strong>Related charts:</strong> Combine this chart with the <strong>Engine Use Data: Speed/Load</strong> distribution to understand whether the turbo has been consistently operated at conditions that cause coking (low EGT, light load, extended idle). Chronic low-temperature operation is a primary cause of turbocharger coking and early bearing failure.
+    </div>
+
+</div>
+</body>
+</html>

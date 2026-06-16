@@ -101,7 +101,7 @@
     </table>
 
     <div class="info">
-        <strong>ECU protection:</strong> The ECU automatically limits RPM and torque when turbine inlet temperature exceeds <strong>750°C (1,382°F)</strong>. Significant time accumulated in band [7] indicates the engine has been operating at its thermal limit.
+        <strong>ECU protection:</strong> The ECU automatically limits RPM and torque when turbine inlet temperature exceeds <strong>1,382°F (750°C)</strong>. Significant time accumulated in band [7] indicates the engine has been operating at its thermal limit.
     </div>
 
     <h2>Background</h2>
@@ -154,7 +154,7 @@
     </table>
 
     <div class="tip">
-        <strong>Tip:</strong> Extended operation below <strong>400°C (752°F)</strong> turbine inlet temperature is particularly harmful to modern emissions-equipped diesel engines. If the chart shows heavy time accumulation in bands [0]–[3], idling and light-load habits should be addressed before further aftertreatment diagnosis.
+        <strong>Tip:</strong> Extended operation below <strong>752°F (400°C)</strong> turbine inlet temperature is particularly harmful to modern emissions-equipped diesel engines. If the chart shows heavy time accumulation in bands [0]–[3], idling and light-load habits should be addressed before further aftertreatment diagnosis.
     </div>
 
     <h2>How to Use This Quick Chart</h2>
@@ -168,11 +168,11 @@
 
     <div class="step">
         <strong>Step 2 — Identify where most engine time is concentrated.</strong>
-        <p style="margin: 6px 0 0 0;">A machine used primarily for productive work should show the tallest bars in the mid-to-upper bands (approximately 400–700°C / 752–1,292°F). Heavy concentration in the lower bands indicates excessive idling or chronic underloading.</p>
+        <p style="margin: 6px 0 0 0;">A machine used primarily for productive work should show the tallest bars in the mid-to-upper bands (approximately 752–1,292°F / 400–700°C). Heavy concentration in the lower bands indicates excessive idling or chronic underloading.</p>
     </div>
 
     <div class="step">
-        <strong>Step 3 — Check the highest band [7] (750–850°C / 1,382–1,562°F).</strong>
+        <strong>Step 3 — Check the highest band [7] (1,382–1,562°F / 750–850°C).</strong>
         <p style="margin: 6px 0 0 0;">This band should be near zero. Any significant accumulation here means the engine has been regularly reaching its thermal protection threshold, and the ECU has been actively limiting power to protect the turbocharger.</p>
     </div>
 
@@ -180,21 +180,21 @@
 
     <div class="card-accent" style="border-left-color: #2E7D32;">
         <div class="card-title" style="color: #2E7D32;">Healthy Operating Pattern <span class="chip-good">Normal</span></div>
-        <p>The majority of accumulated time falls in bands [4] through [6] — roughly 400–700°C (752–1,292°F). Some time in the lower bands is expected from cold starts and travel. Band [7] is at or near zero.</p>
+        <p>The majority of accumulated time falls in bands [4] through [6] — roughly 752–1,292°F (400–700°C). Some time in the lower bands is expected from cold starts and travel. Band [7] is at or near zero.</p>
         <p>This pattern indicates the machine is being used productively under load, and the aftertreatment system is receiving adequate exhaust heat for passive DPF regeneration.</p>
     </div>
 
     <div class="card-accent">
         <div class="card-title">Heavy Low-Temperature Concentration <span class="chip-caution">Caution</span></div>
-        <p>Bands [1]–[3] (below 400°C / 752°F) hold a disproportionately large share of total engine hours. This is the signature of a machine that idles frequently or operates consistently at light load — common on job sites where equipment is left running between tasks.</p>
+        <p>Bands [1]–[3] (below 752°F / 400°C) hold a disproportionately large share of total engine hours. This is the signature of a machine that idles frequently or operates consistently at light load — common on job sites where equipment is left running between tasks.</p>
         <div class="warning" style="margin-top: 10px;">
             <strong>Expect aftertreatment issues:</strong> A machine with this profile is a strong candidate for DPF clogging, increased active regeneration frequency, and potential DEF system problems. Advise the customer to reduce idle time and ensure the machine is operated under load when possible.
         </div>
     </div>
 
     <div class="card-accent" style="border-left-color: #E53935;">
-        <div class="card-title" style="color: #C62828;">Significant Time in Band [7] (Above 750°C / 1,382°F) <span class="chip-warn">Problem</span></div>
-        <p>The ECU limits torque to hold turbine inlet temperature below 750°C. Meaningful accumulation in band [7] indicates the engine has repeatedly hit this thermal ceiling. This can result from overloading, blocked cooling, or conditions that drive extreme exhaust temperatures.</p>
+        <div class="card-title" style="color: #C62828;">Significant Time in Band [7] (Above 1,382°F / 750°C) <span class="chip-warn">Problem</span></div>
+        <p>The ECU limits torque to hold turbine inlet temperature below 1,382°F (750°C). Meaningful accumulation in band [7] indicates the engine has repeatedly hit this thermal ceiling. This can result from overloading, blocked cooling, or conditions that drive extreme exhaust temperatures.</p>
         <div class="warning" style="margin-top: 10px;">
             <strong>Investigate further:</strong> Review the machine's duty cycle and cooling system. Check for fault codes related to turbocharger overtemperature. Compare with the Speed/Load Distribution chart to understand what load conditions are driving the high temperatures.
         </div>
