@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Time at EGT — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Time at EGT</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>P_L_Turb_in_temp_raw</code></td>
+                <td>Turbine inlet temperature (live)</td>
+                <td>°C / °F</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Turbine_in_temp_timer_nvv[0–7]</code></td>
+                <td>Accumulated engine run time in each turbine inlet temperature band</td>
+                <td>Seconds</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Temperature Bands</h2>
+
+    <p>The chart divides lifetime engine operation into eight turbine inlet temperature bands. Each bar shows how many seconds the engine has accumulated in that range.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Index</th>
+                <th>Range (°C)</th>
+                <th>Range (°F)</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>[0]</code></td>
+                <td>&lt; 0°C</td>
+                <td>&lt; 32°F</td>
+                <td>Below freezing — essentially zero in normal operation</td>
+            </tr>
+            <tr>
+                <td><code>[1]</code></td>
+                <td>0 – 100°C</td>
+                <td>32 – 212°F</td>
+                <td>Very cold; start-up or extreme extended idle</td>
+            </tr>
+            <tr>
+                <td><code>[2]</code></td>
+                <td>100 – 200°C</td>
+                <td>212 – 392°F</td>
+                <td>Cold; excessive idling or very light load</td>
+            </tr>
+            <tr>
+                <td><code>[3]</code></td>
+                <td>200 – 400°C</td>
+                <td>392 – 752°F</td>
+                <td>Below normal operating range; light load or prolonged idle</td>
+            </tr>
+            <tr>
+                <td><code>[4]</code></td>
+                <td>400 – 600°C</td>
+                <td>752 – 1,112°F</td>
+                <td>Light-to-moderate load — normal for intermittent operation</td>
+            </tr>
+            <tr>
+                <td><code>[5]</code></td>
+                <td>600 – 700°C</td>
+                <td>1,112 – 1,292°F</td>
+                <td>Moderate load — healthy operating range</td>
+            </tr>
+            <tr>
+                <td><code>[6]</code></td>
+                <td>700 – 750°C</td>
+                <td>1,292 – 1,382°F</td>
+                <td>High load — approaching ECU protection limit</td>
+            </tr>
+            <tr>
+                <td><code>[7]</code></td>
+                <td>750 – 850°C</td>
+                <td>1,382 – 1,562°F</td>
+                <td><span class="chip-warn">ECU limit</span> — ECU limits torque to keep temp below 750°C; this band should be near zero</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="info">
+        <strong>ECU protection:</strong> The ECU automatically limits RPM and torque when turbine inlet temperature exceeds <strong>750°C (1,382°F)</strong>. Significant time accumulated in band [7] indicates the engine has been operating at its thermal limit.
+    </div>
+
+    <h2>Background</h2>
+
+    <p>Exhaust gas temperature (EGT) at the turbine inlet is one of the most meaningful indicators of engine and aftertreatment health over the life of the machine. Unlike a snapshot of current conditions, the Time at EGT chart shows the <strong>cumulative distribution</strong> of how the engine has been used — revealing patterns of idling, light loading, and heavy operation that a single data capture cannot capture.</p>
+
+    <p>The sensor for this chart is the turbine inlet temperature sensor (<code>P_L_Turb_in_temp_raw</code>), located upstream of the turbocharger turbine. The ECU continuously monitors this value and accumulates run time into the eight bands above. These totals are stored in non-volatile memory and persist across key cycles.</p>
+
+    <div class="note">
+        <strong>Note:</strong> EGT values in this chart are measured at the <em>turbine inlet</em>, not the DPF or SCR. Temperatures in the aftertreatment system will be lower. When comparing to published DPF regeneration thresholds — which are typically referenced at the DPF inlet — bear in mind that turbine inlet temps are higher.
+    </div>
+
+    <h2>Why EGT Matters for Aftertreatment</h2>
+
+    <p>Modern Tier 4 / Stage V diesel engines rely on exhaust heat to keep the aftertreatment system working. Cold exhaust gas — the result of excessive idling or chronic light loading — is one of the most common causes of premature aftertreatment failure on compact equipment like skid steers and compact track loaders.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Issue</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>DPF Clogging</strong></td>
+                <td>Passive DPF regeneration requires sustained high temperatures. Cold EGTs allow soot to accumulate, increasing regeneration frequency and eventual filter failure.</td>
+            </tr>
+            <tr>
+                <td><strong>Wet Stacking</strong></td>
+                <td>Unburned fuel and condensate accumulate in the exhaust when combustion temperatures are too low, causing black residue buildup and increased emissions.</td>
+            </tr>
+            <tr>
+                <td><strong>DEF Crystallization</strong></td>
+                <td>Insufficient exhaust temperatures at the SCR catalyst prevent proper DEF decomposition. Urea crystals can block the injector and damage the catalyst.</td>
+            </tr>
+            <tr>
+                <td><strong>Carbon Deposits</strong></td>
+                <td>Low combustion temperatures promote carbon buildup on injector tips, EGR passages, and the turbocharger, reducing efficiency over time.</td>
+            </tr>
+            <tr>
+                <td><strong>Turbocharger Coking</strong></td>
+                <td>Oil residue bakes onto turbo bearings when the turbo does not reach operating temperature consistently, leading to shaft wear and seal failure.</td>
+            </tr>
+            <tr>
+                <td><strong>Cylinder Glazing</strong></td>
+                <td>Chronic low-load operation at low combustion temperatures prevents piston rings from seating properly, polishing cylinder walls and degrading oil control.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> Extended operation below <strong>400°C (752°F)</strong> turbine inlet temperature is particularly harmful to modern emissions-equipped diesel engines. If the chart shows heavy time accumulation in bands [0]–[3], idling and light-load habits should be addressed before further aftertreatment diagnosis.
+    </div>
+
+    <h2>How to Use This Quick Chart</h2>
+
+    <p>The Time at EGT chart is a static historical view — it does not animate with the Time Slider. It reflects the machine's <em>entire operating history</em> stored in the ECU's non-volatile memory.</p>
+
+    <div class="step">
+        <strong>Step 1 — Load your snapshot and open the Time at EGT Quick Chart.</strong>
+        <p style="margin: 6px 0 0 0;">The chart will display immediately as a bar graph. Each bar represents one temperature band; bar height shows accumulated engine seconds in that band.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Identify where most engine time is concentrated.</strong>
+        <p style="margin: 6px 0 0 0;">A machine used primarily for productive work should show the tallest bars in the mid-to-upper bands (approximately 400–700°C / 752–1,292°F). Heavy concentration in the lower bands indicates excessive idling or chronic underloading.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Check the highest band [7] (750–850°C / 1,382–1,562°F).</strong>
+        <p style="margin: 6px 0 0 0;">This band should be near zero. Any significant accumulation here means the engine has been regularly reaching its thermal protection threshold, and the ECU has been actively limiting power to protect the turbocharger.</p>
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">Healthy Operating Pattern <span class="chip-good">Normal</span></div>
+        <p>The majority of accumulated time falls in bands [4] through [6] — roughly 400–700°C (752–1,292°F). Some time in the lower bands is expected from cold starts and travel. Band [7] is at or near zero.</p>
+        <p>This pattern indicates the machine is being used productively under load, and the aftertreatment system is receiving adequate exhaust heat for passive DPF regeneration.</p>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">Heavy Low-Temperature Concentration <span class="chip-caution">Caution</span></div>
+        <p>Bands [1]–[3] (below 400°C / 752°F) hold a disproportionately large share of total engine hours. This is the signature of a machine that idles frequently or operates consistently at light load — common on job sites where equipment is left running between tasks.</p>
+        <div class="warning" style="margin-top: 10px;">
+            <strong>Expect aftertreatment issues:</strong> A machine with this profile is a strong candidate for DPF clogging, increased active regeneration frequency, and potential DEF system problems. Advise the customer to reduce idle time and ensure the machine is operated under load when possible.
+        </div>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Significant Time in Band [7] (Above 750°C / 1,382°F) <span class="chip-warn">Problem</span></div>
+        <p>The ECU limits torque to hold turbine inlet temperature below 750°C. Meaningful accumulation in band [7] indicates the engine has repeatedly hit this thermal ceiling. This can result from overloading, blocked cooling, or conditions that drive extreme exhaust temperatures.</p>
+        <div class="warning" style="margin-top: 10px;">
+            <strong>Investigate further:</strong> Review the machine's duty cycle and cooling system. Check for fault codes related to turbocharger overtemperature. Compare with the Speed/Load Distribution chart to understand what load conditions are driving the high temperatures.
+        </div>
+    </div>
+
+    <img src="../images/time_at_egt.png" alt="Time at EGT chart example" style="margin-top: 16px; border: 1px solid #C0C0C0; border-radius: 6px;">
+
+    <div class="note" style="margin-top: 16px;">
+        <strong>Note:</strong> The EUD (Engine Use Data) values are lifetime counters stored in non-volatile memory. They do not reset on key cycle. If an ECU has been replaced, the history starts fresh from the replacement date — factor this in when interpreting low hour totals on an older machine.
+    </div>
+
+</div>
+</body>
+</html>
