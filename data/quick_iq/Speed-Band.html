@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Speed Band — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Speed Band</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>EUD_Engine_run_time_spdbnd1_nvv</code></td>
+                <td>Engine run time in speed band 1 (&lt; 1,250 RPM)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Engine_run_time_spdbnd2_nvv</code></td>
+                <td>Engine run time in speed band 2 (1,250 – 1,600 RPM)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Engine_run_time_spdbnd3_nvv</code></td>
+                <td>Engine run time in speed band 3 (1,600 – 2,000 RPM)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Engine_run_time_spdbnd4_nvv</code></td>
+                <td>Engine run time in speed band 4 (2,000 – 2,400 RPM)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Engine_run_time_spdbnd5_nvv</code></td>
+                <td>Engine run time in speed band 5 (&gt; 2,400 RPM)</td>
+                <td>Seconds</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Speed Bands</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Band</th>
+                <th>RPM Range</th>
+                <th>Typical Context</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1</strong></td>
+                <td>&lt; 1,250 RPM</td>
+                <td>Low idle and near-idle operation</td>
+            </tr>
+            <tr>
+                <td><strong>2</strong></td>
+                <td>1,250 – 1,600 RPM</td>
+                <td>Light work, transitional speeds</td>
+            </tr>
+            <tr>
+                <td><strong>3</strong></td>
+                <td>1,600 – 2,000 RPM</td>
+                <td>Moderate load operation</td>
+            </tr>
+            <tr>
+                <td><strong>4</strong></td>
+                <td>2,000 – 2,400 RPM</td>
+                <td>Normal working range</td>
+            </tr>
+            <tr>
+                <td><strong>5</strong></td>
+                <td>&gt; 2,400 RPM</td>
+                <td>High RPM / full throttle</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Background</h2>
+
+    <p>The Speed Band chart shows the machine's lifetime distribution of engine run time across five RPM ranges. Like the Time at EGT chart, this is a static historical view — it reflects the entire operating history stored in the ECU's non-volatile memory and does not animate with the Time Slider.</p>
+
+    <p>Engine speed directly affects exhaust gas temperature. Higher RPM means more airflow, more fuel, and hotter exhaust — which is beneficial for aftertreatment system health. An engine that spends most of its life in bands 1 and 2 is an engine running cold, and cold exhaust is one of the most common root causes of premature DPF and SCR failure on compact equipment.</p>
+
+    <div class="info">
+        <strong>EUD note:</strong> The speed band counters are stored in non-volatile memory and persist across key cycles. If the ECU has been replaced, the history resets from the replacement date. Band 1 includes all idle time — compare it against <code>EUD_Engine_idle_time_nvv</code> (dedicated idle counter) to understand how much of the low-RPM time was true stationary idle versus low-speed work.
+    </div>
+
+    <h2>Why RPM Matters for Aftertreatment</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Benefit of Higher RPM</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Hotter exhaust</strong></td>
+                <td>Higher engine speeds generate more heat in the exhaust stream, keeping the DPF, DOC, and SCR catalyst in their effective operating range.</td>
+            </tr>
+            <tr>
+                <td><strong>Passive DPF regeneration</strong></td>
+                <td>Continuous passive soot burn-off requires sustained exhaust temperatures above roughly 932°F (500°C). Low-RPM operation rarely reaches this threshold.</td>
+            </tr>
+            <tr>
+                <td><strong>SCR efficiency</strong></td>
+                <td>The SCR catalyst converts NOx most efficiently at elevated temperatures. Cold, low-speed operation reduces conversion rates and can cause DEF crystallization.</td>
+            </tr>
+            <tr>
+                <td><strong>Reduced carbon buildup</strong></td>
+                <td>Hotter exhaust gases help burn off carbon deposits in the EGR passages, turbocharger, and exhaust manifold.</td>
+            </tr>
+            <tr>
+                <td><strong>Moisture elimination</strong></td>
+                <td>Adequate exhaust heat vaporizes condensation in the system, preventing corrosive acid formation from sulfur compounds in the fuel.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> Extended operation below roughly 392°F (200°C) EGT — which correlates strongly with sustained low-RPM, low-load running — is particularly harmful to modern emissions-equipped diesel engines. Heavy accumulation in band 1 is a reliable predictor of aftertreatment problems.
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <img src="../images/speed_band_run_time.png" alt="Speed Band Run Time chart example" style="margin-bottom: 16px; border: 1px solid #C0C0C0; border-radius: 6px;">
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">Healthy Distribution <span class="chip-good">Normal</span></div>
+        <p>The majority of engine hours fall in bands 3 through 5 (above 1,600 RPM), with some time in band 2 for transitional and light-load work. Band 1 represents a modest fraction of total hours — cold starts, brief idles between tasks, and travel at low throttle.</p>
+        <p>This distribution indicates the machine is spending most of its life under productive load at RPMs that generate adequate exhaust heat for aftertreatment health.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Heavy Low-Speed Concentration <span class="chip-warn">Problem</span></div>
+        <p>Band 1 holds a disproportionately large share of total engine hours — the machine is spending the majority of its running time at or near idle. This is the RPM signature of a machine left idling between tasks, used for long warm-up periods, or operated in a low-demand application without adequate loading.</p>
+        <div class="warning" style="margin-top: 10px;">
+            <strong>Expect aftertreatment issues:</strong> Cross-reference with the <strong>Time at EGT</strong> chart. If heavy band 1 time corresponds to heavy accumulation in the lower EGT temperature bands (below 752°F / 400°C), the machine's operating habits are the root cause of any DPF, SCR, or DEF system problems. Operator education about idle reduction should be part of the repair recommendation.
+        </div>
+    </div>
+
+    <div class="note">
+        <strong>Related charts:</strong> Use the <strong>Time at EGT</strong> chart alongside Speed Band to confirm the thermal consequence of the RPM distribution. Speed Band shows <em>where</em> the engine is running; Time at EGT shows <em>how hot</em> it ran while it was there. The two together paint a complete picture of the machine's operating habits.
+    </div>
+
+</div>
+</body>
+</html>

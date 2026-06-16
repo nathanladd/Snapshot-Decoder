@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Time at Elevation — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Time at Elevation</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Pressure Range</th>
+                <th>Approx. Elevation</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[0]</code></td>
+                <td>Run time at atmospheric pressure band 0</td>
+                <td>&lt; 60 kPa</td>
+                <td>&gt; 13,100 ft (4,000 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[1]</code></td>
+                <td>Run time at atmospheric pressure band 1</td>
+                <td>60–70 kPa</td>
+                <td>~9,800–13,100 ft (3,000–4,000 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[2]</code></td>
+                <td>Run time at atmospheric pressure band 2</td>
+                <td>70–80 kPa</td>
+                <td>~6,600–9,800 ft (2,000–3,000 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[3]</code></td>
+                <td>Run time at atmospheric pressure band 3</td>
+                <td>80–85 kPa</td>
+                <td>~4,900–6,600 ft (1,500–2,000 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[4]</code></td>
+                <td>Run time at atmospheric pressure band 4</td>
+                <td>85–90 kPa</td>
+                <td>~3,300–4,900 ft (1,000–1,500 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[5]</code></td>
+                <td>Run time at atmospheric pressure band 5</td>
+                <td>90–95 kPa</td>
+                <td>~1,600–3,300 ft (500–1,000 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[6]</code></td>
+                <td>Run time at atmospheric pressure band 6</td>
+                <td>95–100 kPa</td>
+                <td>~0–1,600 ft (0–500 m)</td>
+                <td>Seconds</td>
+            </tr>
+            <tr>
+                <td><code>EUD_Atmos_pres_timer_nvv[7]</code></td>
+                <td>Run time at atmospheric pressure band 7</td>
+                <td>100–110 kPa</td>
+                <td>Sea level / below sea level</td>
+                <td>Seconds</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Background</h2>
+
+    <p>The Time at Elevation chart shows how the engine's lifetime operating hours are distributed across altitude bands. The ECU derives elevation from the onboard atmospheric pressure sensor (<code>P_L_Atmosp_raw</code>) — the same sensor used to adjust fueling and boost targets in real time. Each time the engine runs, seconds are accumulated into whichever pressure band matches the current ambient reading.</p>
+
+    <p>Elevation matters for diesel engine health because air density drops with altitude. A machine that spends most of its life above 5,000 ft is a machine that is working harder to breathe, and the engine and turbocharger are compensating for that every time it runs. This chart makes that operating environment visible in a single histogram.</p>
+
+    <div class="info">
+        <strong>EUD note:</strong> Like all Engine Use Data charts, this is a static historical view — it does not animate with the Time Slider. The counters are stored in non-volatile ECU memory and persist across key cycles. An ECU replacement resets all elevation history.
+    </div>
+
+    <div class="note">
+        <strong>North Dakota assembly note:</strong> Bobcat machines are assembled at the factory in North Dakota, which sits at roughly 1,600–2,100 ft (490–640 m) — squarely in band 5 (90–95 kPa). New or recently ECU-replaced machines will show a small amount of accumulated time there even before they reach the customer.
+    </div>
+
+    <h2>How Elevation Affects the Engine</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Effect</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Reduced air density</strong></td>
+                <td>At 10,000 ft (3,000 m), atmospheric pressure is roughly 70 kPa — only about 69% of sea-level air density. Each intake stroke pulls in less oxygen mass.</td>
+            </tr>
+            <tr>
+                <td><strong>Turbocharger stress</strong></td>
+                <td>The turbo must spin faster to compress thin air to the required boost pressure. Higher shaft speeds increase heat and bearing load. Sustained high-altitude operation accelerates turbo wear.</td>
+            </tr>
+            <tr>
+                <td><strong>Power derating</strong></td>
+                <td>The ECU reduces available torque at altitude to protect the engine from over-fueling with insufficient air. Power complaints at altitude may be intentional ECU derating, not a fault.</td>
+            </tr>
+            <tr>
+                <td><strong>EGR reduction</strong></td>
+                <td>At altitude, the ECU reduces EGR rates to preserve the limited oxygen available for combustion. This is normal behavior — not a sign of EGR system problems.</td>
+            </tr>
+            <tr>
+                <td><strong>Increased soot output</strong></td>
+                <td>Reduced oxygen availability makes complete combustion harder, increasing soot production and DPF loading rates. Machines used at elevation may require more frequent active regenerations.</td>
+            </tr>
+            <tr>
+                <td><strong>Combustion temperature changes</strong></td>
+                <td>Altitude affects the air/fuel ratio, which in turn affects exhaust temperatures. High-altitude operation can shift EGT patterns compared to sea-level baselines — cross-reference with the <strong>Time at EGT</strong> chart.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>What to Look For</h2>
+
+    <img src="../images/time_at_elevation.png" alt="Time at Elevation chart example" style="margin-bottom: 16px; border: 1px solid #C0C0C0; border-radius: 6px;">
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">Low-Altitude Operation <span class="chip-good">Normal</span></div>
+        <p>The vast majority of engine hours fall in bands 6 and 7 (95–110 kPa, below ~1,600 ft). 
+            This is consistent with machines operating in low-elevation regions — the Gulf Coast, Midwest plains, 
+            or similar flat terrain. The engine operates close to its sea-level calibration baseline and the turbo 
+            is not under chronic high-speed stress.</p>
+    </div>
+
+    <div class="card-accent">
+        <div class="card-title">Mid-Altitude Operation <span class="chip-caution">Monitor</span></div>
+        <p>Significant hours in bands 3, 4 and 5 (85–95 kPa, roughly 1,600–4,900 ft). This is the normal operating range 
+            for the Colorado Front Range, the Great Basin, and similar elevated regions. The engine compensates automatically 
+            and most machines handle this well, but it is worth noting when diagnosing turbo wear or elevated DPF regeneration 
+            frequency.</p>
+        <p>Band 5 (90–95 kPa) also includes the Bobcat North Dakota assembly plant at roughly 1,600–2,100 ft, 
+            so some accumulation there is expected on any machine regardless of where it is deployed.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Sustained High-Altitude Operation <span class="chip-warn">Problem</span></div>
+        <p>Meaningful accumulated time in bands 2 or 3 (70–85 kPa, above ~4,900 ft / 1,500 m) — or any time in bands 0 or 1 (above ~9,800 ft / 3,000 m) — 
+            indicates the machine has operated in mountain or high-plateau environments for extended periods.</p>
+        <p>At these altitudes, the turbocharger is chronically oversped, EGR rates are suppressed by the ECU, and soot production is elevated. 
+            Use this chart as context when investigating turbo oil consumption, premature DPF clogging, or power complaints that the operator attributes 
+            to the machine but may be caused by the operating environment.</p>
+        <div class="warning" style="margin-top: 10px;">
+            <strong>Altitude context for diagnosis:</strong> A machine with heavy band 2–3 accumulation that also shows heavy low-EGT 
+            time in the <strong>Time at EGT</strong> chart has a compounding problem — altitude is suppressing combustion efficiency while the 
+            machine may also be underloaded. Both factors push soot production up simultaneously.
+        </div>
+    </div>
+
+    <div class="tip">
+        <strong>Tip:</strong> The atmospheric pressure sensor (<code>P_L_Atmosp_raw</code>) that drives this chart is the same sensor the ECU uses for real-time fueling and boost compensation. If <code>P_L_Atmosp_raw</code> reads abnormally high or low at a known elevation, the sensor may be failing — which would corrupt both live engine control and the elevation histogram. Cross-check the live reading against expected pressure for the machine's current location.
+    </div>
+
+    <div class="note">
+        <strong>Related charts:</strong> Use Time at Elevation alongside <strong>Time at EGT</strong> to understand whether altitude is compounding a thermal problem. High-altitude operation raises turbo speed while low-load idle lowers EGT — when both conditions occur together, the aftertreatment system is stressed from two directions at once.
+    </div>
+
+</div>
+</body>
+</html>

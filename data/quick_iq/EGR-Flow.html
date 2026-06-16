@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EGR Flow — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>EGR Flow</h1>
+
+    <h2>PIDs Used in This Chart</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>PID Name</th>
+                <th>Description</th>
+                <th>Units</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>ACM_Intake_port_air_flow_maf</code></td>
+                <td>Intake port air mass flow (MAF sensor)</td>
+                <td>g/s</td>
+            </tr>
+            <tr>
+                <td><code>ACM_Intake_port_air_flow_spd</code></td>
+                <td>Intake port air mass flow (speed density model)</td>
+                <td>g/s</td>
+            </tr>
+            <tr>
+                <td>Error (computed)</td>
+                <td>Air mass flow error (MAF sensor − speed density)</td>
+                <td>g/s</td>
+            </tr>
+            <tr>
+                <td><code>IN_Egr_position</code></td>
+                <td>EGR valve position</td>
+                <td>%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Background</h2>
+
+    <p>The EGR Flow chart compares two independent ways of measuring how much air is entering the engine. The <strong>MAF sensor</strong> (<code>ACM_Intake_port_air_flow_maf</code>) measures fresh air entering the intake directly. The <strong>speed density model</strong> (<code>ACM_Intake_port_air_flow_spd</code>) calculates expected fresh air from intake manifold pressure, temperature, RPM, and volumetric efficiency.</p>
+
+    <p>When the EGR valve is closed, both values should track closely together. The difference between them — the error line — should sit near zero. When the EGR valve opens and exhaust gas is recirculated back into the intake, the speed density model accounts for the additional charge pressure while the MAF sensor only measures fresh air. A gap between the two lines at that moment is expected and normal.</p>
+
+    <div class="info">
+        <strong>Key concept:</strong> The MAF sensor sits <em>upstream</em> of the EGR mixing point. When the EGR valve opens, recirculated exhaust enters the intake <em>after</em> the MAF sensor and is not measured by it. The speed density model, which is based on manifold pressure, does see the combined charge. So when EGR is flowing: <strong>model &gt; MAF is expected</strong> — the gap represents EGR flow contribution.
+    </div>
+
+    <h2>How to Use This Quick Chart</h2>
+
+    <div class="step">
+        <strong>Step 1 — Load your snapshot and open the EGR Flow Quick Chart.</strong>
+        <p style="margin: 6px 0 0 0;">The chart plots both air mass flow values on the same axis, with the EGR valve position on a secondary axis. Enable the Time Slider to scrub through operating conditions.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 2 — Find a period when the EGR valve is closed (0%).</strong>
+        <p style="margin: 6px 0 0 0;">With the valve closed, the two flow lines should overlap and the error line should be flat near zero. This validates the MAF sensor independent of EGR behavior. Any persistent gap here is not caused by EGR — it points to a MAF sensor issue or an intake air leak downstream of the sensor.</p>
+    </div>
+
+    <div class="step">
+        <strong>Step 3 — Watch what happens when the EGR valve opens.</strong>
+        <p style="margin: 6px 0 0 0;">As the valve opens, the speed density model will rise above the MAF reading. The gap should grow proportionally with the valve opening percentage. If the EGR valve is open but the gap does not appear — or is smaller than expected for the valve position — the EGR passage is restricted.</p>
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">EGR Closed — MAF Validated <span class="chip-good">Normal</span></div>
+        <p>Both flow lines track together and the error line stays near zero. This confirms the MAF sensor is reading accurately and there are no intake leaks between the sensor and the intake manifold. The EGR system is not affecting the reading.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">EGR Open — Healthy Flow Gap <span class="chip-good">Normal</span></div>
+        <p>When the EGR valve opens, the speed density model rises above the MAF reading. The gap reflects the volume of exhaust gas being recirculated. A gap proportional to the valve opening confirms the EGR system is flowing as commanded.</p>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">EGR Open — Restricted Flow <span class="chip-warn">Problem</span></div>
+        <p>The EGR valve is commanding some opening percentage, 
+            but the fresh air measured by the MAF is greater than the calculated engine air flow. 
+            It should have gone down to less than the speed density model. 
+            The EGR passage is restricted — carbon buildup, a stuck valve, or a blocked cooler is preventing 
+            exhaust gas from flowing even though the valve is mechanically opening.</p>
+        <img src="../images/EGR Flow restricted 59pct.png" alt="Restricted EGR flow at 59% valve opening" style="margin-top: 10px; border: 1px solid #C0C0C0; border-radius: 6px;">
+        <div class="warning" style="margin-top: 12px;">
+            <strong>Fault P0400 — EGR Air Plausibility:</strong> Set when the ECU calculates that EGR valve flow is below its diagnosis threshold. If the EGR passage is restricted enough that the model and MAF error stays too small during commanded EGR events, this fault will set. Compare the gap at a known valve percentage to a known-good snapshot for the same engine.
+        </div>
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Large Gap with EGR Closed <span class="chip-warn">Problem</span></div>
+        <p>The speed density model reads significantly higher than the MAF sensor even with the EGR valve fully closed. Since EGR is not flowing, this gap is not an EGR problem — it indicates that air is entering the intake <em>downstream</em> of the MAF sensor without being measured, or the MAF sensor is reading low.</p>
+        <ul style="margin: 8px 0 0 0;">
+            <li><strong>Intake air leak</strong> — a loose boot, cracked intercooler hose, or failed connection after the MAF allows unmetered air into the manifold</li>
+            <li><strong>MAF sensor reading low</strong> — contaminated, damaged, or failed MAF sensor; a new MAF will close the gap</li>
+            <li><strong>Aftertreatment restriction</strong> — a blocked DOC or DPF can alter pressure dynamics and cause apparent MAF/model divergence</li>
+        </ul>
+    </div>
+
+    <h2>Related Fault Codes</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fault Code</th>
+                <th>Description</th>
+                <th>Chart Signature</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>P0400</strong></td>
+                <td>EGR Air Plausibility Fault</td>
+                <td>EGR valve open but gap between model and MAF is smaller than expected — EGR passage restricted</td>
+            </tr>
+            <tr>
+                <td><strong>P0404</strong></td>
+                <td>EGR Position Control Fault</td>
+                <td>Position error (demand vs. <code>IN_Egr_position</code>) exceeds 5% for more than 20 seconds — valve mechanically stuck</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> Use the <strong>Vertical Cursor</strong> to align a steady-state operating point where the EGR valve is at a stable open percentage. Read both flow values and the error simultaneously using the <strong>Values</strong> tool. Compare that error value to a known-good snapshot taken under the same load and RPM conditions to quantify how much flow has been lost.
+    </div>
+
+    <div class="note">
+        <strong>Related chart:</strong> The <strong>EGR Calibration</strong> Quick Chart evaluates the mechanical health of the EGR valve itself — whether its actual position matches the learned closed position and whether it is responding to commands. If the EGR Flow chart shows restricted flow but the valve appears to be opening correctly in the EGR Calibration chart, the restriction is in the passage or cooler, not the valve actuator.
+    </div>
+
+</div>
+</body>
+</html>

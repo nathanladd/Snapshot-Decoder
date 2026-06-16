@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Speed vs Load Distribution — Quick IQ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+<div class="page-content">
+
+    <h1>Speed vs Load Distribution</h1>
+
+    <h2>Background</h2>
+
+    <p>The Speed vs Load Distribution chart plots lifetime engine operating time across a two-dimensional grid of RPM and load. The chart renders as a bubble plot — each bubble sits at a speed/load intersection, and its size represents the accumulated hours the engine has spent at that operating point.</p>
+
+    <p>This is the most complete picture of how a machine has actually been used. Where the Speed Band chart shows only RPM distribution and the Time at EGT chart shows only thermal history, the Speed vs Load chart combines both dimensions into a single view that reveals whether the engine is being loaded appropriately for the speed at which it is running.</p>
+
+    <div class="info">
+        <strong>EUD note:</strong> Like all Engine Use Data charts, this is a static historical view — it does not animate with the Time Slider. The values are stored in non-volatile memory and persist across key cycles. An ECU replacement resets all counters.
+    </div>
+
+    <h2>What to Look For</h2>
+
+    <div class="card-accent" style="border-left-color: #2E7D32;">
+        <div class="card-title" style="color: #2E7D32;">Productive Operating Profile <span class="chip-good">Normal</span></div>
+        <p>Bubble mass is concentrated in the upper-right portion of the grid — high RPM paired with meaningful load (above 40–50%). Some clustering at lower RPM / lower load is expected for startup, idle periods, and light repositioning work.</p>
+        <p>This profile indicates the engine is being loaded consistently when it is running at speed, which keeps combustion temperatures high and the aftertreatment system in its effective operating range.</p>
+        <img src="../images/speed_load_distribution.png" alt="Speed vs Load Distribution chart example" style="margin-top: 12px; border: 1px solid #C0C0C0; border-radius: 6px;">
+    </div>
+
+    <div class="card-accent" style="border-left-color: #E53935;">
+        <div class="card-title" style="color: #C62828;">Low-Speed / Low-Load Cluster <span class="chip-warn">Problem</span></div>
+        <p>A large bubble or cluster of bubbles in the lower-left corner — low RPM, low load — is the signature of extended idle or near-idle operation. The machine is running but not working. This is the most common operating pattern on compact equipment used for intermittent tasks with long wait times between them.</p>
+        <p>Cross-reference with the <strong>Speed Band</strong> chart to see how much total time is in band 1 (&lt; 1,250 RPM), and with the <strong>Time at EGT</strong> chart to confirm the thermal consequence. A machine with a large low-left cluster will almost always show heavy accumulation in the low EGT temperature bands as well.</p>
+    </div>
+
+    <h2>Low Load Operation — Consequences</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Issue</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>DPF clogging</strong></td>
+                <td>Low load means low EGT, which prevents passive DPF regeneration. Soot accumulates faster than it can burn off, increasing active regeneration demand and shortening filter life.</td>
+            </tr>
+            <tr>
+                <td><strong>Wet stacking</strong></td>
+                <td>Incomplete combustion at low load allows unburned fuel and soot to condense in the exhaust, causing black residue buildup.</td>
+            </tr>
+            <tr>
+                <td><strong>Carbon deposits</strong></td>
+                <td>Low combustion temperatures promote carbon buildup on injector tips, EGR passages, and piston rings.</td>
+            </tr>
+            <tr>
+                <td><strong>Cylinder glazing</strong></td>
+                <td>Low combustion pressure prevents piston rings from seating properly, polishing cylinder walls and degrading oil control over time.</td>
+            </tr>
+            <tr>
+                <td><strong>Oil dilution</strong></td>
+                <td>Unburned fuel can pass the piston rings and dilute the crankcase oil, reducing lubrication effectiveness.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> Most diesel engine manufacturers recommend a minimum sustained load of 30–40% to 
+        maintain proper combustion temperatures. An idle percentage above 30–40% of total engine hours is a 
+        signal to investigate operating habits. Calculate it from the snapshot 
+        header: <strong>Idle Hours ÷ Engine Hours × 100</strong>.
+    </div>
+
+    <div class="note">
+        <strong>Related charts:</strong> Use Speed vs Load Distribution alongside <strong>Speed Band</strong> and <strong>Time at EGT</strong> for a complete picture of machine utilization. Speed Band shows RPM distribution, Time at EGT shows the thermal result, and Speed vs Load reveals the underlying cause by showing whether load follows speed.
+    </div>
+
+</div>
+</body>
+</html>
