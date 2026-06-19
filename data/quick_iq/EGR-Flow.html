@@ -107,6 +107,39 @@
         </ul>
     </div>
 
+    <h2>Case Study</h2>
+
+    <div class="case-study">
+        <div class="case-study-label">Case Study</div>
+        <div class="case-study-title">T / S 450 | V1 | 2.4L with EGR Fault Codes</div>
+        <p>This engine would run for a couple minutes before setting a fault code related to EGR operation. 
+            The tech was able to save a snapshot while duplicating the failure.
+        Readings were looking fairly normal until the 'EGR Flow' Quick Chart was opened. The EGR Flow chart below shows an unusually large difference 
+        between speed density air flow and actual air flow. In fact, the two readings go in opposite directions which is very strange.</p>
+        
+        </p><code>ACM_Intake_Port_Air_Flow_MAF</code> (the orange line) is the actual air flow measured by the MAF sensor.
+        </p><code>ACM_Intake_Port_Air_Flow_Spd</code> (the blue line) is a mathmatical calculation by the ECU based on manifold pressure, temperature, 
+        and RPM. It is a model of how much air should be entering the engine.
+        </p><code>IN_Egr_position</code> (the dashed line) is the position of the EGR valve.</p>
+
+        <p>For the first minute of the snapshot, the engine started and idled. During idle the EGR valve was closed and, as expected, the MAF and speed density 
+            readings are matching. I placed the cursor on this chart near the point where the engine speed was increased. The EGR valve is still closed at this point. 
+        Anytime the EGR valve is closed, we should expect the MAF and speed density readings to be similar, however, in this instance, the air flow dropped.</p>
+
+        <p>Engine speed increased, EGR valve remained closed, and yet the air flow not only didn't rise to match the calculated air flow, it dropped. 
+            Something's terribly wrong.</p>
+
+        <p>It's tempting to dig into the engine looking for air restrictions like a colasping intake hose. Referring to the 'Turbo' Quick Chart will provice
+            additional insight in this case. The Turbo chart shows good engine speed and boost pressure, which rules out intake restrictions. The most likely 
+            culprit is a failed MAF sensor that is reading low once engine speed increases. A new MAF sensor would be expected to bring the orange line up and 
+            closer to the blue line, especially during the period when the EGR valve is closed.
+        </p>
+
+        <img src="../images/EGR Flow failed MAF sensor.png" alt="EGR Flow chart showing a flat MAF reading while the speed density model rises and falls with engine conditions">
+        <p class="case-study-caption">Engine speed increased, EGR valve remained closed, and yet the air flow not only didn't rise to match the calculated air flow, it dropped. 
+            Something's terribly wrong..</p>
+    </div>
+
     <h2>Related Fault Codes</h2>
 
     <table>
@@ -132,7 +165,8 @@
     </table>
 
     <div class="tip">
-        <strong>Tip:</strong> Use the <strong>Vertical Cursor</strong> to align a steady-state operating point where the EGR valve is at a stable open percentage. Read both flow values and the error simultaneously using the <strong>Values</strong> tool. Compare that error value to a known-good snapshot taken under the same load and RPM conditions to quantify how much flow has been lost.
+        <strong>Tip:</strong> Use the <strong>Horizontal Rulers</strong> to measure the difference in flow values. A difference of around 10 Grams/Second 
+        when the EGR valve is open indicates an expected amount of EGR flow. 
     </div>
 
     <div class="note">
