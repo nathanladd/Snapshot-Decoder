@@ -1,9 +1,20 @@
 /* Quick IQ pages — design palette from Snapshot Decoder / Course Management Platform */
 
+/* This stylesheet is shared by every page in data/quick_iq/ (Boost-Pressure.html,
+   EGR-Calibration.html, etc.). Each HTML page only supplies content + class names;
+   all colors, spacing, and layout live here so the pages stay visually consistent. */
+
+/* Reset box-sizing so padding/border are included in an element's declared width,
+   instead of being added on top of it (the default CSS behavior). This makes
+   width math predictable everywhere below. */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Base page styles: applies to all text unless a more specific rule overrides it. */
 body {
     font-family: 'Segoe UI', sans-serif;
+    /* clamp(min, preferred, max): font scales with viewport width (1.78vw) but
+       never drops below 12px or grows past 16px — keeps text readable on both
+       narrow and wide windows without needing a media query. */
     font-size: clamp(12px, 1.78vw, 16px);
     line-height: 1.6;
     color: #333333;
@@ -12,6 +23,8 @@ body {
     padding: 0;
 }
 
+/* Heading hierarchy: h1 = page title (blue, underlined), h2 = section headers,
+   h3 = sub-section headers. Colors get lighter/less prominent as level increases. */
 h1 { color: #0078d4; border-bottom: 2px solid #AFC8E8; padding-bottom: 10px; margin-top: 0; }
 h2 { color: #333333; font-weight: bold; margin-top: 20px; }
 h3 { color: #555555; margin-top: 15px; }
@@ -21,6 +34,8 @@ li { margin: 5px 0; }
 a  { color: #0078d4; }
 a:hover { color: #106ebe; }
 
+/* Inline <code> snippets (e.g. parameter names, values) get a light gray
+   "pill" background so they stand out from surrounding prose. */
 code {
     background-color: #F8F8F8;
     border: 1px solid #C0C0C0;
@@ -30,19 +45,23 @@ code {
     font-weight: bold;
 }
 
-/* Tables */
+/* Tables: used for things like parameter reference tables and comparison data. */
 table  { border-collapse: collapse; width: 100%; margin: 14px 0; }
 th, td { border: 1px solid #C0C0C0; padding: 9px 12px; text-align: left; }
 th {
+    /* linear-gradient(to bottom, light, dark) gives header cells a subtle
+       vertical shading instead of a flat fill. */
     background: linear-gradient(to bottom, #EAF4FF, #D8E9FF);
     border-bottom: 2px solid #AFC8E8;
     color: #333333;
     font-weight: bold;
 }
-tr:nth-child(even) { background-color: #F8F8F8; }
-tr:hover { background-color: #EAF4FF; }
+tr:nth-child(even) { background-color: #F8F8F8; } /* zebra-striping for readability */
+tr:hover { background-color: #EAF4FF; } /* highlight the row under the mouse */
 
-/* Panel */
+/* Panel: a bordered container with a shaded title bar on top and a plain
+   body below it. Apply .panel to the outer wrapper, .panel-title to the
+   header div, and .panel-body to the content div inside it. */
 .panel { border: 1px solid #C0C0C0; border-radius: 6px; overflow: hidden; margin: 8px 0; }
 .panel-title {
     background: linear-gradient(to bottom, #EAF4FF, #D8E9FF);
@@ -54,7 +73,8 @@ tr:hover { background-color: #EAF4FF; }
 }
 .panel-body { background-color: #F8F8F8; padding: 12px; }
 
-/* Cards */
+/* Cards: self-contained white boxes used to group related content
+   (e.g. one card per diagnostic scenario). */
 .card {
     background-color: #ffffff;
     border: 1px solid #C0C0C0;
@@ -63,6 +83,8 @@ tr:hover { background-color: #EAF4FF; }
     margin: 10px 0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
+/* Same as .card but with a blue left-edge stripe, used to draw extra
+   attention to a card (e.g. the answer/diagnosis card on a Quick IQ page). */
 .card-accent {
     background-color: #ffffff;
     border: 1px solid #C0C0C0;
@@ -72,6 +94,7 @@ tr:hover { background-color: #EAF4FF; }
     margin: 10px 0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
+/* Heading placed inside a .card/.card-accent, e.g. <div class="card-title">. */
 .card-title {
     color: #0078d4;
     font-size: 15px;
@@ -81,14 +104,27 @@ tr:hover { background-color: #EAF4FF; }
     border-bottom: 1px solid #E0E0E0;
 }
 
-/* Callout boxes */
+/* Callout boxes: colored, left-bordered blocks for calling out a specific
+   kind of message in the page text. All five share the same shape (14px
+   padding, 4px left border, rounded only on the right side) and differ
+   only in color, which signals the message's intent:
+     .info    — blue,   neutral background information
+     .tip     — green,  a helpful suggestion or best practice
+     .note    — yellow, something worth flagging but not urgent
+     .warning — red,    a problem or risk the reader should avoid
+     .step    — gray,   one step in a numbered/sequential procedure */
 .info    { background-color: #EAF4FF; padding: 14px; border-left: 4px solid #0078d4; margin: 12px 0; border-radius: 0 4px 4px 0; }
 .tip     { background-color: #f0fff4; padding: 14px; border-left: 4px solid #2E7D32; margin: 12px 0; border-radius: 0 4px 4px 0; }
 .note    { background-color: #fffbeb; padding: 14px; border-left: 4px solid #F9A825; margin: 12px 0; border-radius: 0 4px 4px 0; }
 .warning { background-color: #fff5f5; padding: 14px; border-left: 4px solid #E53935; margin: 12px 0; border-radius: 0 4px 4px 0; }
 .step    { background-color: #F8F8F8; padding: 14px; border-left: 4px solid #AFC8E8; margin: 12px 0; border-radius: 0 4px 4px 0; }
 
-/* Case Study */
+/* Case Study: a distinct, book-like block (serif font, cream background,
+   tan border) used to set a real-world example apart from the surrounding
+   instructional text. Structure: .case-study wraps everything,
+   .case-study-label is the small uppercase "CASE STUDY" tag at the top,
+   .case-study-title is the headline below it, and .case-study-caption
+   styles text under an image (e.g. a figure caption). */
 .case-study {
     font-family: Georgia, Cambria, 'Times New Roman', serif;
     background-color: #FBF8F2;
@@ -100,7 +136,7 @@ tr:hover { background-color: #EAF4FF; }
 }
 .case-study-label {
     display: inline-block;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', sans-serif; /* break out of the serif case-study font for the tag itself */
     background-color: #8A6D3B;
     color: #ffffff;
     font-size: 11px;
@@ -116,15 +152,24 @@ tr:hover { background-color: #EAF4FF; }
 .case-study img { margin-top: 10px; border: 1px solid #D9CFB8; border-radius: 6px; }
 .case-study-caption { font-family: 'Segoe UI', sans-serif; font-size: 12px; color: #7A6A4C; margin-top: 6px; }
 
-/* Status chips */
+/* Status chips: small rounded "pill" labels (like inline badges) used next
+   to a card title or value to flag its status at a glance.
+     .chip-good    — green,  value is in the normal/expected range
+     .chip-caution — yellow, value is borderline / worth a second look
+     .chip-warn    — red,    value is out of range / indicates a fault */
 .chip-good    { display: inline-block; background-color: #C8E6C9; border: 1px solid #81C784; color: #2E7D32; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; }
 .chip-caution { display: inline-block; background-color: #FFF9C4; border: 1px solid #F9A825; color: #795548; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; }
 .chip-warn    { display: inline-block; background-color: #FFCDD2; border: 1px solid #EF9A9A; color: #C62828; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; }
 
-/* Images */
+/* Images: caps any <img> at 600px wide / 450px tall (or 60% of the viewport
+   height, whichever is smaller) so a single oversized screenshot can't
+   blow out the page layout. object-fit: contain preserves aspect ratio
+   inside that box instead of stretching/cropping the image. */
 img { max-width: min(600px, 100%); max-height: min(450px, 60vh); height: auto; object-fit: contain; }
 
-/* Page wrapper */
+/* Page wrapper: wrap each page's content in <div class="page-content"> to
+   center it, cap its width at 1400px on large screens, and apply generous
+   top/bottom/side padding. */
 .page-content {
     max-width: 1400px;
     margin: 0 auto;
