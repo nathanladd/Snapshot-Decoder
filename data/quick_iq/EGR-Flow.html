@@ -69,18 +69,28 @@
     <h2>How to Use This Quick Chart</h2>
 
     <div class="step">
-        <strong>Step 1 — Load your snapshot and open the EGR Flow Quick Chart.</strong>
-        <p style="margin: 6px 0 0 0;">The chart plots both air mass flow values on the same axis, with the EGR valve position on a secondary axis. Enable the Time Slider to scrub through operating conditions.</p>
+        <strong>Step 1 — Duplicate the customer's concern while saving a snapshot. Load your snapshot and open the EGR Flow Quick Chart.</strong>
+        <p style="margin: 6px 0 0 0;">The chart plots both air mass flow values on the same axis, with the EGR valve position on a secondary axis. 
+            Enable the Time Slider to scrub through operating conditions.</p>
     </div>
 
     <div class="step">
         <strong>Step 2 — Find a period when the EGR valve is closed (0%).</strong>
-        <p style="margin: 6px 0 0 0;">With the valve closed, the two flow lines should overlap and the error line should be flat near zero. This validates the MAF sensor independent of EGR behavior. Any persistent gap here is not caused by EGR — it points to a MAF sensor issue or an intake air leak downstream of the sensor.</p>
+        <p style="margin: 6px 0 0 0;">With the valve closed, the two flow lines should overlap and the error line should be flat near zero. 
+            This validates the MAF sensor independent of EGR behavior. Any persistent gap here is not caused by EGR — it points to a MAF sensor 
+            issue or an intake air leak downstream of the sensor.</p>
     </div>
 
     <div class="step">
         <strong>Step 3 — Watch what happens when the EGR valve opens.</strong>
-        <p style="margin: 6px 0 0 0;">As the valve opens, the speed density model will rise above the MAF reading. The gap should grow proportionally with the valve opening percentage. If the EGR valve is open but the gap does not appear — or is smaller than expected for the valve position — the EGR passage is restricted.</p>
+        <p style="margin: 6px 0 0 0;">As the valve opens, the MAF reading will drop below the speed density model. The gap should grow proportionally 
+            with the valve opening percentage. If the EGR valve is open but the gap does not appear — or is smaller than expected for the valve position — 
+            either the EGR passage/cooler is restricted or the speed density model accounts for EGR position.</p>
+    </div>
+
+    <div class="note">
+        <strong>Boost Pressure</strong>: Speed density is a calculation partially based on manifold pressure. Low boost pressure caused by a failed turbo
+        or boost leak will cause incorrect speed density readings.
     </div>
 
     <h2>What to Look For</h2>
