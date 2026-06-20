@@ -33,7 +33,7 @@
                 <td>g/s</td>
             </tr>
             <tr>
-                <td>Error (computed)</td>
+                <td><code>ACM_Air_estimation_raw_error</code></td>
                 <td>Air mass flow error (MAF sensor − speed density)</td>
                 <td>g/s</td>
             </tr>
@@ -47,14 +47,25 @@
 
     <h2>Background</h2>
 
-    <p>The EGR Flow chart compares two independent ways of measuring how much air is entering the engine. The <strong>MAF sensor</strong> (<code>ACM_Intake_port_air_flow_maf</code>) measures fresh air entering the intake directly. The <strong>speed density model</strong> (<code>ACM_Intake_port_air_flow_spd</code>) calculates expected fresh air from intake manifold pressure, temperature, RPM, and volumetric efficiency.</p>
+    <p>The EGR Flow chart compares two independent ways of measuring how much air is entering the engine. The <strong>MAF sensor</strong> 
+        (<code>ACM_Intake_port_air_flow_maf</code>) measures fresh air entering the intake directly. The <strong>speed density model</strong> 
+        (<code>ACM_Intake_port_air_flow_spd</code>) calculates air flow from intake manifold pressure, temperature, RPM, and volumetric efficiency.</p>
 
-    <p>When the EGR valve is closed, both values should track closely together. The difference between them — the error line — should sit near zero. When the EGR valve opens and exhaust gas is recirculated back into the intake, the speed density model accounts for the additional charge pressure while the MAF sensor only measures fresh air. A gap between the two lines at that moment is expected and normal.</p>
+    <p>When the EGR valve is closed, both values should track closely together. The difference between them — the error line — should sit near zero. 
+        When the EGR valve opens and exhaust gas is recirculated back into the intake, fresh air flowing through the air filter and MAF sensor will be displaced
+        by the exhaust gas. The speed density PID continues to be a calculation of total air entering the engine, while the MAF sensor physically measures fresh air 
+        which should now be less than the speed density calculation. A gap between the two lines at that moment is expected and normal.</p>
 
-    <div class="info">
-        <strong>Key concept:</strong> The MAF sensor sits <em>upstream</em> of the EGR mixing point. When the EGR valve opens, recirculated exhaust enters the intake <em>after</em> the MAF sensor and is not measured by it. The speed density model, which is based on manifold pressure, does see the combined charge. So when EGR is flowing: <strong>model &gt; MAF is expected</strong> — the gap represents EGR flow contribution.
+    <div class="note">
+        <strong>Point of controversy:</strong> The <strong>Speed Density Calculation</strong> seems to be calculated differently in some ECU software versions.
+        In some cases, it appears to be a calculated <strong>Model</strong> that will match closely to the MAF sensor reading even when the EGR valve is open and 
+        EGR flow is normal. In other cases, it appears to be a more traditional <strong>Speed Density Calculation</strong> that does not account for EGR flow and 
+        therefore will remain above the MAF sensor reading when the EGR valve opens. If your engine is not setting any EGR related faults codes, and your MAF 
+        and speed density readings track together closely even when the EGR valve is open, then your ECU is likely using a model that accounts for EGR flow. Don't get too 
+        concerned about it - the chart is still useful. 
     </div>
 
+    
     <h2>How to Use This Quick Chart</h2>
 
     <div class="step">
@@ -75,13 +86,11 @@
     <h2>What to Look For</h2>
 
     <div class="card-accent" style="border-left-color: #2E7D32;">
-        <div class="card-title" style="color: #2E7D32;">EGR Closed — MAF Validated <span class="chip-good">Normal</span></div>
-        <p>Both flow lines track together and the error line stays near zero. This confirms the MAF sensor is reading accurately and there are no intake leaks between the sensor and the intake manifold. The EGR system is not affecting the reading.</p>
-    </div>
-
-    <div class="card-accent" style="border-left-color: #2E7D32;">
-        <div class="card-title" style="color: #2E7D32;">EGR Open — Healthy Flow Gap <span class="chip-good">Normal</span></div>
-        <p>When the EGR valve opens, the speed density model rises above the MAF reading. The gap reflects the volume of exhaust gas being recirculated. A gap proportional to the valve opening confirms the EGR system is flowing as commanded.</p>
+        <div class="card-title" style="color: #2E7D32;">EGR Closed and Open — Normal Operation <span class="chip-good">Normal</span></div>
+        <p>With the EGR valve closed, the MAF and speed density readings track together and the error line stays near zero — confirming the MAF sensor is reading 
+            accurately with no intake leaks downstream of the sensor. As the EGR valve opens, in this case to almost 47%, MAF (fresh air) drops below the speed density.
+            The difference is about 6.5 grams/second. This is the actual amount of EGR flow. I believe anything less than 10 grams/second would be considered normal.</p>
+        <img src="../images/EGR Flow Normal.png" alt="EGR Flow chart showing normal operation with EGR valve closed and open at several positions" style="margin-top: 10px; border: 1px solid #C0C0C0; border-radius: 6px;">
     </div>
 
     <div class="card-accent" style="border-left-color: #E53935;">
@@ -95,16 +104,6 @@
         <div class="warning" style="margin-top: 12px;">
             <strong>Fault P0400 — EGR Air Plausibility:</strong> Set when the ECU calculates that EGR valve flow is below its diagnosis threshold. If the EGR passage is restricted enough that the model and MAF error stays too small during commanded EGR events, this fault will set. Compare the gap at a known valve percentage to a known-good snapshot for the same engine.
         </div>
-    </div>
-
-    <div class="card-accent" style="border-left-color: #E53935;">
-        <div class="card-title" style="color: #C62828;">Large Gap with EGR Closed <span class="chip-warn">Problem</span></div>
-        <p>The speed density model reads significantly higher than the MAF sensor even with the EGR valve fully closed. Since EGR is not flowing, this gap is not an EGR problem — it indicates that air is entering the intake <em>downstream</em> of the MAF sensor without being measured, or the MAF sensor is reading low.</p>
-        <ul style="margin: 8px 0 0 0;">
-            <li><strong>Intake air leak</strong> — a loose boot, cracked intercooler hose, or failed connection after the MAF allows unmetered air into the manifold</li>
-            <li><strong>MAF sensor reading low</strong> — contaminated, damaged, or failed MAF sensor; a new MAF will close the gap</li>
-            <li><strong>Aftertreatment restriction</strong> — a blocked DOC or DPF can alter pressure dynamics and cause apparent MAF/model divergence</li>
-        </ul>
     </div>
 
     <h2>Case Study</h2>
@@ -129,15 +128,22 @@
         <p>Engine speed increased, EGR valve remained closed, and yet the air flow not only didn't rise to match the calculated air flow, it dropped. 
             Something's terribly wrong.</p>
 
-        <p>It's tempting to dig into the engine looking for air restrictions like a colasping intake hose. Referring to the 'Turbo' Quick Chart will provice
+        <p>It's tempting to dig into the engine looking for air restrictions like a colasping intake hose. Referring to the 'Turbo' Quick Chart will provide
             additional insight in this case. The Turbo chart shows good engine speed and boost pressure, which rules out intake restrictions. The most likely 
-            culprit is a failed MAF sensor that is reading low once engine speed increases. A new MAF sensor would be expected to bring the orange line up and 
-            closer to the blue line, especially during the period when the EGR valve is closed.
-        </p>
+            culprit is a failed MAF sensor that is reading low once engine speed increases. The MAF sensor was replaced. As the second chart shows, the MAF
+            and speed density readings are now tracking together as expected.</p>
 
-        <img src="../images/EGR Flow failed MAF sensor.png" alt="EGR Flow chart showing a flat MAF reading while the speed density model rises and falls with engine conditions">
-        <p class="case-study-caption">Engine speed increased, EGR valve remained closed, and yet the air flow not only didn't rise to match the calculated air flow, it dropped. 
-            Something's terribly wrong..</p>
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div style="flex: 1;">
+                <img src="../images/EGR Flow failed MAF sensor.png" alt="EGR Flow chart showing a flat MAF reading while the speed density model rises and falls with engine conditions">
+                <p class="case-study-caption">Engine speed increased, EGR valve remained closed, and yet the air flow not only didn't rise to match the calculated air flow, it dropped.
+                    Something's terribly wrong..</p>
+            </div>
+            <div style="flex: 1;">
+                <img src="../images/EGR Flow failed MAF replaced.png" alt="EGR Flow chart after the MAF sensor was replaced, showing the MAF and speed density readings tracking together">
+                <p class="case-study-caption">New MAF sensor installed — MAF and speed density readings now track together as expected.</p>
+            </div>
+        </div>
     </div>
 
     <h2>Related Fault Codes</h2>
