@@ -52,7 +52,6 @@ V2_MISFIRE = QuickChartDef(
     title="Misfire Counters",
     primary_pids=["MisfDet_ctMifMem_[0]", "MisfDet_ctMifMem_[2]", 
                   "MisfDet_ctMifMem_[3]", "MisfDet_ctMifMem_[1]"],
-    primary_range=(-20, 150),
 )
 
 V2_THROTTLE_VALVE = QuickChartDef(

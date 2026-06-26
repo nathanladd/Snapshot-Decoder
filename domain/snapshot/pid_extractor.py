@@ -8,7 +8,7 @@ import math
 from typing import Dict
 import pandas as pd
 
-from domain.constants import UNIT_NORMALIZATION
+from domain.constants import UNIT_NORMALIZATION, PID_DESCRIPTION_OVERRIDES
 
 
 def extract_pid_info(
@@ -48,6 +48,12 @@ def extract_pid_info(
         # Collapse multi-line cells
         description = " ".join(part.strip() for part in description.splitlines() if part.strip())
         unit = " ".join(part.strip() for part in unit.splitlines() if part.strip())
+
+        # Override description for known PIDs (case-insensitive). The override
+        # always wins over whatever the file provided.
+        override = PID_DESCRIPTION_OVERRIDES.get(pid.strip().lower())
+        if override is not None:
+            description = override
 
         # Normalize unit if known
         if unit:

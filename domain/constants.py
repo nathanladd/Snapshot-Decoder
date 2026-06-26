@@ -255,6 +255,21 @@ UNIT_NORMALIZATION: dict[str, str] = {
     "k": "Kelvin",
     }
 
+# Override descriptions for specific PIDs during extraction.
+# Applied in domain/snapshot/pid_extractor.py: when a PID matches a key here, the
+# description read from the snapshot file is REPLACED with this text (always wins).
+# Keys are the PID name LOWERCASED; matching is case-insensitive (mirrors
+# UNIT_NORMALIZATION). Add entries here to give cryptic raw PID names a clear,
+# human-readable description in the PID panel, charts, and tooltips.
+PID_DESCRIPTION_OVERRIDES: dict[str, str] = {
+    # Misfire-detection per-cylinder memory counters (V2). NOTE: confirm the
+    # index->cylinder mapping before relying on these labels.
+    "misfdet_ctmifmem_[0]": "Misfire Count - Cylinder 1",
+    "misfdet_ctmifmem_[1]": "Misfire Count - Cylinder 2",
+    "misfdet_ctmifmem_[2]": "Misfire Count - Cylinder 3",
+    "misfdet_ctmifmem_[3]": "Misfire Count - Cylinder 4",
+    }
+
 # Conversion rules for standardizing metric units to US units.
 # Key: normalized source unit string (from UNIT_NORMALIZATION values)
 # Value: (target_unit, factor, pre_offset, post_offset)
