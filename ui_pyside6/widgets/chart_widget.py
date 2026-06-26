@@ -68,7 +68,11 @@ class ChartWidget(QWidget):
         
         # Time slider state
         self._time_slider_enabled = False
-        self._cursor_line = None
+        self._cursor_lines = []  # one vertical cursor line per stacked subplot
+
+        # "Separate charts" (stacked small-multiples) mode
+        self._separate_charts = False
+        self._all_axes = []  # every plotted axes, top to bottom
 
         # Horizontal Y-ruler state
         self._y_ruler_values: List[float] = []
@@ -106,6 +110,7 @@ class ChartWidget(QWidget):
         self._toolbar.quick_iq_requested.connect(self._on_quick_iq_requested)
         self._toolbar.value_display_changed.connect(self._on_value_display_changed)
         self._toolbar.time_slider_changed.connect(self._on_time_slider_changed)
+        self._toolbar.separate_charts_changed.connect(self._on_separate_charts_changed)
         self._toolbar.axis_settings_changed.connect(self.axis_settings_changed.emit)
         layout.addWidget(self._toolbar)
         
@@ -486,9 +491,10 @@ class ChartWidget(QWidget):
         )
         self._ax.set_xticks([])
         self._ax.set_yticks([])
+        self._all_axes = [self._ax]
         self._redraw_y_rulers()
         self._canvas.draw()
-    
+
     def clear(self):
         """Clear the chart."""
         self._y_ruler_values.clear()
@@ -500,6 +506,7 @@ class ChartWidget(QWidget):
         self._figure.clear()
         self._ax = self._figure.add_subplot(111)
         self._ax_secondary = None
+        self._all_axes = [self._ax]
         self._current_config = None
         self._current_action_id = None
         self._show_welcome()
@@ -613,9 +620,12 @@ class ChartWidget(QWidget):
         
         self._ax.grid(True, linestyle=':', alpha=0.7)
         self._figure.tight_layout()
+        self._all_axes = [self._ax]
+        if self._ax_secondary:
+            self._all_axes.append(self._ax_secondary)
         self._redraw_y_rulers()
         self._canvas.draw()
-    
+
     def get_current_axis_limits(self) -> Optional[Dict[str, float]]:
         """Get the current axis limits from the rendered chart."""
         if not self._ax:
@@ -677,16 +687,18 @@ class ChartWidget(QWidget):
         # Clear existing cursor
         self._disable_value_display()
         
-        # Collect all plot artists (lines, containers, collections)
+        # Collect all plot artists (lines, containers, collections) from every
+        # axes — covers the combined view, the secondary axis, and each subplot
+        # in separate (stacked) mode.
         artists = []
-        if self._ax:
-            artists.extend(self._ax.lines)
-            artists.extend(self._ax.containers)
-            artists.extend(self._ax.collections)
-        if self._ax_secondary:
-            artists.extend(self._ax_secondary.lines)
-            artists.extend(self._ax_secondary.containers)
-            artists.extend(self._ax_secondary.collections)
+        axes_to_scan = list(self._all_axes) if self._all_axes else []
+        for ax in (self._ax, self._ax_secondary):
+            if ax is not None and ax not in axes_to_scan:
+                axes_to_scan.append(ax)
+        for ax in axes_to_scan:
+            artists.extend(ax.lines)
+            artists.extend(ax.containers)
+            artists.extend(ax.collections)
         
         if artists:
             self._mpl_cursor = mplcursors.cursor(artists, hover=True)
@@ -757,6 +769,14 @@ class ChartWidget(QWidget):
             else:
                 self._live_values_widget.hide_widget()
     
+    def _on_separate_charts_changed(self, enabled: bool):
+        """Toggle between stacked (one chart per PID) and combined rendering."""
+        self._separate_charts = enabled
+        # Re-render the current chart in the new layout. _render_config
+        # re-applies any active rulers, hover values, and time slider.
+        if self._current_config:
+            self._render_config(self._current_config)
+
     def _format_slider_time(self, seconds):
         """Format seconds as MM:SS for slider labels."""
         if seconds < 0:
@@ -775,9 +795,10 @@ class ChartWidget(QWidget):
         if not self._slider_time_entry.hasFocus():
             self._slider_time_entry.setText(self._format_slider_time(val))
         
-        # Update vertical cursor line on the chart
-        if self._cursor_line:
-            self._cursor_line.set_xdata([val, val])
+        # Update vertical cursor line(s) on the chart (one per stacked subplot)
+        if self._cursor_lines:
+            for line in self._cursor_lines:
+                line.set_xdata([val, val])
             self._canvas.draw_idle()
         
         # Update live values display
@@ -844,25 +865,27 @@ class ChartWidget(QWidget):
         
         # Show the Qt slider widget
         self._slider_widget.show()
-        
-        # Create vertical cursor line on the matplotlib chart
-        self._cursor_line = self._ax.axvline(
-            x=self._slider_min_val, color='red', alpha=0.5, linestyle='--'
-        )
+
+        # Create a vertical cursor line on each subplot (shared x-axis). In the
+        # combined view this is a single line; in separate mode it spans the stack.
+        self._cursor_lines = [
+            ax.axvline(x=self._slider_min_val, color='red', alpha=0.5, linestyle='--')
+            for ax in (self._all_axes or [self._ax])
+        ]
         self._canvas.draw()
     
     def _disable_time_slider(self):
         """Disable time slider and vertical cursor."""
         # Hide the Qt slider widget
         self._slider_widget.hide()
-        
-        if self._cursor_line:
+
+        for line in self._cursor_lines:
             try:
-                self._cursor_line.remove()
+                line.remove()
             except Exception:
                 pass
-            self._cursor_line = None
-        
+        self._cursor_lines = []
+
         self._canvas.draw_idle()
     
     def plot_quick_chart(self, snapshot: Snapshot, action_id: str):
@@ -1028,15 +1051,19 @@ class ChartWidget(QWidget):
         
         # Use ChartRenderer for consistent rendering with ColorManager
         renderer = ChartRenderer(config)
-        ax_left, ax_right = renderer.render(self._figure, self._canvas)
-        
+        ax_left, ax_right = renderer.render(
+            self._figure, self._canvas, separate=self._separate_charts
+        )
+
         # Update title for reference charts
         if config.quick_chart_action_id and config.quick_chart_action_id.startswith("REF_"):
             ax_left.set_title(title)
-        
-        # Store the axes for reference
+
+        # Store the axes for reference. In separate mode ax_left is the top
+        # subplot (where Y-rulers bind) and _all_axes holds every subplot.
         self._ax = ax_left
         self._ax_secondary = ax_right
+        self._all_axes = renderer.axes if renderer.axes else [ax_left]
 
         # Re-draw any active Y-rulers on the freshly rendered axis
         self._redraw_y_rulers()

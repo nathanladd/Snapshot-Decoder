@@ -46,6 +46,8 @@ class ChartRenderer:
             config: ChartConfig instance with all chart parameters
         """
         self.config = config
+        # All axes produced by the most recent render() call (top to bottom)
+        self.axes: list = []
         # Apply user appearance settings from AppSettings
         self.config.grid_linewidth = app_settings.grid_linewidth
         self._user_line_width = app_settings.line_width
@@ -80,6 +82,19 @@ class ChartRenderer:
             if description:
                 return description
         return pid_name
+
+    def _get_series_unit(self, pid_name: str) -> str:
+        """Get the unit string for a PID from pid_info (case-insensitive)."""
+        if not self.config.pid_info:
+            return ""
+        info = self.config.pid_info.get(pid_name)
+        if info is None:
+            pid_cf = pid_name.casefold()
+            for key, value in self.config.pid_info.items():
+                if str(key).casefold() == pid_cf:
+                    info = value
+                    break
+        return (info or {}).get("Unit", "") if info else ""
     
     def _get_series_color(self, series_name: str, is_secondary: bool, series_index: int) -> str:
         """
@@ -98,60 +113,147 @@ class ChartRenderer:
         )
     
     def render(
-        self, 
-        figure: Figure, 
+        self,
+        figure: Figure,
         canvas: Optional[object] = None,
-        clear_figure: bool = True
+        clear_figure: bool = True,
+        separate: bool = False
     ) -> Tuple[Axes, Optional[Axes]]:
         """
         Render the chart on an existing figure.
-        
+
         Args:
             figure: Matplotlib Figure object to render on
             canvas: Optional canvas object (e.g., FigureCanvasTkAgg) to refresh
             clear_figure: Whether to clear the figure before rendering
-        
+            separate: If True (line charts only), render each PID on its own
+                stacked subplot with a shared x-axis instead of overlaying them
+
         Returns:
-            Tuple of (primary_axis, secondary_axis)
+            Tuple of (primary_axis, secondary_axis). In separate mode the primary
+            axis is the top subplot and the secondary axis is None. The full list
+            of rendered axes is available via ``self.axes``.
         """
         if clear_figure:
             figure.clear()
-        
+
         # Prepare data: convert Timedelta to seconds for plotting
         plot_data = self.config.data.copy()
         if pd.api.types.is_timedelta64_dtype(plot_data.get("Time")):
             plot_data["Time"] = plot_data["Time"].dt.total_seconds()
         elif pd.api.types.is_timedelta64_dtype(plot_data.get("Time (MM:SS)")):
             plot_data["Time (MM:SS)"] = plot_data["Time (MM:SS)"].dt.total_seconds()
-        
+
         # Store figure reference for colorbar support in bubble charts
         self._figure = figure
-        
-        # Create axes
-        ax_left = figure.add_subplot(111)
-        ax_right = ax_left.twinx() if self.config.secondary_axis.series else None
-        
-        # Render based on chart type
-        if self.config.chart_type == "line":
-            self._render_line_chart(ax_left, ax_right, plot_data)
-        elif self.config.chart_type == "bar":
-            self._render_bar_chart(ax_left, ax_right, plot_data)
-        elif self.config.chart_type == "bubble":
-            self._render_bubble_chart(ax_left, ax_right, plot_data)
-        elif self.config.chart_type == "status":
-            self._render_status_chart(ax_left, ax_right, plot_data)
+
+        if separate and self.config.chart_type == "line":
+            ax_left, ax_right = self._render_separate(figure, plot_data)
         else:
-            raise ValueError(f"Unsupported chart type: {self.config.chart_type}")
-        
-        # Apply common formatting
-        self._apply_formatting(ax_left, ax_right)
-        
+            # Create axes
+            ax_left = figure.add_subplot(111)
+            ax_right = ax_left.twinx() if self.config.secondary_axis.series else None
+
+            # Render based on chart type
+            if self.config.chart_type == "line":
+                self._render_line_chart(ax_left, ax_right, plot_data)
+            elif self.config.chart_type == "bar":
+                self._render_bar_chart(ax_left, ax_right, plot_data)
+            elif self.config.chart_type == "bubble":
+                self._render_bubble_chart(ax_left, ax_right, plot_data)
+            elif self.config.chart_type == "status":
+                self._render_status_chart(ax_left, ax_right, plot_data)
+            else:
+                raise ValueError(f"Unsupported chart type: {self.config.chart_type}")
+
+            # Apply common formatting
+            self._apply_formatting(ax_left, ax_right)
+
+            # Expose every rendered axes (used by the widget for cursors/hover)
+            self.axes = [ax for ax in (ax_left, ax_right) if ax is not None]
+
         # Finalize
         figure.tight_layout()
         if canvas:
             canvas.draw_idle()
-        
+
         return ax_left, ax_right
+
+    def _render_separate(
+        self, figure: Figure, plot_data: pd.DataFrame
+    ) -> Tuple[Axes, Optional[Axes]]:
+        """
+        Render each PID on its own stacked line chart with a shared x-axis.
+
+        Y-axes are independent (each PID auto-scales on its own subplot). The
+        returned primary axis is the top subplot; the secondary axis is None.
+        Populates ``self.axes`` with all subplots, top to bottom.
+        """
+        series = list(self.config.primary_axis.series) + list(self.config.secondary_axis.series)
+        n = max(len(series), 1)
+
+        # squeeze=False keeps a consistent 2-D result even for a single PID
+        axes = list(figure.subplots(n, 1, sharex=True, squeeze=False)[:, 0])
+        x_key = self.config.get_x_column()
+
+        for i, (ax, series_name) in enumerate(zip(axes, series)):
+            if series_name not in plot_data.columns:
+                continue
+            y = pd.to_numeric(plot_data[series_name], errors="coerce")
+            style = self.config.get_series_style(series_name, is_secondary=False)
+            if not style.color:
+                style.color = self._get_series_color(series_name, False, i)
+
+            x = plot_data[x_key] if x_key else y.index
+            ax.plot(
+                x, y,
+                linestyle=style.linestyle,
+                linewidth=self._user_line_width,
+                marker=style.marker,
+                markersize=self._user_marker_size,
+                color=style.color,
+                alpha=style.alpha,
+                label=self._get_legend_label(series_name),
+            )
+            # Horizontal, left-aligned description above each subplot instead of
+            # a rotated y-axis label (long PID descriptions overlap vertically).
+            ax.set_title(
+                self._get_legend_label(series_name),
+                fontsize=9,
+                loc="left",
+                pad=3,
+            )
+            # Short unit string stays on the y-axis, beside the tick values.
+            unit = self._get_series_unit(series_name)
+            if unit:
+                ax.set_ylabel(unit, fontsize=8)
+            if self.config.grid:
+                ax.grid(
+                    True,
+                    linestyle=self.config.grid_style,
+                    linewidth=self.config.grid_linewidth,
+                )
+
+        # Overall chart title at the figure level so it doesn't collide with the
+        # top subplot's per-PID title.
+        if self.config.title:
+            figure.suptitle(self.config.title, fontsize=11)
+
+        # X-axis label + MM:SS formatter on the bottom subplot only (shared x)
+        bottom = axes[-1]
+        if x_key in ("Time", "Time (MM:SS)"):
+            bottom.set_xlabel("Time (mm:ss)")
+            def format_time(value, pos):
+                minutes = int(value // 60)
+                seconds = int(value % 60)
+                return f"{minutes:02d}:{seconds:02d}"
+            bottom.xaxis.set_major_formatter(FuncFormatter(format_time))
+        else:
+            bottom.set_xlabel(self.config.x_label or x_key or "Index")
+
+        self.axes = axes
+        # Top subplot is the "primary" axis; rulers bind here.
+        return axes[0], None
     
     def create_and_render(
         self, 

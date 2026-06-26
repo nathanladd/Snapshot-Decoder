@@ -45,6 +45,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     # Signal emitted when time slider toggle changes
     time_slider_changed = Signal(bool)
 
+    # Signal emitted when "separate charts" (stacked) toggle changes
+    separate_charts_changed = Signal(bool)
+
     # Signal emitted when axis controls are changed
     axis_settings_changed = Signal()
     
@@ -162,6 +165,41 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         """)
         self._time_slider_btn.toggled.connect(self.time_slider_changed.emit)
         self.addWidget(self._time_slider_btn)
+
+        # Add "separate charts" (stacked small-multiples) toggle
+        self._separate_charts_btn = QToolButton(self)
+        self._separate_charts_btn.setToolTip("Chart each PID on its own stacked subplot")
+        self._separate_charts_btn.setCheckable(True)  # Makes it a latching button
+
+        from PySide6.QtGui import QIcon
+        from PySide6.QtCore import QSize
+        self._separate_charts_btn.setIcon(QIcon(resource_path('data/app_images/chart-table.png')))
+        self._separate_charts_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
+
+        self._separate_charts_btn.setStyleSheet("""
+            QToolButton {
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 4px;
+                background-color: #F0F0F0;
+            }
+            QToolButton:hover {
+                background-color: #E0E0E0;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:pressed {
+                background-color: #D0D0D0;
+            }
+            QToolButton:checked {
+                background-color: #0078d4;
+                border: 1px solid #0078d4;
+            }
+            QToolButton:checked:hover {
+                background-color: #106ebe;
+            }
+        """)
+        self._separate_charts_btn.toggled.connect(self.separate_charts_changed.emit)
+        self.addWidget(self._separate_charts_btn)
 
         # Add Quick IQ button
         self._quick_iq_btn = QToolButton(self)
