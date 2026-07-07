@@ -68,8 +68,8 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Load Percent and Brake Torque"),
         ("Torque Limits", "V2_ENGINE_TORQUE_LIMITS",
         "Torque Limits"),
-        ("Boost Leak", "V2_BOOST_LEAK",
-        "Boost Leak"),
+        ("EGR Flow", "V2_EGR_FLOW",
+        "Mass Air Flow Sensor vs Speed Density"),
         
     ],
     SnapType.DCU_V1: [

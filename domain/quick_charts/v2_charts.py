@@ -98,9 +98,9 @@ V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
     display_prefix="Torque Limit:",
 )
 
-V2_BOOST_LEAK = QuickChartDef(
-    action_id="V2_BOOST_LEAK",
-    title="Boost Leak",
+V2_EGR_FLOW = QuickChartDef(
+    action_id="V2_EGR_FLOW",
+    title="EGR Flow",
     primary_pids=["AirMod_mfGasIntkVlv_f", "AFS_dm"],
     primary_range=(0, 400),
     secondary_pids=["EGRVlv_rAct"],
@@ -132,5 +132,5 @@ V2_CHARTS: dict[str, QuickChartDef] = {
     "V2_THROTTLE_VALVE": V2_THROTTLE_VALVE,               # Throttle Valve Position
     "V2_ENGINE_LOAD": V2_ENGINE_LOAD,                     # Engine Load
     "V2_ENGINE_TORQUE_LIMITS": V2_ENGINE_TORQUE_LIMITS,   # Engine Torque Limits
-    "V2_BOOST_LEAK": V2_BOOST_LEAK,                       # Boost Leak
+    "V2_EGR_FLOW": V2_EGR_FLOW,                           # EGR Flow
 }

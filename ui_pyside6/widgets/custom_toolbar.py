@@ -173,7 +173,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import QSize
-        self._separate_charts_btn.setIcon(QIcon(resource_path('data/app_images/chart-table.png')))
+        self._separate_charts_btn.setIcon(QIcon(resource_path('data/app_images/stacked-charts.png')))
         self._separate_charts_btn.setIconSize(QSize(20, 20))  # Fixed 20x20 size for toolbar
 
         self._separate_charts_btn.setStyleSheet("""
