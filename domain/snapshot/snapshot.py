@@ -13,6 +13,11 @@ import pandas as pd
 
 from domain.snaptypes import SnapType
 from domain.snapshot.header_parser import parse_header, find_date_time
+from domain.snapshot.map_version_decoder import (
+    EcuMapInfo,
+    decode_map_version,
+    find_map_version,
+)
 from domain.snapshot.type_detector import find_header_row, detect_snapshot_type
 from domain.snapshot.pid_extractor import extract_pid_info
 from domain.snapshot.data_cleaner import scrub_snapshot, remove_unsupported_pids
@@ -50,6 +55,13 @@ class Snapshot:
         self.hours: float = 0.0
 
         self.header_list: List[Tuple[str, str]] = []
+
+        # Decoded from the ECU Map Version header (when recognized)
+        self.displacement: Optional[str] = None
+        self.subtype: Optional[str] = None
+        self.horsepower: Optional[str] = None
+        self.ecu_map_info: Optional[EcuMapInfo] = None
+
         self.pid_info: Dict[str, Dict[str, str]] = {}
         self.snapshot_type: SnapType = SnapType.EMPTY
         self.mdp_success_rate: float = 0.0
@@ -93,6 +105,7 @@ class Snapshot:
         # (Phase 3) Parse header information
         self.header_list = parse_header(self.raw_table, max_rows=5)
         self.date_time = find_date_time(self.header_list)
+        self._decode_map_version()
         
         # (Phase 4) Extract PID descriptions
         self.pid_info = extract_pid_info(self.raw_table, header_row_idx)
@@ -116,6 +129,16 @@ class Snapshot:
         
         # (Phase 9) Detect engine systems
         self._detect_systems()
+
+    def _decode_map_version(self) -> None:
+        """Decode the ECU Map Version from the header, if recognized."""
+        map_version = find_map_version(self.header_list)
+        info = decode_map_version(map_version)
+        if info is not None:
+            self.ecu_map_info = info
+            self.displacement = info.displacement
+            self.subtype = info.subtype
+            self.horsepower = info.horsepower
 
     def _detect_systems(self) -> None:
         """Detect which engine systems are present in the snapshot."""

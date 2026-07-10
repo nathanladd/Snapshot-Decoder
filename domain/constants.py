@@ -209,7 +209,7 @@ HEADER_LABELS = {
     "data logging": "Date / Time",
     "engine no": "Engine Model",
     "sw version": "Engine Analyzer",
-    "ecu map": "Map Version",
+    "ecu map": "ECU Map Version",
     "start time": "Date / Time",
 }
 

@@ -5,7 +5,7 @@ Header panel widget displaying snapshot metadata with toolbar.
 from typing import Optional
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QGridLayout, QLabel, QGroupBox, QToolBar, QToolButton
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QGroupBox, QToolBar, QToolButton
 )
 from PySide6.QtCore import Qt, Signal, QMimeData
 from PySide6.QtGui import QAction, QIcon, QPixmap, QDragEnterEvent, QDragLeaveEvent, QDropEvent
@@ -29,6 +29,20 @@ class HeaderPanel(QWidget):
     _VALID_EXTENSIONS = ('.xlsx', '.xls')
     
     _GROUP_STYLE_DEFAULT = "QGroupBox { font-weight: bold; }"
+
+    # Blue info chips - matches the system panel indicator styling but in a
+    # distinct color so they read as information, not system status
+    _CHIP_STYLE = """
+        QLabel {
+            background-color: #0078d4;
+            color: #FFFFFF;
+            font-weight: bold;
+            font-size: 10px;
+            border: 2px solid #4aa3e0;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+    """
     _GROUP_STYLE_EMPTY = (
         "QGroupBox { font-weight: bold; border: 2px dashed #0078d4; "
         "border-radius: 4px; margin-top: 0.5em; padding-top: 0.6em; }"
@@ -124,6 +138,16 @@ class HeaderPanel(QWidget):
             self._add_header_row("Engine Hours:", f"{snapshot.hours:.1f}")
         if snapshot.idle_time is not None and snapshot.idle_time > 0:
             self._add_header_row("Idle Time:", f"{snapshot.idle_time:.1f}")
+
+        # Compact chips for values decoded from the ECU Map Version
+        horsepower = getattr(snapshot, "horsepower", None)
+        chip_texts = [text for text in (
+            getattr(snapshot, "displacement", None),
+            getattr(snapshot, "subtype", None),
+            f"HP Code: {horsepower}" if horsepower is not None else None,
+        ) if text]
+        if chip_texts:
+            self._add_chip_row(chip_texts)
     
     def clear(self):
         """Clear all displayed data."""
@@ -163,6 +187,26 @@ class HeaderPanel(QWidget):
         # Ensure the value column stretches
         self._grid_layout.setColumnStretch(1, 1)
     
+    def _add_chip_row(self, texts: list):
+        """Add a row of compact info chips spanning both grid columns."""
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+        row_layout.setContentsMargins(0, 2, 0, 0)
+        row_layout.setSpacing(4)
+
+        for text in texts:
+            chip = QLabel(text)
+            chip.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            chip.setFixedHeight(20)
+            chip.setStyleSheet(self._CHIP_STYLE)
+            row_layout.addWidget(chip)
+
+        # Keep chips left-aligned instead of stretching across the row
+        row_layout.addStretch(1)
+
+        row = self._grid_layout.rowCount()
+        self._grid_layout.addWidget(row_widget, row, 0, 1, 2)
+
     def _setup_toolbar(self):
         """Set up the toolbar with common actions."""
         self._toolbar = QToolBar()

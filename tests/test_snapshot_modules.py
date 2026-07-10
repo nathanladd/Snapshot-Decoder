@@ -9,6 +9,7 @@ import pandas as pd
 import math
 
 from domain.snapshot.header_parser import parse_header, find_date_time, _normalize_label
+from domain.snapshot.map_version_decoder import decode_map_version, find_map_version
 from domain.snapshot.type_detector import find_header_row, detect_snapshot_type
 from domain.snapshot.pid_extractor import extract_pid_info, _to_str
 from domain.snapshot.data_cleaner import (
@@ -93,6 +94,98 @@ class TestHeaderParser:
         assert _normalize_label("program sw version") == "Program SW Version"
         assert _normalize_label("file name") == "File Name"
         assert _normalize_label("Unknown Label") == "Unknown Label"
+
+
+class TestMapVersionDecoder:
+    """Tests for map_version_decoder module."""
+
+    def test_decode_full_example(self):
+        """Test decoding the reference map version from the spec."""
+        info = decode_map_version("DL01_LEL00_B14_UNE52D")
+
+        assert info is not None
+        assert info.map_version == "DL01_LEL00_B14_UNE52D"
+        assert info.base_engine_type == "DL01"
+        assert info.engine_version == "V1"
+        assert info.displacement == "1.8L"
+        assert info.subtype_code == "LEL"
+        assert info.subtype == "Loader"
+        assert info.horsepower == "00"
+        assert info.subtype_recognized
+
+    def test_decode_digit_rule_for_v2(self):
+        """Test that displacement follows the digit rule on DM prefixes."""
+        info = decode_map_version("DM02_LEE07_C22_XYZ99A")
+
+        assert info is not None
+        assert info.engine_version == "V2"
+        assert info.displacement == "2.4L"
+        assert info.subtype == "MX"
+        assert info.horsepower == "07"
+
+    def test_decode_all_base_engine_types(self):
+        """Test all six base engine types map to version and displacement."""
+        expected = {
+            "DL01": ("V1", "1.8L"),
+            "DL02": ("V1", "2.4L"),
+            "DL03": ("V1", "3.4L"),
+            "DM01": ("V2", "1.8L"),
+            "DM02": ("V2", "2.4L"),
+            "DM03": ("V2", "3.4L"),
+        }
+        for base, (version, displacement) in expected.items():
+            info = decode_map_version(f"{base}_LEL00_B14")
+            assert info is not None
+            assert info.engine_version == version
+            assert info.displacement == displacement
+
+    def test_decode_all_subtypes(self):
+        """Test all four subtype codes map to machine families."""
+        expected = {
+            "LEL": "Loader",
+            "LEE": "MX",
+            "LEU": "Toolcat",
+            "LEV": "Versahandler",
+        }
+        for code, subtype in expected.items():
+            info = decode_map_version(f"DL01_{code}00_B14")
+            assert info is not None
+            assert info.subtype == subtype
+
+    def test_decode_unknown_subtype_keeps_raw_code(self):
+        """Test that an unknown subtype code still decodes with the raw code."""
+        info = decode_map_version("DL03_XYZ01_B14")
+
+        assert info is not None
+        assert info.subtype_code == "XYZ"
+        assert info.subtype == "XYZ"
+        assert not info.subtype_recognized
+
+    def test_decode_unrecognized_returns_none(self):
+        """Test that non-Bobcat strings return None."""
+        assert decode_map_version("garbage") is None
+        assert decode_map_version("XX99_LEL00_A") is None  # unknown prefix/digits
+        assert decode_map_version("DL04_LEL00_A") is None  # unknown displacement
+        assert decode_map_version("DL01LEL00") is None     # missing underscore
+        assert decode_map_version("") is None
+        assert decode_map_version(None) is None
+
+    def test_decode_normalizes_case_and_whitespace(self):
+        """Test that lowercase and padded input still decodes."""
+        info = decode_map_version("  dl01_lel00_b14_une52d  ")
+
+        assert info is not None
+        assert info.displacement == "1.8L"
+        assert info.subtype == "Loader"
+
+    def test_find_map_version_both_labels(self):
+        """Test finding the map version under both header labels."""
+        assert find_map_version([("ECU Map Version", "DL01_LEL00")]) == "DL01_LEL00"
+        assert find_map_version([("Map Version", "DM03_LEU02")]) == "DM03_LEU02"
+
+    def test_find_map_version_not_found(self):
+        """Test when no map version label is in the header list."""
+        assert find_map_version([("File Name", "test.xlsx")]) == ""
 
 
 class TestTypeDetector:

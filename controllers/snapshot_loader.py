@@ -14,6 +14,7 @@ from PySide6.QtCore import QThread, Signal
 
 from domain.snapshot import Snapshot
 from domain.snapshot.header_parser import parse_header, find_date_time
+from domain.snapshot.map_version_decoder import decode_map_version, find_map_version
 from domain.snapshot.type_detector import find_header_row, detect_snapshot_type
 from domain.snapshot.pid_extractor import extract_pid_info
 from domain.snapshot.data_cleaner import scrub_snapshot, remove_unsupported_pids
@@ -167,7 +168,28 @@ class SnapshotLoader(QThread):
                 log_info("No header information found")
                 log_warning("HEADERS_PARSED", "Count: 0 | No headers found")
 
-            
+            # Decode ECU Map Version into displacement, subtype, and horsepower
+            map_version = find_map_version(snapshot.header_list)
+            if map_version:
+                map_info = decode_map_version(map_version)
+                if map_info is not None:
+                    snapshot.ecu_map_info = map_info
+                    snapshot.displacement = map_info.displacement
+                    snapshot.subtype = map_info.subtype
+                    snapshot.horsepower = map_info.horsepower
+                    log_info(
+                        f"Decoded ECU Map Version '{map_info.map_version}': "
+                        f"{map_info.engine_version} {map_info.displacement} "
+                        f"{map_info.subtype}, HP setting {map_info.horsepower}"
+                    )
+                    if not map_info.subtype_recognized:
+                        log_warning(f"Unknown subtype code '{map_info.subtype_code}' in ECU Map Version '{map_info.map_version}'")
+                else:
+                    log_warning(f"Map Version '{map_version}' did not match known Bobcat format")
+            else:
+                log_debug("No ECU Map Version found in header")
+
+
             if self._cancelled:
                 log_warning("LOAD_CANCELLED", "Phase 3 - Parsing headers")
                 return
