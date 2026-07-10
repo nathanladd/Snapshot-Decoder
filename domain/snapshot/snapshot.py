@@ -72,6 +72,9 @@ class Snapshot:
         self.has_doc: bool = False
         self.has_dpf: bool = False
         self.has_scr: bool = False
+        # True when has_scr was inferred from temperature sensors on an
+        # unverified engine (ECU map version absent/unrecognized).
+        self.scr_temp_unverified: bool = False
         self.has_air_throttle: bool = False
         self._detected_systems: Optional[DetectedSystems] = None
 
@@ -142,13 +145,14 @@ class Snapshot:
 
     def _detect_systems(self) -> None:
         """Detect which engine systems are present in the snapshot."""
-        self._detected_systems = detect_systems(self.snapshot)
+        self._detected_systems = detect_systems(self.snapshot, self.ecu_map_info)
         
         # Set convenience bool attributes
         self.has_egr = self._detected_systems.egr
         self.has_doc = self._detected_systems.doc
         self.has_dpf = self._detected_systems.dpf
         self.has_scr = self._detected_systems.scr
+        self.scr_temp_unverified = self._detected_systems.scr_temp_unverified
         self.has_air_throttle = self._detected_systems.air_throttle
         self.has_mdp = self._detected_systems.mdp
     

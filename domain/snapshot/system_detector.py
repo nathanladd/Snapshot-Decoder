@@ -16,7 +16,13 @@ from domain.constants import (
     V1_SCR_TEMP_DIFF_MIN_PCT,
     V1_SCR_TEMP_SWING_MIN_PCT,
 )
+from domain.snapshot.map_version_decoder import EcuMapInfo
 from infrastructure.logging_config import log_debug, log_info, log_warning
+
+# V1 SCR temperature detection only applies to this displacement, and only
+# below this horsepower code (00 = highest). See detect_systems().
+V1_SCR_DISPLACEMENT = "3.4L"
+V1_SCR_MAX_HP_CODE = 4
 
 
 @dataclass
@@ -40,6 +46,11 @@ class DetectedSystems:
     # valid rows). Populated for display/diagnostics even when below threshold.
     scr_temp_diff_pct: Optional[float] = None
 
+    # True when SCR was detected via the temperature fallback on an engine we
+    # could not verify (ECU map version absent/unrecognized). Signals the UI to
+    # note the SCR result is based on temperature sensors only.
+    scr_temp_unverified: bool = False
+
     # Store which PIDs matched for each system (for debugging/display)
     matched_pids: dict[str, list[str]] = field(default_factory=dict)
     
@@ -48,16 +59,22 @@ class DetectedSystems:
             self.matched_pids = {}
 
 
-def detect_systems(df: pd.DataFrame) -> DetectedSystems:
+def detect_systems(
+    df: pd.DataFrame,
+    map_info: Optional[EcuMapInfo] = None,
+) -> DetectedSystems:
     """
     Detect which engine systems are present in the snapshot.
-    
+
     Checks all column names against the SYSTEM_PIDS mapping to determine
     which systems are present.
-    
+
     Args:
         df: Cleaned snapshot DataFrame
-        
+        map_info: Decoded ECU map info, used to gate V1 SCR temperature
+            detection. When None (map version absent/unrecognized) the V1
+            SCR temperature fallback is skipped.
+
     Returns:
         DetectedSystems dataclass with boolean flags for each system
     """
@@ -90,13 +107,55 @@ def detect_systems(df: pd.DataFrame) -> DetectedSystems:
     # V1 engines have no dedicated SCR PID, so fall back to comparing the SCR
     # inlet/outlet temperatures. Only needed when SCR was not already found above.
     if not systems.scr:
-        scr_present, diff_pct = detect_scr_by_temperature(df)
-        systems.scr_temp_diff_pct = diff_pct
-        if scr_present:
-            systems.scr = True
-            systems.matched_pids["scr"] = list(V1_SCR_TEMP_PIDS.values())
+        should_run, unverified = _v1_scr_temp_decision(map_info)
+        if should_run:
+            scr_present, diff_pct = detect_scr_by_temperature(df)
+            systems.scr_temp_diff_pct = diff_pct
+            if scr_present:
+                systems.scr = True
+                systems.scr_temp_unverified = unverified
+                systems.matched_pids["scr"] = list(V1_SCR_TEMP_PIDS.values())
 
     return systems
+
+
+def _v1_scr_temp_decision(map_info: Optional[EcuMapInfo]) -> Tuple[bool, bool]:
+    """
+    Decide whether to run V1 SCR temperature detection, and how to trust it.
+
+    Returns ``(should_run, unverified)``:
+
+    - Verified 3.4L engines with a horsepower code below V1_SCR_MAX_HP_CODE
+      (00 = highest) run the check as a trusted result -> (True, False).
+    - When the ECU map version is absent or unrecognized we cannot confirm the
+      engine, so the check still runs but the result is flagged unverified so
+      the UI can note it is based on temperature sensors only -> (True, True).
+    - A known engine that does not qualify (wrong displacement, or a
+      horsepower code at/above the limit) is skipped -> (False, False).
+    """
+    if map_info is None:
+        log_debug(
+            "V1 SCR Temp Detection: no ECU map info - running unverified "
+            "(temperature sensors only)"
+        )
+        return True, True
+
+    if map_info.displacement != V1_SCR_DISPLACEMENT:
+        log_debug(
+            f"V1 SCR Temp Detection: displacement {map_info.displacement} is not "
+            f"{V1_SCR_DISPLACEMENT} - skipping"
+        )
+        return False, False
+
+    hp_code = map_info.horsepower_code
+    if hp_code is None or hp_code >= V1_SCR_MAX_HP_CODE:
+        log_debug(
+            f"V1 SCR Temp Detection: horsepower code {map_info.horsepower!r} is not "
+            f"below {V1_SCR_MAX_HP_CODE:02d} - skipping"
+        )
+        return False, False
+
+    return True, False
 
 
 def detect_scr_by_temperature(

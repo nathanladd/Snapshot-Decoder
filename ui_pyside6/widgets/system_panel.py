@@ -119,6 +119,28 @@ class SystemPanel(QWidget):
         font.setStrikeOut(False)
         label.setFont(font)
     
+    def _set_scr_label(self, label: QLabel, snapshot: Snapshot):
+        """Style the SCR label, flagging temperature-only (unverified) detection."""
+        if not getattr(snapshot, "has_scr", False):
+            label.setText("SCR")
+            label.setToolTip("")
+            self._set_label_off(label)
+            return
+
+        if getattr(snapshot, "scr_temp_unverified", False):
+            # Detected from inlet/outlet temperatures on an engine we could not
+            # verify (ECU map version absent/unrecognized).
+            label.setText("SCR *")
+            label.setToolTip(
+                "Engine horsepower could not be verified from the MAP file.\n"
+                "The fall-back temperature sensor method was used to detect the "
+                "SCR, which is less accurate."
+            )
+        else:
+            label.setText("SCR")
+            label.setToolTip("")
+        self._set_label_on(label)
+
     def set_snapshot(self, snapshot: Optional[Snapshot]):
         """Update the panel with snapshot data."""
         if snapshot is None:
@@ -126,13 +148,16 @@ class SystemPanel(QWidget):
                 if attr_name == "has_mdp":
                     # Reset MDP label text to just "MDP"
                     label.setText("MDP")
+                elif attr_name == "has_scr":
+                    label.setText("SCR")
+                    label.setToolTip("")
                 self._set_label_off(label)
             return
-        
+
         # Update each system label based on snapshot attributes
         for attr_name, display_name in self.SYSTEMS:
             label = self._system_labels[attr_name]
-            
+
             if attr_name == "has_mdp":
                 # Special handling for MDP system - check both detection and success rate
                 if getattr(snapshot, attr_name, False):
@@ -140,10 +165,14 @@ class SystemPanel(QWidget):
                     self._set_mdp_label(label, mdp_rate)
                 else:
                     self._set_label_off(label)
+            elif attr_name == "has_scr":
+                # SCR may be inferred from temperature sensors on an engine we
+                # could not verify; mark it and explain via tooltip.
+                self._set_scr_label(label, snapshot)
             else:
                 # Regular system handling
                 has_system = getattr(snapshot, attr_name, False)
-                
+
                 if has_system:
                     self._set_label_on(label)
                 else:

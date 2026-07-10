@@ -63,6 +63,17 @@ class EcuMapInfo:
         """True if the subtype code matched a known machine family."""
         return self.subtype_code in SUBTYPES
 
+    @property
+    def horsepower_code(self) -> Optional[int]:
+        """
+        Numeric horsepower setting, or None if the raw code is non-numeric.
+
+        The raw ``horsepower`` string is a 2-digit relative setting where
+        ``00`` is the highest. This gives callers a safe numeric view for
+        comparisons without discarding the zero-padded display string.
+        """
+        return int(self.horsepower) if self.horsepower.isdigit() else None
+
 
 def decode_map_version(value: str) -> Optional[EcuMapInfo]:
     """

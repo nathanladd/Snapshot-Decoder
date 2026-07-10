@@ -304,11 +304,12 @@ class SnapshotLoader(QThread):
             # Phase 9: Detect engine systems
             self.progress.emit(95, "Detecting systems...")
             log_phase(9, "Detecting Engine Systems")
-            systems = detect_systems(snapshot.snapshot)
+            systems = detect_systems(snapshot.snapshot, snapshot.ecu_map_info)
             snapshot.has_egr = systems.egr
             snapshot.has_doc = systems.doc
             snapshot.has_dpf = systems.dpf
             snapshot.has_scr = systems.scr
+            snapshot.scr_temp_unverified = systems.scr_temp_unverified
             snapshot.has_air_throttle = systems.air_throttle
             snapshot.has_mdp = systems.mdp
             snapshot._detected_systems = systems
