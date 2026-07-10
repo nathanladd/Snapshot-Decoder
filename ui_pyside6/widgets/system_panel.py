@@ -5,7 +5,7 @@ System panel widget displaying system availability status.
 from typing import Optional, Dict
 
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QVBoxLayout
+    QWidget, QLabel, QHBoxLayout
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -33,26 +33,21 @@ class SystemPanel(QWidget):
     
     def _setup_ui(self):
         """Set up the UI layout."""
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
-        
-        # Create indicator-style labels for each system in vertical column
+
+        # Create indicator-style labels for each system in a horizontal row
+        # (sized to sit in the window status bar)
         for attr_name, display_name in self.SYSTEMS:
             label = QLabel(display_name)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             label.setFixedHeight(20)
             label.setFixedWidth(80)
             self._system_labels[attr_name] = label
-            
+
             self._set_label_off(label)
             layout.addWidget(label)
-        
-        # Add stretch to push labels to center when there's extra space
-        top_stretch = 1
-        bottom_stretch = 1
-        layout.insertStretch(0, top_stretch)  # Add stretch at top
-        layout.addStretch(bottom_stretch)    # Add stretch at bottom
     
     def _set_label_on(self, label: QLabel):
         """Style label as ON - glowing green indicator light."""

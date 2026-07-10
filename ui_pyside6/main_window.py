@@ -28,6 +28,7 @@ from infrastructure.logging_config import set_error_signal
 
 from ui_pyside6.widgets.header_panel import HeaderPanel
 from ui_pyside6.widgets.system_panel import SystemPanel
+from ui_pyside6.widgets.map_info_panel import MapInfoPanel
 from ui_pyside6.widgets.integrated_pid_widget import IntegratedPidWidget
 from ui_pyside6.widgets.chart_widget import ChartWidget
 from ui_pyside6.widgets.quick_chart_panel import QuickChartPanel
@@ -144,10 +145,9 @@ class MainWindow(QMainWindow):
         self.header_panel.help_requested.connect(self._on_show_help_home)
         self.header_panel.file_dropped.connect(self._on_open_file)
         
-        self.system_panel = SystemPanel()
-        # Vertically center the system panel relative to header panel
-        header_row.addWidget(self.system_panel, 0, Qt.AlignmentFlag.AlignVCenter)
-        
+        # The system chips and MAP info chips now live in the status bar
+        # (see _setup_statusbar), grouped and right-aligned.
+
         left_layout.addLayout(header_row)
         
         # PID selection panel (integrated widget)
@@ -310,10 +310,29 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
     
     def _setup_statusbar(self):
-        """Set up the status bar."""
+        """Set up the status bar with grouped, right-aligned info chips."""
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
         self.statusbar.showMessage("Ready - Open a snapshot file to begin")
+
+        # MAP file chips and engine system chips live here, grouped together
+        # and right-aligned via addPermanentWidget.
+        self.map_info_panel = MapInfoPanel()
+        self.system_panel = SystemPanel()
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.VLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+
+        chip_group = QWidget()
+        chip_layout = QHBoxLayout(chip_group)
+        chip_layout.setContentsMargins(0, 0, 4, 0)
+        chip_layout.setSpacing(8)
+        chip_layout.addWidget(self.map_info_panel)
+        chip_layout.addWidget(separator)
+        chip_layout.addWidget(self.system_panel)
+
+        self.statusbar.addPermanentWidget(chip_group)
     
     @Slot()
     def _on_open_file_dialog(self):
@@ -400,6 +419,7 @@ class MainWindow(QMainWindow):
         
         self.header_panel.clear()
         self.system_panel.clear()
+        self.map_info_panel.clear()
         self.pid_panel.clear()
         self.quick_chart_panel.clear()
         self.chart_widget.clear()
@@ -419,6 +439,7 @@ class MainWindow(QMainWindow):
         # Update UI with snapshot data
         self.header_panel.set_snapshot(snapshot)
         self.system_panel.set_snapshot(snapshot)
+        self.map_info_panel.set_snapshot(snapshot)
         self.pid_panel.set_snapshot(snapshot)
         self.quick_chart_panel.set_snapshot(snapshot)
         self.chart_widget.clear()
