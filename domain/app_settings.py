@@ -8,8 +8,11 @@ automatic persistence to a settings.json file.
 
 import json
 import os
+import shutil
 import sys
 from typing import Any, Dict
+
+from domain.user_paths import user_data_file
 
 
 # Default settings values
@@ -32,12 +35,18 @@ _DEFAULTS: Dict[str, Any] = {
 
 
 def _settings_file_path() -> str:
-    """Return the path to the settings JSON file next to the executable / project root."""
+    """Return the path to the settings JSON file in the per-user data dir."""
+    return user_data_file("settings.json")
+
+
+def _legacy_settings_paths() -> list:
+    """Old next-to-executable / project-root locations, newest-priority first."""
+    paths = []
     if getattr(sys, "frozen", False):
-        base = os.path.dirname(sys.executable)
-    else:
-        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, "settings.json")
+        paths.append(os.path.join(os.path.dirname(sys.executable), "settings.json"))
+    paths.append(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "settings.json"))
+    return paths
 
 
 class AppSettings:
@@ -66,6 +75,14 @@ class AppSettings:
     def load(self):
         """Load settings from the JSON file (or use defaults)."""
         path = _settings_file_path()
+        if not os.path.isfile(path):
+            for legacy in _legacy_settings_paths():
+                if os.path.isfile(legacy):
+                    try:
+                        shutil.copyfile(legacy, path)  # copy, don't move — leave original untouched
+                    except Exception:
+                        pass
+                    break
         if os.path.isfile(path):
             try:
                 with open(path, "r", encoding="utf-8") as f:

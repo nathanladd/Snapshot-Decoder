@@ -299,6 +299,18 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def set_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration for PDF export."""
         self.chart_config = config
+
+        # My Charts have no hosted Quick IQ page (only built-ins do) — gate the
+        # button off so a title-slug collision can never open the wrong page.
+        is_user_chart = bool(
+            config and config.quick_chart_action_id
+            and config.quick_chart_action_id.startswith("USER_")
+        )
+        self._quick_iq_btn.setEnabled(not is_user_chart)
+        self._quick_iq_btn.setToolTip(
+            "No Quick IQ page for custom charts" if is_user_chart
+            else "Open Quick IQ in your default browser"
+        )
     
     def save_figure(self, *args):
         """Override save_figure to save as PDF with metadata."""

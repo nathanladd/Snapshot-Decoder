@@ -20,6 +20,7 @@ import mplcursors
 from domain.snapshot import Snapshot
 from domain.chart_config import ChartConfig, AxisConfig
 from domain.quick_charts import QUICK_CHART_REGISTRY, ChartConfigBuilder
+from domain.user_charts import UserChartStore
 from domain.constants import LIVE_METRIC_PID_MAP
 from infrastructure import log_chart_generated, log_debug
 from ui.color_manager import ColorManager
@@ -895,8 +896,12 @@ class ChartWidget(QWidget):
         
         log_debug(f"Plotting quick chart: {action_id}")
         
-        # Get chart definition from registry
+        # Get chart definition from the built-in registry, falling back to
+        # user-saved My Charts (never merged into QUICK_CHART_REGISTRY).
         definition = QUICK_CHART_REGISTRY.get(action_id)
+        if definition is None:
+            user_chart = UserChartStore().get(action_id)
+            definition = user_chart.to_quick_chart_def() if user_chart else None
         if not definition:
             log_debug(f"Unknown chart action ID: {action_id}")
             self._ax.clear()
@@ -933,7 +938,11 @@ class ChartWidget(QWidget):
     def get_current_config(self) -> Optional[ChartConfig]:
         """Get the current chart configuration."""
         return self._current_config
-    
+
+    def get_current_action_id(self) -> Optional[str]:
+        """Get the action_id of the currently displayed quick chart, if any."""
+        return self._current_action_id
+
     def get_current_primary_pids(self) -> List[str]:
         """Get PIDs currently on primary axis."""
         if self._current_config:

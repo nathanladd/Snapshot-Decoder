@@ -47,6 +47,7 @@ Two jobs, both about convenience for the rest of the app:
 # These imports run top-to-bottom the moment the package is first imported.
 from domain.quick_charts.definitions import QuickChartDef, BarChartDef, BubbleChartDef, StatusChartDef
 from domain.quick_charts.builders import ChartConfigBuilder
+from domain.quick_charts.slug import slugify_chart_title
 from domain.quick_charts.v1_charts import V1_CHARTS
 from domain.quick_charts.v2_charts import V2_CHARTS
 from domain.quick_charts.eud_charts import EUD_CHARTS
@@ -73,6 +74,7 @@ __all__ = [
     "BubbleChartDef",
     "StatusChartDef",
     "ChartConfigBuilder",
+    "slugify_chart_title",
     "V1_CHARTS",
     "V2_CHARTS",
     "EUD_CHARTS",

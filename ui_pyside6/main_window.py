@@ -6,20 +6,23 @@ PySide6 implementation with clean controller-based architecture.
 
 import os
 import copy
-import re
 import webbrowser
+from datetime import datetime
 from typing import Optional
+from uuid import uuid4
 
 from PySide6.QtCore import Qt, Signal, Slot, QEvent, QTimer
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox, QProgressDialog, QSplashScreen,
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QMenuBar, QMenu, QStatusBar, QFileDialog, QLabel, QFrame
+    QMenuBar, QMenu, QStatusBar, QFileDialog, QLabel, QFrame, QInputDialog
 )
 from PySide6.QtGui import QAction, QIcon, QPixmap, QFont, QColor
 
 from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
+from domain.quick_charts import slugify_chart_title
+from domain.user_charts import UserChartDef, UserChartStore
 from controllers.app_controller import AppController
 from controllers.chart_controller import ChartController
 from version import APP_VERSION
@@ -178,6 +181,7 @@ class MainWindow(QMainWindow):
         # Quick chart buttons panel
         self.quick_chart_panel = QuickChartPanel()
         self.quick_chart_panel.chart_requested.connect(self._on_quick_chart_requested)
+        self.quick_chart_panel.save_chart_requested.connect(self._on_save_my_chart_requested)
         top_bar_layout.addWidget(self.quick_chart_panel, stretch=1)
         
         # Logo in top right - scale to match quick chart panel height
@@ -546,7 +550,7 @@ class MainWindow(QMainWindow):
         # Get current PIDs from panel
         primary_pids = self.pid_panel.get_primary_pids()
         secondary_pids = self.pid_panel.get_secondary_pids()
-        
+
         # Update chart if we have PIDs, otherwise clear chart
         if primary_pids or secondary_pids:
             self.chart_widget.update_chart(
@@ -558,7 +562,7 @@ class MainWindow(QMainWindow):
         else:
             # Clear chart when no PIDs selected
             self.chart_widget.clear()
-        
+
         # Update PID panel colors
         config = self.chart_widget.get_current_config()
         if config:
@@ -566,6 +570,8 @@ class MainWindow(QMainWindow):
         else:
             # Reset colors when no chart
             self.pid_panel.update_chart_colors(None)
+
+        self.quick_chart_panel.set_save_enabled(bool(primary_pids or secondary_pids))
     
     @Slot(list, list)
     def _on_pid_selection_changed(self, primary_pids: list, secondary_pids: list):
@@ -670,27 +676,112 @@ class MainWindow(QMainWindow):
         """Handle quick chart button click."""
         if not self.snapshot:
             return
-        
+
         # Handle special reference PDF generation
         if action_id == "REF_GENERATE_PDF":
             self._generate_reference_pdf()
             return
-        
+
         self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
-        
+
         # Sync PID panel with quick chart's PIDs
         primary_pids = self.chart_widget.get_current_primary_pids()
         secondary_pids = self.chart_widget.get_current_secondary_pids()
         self.pid_panel.set_pids(primary_pids, secondary_pids, emit_signal=False)
-        
+
         # Update PID panel colors to match quick chart
         config = self.chart_widget.get_current_config()
         if config:
             self.pid_panel.update_chart_colors(config)
-        
+
         # Update axis controls from the chart config
         self._update_axis_controls_from_config()
-    
+
+        self.quick_chart_panel.set_save_enabled(bool(primary_pids or secondary_pids))
+
+    @Slot()
+    def _on_save_my_chart_requested(self):
+        """Save the current canvas PID/axis selection as a My Chart (new or update)."""
+        if not self.app_controller.has_snapshot():
+            return
+
+        primary_pids = self.pid_panel.get_primary_pids()
+        secondary_pids = self.pid_panel.get_secondary_pids()
+        if not primary_pids and not secondary_pids:
+            QMessageBox.information(
+                self, "Save as My Chart", "Select PIDs to build a chart, then save it."
+            )
+            return
+
+        store = UserChartStore()
+        axis_settings = self._get_axis_settings()
+        primary_range = None if axis_settings.get('primary_auto', True) else (
+            axis_settings.get('primary_min'), axis_settings.get('primary_max'))
+        secondary_range = None if axis_settings.get('secondary_auto', True) else (
+            axis_settings.get('secondary_min'), axis_settings.get('secondary_max'))
+
+        current_action_id = self.chart_widget.get_current_action_id()
+        existing = (
+            store.get(current_action_id)
+            if current_action_id and current_action_id.startswith("USER_")
+            else None
+        )
+
+        if existing:
+            box = QMessageBox(self)
+            box.setWindowTitle("Save as My Chart")
+            box.setText(
+                f"Update '{existing.title}' with the current selection, "
+                f"or save as a new chart?"
+            )
+            update_btn = box.addButton(f"Update '{existing.title}'", QMessageBox.ButtonRole.AcceptRole)
+            new_btn = box.addButton("Save as New", QMessageBox.ButtonRole.ActionRole)
+            box.addButton(QMessageBox.StandardButton.Cancel)
+            box.exec()
+            clicked = box.clickedButton()
+
+            if clicked is update_btn:
+                existing.primary_pids = primary_pids
+                existing.secondary_pids = secondary_pids
+                existing.primary_range = primary_range
+                existing.secondary_range = secondary_range
+                existing.modified = datetime.now().isoformat()
+                store.update(existing)
+                self.quick_chart_panel.reload_user_charts()
+                self.statusbar.showMessage(f"Updated My Chart '{existing.title}'")
+                return
+            if clicked is not new_btn:
+                return  # Cancel
+
+        name, ok = QInputDialog.getText(self, "Save as My Chart", "Chart name:")
+        if not ok or not name.strip():
+            return
+        name = name.strip()
+
+        if not store.is_title_available(name):
+            QMessageBox.warning(
+                self, "Name Unavailable",
+                "That name is already used by a built-in chart or another "
+                "My Chart — pick another."
+            )
+            return
+
+        now = datetime.now().isoformat()
+        new_def = UserChartDef(
+            action_id="USER_" + uuid4().hex,
+            title=name,
+            primary_pids=primary_pids,
+            secondary_pids=secondary_pids,
+            primary_range=primary_range,
+            secondary_range=secondary_range,
+            snapshot_type=self.snapshot.snapshot_type.name,
+            created=now,
+            modified=now,
+        )
+        store.add(new_def)
+        self.quick_chart_panel.reload_user_charts()
+        self.statusbar.showMessage(f"Saved My Chart '{name}'")
+
     @Slot()
     def _on_show_raw_table(self):
         """Show the raw data table window."""
@@ -964,18 +1055,16 @@ class MainWindow(QMainWindow):
 
     def _build_quick_iq_url(self, chart_title: str) -> str:
         """Build a Quick IQ URL from chart title."""
-        slug = chart_title.strip()
-        slug = slug.replace("&", " and ")
-        slug = slug.replace("/", "-")
-        slug = re.sub(r"\s+", "-", slug)
-        slug = re.sub(r"[^A-Za-z0-9\-]", "", slug)
-        slug = re.sub(r"-+", "-", slug).strip("-")
-
-        return f"https://decoder.rudi-hq.com/quick-iq/{slug}.html"
+        return f"https://decoder.rudi-hq.com/quick-iq/{slugify_chart_title(chart_title)}.html"
 
     @Slot(str)
     def _on_quick_iq_requested(self, chart_title: str):
         """Open Quick IQ page in the default browser."""
+        current_action_id = self.chart_widget.get_current_action_id()
+        if current_action_id and current_action_id.startswith("USER_"):
+            QMessageBox.information(self, "Quick IQ", "No Quick IQ page for custom charts.")
+            return
+
         if not chart_title:
             QMessageBox.information(self, "Quick IQ", "Create or select a chart first.")
             return

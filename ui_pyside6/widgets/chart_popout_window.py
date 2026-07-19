@@ -103,6 +103,7 @@ class ChartPopoutWindow(QMainWindow):
         self.toolbar.quick_iq_requested.connect(self._on_quick_iq_requested)
         self.toolbar.value_display_changed.connect(self._on_value_display_changed)
         self.toolbar.time_slider_changed.connect(self._on_time_slider_changed)
+        self.toolbar.set_chart_config(self.config)
         main_layout.addWidget(self.toolbar)
         
         # Canvas + Y-ruler controls row
@@ -635,6 +636,9 @@ class ChartPopoutWindow(QMainWindow):
     @Slot()
     def _on_quick_iq_requested(self):
         """Forward Quick IQ request to main window with this chart title."""
+        action_id = self.config.quick_chart_action_id if self.config else None
+        if action_id and action_id.startswith("USER_"):
+            return
         title = self.config.title if self.config and self.config.title else ""
         self.quick_iq_requested.emit(title)
     
