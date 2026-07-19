@@ -295,7 +295,13 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def clear_axis_controls(self):
         """Reset toolbar axis controls to defaults."""
         self._axis_controls.clear()
-    
+
+    def set_separate_charts_checked(self, checked: bool):
+        """Sync the stacked-subplot toggle button without emitting a change signal."""
+        self._separate_charts_btn.blockSignals(True)
+        self._separate_charts_btn.setChecked(checked)
+        self._separate_charts_btn.blockSignals(False)
+
     def set_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration for PDF export."""
         self.chart_config = config

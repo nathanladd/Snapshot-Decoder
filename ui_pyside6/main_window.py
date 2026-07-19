@@ -1140,7 +1140,11 @@ class MainWindow(QMainWindow):
         
         # Open pop-out window with current config and cart
         from ui_pyside6.widgets.chart_popout_window import ChartPopoutWindow
-        popup = ChartPopoutWindow(self, config, chart_cart=self.chart_cart_dock.chart_cart)
+        popup = ChartPopoutWindow(
+            self, config,
+            chart_cart=self.chart_cart_dock.chart_cart,
+            separate_charts=self.chart_widget.get_separate_charts_enabled(),
+        )
         popup.quick_iq_requested.connect(self._on_quick_iq_requested)
         popup.show()
     

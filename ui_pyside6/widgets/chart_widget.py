@@ -943,6 +943,10 @@ class ChartWidget(QWidget):
         """Get the action_id of the currently displayed quick chart, if any."""
         return self._current_action_id
 
+    def get_separate_charts_enabled(self) -> bool:
+        """Whether the chart is currently rendered as stacked per-PID subplots."""
+        return self._separate_charts
+
     def get_current_primary_pids(self) -> List[str]:
         """Get PIDs currently on primary axis."""
         if self._current_config:

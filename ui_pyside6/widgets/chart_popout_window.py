@@ -33,23 +33,28 @@ class ChartPopoutWindow(QMainWindow):
     # Signal emitted when Quick IQ is requested from pop-out toolbar
     quick_iq_requested = Signal(str)
     
-    def __init__(self, parent, config: ChartConfig, chart_cart=None):
+    def __init__(self, parent, config: ChartConfig, chart_cart=None, separate_charts: bool = False):
         super().__init__(parent)
-        
+
         # Deep copy config to make this window independent
         self.config = copy.deepcopy(config)
         self.chart_cart = chart_cart
-        
+
+        # Whether to render each PID on its own stacked subplot, carried over
+        # from the canvas's toggle state at the time it was popped out.
+        self._separate_charts = separate_charts
+        self._all_axes: List = []
+
         # Window setup
         self.setWindowTitle(self.config.title or "Chart")
         self.setGeometry(100, 100, 1000, 600)
-        
+
         # Interactivity controls
         self.enable_slider = False
         self.enable_cursor = False
-        
+
         # Interactivity state
-        self.cursor_line = None
+        self._cursor_lines: List = []
         self.mpl_cursor = None
         
         # Slider data range
@@ -103,7 +108,9 @@ class ChartPopoutWindow(QMainWindow):
         self.toolbar.quick_iq_requested.connect(self._on_quick_iq_requested)
         self.toolbar.value_display_changed.connect(self._on_value_display_changed)
         self.toolbar.time_slider_changed.connect(self._on_time_slider_changed)
+        self.toolbar.separate_charts_changed.connect(self._on_separate_charts_changed)
         self.toolbar.set_chart_config(self.config)
+        self.toolbar.set_separate_charts_checked(self._separate_charts)
         main_layout.addWidget(self.toolbar)
         
         # Canvas + Y-ruler controls row
@@ -438,7 +445,10 @@ class ChartPopoutWindow(QMainWindow):
         """Render the chart using ChartRenderer."""
         try:
             renderer = ChartRenderer(self.config)
-            self.ax_left, self.ax_right = renderer.render(self.figure, self.canvas)
+            self.ax_left, self.ax_right = renderer.render(
+                self.figure, self.canvas, separate=self._separate_charts
+            )
+            self._all_axes = renderer.axes if renderer.axes else [self.ax_left]
             self._redraw_y_rulers()
         except Exception as e:
             # Show error on the chart
@@ -473,19 +483,28 @@ class ChartPopoutWindow(QMainWindow):
         self._clear_interactivity()
         self._add_interactivity()
         self.canvas.draw()
-    
+
+    @Slot(bool)
+    def _on_separate_charts_changed(self, enabled: bool):
+        """Toggle between stacked (one chart per PID) and combined rendering."""
+        self._separate_charts = enabled
+        self._clear_interactivity()
+        self._render_chart()
+        self._add_interactivity()
+        self.canvas.draw()
+
     def _clear_interactivity(self):
         """Remove existing slider and cursors."""
         # Hide the Qt slider widget
         self._slider_widget.hide()
-        
-        if self.cursor_line:
+
+        for line in self._cursor_lines:
             try:
-                self.cursor_line.remove()
+                line.remove()
             except Exception:
                 pass
-            self.cursor_line = None
-        
+        self._cursor_lines = []
+
         if self.mpl_cursor:
             try:
                 self.mpl_cursor.remove()
@@ -500,16 +519,18 @@ class ChartPopoutWindow(QMainWindow):
         
         # --- Add Hover Cursors ---
         if self.enable_cursor:
+            # Scan every axes — covers the combined view, the secondary axis,
+            # and each subplot in separate (stacked) mode.
             artists = []
-            if self.ax_left:
-                artists.extend(self.ax_left.lines)
-                artists.extend(self.ax_left.containers)
-                artists.extend(self.ax_left.collections)
-            if self.ax_right:
-                artists.extend(self.ax_right.lines)
-                artists.extend(self.ax_right.containers)
-                artists.extend(self.ax_right.collections)
-            
+            axes_to_scan = list(self._all_axes) if self._all_axes else []
+            for ax in (self.ax_left, self.ax_right):
+                if ax is not None and ax not in axes_to_scan:
+                    axes_to_scan.append(ax)
+            for ax in axes_to_scan:
+                artists.extend(ax.lines)
+                artists.extend(ax.containers)
+                artists.extend(ax.collections)
+
             if artists:
                 self.mpl_cursor = mplcursors.cursor(artists, hover=True)
                 
@@ -551,11 +572,14 @@ class ChartPopoutWindow(QMainWindow):
                 
                 # Show the Qt slider widget
                 self._slider_widget.show()
-                
-                # Create vertical cursor line on the matplotlib chart
-                self.cursor_line = self.ax_left.axvline(
-                    x=self._slider_min_val, color='red', alpha=0.5, linestyle='--'
-                )
+
+                # Create a vertical cursor line on each subplot (shared x-axis).
+                # In the combined view this is a single line; in separate mode
+                # it spans the stack.
+                self._cursor_lines = [
+                    ax.axvline(x=self._slider_min_val, color='red', alpha=0.5, linestyle='--')
+                    for ax in (self._all_axes or [self.ax_left])
+                ]
     
     def _format_slider_time(self, seconds):
         """Format seconds as MM:SS for slider labels."""
@@ -601,9 +625,10 @@ class ChartPopoutWindow(QMainWindow):
         if not self._slider_time_entry.hasFocus():
             self._slider_time_entry.setText(self._format_slider_time(val))
         
-        # Update vertical cursor line on the chart
-        if self.cursor_line:
-            self.cursor_line.set_xdata([val, val])
+        # Update vertical cursor line(s) on the chart (one per stacked subplot)
+        if self._cursor_lines:
+            for line in self._cursor_lines:
+                line.set_xdata([val, val])
             self.canvas.draw_idle()
         
         # Update live values display
