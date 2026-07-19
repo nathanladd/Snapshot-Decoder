@@ -39,6 +39,7 @@ from ui_pyside6.widgets.data_table_window import DataTableWindow
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel
 from ui_pyside6.widgets.log_console_dock import LogConsoleDock
 from ui_pyside6.widgets.chart_cart_dock import ChartCartDock
+from ui_pyside6.widgets.my_charts_dock import MyChartsDock
 from ui_pyside6.widgets.settings import SettingsDialog
 from domain.app_settings import app_settings
     
@@ -76,6 +77,7 @@ class MainWindow(QMainWindow):
         self._setup_statusbar()
         self._setup_log_console()
         self._setup_chart_cart()
+        self._setup_my_charts()
         self._connect_signals()
         
         log_info("MainWindow initialized with controller architecture")
@@ -181,7 +183,6 @@ class MainWindow(QMainWindow):
         # Quick chart buttons panel
         self.quick_chart_panel = QuickChartPanel()
         self.quick_chart_panel.chart_requested.connect(self._on_quick_chart_requested)
-        self.quick_chart_panel.save_chart_requested.connect(self._on_save_my_chart_requested)
         top_bar_layout.addWidget(self.quick_chart_panel, stretch=1)
         
         # Logo in top right - scale to match quick chart panel height
@@ -268,7 +269,12 @@ class MainWindow(QMainWindow):
         self._chart_cart_action.setCheckable(True)
         self._chart_cart_action.triggered.connect(self._on_toggle_chart_cart)
         view_menu.addAction(self._chart_cart_action)
-        
+
+        self._my_charts_action = QAction("&My Charts", self)
+        self._my_charts_action.setCheckable(True)
+        self._my_charts_action.triggered.connect(self._on_toggle_my_charts)
+        view_menu.addAction(self._my_charts_action)
+
         self._log_console_action = QAction("&Log Console", self)
         self._log_console_action.setCheckable(True)
         self._log_console_action.triggered.connect(self._on_toggle_log_console)
@@ -426,6 +432,7 @@ class MainWindow(QMainWindow):
         self.map_info_panel.clear()
         self.pid_panel.clear()
         self.quick_chart_panel.clear()
+        self.my_charts_dock.my_charts.clear()
         self.chart_widget.clear()
         self.chart_cart_dock.chart_cart.clear_all()
         
@@ -446,6 +453,7 @@ class MainWindow(QMainWindow):
         self.map_info_panel.set_snapshot(snapshot)
         self.pid_panel.set_snapshot(snapshot)
         self.quick_chart_panel.set_snapshot(snapshot)
+        self.my_charts_dock.my_charts.set_snapshot(snapshot)
         self.chart_widget.clear()
         
         self.statusbar.showMessage(
@@ -571,7 +579,7 @@ class MainWindow(QMainWindow):
             # Reset colors when no chart
             self.pid_panel.update_chart_colors(None)
 
-        self.quick_chart_panel.set_save_enabled(bool(primary_pids or secondary_pids))
+        self.my_charts_dock.my_charts.set_save_enabled(bool(primary_pids or secondary_pids))
     
     @Slot(list, list)
     def _on_pid_selection_changed(self, primary_pids: list, secondary_pids: list):
@@ -697,7 +705,7 @@ class MainWindow(QMainWindow):
         # Update axis controls from the chart config
         self._update_axis_controls_from_config()
 
-        self.quick_chart_panel.set_save_enabled(bool(primary_pids or secondary_pids))
+        self.my_charts_dock.my_charts.set_save_enabled(bool(primary_pids or secondary_pids))
 
     @Slot()
     def _on_save_my_chart_requested(self):
@@ -747,7 +755,7 @@ class MainWindow(QMainWindow):
                 existing.secondary_range = secondary_range
                 existing.modified = datetime.now().isoformat()
                 store.update(existing)
-                self.quick_chart_panel.reload_user_charts()
+                self.my_charts_dock.my_charts.reload_user_charts()
                 self.statusbar.showMessage(f"Updated My Chart '{existing.title}'")
                 return
             if clicked is not new_btn:
@@ -779,7 +787,7 @@ class MainWindow(QMainWindow):
             modified=now,
         )
         store.add(new_def)
-        self.quick_chart_panel.reload_user_charts()
+        self.my_charts_dock.my_charts.reload_user_charts()
         self.statusbar.showMessage(f"Saved My Chart '{name}'")
 
     @Slot()
@@ -889,7 +897,25 @@ class MainWindow(QMainWindow):
         
         # Listen for cart changes to sync PID panel
         self.chart_cart_dock.chart_cart.cart_changed.connect(self._on_chart_cart_changed)
-    
+
+    def _setup_my_charts(self):
+        """Setup the My Charts dock widget."""
+        self.my_charts_dock = MyChartsDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.my_charts_dock)
+
+        # Visible by default
+        self.my_charts_dock.show()
+
+        # Sync menu check state when dock visibility changes
+        self.my_charts_dock.visibilityChanged.connect(self._on_my_charts_visibility_changed)
+        self.my_charts_dock.toggleViewAction().toggled.connect(self._on_my_charts_visibility_changed)
+
+        # Tab alongside the chart cart and log console in the right dock area
+        self.tabifyDockWidget(self.chart_cart_dock, self.my_charts_dock)
+
+        self.my_charts_dock.my_charts.chart_requested.connect(self._on_quick_chart_requested)
+        self.my_charts_dock.my_charts.save_chart_requested.connect(self._on_save_my_chart_requested)
+
     @Slot(bool)
     def _on_toggle_log_console(self, enabled: bool):
         """Enable/disable the log console dock from the View menu."""
@@ -917,6 +943,15 @@ class MainWindow(QMainWindow):
         if enabled:
             self.chart_cart_dock.raise_()
 
+    @Slot(bool)
+    def _on_toggle_my_charts(self, enabled: bool):
+        """Enable/disable the My Charts dock from the View menu."""
+        if self._is_minimizing:
+            return
+        self.my_charts_dock.setVisible(enabled)
+        if enabled:
+            self.my_charts_dock.raise_()
+
     def _sync_view_menu_checks(self):
         """Sync View menu checks with dock enabled states (independent of tab focus)."""
         if self._is_minimizing:
@@ -925,6 +960,8 @@ class MainWindow(QMainWindow):
             self._controls_panel_action.setChecked(self.controls_dock.isVisible())
         if hasattr(self, 'chart_cart_dock') and hasattr(self, '_chart_cart_action'):
             self._chart_cart_action.setChecked(self.chart_cart_dock.isVisible())
+        if hasattr(self, 'my_charts_dock') and hasattr(self, '_my_charts_action'):
+            self._my_charts_action.setChecked(self.my_charts_dock.isVisible())
         if hasattr(self, 'log_console_dock') and hasattr(self, '_log_console_action'):
             self._log_console_action.setChecked(self.log_console_dock.isVisible())
 
@@ -941,6 +978,11 @@ class MainWindow(QMainWindow):
     @Slot(bool)
     def _on_chart_cart_visibility_changed(self, _visible: bool):
         """Sync menu check state with chart cart dock visibility."""
+        self._sync_view_menu_checks()
+
+    @Slot(bool)
+    def _on_my_charts_visibility_changed(self, _visible: bool):
+        """Sync menu check state with My Charts dock visibility."""
         self._sync_view_menu_checks()
     
     def add_current_chart_to_cart(self):
@@ -964,6 +1006,7 @@ class MainWindow(QMainWindow):
         docks = [
             self.controls_dock,
             self.chart_cart_dock,
+            self.my_charts_dock,
             self.log_console_dock,
         ]
 
@@ -975,14 +1018,17 @@ class MainWindow(QMainWindow):
         # Re-add to default areas
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.controls_dock)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.chart_cart_dock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.my_charts_dock)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_console_dock)
 
         # Re-tab the right-side docks
+        self.tabifyDockWidget(self.chart_cart_dock, self.my_charts_dock)
         self.tabifyDockWidget(self.chart_cart_dock, self.log_console_dock)
 
         # Set default visibility
         self.controls_dock.show()
         self.chart_cart_dock.show()
+        self.my_charts_dock.show()
         self.log_console_dock.hide()
 
         # Expand controls dock if collapsed
