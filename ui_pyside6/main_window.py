@@ -15,7 +15,8 @@ from PySide6.QtCore import Qt, Signal, Slot, QEvent, QTimer
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox, QProgressDialog, QSplashScreen,
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QMenuBar, QMenu, QStatusBar, QFileDialog, QLabel, QFrame, QInputDialog
+    QMenuBar, QMenu, QStatusBar, QFileDialog, QLabel, QFrame, QInputDialog,
+    QDialog, QDialogButtonBox
 )
 from PySide6.QtGui import QAction, QIcon, QPixmap, QFont, QColor
 
@@ -174,28 +175,17 @@ class MainWindow(QMainWindow):
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(4)
         
-        # Top bar with quick charts and logo
+        # Top bar with quick charts
         top_bar = QWidget()
         top_bar_layout = QHBoxLayout(top_bar)
         top_bar_layout.setContentsMargins(0, 0, 0, 0)
         top_bar_layout.setSpacing(8)
-        
+
         # Quick chart buttons panel
         self.quick_chart_panel = QuickChartPanel()
         self.quick_chart_panel.chart_requested.connect(self._on_quick_chart_requested)
         top_bar_layout.addWidget(self.quick_chart_panel, stretch=1)
-        
-        # Logo in top right - scale to match quick chart panel height
-        logo_path = os.path.join(os.path.dirname(__file__), "..", "data", "app_images", "logo.png")
-        if os.path.exists(logo_path):
-            logo_label = QLabel()
-            pixmap = QPixmap(logo_path)
-            # Scale to 100px height
-            scaled_pixmap = pixmap.scaledToHeight(100, Qt.TransformationMode.SmoothTransformation)
-            logo_label.setPixmap(scaled_pixmap)
-            logo_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-            top_bar_layout.addWidget(logo_label)
-        
+
         right_layout.addWidget(top_bar)
         
         # Chart widget
@@ -860,15 +850,39 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_show_about(self):
         """Show the about dialog."""
-        QMessageBox.about(
-            self,
-            f"About {APP_TITLE}",
-            f"{APP_TITLE} {APP_VERSION}\n\n"
-            "A tool for analyzing engine snapshot data.\n\n"
-            "Nathan Ladd\n"
-            "Service Trainer\n"
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"About {APP_TITLE}")
+
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+
+        text_label = QLabel(
+            f"<b>{APP_TITLE} {APP_VERSION}</b><br><br>"
+            "A tool for analyzing engine snapshot data.<br><br>"
+            "Nathan Ladd<br>"
+            "Service Trainer<br>"
             "nladd@bobcatoftherockies.com"
         )
+        text_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        top_layout.addWidget(text_label, stretch=1)
+
+        logo_path = os.path.join(os.path.dirname(__file__), "..", "data", "app_images", "logo.png")
+        if os.path.exists(logo_path):
+            logo_label = QLabel()
+            pixmap = QPixmap(logo_path)
+            scaled_pixmap = pixmap.scaledToHeight(100, Qt.TransformationMode.SmoothTransformation)
+            logo_label.setPixmap(scaled_pixmap)
+            logo_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+            top_layout.addWidget(logo_label, stretch=0, alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
+
+        main_layout = QVBoxLayout(dialog)
+        main_layout.addLayout(top_layout)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        button_box.accepted.connect(dialog.accept)
+        main_layout.addWidget(button_box)
+
+        dialog.exec()
     
     def _setup_log_console(self):
         """Setup the log console dock widget."""
