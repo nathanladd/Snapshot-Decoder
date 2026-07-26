@@ -15,7 +15,7 @@ from .builders import ChartConfigBuilder
 from .reference_definitions import ReferenceChartPage, REFERENCE_CHARTS_BY_TYPE
 from domain.snaptypes import SnapType
 from domain.chart_config import ChartConfig
-from ui.chart_renderer import ChartRenderer
+from rendering.chart_renderer import ChartRenderer
 
 
 class ReferenceChartBuilder:

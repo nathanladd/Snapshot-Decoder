@@ -18,7 +18,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from domain.chart_config import ChartConfig
-from ui.chart_renderer import ChartRenderer
+from rendering.chart_renderer import ChartRenderer
 from version import APP_VERSION
 from infrastructure import log_info, log_error
 
@@ -468,7 +468,7 @@ class ChartCartWidget(QWidget):
                 "Export Failed",
                 f"Failed to export PDF:\n{str(e)}"
             )
-            error(f"Chart cart PDF export failed: {str(e)}")
+            log_error(f"Chart cart PDF export failed: {str(e)}")
     
     def get_config_count(self) -> int:
         """Get the number of configs in the cart."""

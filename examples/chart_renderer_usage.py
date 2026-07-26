@@ -20,7 +20,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from domain.chart_config import ChartConfig, AxisConfig, SeriesStyle
-from ui.chart_renderer import ChartRenderer
+from rendering.chart_renderer import ChartRenderer
 
 
 # Sample data

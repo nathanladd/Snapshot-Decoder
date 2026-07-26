@@ -27,7 +27,7 @@ from domain.constants import (
     LIVE_METRIC_STATE_LABELS,
     UNIT_DISPLAY_DECIMALS,
 )
-from ui.color_manager import ColorManager
+from rendering.color_manager import ColorManager
 from infrastructure import log_debug, log_error
 from domain.pid_debug_config import get_pid_debug_setting, get_log_interval, get_log_on_stop, get_position_threshold
 from utils import resource_path
@@ -447,9 +447,9 @@ class LiveValuesWidget(QWidget):
         if self._debug_logging:
             snap_type = config.snapshot_type if config else None
             data_cols = list(config.data.columns) if config and config.data is not None else []
-            debug("=== Live Values Config Update ===")
-            debug(f"Snapshot type: {snap_type}")
-            debug(f"Chart data columns ({len(data_cols)}): {data_cols}")
+            log_debug("=== Live Values Config Update ===")
+            log_debug(f"Snapshot type: {snap_type}")
+            log_debug(f"Chart data columns ({len(data_cols)}): {data_cols}")
         self._rebuild_compact_live_metrics()
         self._rebuild_cards()
     
@@ -476,11 +476,11 @@ class LiveValuesWidget(QWidget):
         self._update_compact_live_metrics(values, x_position, should_log)
         
         if should_log:
-            debug(f"=== Live Values Update Debug ===")
-            debug(f"Position: {x_position:.3f}")
-            debug(f"Interpolation elapsed: {interp_elapsed_ms:.3f} ms")
-            debug(f"Interpolated values: {list(values.keys())}")
-            debug(f"Available cards: {list(self.cards.keys())}")
+            log_debug(f"=== Live Values Update Debug ===")
+            log_debug(f"Position: {x_position:.3f}")
+            log_debug(f"Interpolation elapsed: {interp_elapsed_ms:.3f} ms")
+            log_debug(f"Interpolated values: {list(values.keys())}")
+            log_debug(f"Available cards: {list(self.cards.keys())}")
         
         # Update cards
         updated_count = 0
@@ -489,27 +489,27 @@ class LiveValuesWidget(QWidget):
                 self.cards[pid_name].update_value(value)
                 updated_count += 1
                 if should_log:
-                    debug(f"  ✓ Updated {pid_name}: {value}")
+                    log_debug(f"  ✓ Updated {pid_name}: {value}")
             else:
                 if pid_name in extra_metric_pid_set:
                     # Compact gauges/chips consume these values directly; no standalone card is expected.
                     if should_log:
-                        debug(f"  • Compact-only PID (no card expected): {pid_name}")
+                        log_debug(f"  • Compact-only PID (no card expected): {pid_name}")
                     continue
                 if should_log:
-                    debug(f"  ✗ No card found for {pid_name}")
-                error(f"Live values: No card found for PID {pid_name} but interpolation succeeded")
+                    log_debug(f"  ✗ No card found for {pid_name}")
+                log_error(f"Live values: No card found for PID {pid_name} but interpolation succeeded")
         
         # Check for cards that didn't get updated
         if should_log:
             for pid_name in self.cards:
                 if pid_name not in values:
-                    debug(f"  ⚠ No interpolated value for {pid_name}")
-                    error(f"Live values: Card exists for PID {pid_name} but no interpolated value available")
+                    log_debug(f"  ⚠ No interpolated value for {pid_name}")
+                    log_error(f"Live values: Card exists for PID {pid_name} but no interpolated value available")
             
-            debug(f"Updated {updated_count}/{len(self.cards)} cards")
-            debug(f"=== Live Values Update Complete ===")
-            debug("")  # Empty line for spacing
+            log_debug(f"Updated {updated_count}/{len(self.cards)} cards")
+            log_debug(f"=== Live Values Update Complete ===")
+            log_debug("")  # Empty line for spacing
         
         # Update title with position
         self._update_title(x_position)
@@ -529,47 +529,47 @@ class LiveValuesWidget(QWidget):
         """Resolve canonical live metrics to available PID columns for current config."""
         if not self.chart_config or self.chart_config.data is None or self.chart_config.data.empty:
             if self._debug_logging:
-                debug("Live metrics: no chart data available; compact row hidden")
+                log_debug("Live metrics: no chart data available; compact row hidden")
             return {}
 
         snap_type = self.chart_config.snapshot_type
         if snap_type is None:
             if self._debug_logging:
-                debug("Live metrics: snapshot_type is None; compact row hidden")
+                log_debug("Live metrics: snapshot_type is None; compact row hidden")
             return {}
 
         metric_aliases = LIVE_METRIC_PID_MAP.get(snap_type)
         if not metric_aliases:
             # Strict opt-in: undefined snaptypes should not show gauges/chips.
             if self._debug_logging:
-                debug(f"Live metrics: no LIVE_METRIC_PID_MAP entry for {snap_type}; compact row hidden")
+                log_debug(f"Live metrics: no LIVE_METRIC_PID_MAP entry for {snap_type}; compact row hidden")
             return {}
 
         available_cols = set(self.chart_config.data.columns)
         available_cols_cf = {str(col).casefold(): str(col) for col in self.chart_config.data.columns}
         resolved: Dict[str, str] = {}
         if self._debug_logging:
-            debug(f"Live metrics: resolving aliases for {snap_type}")
-            debug(f"Live metrics: available columns = {sorted(available_cols)}")
+            log_debug(f"Live metrics: resolving aliases for {snap_type}")
+            log_debug(f"Live metrics: available columns = {sorted(available_cols)}")
         for key in LIVE_METRIC_KEYS:
             aliases = metric_aliases.get(key, [])
             if self._debug_logging:
-                debug(f"  {key}: aliases={aliases}")
+                log_debug(f"  {key}: aliases={aliases}")
             for alias in aliases:
                 actual_col = alias if alias in available_cols else available_cols_cf.get(alias.casefold())
                 if actual_col:
                     resolved[key] = actual_col
                     if self._debug_logging:
                         if actual_col == alias:
-                            debug(f"    -> resolved to {actual_col}")
+                            log_debug(f"    -> resolved to {actual_col}")
                         else:
-                            debug(f"    -> resolved alias {alias} to actual column {actual_col}")
+                            log_debug(f"    -> resolved alias {alias} to actual column {actual_col}")
                     break
             if self._debug_logging and key not in resolved:
-                error(f"    -> no matching column for {key}")
+                log_error(f"    -> no matching column for {key}")
 
         if self._debug_logging:
-            debug(f"Live metrics: resolved map = {resolved}")
+            log_debug(f"Live metrics: resolved map = {resolved}")
         return resolved
 
     def _parse_state_labels_from_unit(self, pid_name: str) -> Dict[int, str]:
@@ -760,7 +760,7 @@ class LiveValuesWidget(QWidget):
 
         if not self._resolved_live_metric_pids:
             if self._debug_logging:
-                debug("Live metrics: nothing resolved; compact row hidden")
+                log_debug("Live metrics: nothing resolved; compact row hidden")
             self.key_live_widget.hide()
             return
 
@@ -821,7 +821,7 @@ class LiveValuesWidget(QWidget):
                             if abs(max_value - min_value) < 1e-9:
                                 max_value = min_value + 1.0
                             if self._debug_logging:
-                                debug(
+                                log_debug(
                                     f"Live metrics: expanded range for {metric_key} ({pid_name}) "
                                     f"to [{min_value:.3f}, {max_value:.3f}] from data"
                                 )
@@ -865,7 +865,7 @@ class LiveValuesWidget(QWidget):
             self.live_metric_gauges[metric_key] = gauge
             self.key_live_layout.addWidget(gauge)
             if self._debug_logging:
-                debug(f"Live metrics: created gauge {metric_key} from PID {pid_name}")
+                log_debug(f"Live metrics: created gauge {metric_key} from PID {pid_name}")
 
         snap_type = self.chart_config.snapshot_type if self.chart_config else None
         state_map = LIVE_METRIC_STATE_LABELS.get(snap_type, {}) if snap_type else {}
@@ -887,7 +887,7 @@ class LiveValuesWidget(QWidget):
 
             if not labels_by_value:
                 if self._debug_logging:
-                    debug(f"Live metrics: skipping chips for {metric_key}; no state labels")
+                    log_debug(f"Live metrics: skipping chips for {metric_key}; no state labels")
                 continue
 
             state_stack_widget = QWidget(self.key_live_widget)
@@ -912,7 +912,7 @@ class LiveValuesWidget(QWidget):
             self.live_state_chip_groups[metric_key] = metric_chip_map
             self.key_live_layout.addWidget(state_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
             if self._debug_logging:
-                debug(
+                log_debug(
                     f"Live metrics: created chips for {metric_key} from PID {pid_name} "
                     f"states={sorted(metric_chip_map.keys())}"
                 )
@@ -941,7 +941,7 @@ class LiveValuesWidget(QWidget):
                 self.live_state_chip_groups["SYNC_STATUS"] = sync_chip_map
                 self.key_live_layout.addWidget(sync_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
                 if self._debug_logging:
-                    debug(
+                    log_debug(
                         f"Live metrics: created sync chips from PID {sync_pid_name} "
                         f"states={sorted(sync_chip_map.keys())}"
                     )
@@ -978,7 +978,7 @@ class LiveValuesWidget(QWidget):
             self.live_state_chip_groups[metric_key] = {-1: chip}
             binary_stack_added = True
             if self._debug_logging:
-                debug(f"Live metrics: created single chip for {metric_key} from PID {pid_name}")
+                log_debug(f"Live metrics: created single chip for {metric_key} from PID {pid_name}")
 
         if binary_stack_added:
             self.key_live_layout.addWidget(binary_stack_widget, 0, Qt.AlignLeft | Qt.AlignTop)
@@ -1018,7 +1018,7 @@ class LiveValuesWidget(QWidget):
             self.key_live_layout.addWidget(chip_frame, 0, Qt.AlignLeft | Qt.AlignVCenter)
             any_cam_crank = True
             if self._debug_logging:
-                debug(f"Live metrics: created image chip for {metric_key} from PID {pid_name}")
+                log_debug(f"Live metrics: created image chip for {metric_key} from PID {pid_name}")
 
         # Keep all compact metric widgets packed to the left with spare room on the right.
         self.key_live_layout.addStretch(1)
@@ -1026,60 +1026,29 @@ class LiveValuesWidget(QWidget):
         should_show = bool(self.live_metric_gauges or self.live_state_chip_groups or self.cam_crank_chips)
         self.key_live_widget.setVisible(should_show)
         if self._debug_logging:
-            debug(
+            log_debug(
                 "Live metrics: rebuild complete "
                 f"visible={should_show}, gauges={list(self.live_metric_gauges.keys())}, "
                 f"chips={list(self.live_state_chip_groups.keys())}"
             )
 
     def _interpolate_metric_value(self, pid_name: str, x_position: float) -> Optional[float]:
-        """Interpolate a single PID value directly from chart data."""
+        """Interpolate a single PID value via the shared PIDInterpolator.
+
+        Used as a fallback when a resolved metric PID wasn't already covered
+        by the batched interpolate_values() call in _update_live_values.
+        """
         if not self.chart_config or self.chart_config.data is None or self.chart_config.data.empty:
             return None
 
-        x_col = self.chart_config.get_x_column()
-        if not x_col or x_col not in self.chart_config.data.columns:
-            return None
-        if pid_name not in self.chart_config.data.columns:
-            return None
-
-        df = self.chart_config.data.copy()
-
-        if pd.api.types.is_timedelta64_dtype(df.get("Time")):
-            df["Time"] = df["Time"].dt.total_seconds()
-        elif pd.api.types.is_timedelta64_dtype(df.get("Time (MM:SS)")):
-            df["Time (MM:SS)"] = df["Time (MM:SS)"].dt.total_seconds()
-            if x_col == "Time (MM:SS)":
-                x_col = "Time"
-
-        if x_col not in df.columns:
-            return None
-
-        sorted_df = df.sort_values(x_col)
-        x_data = pd.to_numeric(sorted_df[x_col], errors="coerce").values
-        y_data = pd.to_numeric(sorted_df[pid_name], errors="coerce").values
-
-        mask = (~np.isnan(x_data)) & (~np.isnan(y_data))
-        if not np.any(mask):
-            return None
-
-        x_valid = x_data[mask]
-        y_valid = y_data[mask]
-
-        if len(x_valid) == 0:
-            return None
-        if x_position <= x_valid[0]:
-            return float(y_valid[0])
-        if x_position >= x_valid[-1]:
-            return float(y_valid[-1])
-
-        return float(np.interp(x_position, x_valid, y_valid))
+        values = self.interpolator.interpolate_values(self.chart_config, x_position, extra_pids=[pid_name])
+        return values.get(pid_name)
 
     def _update_compact_live_metrics(self, interpolated_values: Dict[str, float], x_position: float, should_log: bool = False):
         """Update compact gauges/chips from interpolated values."""
         if not self.key_live_widget.isVisible() or not self._resolved_live_metric_pids:
             if should_log:
-                debug(
+                log_debug(
                     "Live metrics: update skipped "
                     f"visible={self.key_live_widget.isVisible()} resolved={bool(self._resolved_live_metric_pids)}"
                 )
@@ -1096,7 +1065,7 @@ class LiveValuesWidget(QWidget):
 
             gauge.update_value(value)
             if should_log:
-                debug(f"Live metrics: gauge {metric_key} pid={pid_name} value={value}")
+                log_debug(f"Live metrics: gauge {metric_key} pid={pid_name} value={value}")
 
         for metric_key, chip_map in self.live_state_chip_groups.items():
             pid_name = self._resolved_live_metric_pids.get(metric_key)
@@ -1122,7 +1091,7 @@ class LiveValuesWidget(QWidget):
                         on_border="#C62828" if is_red_binary else "#1B5E20",
                     )
                 if should_log:
-                    debug(f"Live metrics: binary chip {metric_key} pid={pid_name} raw={raw} rounded={state_val}")
+                    log_debug(f"Live metrics: binary chip {metric_key} pid={pid_name} raw={raw} rounded={state_val}")
                 continue
 
             for val, chip in chip_map.items():
@@ -1133,7 +1102,7 @@ class LiveValuesWidget(QWidget):
                 else:
                     self._set_chip_active(chip, state_val == val)
             if should_log:
-                debug(f"Live metrics: chips {metric_key} pid={pid_name} active_state={state_val}")
+                log_debug(f"Live metrics: chips {metric_key} pid={pid_name} active_state={state_val}")
 
         # Update cam / sync / crank image chips
         for metric_key, chip_frame in self.cam_crank_chips.items():
@@ -1155,7 +1124,7 @@ class LiveValuesWidget(QWidget):
                     "QFrame { background-color: #FFCDD2; border: 1px solid #EF9A9A; border-radius: 6px; }"
                 )
             if should_log:
-                debug(f"Live metrics: image chip {metric_key} pid={pid_name} raw={raw} is_true={is_true}")
+                log_debug(f"Live metrics: image chip {metric_key} pid={pid_name} raw={raw} is_true={is_true}")
 
     def _rebuild_cards(self):
         """Rebuild all cards based on current chart configuration."""

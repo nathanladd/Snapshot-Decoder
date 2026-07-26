@@ -15,7 +15,7 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont, QColor, QBrush
 
 from domain.snapshot import Snapshot
-from ui.color_manager import ColorManager
+from rendering.color_manager import ColorManager
 
 
 class IntegratedPidWidget(QWidget):

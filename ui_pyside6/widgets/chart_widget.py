@@ -23,8 +23,8 @@ from domain.quick_charts import QUICK_CHART_REGISTRY, ChartConfigBuilder
 from domain.user_charts import UserChartStore
 from domain.constants import LIVE_METRIC_PID_MAP
 from infrastructure import log_chart_generated, log_debug
-from ui.color_manager import ColorManager
-from ui.chart_renderer import ChartRenderer
+from rendering.color_manager import ColorManager
+from rendering.chart_renderer import ChartRenderer
 from ui_pyside6.widgets.custom_toolbar import CustomNavigationToolbar
 from ui_pyside6.widgets.live_values_widget import LiveValuesWidget
 from ui_pyside6.widgets.expandable_panel import ExpandablePanel

@@ -17,7 +17,7 @@ from matplotlib import dates as mdates
 
 from domain.chart_config import ChartConfig, ChartType
 from domain.app_settings import app_settings
-from ui.color_manager import ColorManager
+from rendering.color_manager import ColorManager
 
 
 class ChartRenderer:

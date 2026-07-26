@@ -119,7 +119,7 @@ class PIDInterpolator:
         started = time.perf_counter()
 
         if should_log:
-            debug(f"=== PID Interpolation Debug at X={x_position:.3f} ===")
+            log_debug(f"=== PID Interpolation Debug at X={x_position:.3f} ===")
 
         for pid in pid_columns:
             try:
@@ -130,15 +130,15 @@ class PIDInterpolator:
                 nan_count = int(y_sorted.size - valid_count)
 
                 if should_log:
-                    debug(f"PID: {pid}")
-                    debug(f"  - Data shape: {y_sorted.shape}")
-                    debug(f"  - Valid values: {valid_count}/{len(y_sorted)} (NaN: {nan_count})")
-                    debug(f"  - Data type: {y_sorted.dtype}")
-                    debug(f"  - Sample values: {y_sorted[:5]}")
+                    log_debug(f"PID: {pid}")
+                    log_debug(f"  - Data shape: {y_sorted.shape}")
+                    log_debug(f"  - Valid values: {valid_count}/{len(y_sorted)} (NaN: {nan_count})")
+                    log_debug(f"  - Data type: {y_sorted.dtype}")
+                    log_debug(f"  - Sample values: {y_sorted[:5]}")
 
                 if valid_count == 0:
                     if should_log:
-                        debug(f"  - SKIPPED: All NaN values")
+                        log_debug(f"  - SKIPPED: All NaN values")
                     continue
 
                 y_valid = y_sorted[valid_mask]
@@ -151,23 +151,23 @@ class PIDInterpolator:
                 if not np.isnan(value) and not np.isinf(value):
                     interpolated[pid] = float(value)
                     if should_log:
-                        debug(f"  - SUCCESS: Interpolated value = {value}")
+                        log_debug(f"  - SUCCESS: Interpolated value = {value}")
                 else:
                     if should_log:
-                        debug(f"  - FAILED: Invalid result = {value}")
-                    error(f"PID interpolation failed for {pid}: Invalid result {value} at position {x_position}")
+                        log_debug(f"  - FAILED: Invalid result = {value}")
+                    log_error(f"PID interpolation failed for {pid}: Invalid result {value} at position {x_position}")
             except Exception as e:
                 # Skip problematic columns
                 if should_log:
-                    debug(f"  - ERROR: {e}")
-                error(f"PID interpolation error for {pid}: {e} at position {x_position}")
+                    log_debug(f"  - ERROR: {e}")
+                log_error(f"PID interpolation error for {pid}: {e} at position {x_position}")
                 continue
 
         elapsed_ms = (time.perf_counter() - started) * 1000.0
         if should_log:
-            debug(f"=== Interpolation Complete: {len(interpolated)}/{len(pid_columns)} PIDs successful ===")
-            debug(f"Interpolation elapsed: {elapsed_ms:.3f} ms")
-            debug("")  # Empty line for spacing
+            log_debug(f"=== Interpolation Complete: {len(interpolated)}/{len(pid_columns)} PIDs successful ===")
+            log_debug(f"Interpolation elapsed: {elapsed_ms:.3f} ms")
+            log_debug("")  # Empty line for spacing
         
         # Cache result
         self._cache_result(cache_key, interpolated)

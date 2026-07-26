@@ -6,7 +6,7 @@ Exports all charts from the cart to a multi-page PDF document.
 
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
-from ui.chart_renderer import ChartRenderer
+from rendering.chart_renderer import ChartRenderer
 from typing import List
 from domain.chart_config import ChartConfig
 from version import APP_VERSION

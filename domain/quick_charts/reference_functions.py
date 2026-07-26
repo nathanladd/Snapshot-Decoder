@@ -20,7 +20,7 @@ def show_reference_chart(main_app, snaptype, action_id: str):
     if config:
         # Set as working config and render
         main_app.working_config = config
-        from ui.chart_renderer import ChartRenderer
+        from rendering.chart_renderer import ChartRenderer
         renderer = ChartRenderer(config)
         main_app.ax_left, main_app.ax_right = renderer.render(main_app.figure, main_app.canvas)
         main_app.toolbar.chart_config = config
