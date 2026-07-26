@@ -1,6 +1,12 @@
 """
-My Charts panel content widget: user-saved chart templates with a CRUD
-toolbar and a vertically stacked list of chart buttons.
+My Charts row: user-saved chart templates as a single row of buttons inside the
+chart panel, led by a pinned ＋ tile.
+
+There is no CRUD toolbar — the row is ~26px tall and a four-button toolbar
+would crowd out the charts themselves. Management lives on a right-click menu
+(Edit / Duplicate / Delete) on each chart button, and the ＋ tile saves whatever
+is currently on the canvas. The row keeps its height in every state, including
+"no charts yet", so nothing below it shifts as charts come and go.
 """
 
 import copy
@@ -9,34 +15,16 @@ from typing import List, Optional
 from uuid import uuid4
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea,
-    QSizePolicy, QLabel, QMessageBox, QButtonGroup
+    QWidget, QVBoxLayout, QPushButton, QMessageBox, QButtonGroup, QMenu
 )
 from PySide6.QtCore import Signal, Qt
 
 from domain.snaptypes import SnapType
 from domain.snapshot import Snapshot
 from domain.user_charts import UserChartDef, UserChartStore
+from domain.chart_usage import ChartUsageStore
 
-_TOOLBAR_BTN_STYLE = """
-    QPushButton {
-        border: 1px solid #C0C0C0;
-        border-radius: 3px;
-        padding: 4px 4px;
-        background-color: #F0F0F0;
-        font-size: 11px;
-    }
-    QPushButton:hover:enabled {
-        background-color: #E0E0E0;
-        border: 1px solid #0078d4;
-    }
-    QPushButton:pressed:enabled {
-        background-color: #D0D0D0;
-    }
-    QPushButton:disabled {
-        color: #AAAAAA;
-    }
-"""
+from .chart_button_row import ChartButtonRow, make_chart_button, BUTTON_HEIGHT
 
 _ADD_BTN_STYLE = """
     QPushButton {
@@ -44,8 +32,7 @@ _ADD_BTN_STYLE = """
         border: 2px solid #43A047;
         border-radius: 4px;
         font-weight: bold;
-        padding: 4px 4px;
-        font-size: 11px;
+        font-size: 12px;
     }
     QPushButton:hover:enabled {
         background-color: #C8E6C9;
@@ -57,36 +44,13 @@ _ADD_BTN_STYLE = """
     }
 """
 
-_DELETE_BTN_STYLE = """
-    QPushButton {
-        border: 1px solid #C0C0C0;
-        border-radius: 3px;
-        padding: 4px 4px;
-        background-color: #FFF0F0;
-        font-size: 11px;
-        color: #A40000;
-    }
-    QPushButton:hover:enabled {
-        background-color: #FFD0D0;
-        border: 1px solid #d40000;
-    }
-    QPushButton:pressed:enabled {
-        background-color: #FFB8B8;
-    }
-    QPushButton:disabled {
-        background-color: #F0F0F0;
-        border: 1px solid #C0C0C0;
-        color: #AAAAAA;
-    }
-"""
-
 _CHART_BTN_STYLE = """
     QPushButton {
         background-color: #EDE7F6;
         border: 2px solid #7E57C2;
         border-radius: 4px;
-        padding: 5px 8px;
-        text-align: left;
+        padding: 2px 6px;
+        font-size: 11px;
     }
     QPushButton:hover:enabled {
         background-color: #D1C4E9;
@@ -102,132 +66,83 @@ _CHART_BTN_STYLE = """
     }
 """
 
+_CHART_BTN_TOOLTIP = "Click to load · Right-click to edit, duplicate or delete"
+
 
 class MyChartsWidget(QWidget):
-    """User-saved chart templates: CRUD toolbar + vertical chart list."""
+    """User-saved chart templates as a single labelled row with a ＋ tile."""
 
     # Signal emitted when a My Chart is loaded onto the canvas
     chart_requested = Signal(str)  # action_id
 
-    # Signal emitted when "＋ Add" is clicked to save the current canvas
-    # selection as a My Chart. MainWindow owns the PID panel / axis controls
-    # needed to build the definition, so it handles this end-to-end.
+    # Signal emitted when "＋" is clicked to save the current canvas selection
+    # as a My Chart. MainWindow owns the PID panel / axis controls needed to
+    # build the definition, so it handles this end-to-end.
     save_chart_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._store = UserChartStore()
+        self._usage = ChartUsageStore()
         self._current_snapshot_type: Optional[SnapType] = None
         self._snapshot: Optional[Snapshot] = None
         self._chart_buttons: List[QPushButton] = []
-        self._selected_action_id: Optional[str] = None
-        self._placeholder: Optional[QLabel] = None
+        self._add_btn: Optional[QPushButton] = None
+        self._save_enabled = False
+        self._save_tooltip = ""
         self._setup_ui()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(4)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # CRUD toolbar
-        toolbar = QHBoxLayout()
-        toolbar.setSpacing(4)
-
-        self._add_btn = QPushButton("＋ Add")
-        self._add_btn.setToolTip("Select PIDs to build a chart, then save it")
-        self._add_btn.setStyleSheet(_ADD_BTN_STYLE)
-        self._add_btn.setEnabled(False)
-        self._add_btn.clicked.connect(self.save_chart_requested.emit)
-        toolbar.addWidget(self._add_btn)
-
-        self._edit_btn = QPushButton("Edit")
-        self._edit_btn.setToolTip("Load the selected My Chart")
-        self._edit_btn.setStyleSheet(_TOOLBAR_BTN_STYLE)
-        self._edit_btn.clicked.connect(self._on_edit_clicked)
-        toolbar.addWidget(self._edit_btn)
-
-        self._duplicate_btn = QPushButton("Duplicate")
-        self._duplicate_btn.setToolTip("Duplicate the selected My Chart")
-        self._duplicate_btn.setStyleSheet(_TOOLBAR_BTN_STYLE)
-        self._duplicate_btn.clicked.connect(self._on_duplicate_clicked)
-        toolbar.addWidget(self._duplicate_btn)
-
-        self._delete_btn = QPushButton("Delete")
-        self._delete_btn.setToolTip("Delete the selected My Chart")
-        self._delete_btn.setStyleSheet(_DELETE_BTN_STYLE)
-        self._delete_btn.clicked.connect(self._on_delete_clicked)
-        toolbar.addWidget(self._delete_btn)
-
-        layout.addLayout(toolbar)
-        self._set_crud_enabled(False)
-
-        # Scrollable vertical list of chart buttons
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-
-        self._list_container = QWidget()
-        self._list_layout = QVBoxLayout(self._list_container)
-        self._list_layout.setContentsMargins(0, 0, 0, 0)
-        self._list_layout.setSpacing(3)
-        self._list_layout.addStretch(1)
-
-        scroll.setWidget(self._list_container)
-        layout.addWidget(scroll, stretch=1)
+        self._row = ChartButtonRow("Mine")
+        self._row.overflow_activated.connect(self._on_overflow_activated)
+        layout.addWidget(self._row)
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
         self._button_group.buttonClicked.connect(self._on_chart_button_clicked)
 
-        self._show_placeholder("Load a snapshot to see My Charts")
-
-    # ------------------------------------------------------------------
-    # Placeholder handling
-    # ------------------------------------------------------------------
-
-    def _show_placeholder(self, text: str):
-        self._hide_placeholder()
-        self._placeholder = QLabel(text)
-        self._placeholder.setWordWrap(True)
-        self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._placeholder.setStyleSheet("color: #999; font-style: italic; padding: 8px;")
-        self._list_layout.insertWidget(0, self._placeholder)
-
-    def _hide_placeholder(self):
-        if self._placeholder:
-            self._list_layout.removeWidget(self._placeholder)
-            self._placeholder.deleteLater()
-            self._placeholder = None
+        self._render_user_charts()
 
     # ------------------------------------------------------------------
     # Snapshot wiring
     # ------------------------------------------------------------------
 
     def set_snapshot_type(self, snapshot_type: Optional[SnapType]):
-        """Update the chart list for the given snapshot type."""
+        """Update the chart row for the given snapshot type."""
         self._current_snapshot_type = snapshot_type
         self._render_user_charts()
 
     def set_snapshot(self, snapshot: Optional[Snapshot]):
-        """Update the chart list based on snapshot, disabling charts with no matching PIDs."""
+        """Update the row based on snapshot, disabling charts with no matching PIDs."""
         self._snapshot = snapshot
         self.set_snapshot_type(snapshot.snapshot_type if snapshot else None)
 
     def set_save_enabled(self, enabled: bool, tooltip: str = ""):
-        """Enable/disable the ＋ Add button (no PIDs selected on the canvas => disabled)."""
-        self._add_btn.setEnabled(enabled)
+        """Enable/disable the ＋ tile (no PIDs selected on the canvas => disabled)."""
+        self._save_enabled = enabled
+        self._save_tooltip = tooltip
+        self._apply_save_state()
+
+    def _apply_save_state(self):
+        if self._add_btn is None:
+            return
+        self._add_btn.setEnabled(self._save_enabled)
         self._add_btn.setToolTip(
-            tooltip if tooltip else
-            ("Save the current chart as a My Chart" if enabled
+            self._save_tooltip if self._save_tooltip else
+            ("Save the current chart as a My Chart" if self._save_enabled
              else "Select PIDs to build a chart, then save it")
         )
 
     def reload_user_charts(self):
-        """Re-fetch from the store and rebuild the chart list."""
+        """Re-fetch from the store and rebuild the chart row."""
         self._render_user_charts()
 
     def clear(self):
-        """Clear the panel."""
+        """Clear the row."""
         self._snapshot = None
         self.set_snapshot_type(None)
 
@@ -235,44 +150,61 @@ class MyChartsWidget(QWidget):
     # Rendering
     # ------------------------------------------------------------------
 
-    def _clear_chart_buttons(self):
+    def _render_user_charts(self):
+        """Rebuild the row: pinned ＋ tile, then chart buttons, most-used first."""
         for btn in self._chart_buttons:
             self._button_group.removeButton(btn)
-            self._list_layout.removeWidget(btn)
-            btn.deleteLater()
         self._chart_buttons.clear()
-        self._selected_action_id = None
-        self._set_crud_enabled(False)
+        self._row.clear()
 
-    def _render_user_charts(self):
-        """Rebuild the vertical list of My Charts buttons."""
-        self._clear_chart_buttons()
-        self._hide_placeholder()
+        self._add_btn = QPushButton("＋")
+        self._add_btn.setFixedSize(30, BUTTON_HEIGHT)
+        self._add_btn.setStyleSheet(_ADD_BTN_STYLE)
+        self._add_btn.clicked.connect(self.save_chart_requested.emit)
+        self._row.add_pinned(self._add_btn)
+        self._apply_save_state()
 
         if self._current_snapshot_type is None or self._current_snapshot_type == SnapType.EMPTY:
-            self._show_placeholder("Load a snapshot to see My Charts")
+            self._add_btn.setEnabled(False)
+            self._row.set_placeholder("Load a snapshot to see My Charts")
+            self._row.reflow()
             return
 
         charts = self._store.for_type(self._current_snapshot_type)
         if not charts:
-            self._show_placeholder("No My Charts yet.\nBuild a chart, then click “＋ Add”.")
+            self._row.set_placeholder("Build a chart, then click ＋ to save it")
+            self._row.reflow()
             return
 
-        for chart_def in charts:
-            btn = QPushButton(chart_def.title)
-            btn.setToolTip(chart_def.title)
-            btn.setProperty("action_id", chart_def.action_id)
-            btn.setStyleSheet(_CHART_BTN_STYLE)
-            btn.setCheckable(True)
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        # Most-used first; creation order breaks ties.
+        ordered = sorted(
+            enumerate(charts),
+            key=lambda pair: self._usage.order_key(pair[1].action_id, pair[0]),
+        )
+
+        for _, chart_def in ordered:
+            btn = make_chart_button(
+                chart_def.title,
+                chart_def.action_id,
+                tooltip=f"{chart_def.title}\n{_CHART_BTN_TOOLTIP}",
+                style=_CHART_BTN_STYLE,
+                checkable=True,
+            )
 
             if not self._chart_has_any_pid(chart_def):
                 btn.setEnabled(False)
                 btn.setToolTip("No matching PIDs in this snapshot.")
 
+            btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            btn.customContextMenuRequested.connect(
+                lambda pos, b=btn: self._show_context_menu(b, pos)
+            )
+
             self._button_group.addButton(btn)
-            self._list_layout.insertWidget(self._list_layout.count() - 1, btn)
+            self._row.add_item(btn)
             self._chart_buttons.append(btn)
+
+        self._row.reflow()
 
     def _chart_has_any_pid(self, chart_def: UserChartDef) -> bool:
         """True if at least one of the chart's PIDs exists in the current snapshot."""
@@ -285,31 +217,42 @@ class MyChartsWidget(QWidget):
         return False
 
     # ------------------------------------------------------------------
-    # Selection + CRUD toolbar
+    # Selection + CRUD
     # ------------------------------------------------------------------
-
-    def _set_crud_enabled(self, enabled: bool):
-        self._edit_btn.setEnabled(enabled)
-        self._duplicate_btn.setEnabled(enabled)
-        self._delete_btn.setEnabled(enabled)
 
     def _on_chart_button_clicked(self, btn: QPushButton):
         action_id = btn.property("action_id")
+        if action_id:
+            self.chart_requested.emit(action_id)
+
+    def _on_overflow_activated(self, action_id: str):
+        """A chart picked from the row's ▾ menu."""
+        if action_id:
+            self.chart_requested.emit(action_id)
+
+    def _show_context_menu(self, btn: QPushButton, pos):
+        """Right-click menu on a My Chart button: Edit / Duplicate / Delete."""
+        action_id = btn.property("action_id")
         if not action_id:
             return
-        self._selected_action_id = action_id
-        self._set_crud_enabled(True)
-        self.chart_requested.emit(action_id)
 
-    def _on_edit_clicked(self):
-        if self._selected_action_id:
-            self.chart_requested.emit(self._selected_action_id)
+        menu = QMenu(self)
+        edit_action = menu.addAction("Edit")
+        edit_action.setToolTip("Load this chart onto the canvas to modify it")
+        duplicate_action = menu.addAction("Duplicate")
+        menu.addSeparator()
+        delete_action = menu.addAction("Delete")
 
-    def _on_duplicate_clicked(self):
-        if not self._selected_action_id:
-            return
+        chosen = menu.exec(btn.mapToGlobal(pos))
+        if chosen is edit_action:
+            self.chart_requested.emit(action_id)
+        elif chosen is duplicate_action:
+            self._duplicate_chart(action_id)
+        elif chosen is delete_action:
+            self._delete_chart(action_id)
 
-        original = self._store.get(self._selected_action_id)
+    def _duplicate_chart(self, action_id: str):
+        original = self._store.get(action_id)
         if not original:
             return
 
@@ -330,12 +273,9 @@ class MyChartsWidget(QWidget):
         self._store.add(clone)
         self.reload_user_charts()
 
-    def _on_delete_clicked(self):
-        if not self._selected_action_id:
-            return
-
-        chart_def = self._store.get(self._selected_action_id)
-        title = chart_def.title if chart_def else self._selected_action_id
+    def _delete_chart(self, action_id: str):
+        chart_def = self._store.get(action_id)
+        title = chart_def.title if chart_def else action_id
 
         reply = QMessageBox.question(
             self,
@@ -347,5 +287,6 @@ class MyChartsWidget(QWidget):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        self._store.delete(self._selected_action_id)
+        self._store.delete(action_id)
+        self._usage.forget(action_id)
         self.reload_user_charts()

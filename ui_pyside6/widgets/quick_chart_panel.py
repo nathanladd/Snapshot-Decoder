@@ -1,31 +1,57 @@
 """
-Quick chart buttons panel widget.
+Chart buttons panel: a "Quick" row of built-in charts and a "Mine" row of
+My Charts, in one fixed-height group box.
+
+Both rows are single-line and never scroll — overflow folds into a trailing "▾"
+menu (see ChartButtonRow) — so the panel keeps the same height it had as a
+2-row grid of built-ins. Within each row, most-used charts sort leftmost
+(ChartUsageStore), so the ▾ menu only ever holds charts this user ignores.
 """
 
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QGroupBox,
-    QScrollArea, QSizePolicy, QToolButton, QMenu
+    QWidget, QVBoxLayout, QGroupBox, QToolButton, QMenu
 )
 from PySide6.QtCore import Signal, Qt
 
 from domain.snaptypes import SnapType
 from domain.constants import BUTTONS_BY_TYPE, REFERENCE_CHARTS_BY_TYPE
 from domain.snapshot import Snapshot
+from domain.chart_usage import ChartUsageStore
+
+from .chart_button_row import ChartButtonRow, make_chart_button, BUTTON_HEIGHT
+from .my_charts_widget import MyChartsWidget
+
+_REFERENCE_STYLE = """
+    QToolButton {
+        background-color: #FFD700;
+        border: 2px solid #FFA500;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    QToolButton::menu-indicator { image: none; width: 0px; }
+"""
 
 
 class QuickChartPanel(QWidget):
-    """Panel with quick chart buttons based on snapshot type."""
+    """Two-row chart panel: built-in quick charts above, My Charts below."""
 
-    # Signal emitted when a quick chart is requested
+    # Emitted for any chart click in either row (built-in or USER_ id).
     chart_requested = Signal(str)  # action_id
+
+    # Forwarded from the My Charts row's ＋ tile. MainWindow owns the PID panel
+    # and axis controls needed to build the definition, so it handles the save.
+    save_chart_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._buttons: List[QPushButton] = []
+        self._buttons: List[QWidget] = []
         self._reference_button: Optional[QToolButton] = None
         self._current_snapshot_type: Optional[SnapType] = None
+        self._usage = ChartUsageStore()
         self._setup_ui()
 
     def _setup_ui(self):
@@ -33,54 +59,45 @@ class QuickChartPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Group box
-        self._group = QGroupBox("Quick Charts")
+        self._group = QGroupBox("Charts")
         group_layout = QVBoxLayout(self._group)
         group_layout.setContentsMargins(4, 4, 4, 4)
+        group_layout.setSpacing(4)
 
-        # Scroll area for buttons
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        scroll.setMaximumHeight(90)
+        # Row 1 — built-in quick charts
+        self._quick_row = ChartButtonRow("Quick")
+        self._quick_row.overflow_activated.connect(self.chart_requested)
+        group_layout.addWidget(self._quick_row)
 
-        # Container for buttons - use grid layout for 2 rows
-        self._button_container = QWidget()
-        self._button_layout = QGridLayout(self._button_container)
-        self._button_layout.setSpacing(4)
-        self._button_layout.setContentsMargins(0, 0, 0, 0)
-
-        scroll.setWidget(self._button_container)
-        group_layout.addWidget(scroll)
+        # Row 2 — My Charts (reserved: keeps its height even when empty)
+        self.my_charts = MyChartsWidget()
+        self.my_charts.chart_requested.connect(self.chart_requested)
+        self.my_charts.save_chart_requested.connect(self.save_chart_requested)
+        group_layout.addWidget(self.my_charts)
 
         layout.addWidget(self._group)
 
-        # Show placeholder message
         self._show_placeholder()
 
     def _show_placeholder(self):
         """Show placeholder when no snapshot is loaded."""
         self._clear_buttons()
-        placeholder = QPushButton("Load a snapshot to see quick charts")
-        placeholder.setEnabled(False)
-        self._button_layout.addWidget(placeholder)
-        self._buttons.append(placeholder)
+        self._quick_row.set_placeholder("Load a snapshot to see quick charts")
+        self._quick_row.reflow()
 
     def _clear_buttons(self):
-        """Remove all buttons from the layout."""
-        for btn in self._buttons:
-            self._button_layout.removeWidget(btn)
-            btn.deleteLater()
+        """Remove all buttons from the quick row."""
+        self._quick_row.clear()
         self._buttons.clear()
-
-        # Also clear reference button if it exists
-        if self._reference_button:
-            self._button_layout.removeWidget(self._reference_button)
-            self._reference_button.deleteLater()
-            self._reference_button = None
+        self._reference_button = None
 
     def set_snapshot_type(self, snapshot_type: Optional[SnapType]):
-        """Update buttons based on snapshot type."""
+        """Update both rows based on snapshot type."""
+        self._build_quick_row(snapshot_type)
+        self.my_charts.set_snapshot_type(snapshot_type)
+
+    def _build_quick_row(self, snapshot_type: Optional[SnapType]):
+        """Rebuild row 1 (built-in quick charts) for this snapshot type."""
         self._clear_buttons()
         self._current_snapshot_type = snapshot_type
 
@@ -88,36 +105,30 @@ class QuickChartPanel(QWidget):
             self._show_placeholder()
             return
 
-        # Add reference button if available for this snapshot type
+        # Reference charts stay pinned leftmost, outside the usage sort.
         self._add_reference_button_if_available(snapshot_type)
 
-        # Get buttons for this snapshot type
         buttons_config = BUTTONS_BY_TYPE.get(snapshot_type, [])
 
         if not buttons_config:
-            placeholder = QPushButton("No quick charts for this type")
-            placeholder.setEnabled(False)
-            self._button_layout.addWidget(placeholder)
-            self._buttons.append(placeholder)
-        else:
-            # Create compact buttons in 2-row grid
-            # Adjust column offset if reference button is present
-            col_offset = 1 if self._reference_button else 0
-            num_buttons = len(buttons_config)
-            num_cols = (num_buttons + 1) // 2  # Calculate columns needed for 2 rows
+            self._quick_row.set_placeholder("No quick charts for this type")
+            self._quick_row.reflow()
+            return
 
-            for i, (name, action_id, tooltip) in enumerate(buttons_config):
-                btn = QPushButton(name)
-                btn.setToolTip(tooltip)
-                btn.setProperty("action_id", action_id)
-                btn.clicked.connect(self._on_button_clicked)
-                btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-                btn.setMaximumWidth(120)
+        # Most-used first; declared order breaks ties, so a user with no
+        # history sees exactly the order defined in BUTTONS_BY_TYPE.
+        ordered = sorted(
+            enumerate(buttons_config),
+            key=lambda pair: self._usage.order_key(pair[1][1], pair[0]),
+        )
 
-                row = i % 2
-                col = col_offset + (i // 2)
-                self._button_layout.addWidget(btn, row, col)
-                self._buttons.append(btn)
+        for _, (name, action_id, tooltip) in ordered:
+            btn = make_chart_button(name, action_id, tooltip)
+            btn.clicked.connect(self._on_button_clicked)
+            self._quick_row.add_item(btn)
+            self._buttons.append(btn)
+
+        self._quick_row.reflow()
 
     def _on_button_clicked(self):
         """Handle button click."""
@@ -132,55 +143,39 @@ class QuickChartPanel(QWidget):
         if snapshot_type not in REFERENCE_CHARTS_BY_TYPE:
             return
 
-        # Create reference button
         self._reference_button = QToolButton()
-        self._reference_button.setText("Reference\nCharts")
+        self._reference_button.setText("Reference ▾")
+        self._reference_button.setToolTip("Reference charts")
         self._reference_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._reference_button.setPopupMode(QToolButton.InstantPopup)
-        self._reference_button.setStyleSheet("""
-            QToolButton {
-                background-color: #FFD700;
-                border: 2px solid #FFA500;
-                border-radius: 4px;
-                padding: 4px 4px;
-                font-weight: bold;
-            }
-            QToolButton::menu-indicator {
-                width: 12px;
-                height: 12px;
-                subcontrol-position: bottom center;
-            }
-        """)
-        self._reference_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self._reference_button.setStyleSheet(_REFERENCE_STYLE)
+        self._reference_button.setFixedHeight(BUTTON_HEIGHT)
 
-        # Create dropdown menu
         reference_menu = QMenu(self._reference_button)
-
-        # Add individual chart options from constants
-        reference_charts = REFERENCE_CHARTS_BY_TYPE[snapshot_type]
-        for name, action_id, tooltip in reference_charts:
+        for name, action_id, tooltip in REFERENCE_CHARTS_BY_TYPE[snapshot_type]:
             action = reference_menu.addAction(name)
             action.setToolTip(tooltip)
             action.triggered.connect(
                 lambda checked, aid=action_id: self.chart_requested.emit(aid)
             )
-
         self._reference_button.setMenu(reference_menu)
 
-        # Span both rows so it matches the height of two button rows
-        self._button_layout.addWidget(self._reference_button, 0, 0, 2, 1)
+        self._quick_row.add_pinned(self._reference_button)
 
     def set_snapshot(self, snapshot: Optional[Snapshot]):
-        """Update buttons based on snapshot, disabling charts that require missing systems."""
+        """Update both rows, disabling charts that require missing systems."""
         if snapshot is None:
-            self.set_snapshot_type(None)
+            self._build_quick_row(None)
+            self.my_charts.set_snapshot(None)
             return
 
-        self.set_snapshot_type(snapshot.snapshot_type)
+        self._build_quick_row(snapshot.snapshot_type)
 
         # Disable buttons whose required systems are absent
         if not snapshot.has_air_throttle:
             self._set_button_enabled("V2_THROTTLE_VALVE", False)
+
+        self.my_charts.set_snapshot(snapshot)
 
     def _set_button_enabled(self, action_id: str, enabled: bool):
         """Enable or disable a button by its action_id."""
@@ -191,4 +186,5 @@ class QuickChartPanel(QWidget):
 
     def clear(self):
         """Clear the panel."""
-        self.set_snapshot_type(None)
+        self._build_quick_row(None)
+        self.my_charts.clear()
