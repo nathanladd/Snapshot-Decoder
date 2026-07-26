@@ -23,6 +23,8 @@ class PIDInterpolator:
         self._cache_size_limit = 1000
         self._x_sort_cache: Dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
         self._x_sort_cache_limit = 8
+        self._y_sort_cache: Dict[str, np.ndarray] = {}
+        self._y_sort_cache_limit = 500
         # Use config file setting if not explicitly specified
         if enable_debug_logging is None:
             self._debug_logging = get_pid_debug_setting()
@@ -91,19 +93,25 @@ class PIDInterpolator:
         """
         if not config or config.data.empty:
             return {}
-        
+
         pid_columns = self._get_pid_columns(config, extra_pids)
 
         if not pid_columns:
             return {}
 
-        # Check cache first
-        cache_key = self._get_cache_key(config, x_position, pid_columns)
+        x_col = config.get_x_column()
+        if not x_col or x_col not in config.data.columns:
+            return {}
+
+        # Check cache first (keyed on x_col too - otherwise switching a
+        # chart's x-axis while landing on the same x_position would return
+        # a stale result computed under the previous axis)
+        cache_key = self._get_cache_key(config, x_position, pid_columns, x_col)
         if cache_key in self._cache:
             return self._cache[cache_key]
 
         # Get prepared X-axis data (cached by config/data identity)
-        prepared = self._get_prepared_x_data(config)
+        prepared = self._get_prepared_x_data(config, x_col)
         if prepared is None:
             return {}
         x_sorted, sort_idx, x_valid_mask = prepared
@@ -123,8 +131,7 @@ class PIDInterpolator:
 
         for pid in pid_columns:
             try:
-                y_data = pd.to_numeric(config.data[pid], errors='coerce').to_numpy()
-                y_sorted = y_data[sort_idx]
+                y_sorted = self._get_prepared_y_data(config, pid, x_col, sort_idx)
                 valid_mask = x_valid_mask & (~np.isnan(y_sorted))
                 valid_count = int(np.count_nonzero(valid_mask))
                 nan_count = int(y_sorted.size - valid_count)
@@ -193,12 +200,8 @@ class PIDInterpolator:
             filtered.append(col)
         return filtered
 
-    def _get_prepared_x_data(self, config: ChartConfig) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    def _get_prepared_x_data(self, config: ChartConfig, x_col: str) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray]]:
         """Cache sorted X-axis arrays reused across slider events for same chart data."""
-        x_col = config.get_x_column()
-        if not x_col or x_col not in config.data.columns:
-            return None
-
         cache_key = self._get_x_cache_key(config, x_col)
         cached = self._x_sort_cache.get(cache_key)
         if cached is not None:
@@ -229,12 +232,38 @@ class PIDInterpolator:
             f"{hash(tuple(map(str, config.data.columns)))}"
         )
 
-    def _get_cache_key(self, config: ChartConfig, x_position: float, pid_columns: List[str]) -> str:
+    def _get_prepared_y_data(self, config: ChartConfig, pid: str, x_col: str, sort_idx: np.ndarray) -> np.ndarray:
+        """Cache sorted numeric y-data per (data identity, x-column, pid), reused across slider events.
+
+        Keyed on x_col (not just the data/pid) so a change to the chart's
+        x-axis selection - which produces a different sort_idx - can't return
+        y-data sorted under a stale ordering.
+        """
+        cache_key = self._get_y_cache_key(config, pid, x_col)
+        cached = self._y_sort_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        y_data = pd.to_numeric(config.data[pid], errors='coerce').to_numpy()
+        y_sorted = y_data[sort_idx]
+
+        if len(self._y_sort_cache) >= self._y_sort_cache_limit:
+            oldest_keys = list(self._y_sort_cache.keys())[:50]
+            for old_key in oldest_keys:
+                self._y_sort_cache.pop(old_key, None)
+        self._y_sort_cache[cache_key] = y_sorted
+        return y_sorted
+
+    def _get_y_cache_key(self, config: ChartConfig, pid: str, x_col: str) -> str:
+        return f"{id(config.data)}|{x_col}|{pid}|{config.data.shape}"
+
+    def _get_cache_key(self, config: ChartConfig, x_position: float, pid_columns: List[str], x_col: str) -> str:
         """Generate cache key for interpolation result."""
         data_hash = hash(
             (
                 id(config.data),
                 config.data.shape,
+                x_col,
                 tuple(config.primary_axis.series),
                 tuple(config.secondary_axis.series),
                 tuple(pid_columns),
@@ -256,10 +285,13 @@ class PIDInterpolator:
         """Clear the interpolation cache."""
         self._cache.clear()
         self._x_sort_cache.clear()
-    
+        self._y_sort_cache.clear()
+
     def get_cache_info(self) -> Dict[str, int]:
         """Get information about cache usage."""
         return {
             "cache_size": len(self._cache),
-            "cache_limit": self._cache_size_limit
+            "cache_limit": self._cache_size_limit,
+            "y_cache_size": len(self._y_sort_cache),
+            "y_cache_limit": self._y_sort_cache_limit,
         }

@@ -4,6 +4,7 @@ Data table window for PySide6.
 Provides a spreadsheet view of snapshot data with search and lazy loading.
 """
 
+import numpy as np
 import pandas as pd
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -20,7 +21,7 @@ ROW_LOAD_BATCH = 200     # Number of rows to load when scrolling
 
 class DataPreparationThread(QThread):
     """Background thread for preparing data."""
-    data_ready = Signal(list, list)  # data, headers
+    data_ready = Signal(object, list)  # DataFrame (safe column names), headers
     error_occurred = Signal(str)
     
     def __init__(self, snapshot: pd.DataFrame):
@@ -54,18 +55,18 @@ class DataPreparationThread(QThread):
             if self._cancelled:
                 return
 
-            # Use a display copy with safe column names
+            # Use a display copy with safe column names. Values are stringified
+            # lazily per-batch by the window as rows are displayed, instead of
+            # up front for the whole file, since most files are never scrolled
+            # past the initial batch.
             df_display = self.snapshot.copy()
             df_display.columns = safe_cols
-
-            # Convert DataFrame to list of lists
-            all_data = df_display.astype(str).values.tolist()
 
             if self._cancelled:
                 return
 
             # Emit prepared data
-            self.data_ready.emit(all_data, safe_cols)
+            self.data_ready.emit(df_display, safe_cols)
             
         except Exception as e:
             if not self._cancelled:
@@ -82,7 +83,7 @@ class DataTableWindow(QMainWindow):
         self.window_name = window_name
         
         # Data prepared by background thread
-        self._all_data = None  # Full dataset
+        self._df = None        # Full dataset (DataFrame, safe column names), values stringified per-batch on demand
         self._headers = None   # Column headers
         self._rows_loaded = 0  # Number of rows currently in table
         self._loading_more = False  # Prevent concurrent loads
@@ -188,11 +189,15 @@ class DataTableWindow(QMainWindow):
         self._prep_thread.error_occurred.connect(self._on_error)
         self._prep_thread.start()
     
-    def _on_data_ready(self, data: list, headers: list):
+    def _on_data_ready(self, df: pd.DataFrame, headers: list):
         """Handle prepared data."""
-        self._all_data = data
+        self._df = df
         self._headers = headers
         self._create_table()
+
+    def _stringify_rows(self, start: int, end: int) -> list:
+        """Convert a slice of the DataFrame to a list of lists of strings."""
+        return self._df.iloc[start:end].astype(str).values.tolist()
     
     def _on_error(self, message: str):
         """Handle preparation error."""
@@ -208,21 +213,22 @@ class DataTableWindow(QMainWindow):
         
         # Create table widget
         self.table_widget = QTableWidget()
-        self.table_widget.setRowCount(min(INITIAL_ROW_BATCH, len(self._all_data)))
+        self.table_widget.setRowCount(min(INITIAL_ROW_BATCH, len(self._df)))
         self.table_widget.setColumnCount(len(self._headers))
         self.table_widget.setHorizontalHeaderLabels(self._headers)
-        
+
         # Set selection behavior
         self.table_widget.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.table_widget.setSelectionMode(QAbstractItemView.SingleSelection)
-        
+
         # Load initial batch of data
-        initial_rows = min(INITIAL_ROW_BATCH, len(self._all_data))
-        for row_idx in range(initial_rows):
-            for col_idx, value in enumerate(self._all_data[row_idx]):
-                item = QTableWidgetItem(str(value))
+        initial_rows = min(INITIAL_ROW_BATCH, len(self._df))
+        batch = self._stringify_rows(0, initial_rows)
+        for row_idx, row_values in enumerate(batch):
+            for col_idx, value in enumerate(row_values):
+                item = QTableWidgetItem(value)
                 self.table_widget.setItem(row_idx, col_idx, item)
-        
+
         self._rows_loaded = initial_rows
         
         # Set column widths
@@ -238,10 +244,10 @@ class DataTableWindow(QMainWindow):
     
     def _update_rows_loaded_label(self):
         """Update the label showing how many rows are loaded."""
-        if self._all_data is None:
+        if self._df is None:
             return
-        
-        total = len(self._all_data)
+
+        total = len(self._df)
         if self._rows_loaded >= total:
             self.rows_loaded_label.setText("(All rows loaded)")
             self.load_more_btn.setEnabled(False)
@@ -253,41 +259,41 @@ class DataTableWindow(QMainWindow):
     
     def _load_more_rows(self):
         """Load the next batch of rows into the table."""
-        if self._loading_more or self._all_data is None or self.table_widget is None:
+        if self._loading_more or self._df is None or self.table_widget is None:
             return
-        if self._rows_loaded >= len(self._all_data):
+        if self._rows_loaded >= len(self._df):
             return
-        
+
         self._loading_more = True
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        
+
         try:
-            total = len(self._all_data)
+            total = len(self._df)
             start_row = self._rows_loaded
             end_row = min(start_row + ROW_LOAD_BATCH, total)
-            
+
             # Add rows to table
             current_row_count = self.table_widget.rowCount()
             new_rows_needed = end_row - start_row
             self.table_widget.setRowCount(current_row_count + new_rows_needed)
-            
+
             # Fill new rows with data
-            for row_offset in range(new_rows_needed):
-                row_idx = start_row + row_offset
-                for col_idx, value in enumerate(self._all_data[row_idx]):
-                    item = QTableWidgetItem(str(value))
+            batch = self._stringify_rows(start_row, end_row)
+            for row_offset, row_values in enumerate(batch):
+                for col_idx, value in enumerate(row_values):
+                    item = QTableWidgetItem(value)
                     self.table_widget.setItem(current_row_count + row_offset, col_idx, item)
-            
+
             self._rows_loaded = end_row
             self._update_rows_loaded_label()
-            
+
         finally:
             self._loading_more = False
             QApplication.restoreOverrideCursor()
-    
+
     def _load_all_remaining_rows(self):
         """Load all remaining rows."""
-        while self._rows_loaded < len(self._all_data):
+        while self._rows_loaded < len(self._df):
             self._load_more_rows()
             QApplication.processEvents()  # Keep UI responsive
     
@@ -301,26 +307,29 @@ class DataTableWindow(QMainWindow):
             self._clear_search()
             return
         
-        # Load all data first if not already loaded
-        if self._rows_loaded < len(self._all_data):
+        # Load all data first if not already loaded (matches are navigated by
+        # row/col index into the table widget, so every row needs an item)
+        if self._rows_loaded < len(self._df):
             self._load_all_remaining_rows()
-        
+
         # Clear previous highlights
         self._clear_highlights()
         self._search_matches = []
         self._header_matches = []
         self._current_match_index = -1
-        
+
         # Search through headers first
         for col_idx, header in enumerate(self._headers):
             if search_term in str(header).lower():
                 self._header_matches.append(col_idx)
-        
-        # Search through all data
-        for row_idx, row in enumerate(self._all_data):
-            for col_idx, cell in enumerate(row):
-                if search_term in str(cell).lower():
-                    self._search_matches.append((row_idx, col_idx))
+
+        # Search through all data (vectorized per-column instead of a
+        # per-cell Python loop)
+        match_df = self._df.apply(
+            lambda col: col.astype(str).str.lower().str.contains(search_term, regex=False, na=False)
+        )
+        row_idxs, col_idxs = np.where(match_df.to_numpy())
+        self._search_matches = list(zip(row_idxs.tolist(), col_idxs.tolist()))
         
         # Highlight matches and navigate to first
         total_matches = len(self._header_matches) + len(self._search_matches)
