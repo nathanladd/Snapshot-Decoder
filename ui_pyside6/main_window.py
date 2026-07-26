@@ -26,7 +26,6 @@ from domain.quick_charts import slugify_chart_title
 from domain.user_charts import UserChartDef, UserChartStore
 from domain.chart_usage import ChartUsageStore
 from controllers.app_controller import AppController
-from controllers.chart_controller import ChartController
 from version import APP_VERSION
 from infrastructure import get_logger, log_info, log_error, log_warning, log_debug
 from infrastructure.logging_config import set_error_signal
@@ -64,7 +63,6 @@ class MainWindow(QMainWindow):
         
         # Initialize controllers (UI-agnostic business logic)
         self.app_controller = AppController()
-        self.chart_controller = ChartController()
         
         # UI state
         self.snapshot: Optional[Snapshot] = None
@@ -570,20 +568,6 @@ class MainWindow(QMainWindow):
         """Handle PID selection changes (alternative handler)."""
         # This handler is not used but kept for compatibility
         self._on_pids_changed()
-    
-    @Slot(object)
-    def _on_chart_config_changed(self, config):
-        """Handle chart configuration changes."""
-        if config and self.app_controller.has_snapshot():
-            # Re-render chart with new config
-            try:
-                self.chart_controller.render(config, self.chart_widget.figure)
-                self.chart_widget.canvas.draw()
-                log_debug("Chart re-rendered from config change")
-            except Exception as e:
-                log_error(f"Failed to re-render chart: {str(e)}")
-                self.app_controller.error_occurred.emit(f"Chart rendering failed: {str(e)}")
-            self.chart_widget.clear_axis_controls()
     
     @Slot()
     def _on_axis_settings_changed(self):
