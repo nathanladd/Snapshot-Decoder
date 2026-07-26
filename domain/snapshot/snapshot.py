@@ -36,6 +36,20 @@ from domain.snapshot.system_detector import detect_systems, DetectedSystems
 from file_io.reader_excel import load_xls, load_xlsx
 
 
+class SnapshotTypeDetectionError(ValueError):
+    """Raised by `Snapshot._phase2_detect_type` when confidence is below the minimum threshold.
+
+    Carries the fields needed to report/inspect the failure without
+    re-running detection, since the raw table may still be usable.
+    """
+
+    def __init__(self, message: str, header_row_idx: int, confidence: float, min_confidence: float):
+        super().__init__(message)
+        self.header_row_idx = header_row_idx
+        self.confidence = confidence
+        self.min_confidence = min_confidence
+
+
 class Snapshot:
     """
     Domain entity representing a loaded and parsed snapshot.
@@ -87,50 +101,81 @@ class Snapshot:
     
     def _load_and_parse(self) -> None:
         """Internal method to load the file and perform all parsing steps."""
-        # (Phase 1) Load raw data based on file type
+        self._phase1_load_file()
+        header_row_idx, _confidence = self._phase2_detect_type()
+        self._phase3_parse_header()
+        self._phase4_extract_pids(header_row_idx)
+        self._phase5_scrub(header_row_idx)
+        self._phase5_remove_unsupported()
+        self._phase6_process_time()
+        self._phase7_convert_units()
+        self._phase8_key_pids()
+        self._phase9_detect_systems()
+
+    # -- Individual pipeline phases -----------------------------------
+    # Split out so SnapshotLoader (threaded loading) can drive the same
+    # logic phase-by-phase for progress/cancellation/logging, instead of
+    # reimplementing each step itself.
+
+    def _phase1_load_file(self) -> None:
+        """(Phase 1) Load raw data based on file type."""
         self.raw_table = self._load_file()
-        
         if self.raw_table is None or self.raw_table.empty:
             raise ValueError("The workbook loaded but no data table was found.")
-        
-        # (Phase 2) Find header row and identify snapshot type
+
+    def _phase2_detect_type(self, min_confidence: float = 0.8) -> Tuple[int, float]:
+        """(Phase 2) Find header row and identify snapshot type.
+
+        Returns (header_row_idx, confidence). Raises SnapshotTypeDetectionError
+        if confidence is below min_confidence.
+        """
         header_row_idx = find_header_row(self.raw_table)
         self.snapshot_type, confidence = detect_snapshot_type(self.raw_table, header_row_idx)
-        
-        # Check for minimum 80% confidence
-        min_confidence = 0.8
+
         if confidence < min_confidence:
             error_msg = f"Snapshot type detection failed: {self.snapshot_type.name} only {confidence:.1%} confidence (minimum {min_confidence:.0%} required)"
             from infrastructure.logging_config import log_error
             log_error(error_msg)
-            raise ValueError(error_msg)
-        
-        # (Phase 3) Parse header information
+            raise SnapshotTypeDetectionError(error_msg, header_row_idx, confidence, min_confidence)
+
+        return header_row_idx, confidence
+
+    def _phase3_parse_header(self) -> None:
+        """(Phase 3) Parse header information."""
         self.header_list = parse_header(self.raw_table, max_rows=5)
         self.date_time = find_date_time(self.header_list)
         self._decode_map_version()
-        
-        # (Phase 4) Extract PID descriptions
+
+    def _phase4_extract_pids(self, header_row_idx: int) -> None:
+        """(Phase 4) Extract PID descriptions."""
         self.pid_info = extract_pid_info(self.raw_table, header_row_idx)
-        
-        # (Phase 5) Clean the snapshot
+
+    def _phase5_scrub(self, header_row_idx: int) -> None:
+        """(Phase 5a) Clean the snapshot: headers, Frame/Time, trim to Frame 0."""
         self.snapshot = scrub_snapshot(self.raw_table, header_row_idx, self.pid_info)
+
+    def _phase5_remove_unsupported(self) -> None:
+        """(Phase 5b) Remove 'Not supported' PID columns."""
         self.snapshot = remove_unsupported_pids(self.snapshot, self.pid_info)
-        
-        # (Phase 6) Process time column
+
+    def _phase6_process_time(self) -> None:
+        """(Phase 6) Process time column."""
         self.snapshot = process_time_column(self.snapshot)
-        
-        # (Phase 7) Standardize units to US
+
+    def _phase7_convert_units(self) -> None:
+        """(Phase 7) Standardize units to US."""
         self.snapshot = convert_temperature_to_us_units(self.snapshot, self.pid_info)
         self.snapshot = convert_pressure_to_us_units(self.snapshot, self.pid_info)
         self.snapshot = convert_millivolts_to_volts(self.snapshot, self.pid_info)
-        
-        # (Phase 8) Key PIDs
+
+    def _phase8_key_pids(self) -> None:
+        """(Phase 8) Extract key derived PIDs."""
         self.hours = find_engine_hours(self.snapshot, self.snapshot_type, self.pid_info)
         self.idle_time = find_idle_time(self.snapshot, self.pid_info)
         self.mdp_success_rate = calculate_mdp_success(self.snapshot)
-        
-        # (Phase 9) Detect engine systems
+
+    def _phase9_detect_systems(self) -> None:
+        """(Phase 9) Detect engine systems."""
         self._detect_systems()
 
     def _decode_map_version(self) -> None:
