@@ -4,7 +4,7 @@ Chart Configuration Data Classes
 Defines data classes for configuring different types of charts (line, bar, bubble, status).
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import List, Optional, Dict, Literal
 import pandas as pd
 
@@ -90,6 +90,22 @@ class ChartConfig:
     
     # Quick chart tracking: which quick chart command created this chart
     quick_chart_action_id: Optional[str] = None
+
+    def clone(self) -> "ChartConfig":
+        """Independent copy for a new owner (pop-out window, chart cart) to mutate freely.
+
+        Only the DataFrame and the two AxisConfig objects need real copies, since
+        callers mutate primary_axis/secondary_axis attributes (e.g. min_value)
+        in place. Everything else - pid_info, series_styles, etc. - is read-only
+        metadata that's safe (and much cheaper) to share by reference instead of
+        running it through copy.deepcopy.
+        """
+        return replace(
+            self,
+            data=self.data.copy(),
+            primary_axis=replace(self.primary_axis),
+            secondary_axis=replace(self.secondary_axis),
+        )
 
     @staticmethod
     def _resolve_column_name(data: pd.DataFrame, column_name: str) -> Optional[str]:

@@ -9,6 +9,7 @@ from typing import Optional, TYPE_CHECKING
 import pandas as pd
 
 from domain.chart_config import ChartConfig, AxisConfig
+from domain.constants import LIVE_METRIC_PID_MAP
 from domain.quick_charts.definitions import (
     QuickChartDef,
     BarChartDef,
@@ -58,10 +59,31 @@ class ChartConfigBuilder:
         cls, definition: QuickChartDef, snapshot: "Snapshot"
     ) -> ChartConfig:
         """Build a standard line or status chart configuration."""
-        df = snapshot.snapshot.copy()  # Make a copy to avoid modifying original
-        
-        # Clean data types for all PID columns to ensure numeric interpolation works
+        full_df = snapshot.snapshot
+
+        # Only pull the columns this chart actually needs (a handful of PIDs
+        # plus the x-axis column) instead of copying the entire snapshot -
+        # which can have 100+ columns - on every quick-chart click.
         all_pids = definition.primary_pids + definition.secondary_pids
+        candidate_columns = all_pids + (definition.dynamic_primary_pids or []) + [
+            "Time (MM:SS)", "Time", "Frame",
+        ]
+
+        # Include compact live-metric PID aliases so the live gauges/chips can
+        # still update even when those metrics aren't part of the plotted axes.
+        live_metric_aliases = LIVE_METRIC_PID_MAP.get(snapshot.snapshot_type, {})
+        for aliases in live_metric_aliases.values():
+            candidate_columns.extend(aliases)
+
+        selected_columns = []
+        for col in candidate_columns:
+            resolved = cls._resolve_column_name(full_df, col)
+            if resolved and resolved not in selected_columns:
+                selected_columns.append(resolved)
+
+        df = full_df[selected_columns].copy() if selected_columns else pd.DataFrame()
+
+        # Clean data types for all PID columns to ensure numeric interpolation works
         for pid in all_pids:
             resolved_pid = cls._resolve_column_name(df, pid)
             if resolved_pid:

@@ -137,12 +137,20 @@ class ChartRenderer:
         if clear_figure:
             figure.clear()
 
-        # Prepare data: convert Timedelta to seconds for plotting
-        plot_data = self.config.data.copy()
-        if pd.api.types.is_timedelta64_dtype(plot_data.get("Time")):
-            plot_data["Time"] = plot_data["Time"].dt.total_seconds()
-        elif pd.api.types.is_timedelta64_dtype(plot_data.get("Time (MM:SS)")):
-            plot_data["Time (MM:SS)"] = plot_data["Time (MM:SS)"].dt.total_seconds()
+        # Prepare data: convert Timedelta to seconds for plotting.
+        # Only copy when a conversion is actually needed - avoids duplicating
+        # the whole chart DataFrame on every render.
+        plot_data = self.config.data
+        time_is_timedelta = pd.api.types.is_timedelta64_dtype(plot_data.get("Time"))
+        time_mmss_is_timedelta = not time_is_timedelta and pd.api.types.is_timedelta64_dtype(
+            plot_data.get("Time (MM:SS)")
+        )
+        if time_is_timedelta or time_mmss_is_timedelta:
+            plot_data = plot_data.copy()
+            if time_is_timedelta:
+                plot_data["Time"] = plot_data["Time"].dt.total_seconds()
+            else:
+                plot_data["Time (MM:SS)"] = plot_data["Time (MM:SS)"].dt.total_seconds()
 
         # Store figure reference for colorbar support in bubble charts
         self._figure = figure

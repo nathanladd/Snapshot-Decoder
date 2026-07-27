@@ -28,7 +28,8 @@ def main():
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
-    
+
+
     # Phase 1: Create QApplication first (required for QSplashScreen)
     app = QApplication(sys.argv)
     app.setApplicationName("Snapshot Decoder")

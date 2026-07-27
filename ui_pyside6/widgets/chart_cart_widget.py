@@ -4,7 +4,6 @@ Chart Cart widget for managing chart configurations with thumbnail display.
 PySide6 port of the tkinter ChartCart from v1.
 """
 
-import copy
 from typing import List, Optional
 
 from PySide6.QtWidgets import (
@@ -306,7 +305,7 @@ class ChartCartWidget(QWidget):
     
     def add_config(self, config: ChartConfig):
         """Add a new chart config to the cart."""
-        config_copy = copy.deepcopy(config)
+        config_copy = config.clone()
         self.configs.append(config_copy)
         self._rebuild_ui()
         log_info(f"Chart added to cart: {config.title} ({len(self.configs)} total)")

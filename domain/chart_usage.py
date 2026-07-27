@@ -12,13 +12,16 @@ UserChartStore persistence pattern: per-user JSON at
 corrupt/missing files.
 """
 
+import atexit
 import json
+import threading
 from datetime import datetime
 from typing import Any, Dict, Tuple
 
 from domain.user_paths import user_data_file
 
 _SCHEMA_VERSION = 1
+_SAVE_DEBOUNCE_SECONDS = 2.0
 
 
 class ChartUsageStore:
@@ -32,6 +35,8 @@ class ChartUsageStore:
             cls._instance._counts: Dict[str, int] = {}
             cls._instance._last_used: Dict[str, str] = {}
             cls._instance._loaded = False
+            cls._instance._save_timer = None
+            cls._instance._save_lock = threading.Lock()
         return cls._instance
 
     # ------------------------------------------------------------------
@@ -83,13 +88,35 @@ class ChartUsageStore:
     # Queries / updates
     # ------------------------------------------------------------------
     def record(self, action_id: str):
-        """Count one use of a chart and persist it."""
+        """Count one use of a chart and persist it (debounced)."""
         if not action_id:
             return
         self._ensure_loaded()
         self._counts[action_id] = self._counts.get(action_id, 0) + 1
         self._last_used[action_id] = datetime.now().isoformat()
+        self._schedule_save()
+
+    def _schedule_save(self):
+        """Coalesce rapid record() calls into a single write after a quiet period."""
+        with self._save_lock:
+            if self._save_timer is not None:
+                self._save_timer.cancel()
+            self._save_timer = threading.Timer(_SAVE_DEBOUNCE_SECONDS, self._run_scheduled_save)
+            self._save_timer.daemon = True
+            self._save_timer.start()
+
+    def _run_scheduled_save(self):
+        with self._save_lock:
+            self._save_timer = None
         self.save()
+
+    def flush(self):
+        """Write a pending debounced save immediately (e.g. on app shutdown)."""
+        with self._save_lock:
+            timer, self._save_timer = self._save_timer, None
+        if timer is not None:
+            timer.cancel()
+            self.save()
 
     def count(self, action_id: str) -> int:
         self._ensure_loaded()
@@ -115,3 +142,6 @@ class ChartUsageStore:
         changed = self._last_used.pop(action_id, None) is not None or changed
         if changed:
             self.save()
+
+
+atexit.register(lambda: ChartUsageStore().flush())

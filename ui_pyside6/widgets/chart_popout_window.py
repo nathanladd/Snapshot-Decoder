@@ -4,7 +4,6 @@ Pop-out Chart Window
 A standalone window that displays a chart with its own toolbar.
 """
 
-import copy
 import os
 from typing import Optional, List
 
@@ -36,8 +35,8 @@ class ChartPopoutWindow(QMainWindow):
     def __init__(self, parent, config: ChartConfig, chart_cart=None, separate_charts: bool = False):
         super().__init__(parent)
 
-        # Deep copy config to make this window independent
-        self.config = copy.deepcopy(config)
+        # Independent copy so this window's axis/data edits don't leak back
+        self.config = config.clone()
         self.chart_cart = chart_cart
 
         # Whether to render each PID on its own stacked subplot, carried over
@@ -655,8 +654,8 @@ class ChartPopoutWindow(QMainWindow):
             self.config.secondary_axis.max_value = ymax_secondary
             self.config.secondary_axis.auto_scale = False
         
-        config_copy = copy.deepcopy(self.config)
-        self.chart_cart.add_config(config_copy)
+        # add_config() clones the config itself; no need to copy it here too.
+        self.chart_cart.add_config(self.config)
 
     @Slot()
     def _on_quick_iq_requested(self):
