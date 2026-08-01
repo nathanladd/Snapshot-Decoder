@@ -74,7 +74,7 @@ def remove_unsupported_pids(
         
         # Handle case where column name is duplicated (returns DataFrame)
         if isinstance(data, pd.DataFrame):
-            obj_cols = data.select_dtypes(include=['object'])
+            obj_cols = data.select_dtypes(include=['object', 'string'])
             if not obj_cols.empty:
                 mask = obj_cols.astype(str).apply(
                     lambda x: x.str.contains("Not supported", case=False, regex=False)
@@ -83,7 +83,7 @@ def remove_unsupported_pids(
                     cols_to_drop.add(col)
         else:
             # Handle single column (Series)
-            if data.dtype == 'object':
+            if pd.api.types.is_string_dtype(data):
                 if data.astype(str).str.contains("Not supported", case=False, regex=False).any():
                     cols_to_drop.add(col)
     
@@ -104,7 +104,7 @@ def _clean_column_apostrophes(df: pd.DataFrame, col_name: str) -> None:
     if col_name not in df.columns:
         return
         
-    if df[col_name].dtype == 'object':
+    if pd.api.types.is_string_dtype(df[col_name]):
         df[col_name] = df[col_name].apply(
             lambda x: x[1:] if isinstance(x, str) and x.startswith("'") else x
         )

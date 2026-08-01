@@ -12,6 +12,7 @@ from domain.quick_charts import (
     V1_CHARTS,
     V2_CHARTS,
     EUD_CHARTS,
+    REFERENCE_CHARTS,
     QUICK_CHART_REGISTRY,
 )
 from domain.quick_charts.definitions import StatusChartDef
@@ -228,7 +229,7 @@ class TestQuickChartRegistry:
 
     def test_registry_contains_all_charts(self):
         """Verify registry contains all charts from all categories."""
-        expected_count = len(V1_CHARTS) + len(V2_CHARTS) + len(EUD_CHARTS)
+        expected_count = len(V1_CHARTS) + len(V2_CHARTS) + len(EUD_CHARTS) + len(REFERENCE_CHARTS)
         assert len(QUICK_CHART_REGISTRY) == expected_count
 
     def test_registry_keys_match_action_ids(self):

@@ -50,9 +50,9 @@ def parse_header(df: pd.DataFrame, max_rows: int = 5) -> List[Tuple[str, str]]:
             parts = label_raw.split(":", 1)
             if len(parts) == 2:
                 potential_value = parts[1].strip()
+                label_raw = parts[0].strip()
                 if potential_value:
                     value = potential_value
-                    label_raw = parts[0].strip()
 
         # Check for standalone date in label column (value is empty)
         if (not value or value.lower() == "nan" or value.lower() == "none") and len(label_raw) > 8:

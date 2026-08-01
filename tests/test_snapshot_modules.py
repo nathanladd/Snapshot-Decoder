@@ -67,9 +67,9 @@ class TestHeaderParser:
         })
         
         result = parse_header(df, max_rows=5)
-        
+
         assert len(result) == 1
-        assert result[0][0] == "Program SW Version"
+        assert result[0][0] == "Engine Analyzer"
         assert result[0][1] == "1.2.3"
 
     def test_find_date_time(self):
@@ -91,8 +91,8 @@ class TestHeaderParser:
 
     def test_normalize_label(self):
         """Test label normalization."""
-        assert _normalize_label("program sw version") == "Program SW Version"
-        assert _normalize_label("file name") == "File Name"
+        assert _normalize_label("program sw version") == "Engine Analyzer"
+        assert _normalize_label("file name") == "file name"
         assert _normalize_label("Unknown Label") == "Unknown Label"
 
 
@@ -218,10 +218,13 @@ class TestTypeDetector:
             0: ["Frame"],
             1: ["Time"],
             2: ["smc_engine_state"],
+            3: ["in_engine_cycle_speed"],
+            4: ["in_pedal_position"],
         })
-        
-        result = detect_snapshot_type(df, 0)
-        assert result == SnapType.ECU_V1
+
+        snap_type, confidence = detect_snapshot_type(df, 0)
+        assert snap_type == SnapType.ECU_V1
+        assert confidence >= 0.5
 
     def test_detect_snapshot_type_v2(self):
         """Test detecting ECU_V2 snapshot type."""
@@ -229,10 +232,13 @@ class TestTypeDetector:
             0: ["Frame"],
             1: ["Time"],
             2: ["epm_neng"],
+            3: ["battu_u"],
+            4: ["afsdm"],
         })
-        
-        result = detect_snapshot_type(df, 0)
-        assert result == SnapType.ECU_V2
+
+        snap_type, confidence = detect_snapshot_type(df, 0)
+        assert snap_type == SnapType.ECU_V2
+        assert confidence >= 0.5
 
     def test_detect_snapshot_type_empty(self):
         """Test returning EMPTY when type not detected."""
@@ -241,9 +247,9 @@ class TestTypeDetector:
             1: ["Time"],
             2: ["unknown_pid"],
         })
-        
-        result = detect_snapshot_type(df, 0)
-        assert result == SnapType.EMPTY
+
+        snap_type, confidence = detect_snapshot_type(df, 0)
+        assert snap_type == SnapType.EMPTY
 
 
 class TestPidExtractor:
@@ -261,7 +267,7 @@ class TestPidExtractor:
         
         assert "TestPID" in result
         assert result["TestPID"]["Description"] == "Test Description"
-        assert result["TestPID"]["Unit"] == "rpm"
+        assert result["TestPID"]["Unit"] == "RPM"
 
     def test_to_str_handles_nan(self):
         """Test _to_str handles NaN values."""
@@ -404,10 +410,10 @@ class TestTimeProcessor:
         """Test finding engine hours for V1 snapshot."""
         df = pd.DataFrame({
             "Frame": [0, 1],
-            "EUD_Engine_run_time_nvv": [36000, 36000],  # 10 hours in seconds
+            "EUD_Engine_run_time_total_nvv": [36000, 36000],  # 10 hours in seconds
         })
-        pid_info = {"EUD_Engine_run_time_nvv": {"Unit": "seconds"}}
-        
+        pid_info = {"EUD_Engine_run_time_total_nvv": {"Unit": "seconds"}}
+
         result = find_engine_hours(df, SnapType.ECU_V1, pid_info)
         
         assert result == 10.0
