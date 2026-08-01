@@ -18,7 +18,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from domain.quick_charts import QUICK_CHART_REGISTRY, QuickChartDef, slugify_chart_title
 from domain.snaptypes import SnapType
-from domain.user_paths import user_data_file
+from domain.user_paths import user_data_file, backup_corrupt_file
+from infrastructure import log_error
 
 _SCHEMA_VERSION = 1
 
@@ -118,7 +119,9 @@ class UserChartStore:
             self._charts = [UserChartDef.from_dict(d) for d in data.get("charts", [])]
         except FileNotFoundError:
             self._charts = []
-        except Exception:
+        except Exception as exc:
+            log_error(f"Corrupt My Charts file at {path}, resetting to empty: {exc}")
+            backup_corrupt_file(path)
             self._charts = []
         self._loaded = True
 
@@ -133,7 +136,7 @@ class UserChartStore:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
         except Exception as exc:
-            print(f"Warning: Could not save My Charts: {exc}")
+            log_error(f"Could not save My Charts to {path}: {exc}")
 
     def _ensure_loaded(self):
         if not self._loaded:

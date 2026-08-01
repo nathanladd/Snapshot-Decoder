@@ -732,7 +732,7 @@ class ChartWidget(QWidget):
                             mins = int(x // 60)
                             secs = int(x % 60)
                             x_text = f"{mins:02d}:{secs:02d}"
-                        except:
+                        except (ValueError, TypeError):
                             x_text = f"{x:.2f}"
                     else:
                         x_text = f"{x:.2f}"

@@ -28,3 +28,11 @@ def user_data_dir() -> str:
 def user_data_file(filename: str) -> str:
     """Full path to `filename` inside the per-user data directory."""
     return os.path.join(user_data_dir(), filename)
+
+
+def backup_corrupt_file(path: str) -> None:
+    """Rename an unreadable JSON store to `.bak` so a fresh save() doesn't clobber it."""
+    try:
+        os.replace(path, path + ".bak")
+    except OSError:
+        pass

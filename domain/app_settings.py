@@ -12,7 +12,8 @@ import shutil
 import sys
 from typing import Any, Dict
 
-from domain.user_paths import user_data_file
+from domain.user_paths import user_data_file, backup_corrupt_file
+from infrastructure import log_error, log_warning
 
 
 # Default settings values
@@ -80,8 +81,8 @@ class AppSettings:
                 if os.path.isfile(legacy):
                     try:
                         shutil.copyfile(legacy, path)  # copy, don't move — leave original untouched
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        log_warning(f"Could not copy legacy settings from {legacy}: {exc}")
                     break
         if os.path.isfile(path):
             try:
@@ -89,7 +90,9 @@ class AppSettings:
                     stored = json.load(f)
                 # Merge with defaults so new keys are always present
                 self._data = {**_DEFAULTS, **stored}
-            except Exception:
+            except Exception as exc:
+                log_error(f"Corrupt settings file at {path}, resetting to defaults: {exc}")
+                backup_corrupt_file(path)
                 self._data = dict(_DEFAULTS)
         else:
             self._data = dict(_DEFAULTS)
@@ -102,7 +105,7 @@ class AppSettings:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(self._data, f, indent=4)
         except Exception as exc:
-            print(f"Warning: Could not save settings: {exc}")
+            log_error(f"Could not save settings to {path}: {exc}")
 
     def _ensure_loaded(self):
         if not self._loaded:

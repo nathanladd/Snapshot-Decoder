@@ -47,6 +47,7 @@ class SnapshotLoader(QThread):
         implementation of the actual parsing logic."""
         start_time = time.time()
         file_size = 0
+        snapshot = None
 
         try:
             # Phase 1: Load raw data
@@ -329,11 +330,8 @@ class SnapshotLoader(QThread):
             log_file_error(self.file_path, error_msg)
             
             # Emit partial snapshot for raw data inspection if raw_table was loaded
-            try:
-                if snapshot.raw_table is not None and not snapshot.raw_table.empty:
-                    log_info("Raw data available for inspection despite load failure")
-                    self.partial_loading.emit(snapshot)
-            except NameError:
-                pass
+            if snapshot is not None and snapshot.raw_table is not None and not snapshot.raw_table.empty:
+                log_info("Raw data available for inspection despite load failure")
+                self.partial_loading.emit(snapshot)
             
             self.error.emit(error_msg)
