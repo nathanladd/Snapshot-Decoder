@@ -112,6 +112,9 @@ class SnapshotLoader(QThread):
                     log_error(f"  Could not log header PIDs: {pid_error}")
 
                 # Load raw data for inspection despite identification failure
+                # This allows the user to read the Snapshot file that was attempted
+                # More than likely the user chose specific PIDs in Bobcat Engine Analyzer instead of 
+                # taking a snapshot of ALL PIDs. 
                 log_error(f"Loading raw data for inspection despite identification failure")
                 self.progress.emit(100, "Raw data loaded (identification failed)")
 

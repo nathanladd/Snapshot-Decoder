@@ -502,35 +502,6 @@ class MainWindow(QMainWindow):
         self.statusbar.showMessage("Raw data loaded (identification failed)")
         log_info("Raw snapshot loaded for inspection, widgets not populated due to identification failure")
     
-    @Slot(str)
-    def _on_quick_chart_requested(self, action_id: str):
-        """Handle quick chart request via AppController."""
-        if not self.app_controller.has_snapshot():
-            log_warning("Quick chart requested but no snapshot loaded")
-            return
-        
-        log_info(f"Quick chart requested: {action_id}")
-        
-        # Handle special reference PDF generation
-        if action_id == "REF_GENERATE_PDF":
-            self._generate_reference_pdf()
-            return
-        
-        self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
-        
-        # Sync PID panel with quick chart's PIDs
-        primary_pids = self.chart_widget.get_current_primary_pids()
-        secondary_pids = self.chart_widget.get_current_secondary_pids()
-        self.pid_panel.set_pids(primary_pids, secondary_pids, emit_signal=False)
-        
-        # Update PID panel colors to match quick chart
-        config = self.chart_widget.get_current_config()
-        if config:
-            self.pid_panel.update_chart_colors(config)
-        
-        # Update axis controls from the chart config
-        self._update_axis_controls_from_config()
-    
     @Slot()
     def _on_pids_changed(self):
         """Handle PID selection changes."""
