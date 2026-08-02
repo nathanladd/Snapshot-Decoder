@@ -93,7 +93,12 @@ class UserChartDef:
 
 
 class UserChartStore:
-    """Singleton CRUD store for UserChartDef, backed by my_charts.json."""
+    """Singleton CRUD store for UserChartDef, backed by my_charts.json.
+
+    "CRUD" = Create, Read, Update, Delete — the four operations below
+    (add/all·get/update/delete) cover the full lifecycle of a saved chart
+    def, mirroring the same verbs a database table's API would expose.
+    """
 
     _instance = None
 
