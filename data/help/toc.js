@@ -27,7 +27,6 @@
             heading: "Getting Started",
             items: [
                 { title: "Getting Started",              href: "getting_started.html" },
-                { title: "First Steps",                  href: "first_steps.html" },
                 { title: "Seven Step Diagnostic Process", href: "seven_step.html" },
                 { title: "Troubleshooting",              href: "troubleshooting.html" }
             ]
