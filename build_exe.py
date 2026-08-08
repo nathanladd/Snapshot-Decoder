@@ -40,8 +40,6 @@ main_script = os.path.join(script_dir, 'main.py')
 # These files will be bundled with the executable
 datas = [
     (os.path.join(script_dir, 'data/app_images'), 'data/app_images'),  # App UI images (icons, splash, logo)
-    (os.path.join(script_dir, 'data/images'), 'data/images'),  # Help page screenshots
-    (os.path.join(script_dir, 'data/help'), 'data/help'),  # Help files
 ]
 
 # Define hidden imports (modules that PyInstaller might miss)
