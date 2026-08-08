@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <link rel="stylesheet" href="styles.css">
@@ -7,23 +7,46 @@
 </head>
 <body>
     <h1>Quick Charts</h1>
-    
-    <p>Quick Charts provide instant access to the most commonly needed diagnostic views. These pre-configured charts are designed based on real-world diagnostic experience and focus on the parameters that matter most when troubleshooting engine issues.</p>
-    
+
+    <p>Quick Charts provide instant access to the most commonly needed diagnostic views. These pre-configured charts are designed based on real-world diagnostic experience and focus on the parameters that matter most when troubleshooting engine issues. Alongside the built-in charts sits <strong>My Charts</strong> &ndash; your own saved chart templates &ndash; and both rows quietly reorder themselves over time to put the charts you actually use front and center.</p>
+
     <img src="../images/quick_charts.png" alt="Quick Charts panel" style="max-width: 1000px;">
-    
+
     <h2>Purpose of Quick Charts</h2>
     <p>Quick Charts eliminate the need to manually select PIDs and configure axes for common diagnostic scenarios. Instead of searching through hundreds of parameters, you can instantly view the most relevant data for specific diagnostic tasks.</p>
-    
+
     <div class="info">
-        <strong>Diagnostic Experience:</strong> The Quick Charts available in Snapshot Decoder are based on years of pragmatic diagnostic work experience. 
-        Each chart focuses on the specific parameters and relationships that experienced technicians look at first when diagnosing particular issues. 
+        <strong>Diagnostic Experience:</strong> The Quick Charts available in Snapshot Decoder are based on years of pragmatic diagnostic work experience.
+        Each chart focuses on the specific parameters and relationships that experienced technicians look at first when diagnosing particular issues.
         This saves time and ensures you're looking at the right data to identify problems quickly.
     </div>
-    
+
+    <h2>The Charts Panel</h2>
+    <p>The Charts panel sits at the top of the main window and is organized into two labelled rows:</p>
+
+    <table>
+        <tr><th>Row</th><th>Contents</th></tr>
+        <tr>
+            <td><strong>Quick</strong></td>
+            <td>The built-in diagnostic charts described below. When a snapshot type has reference
+                charts available, a gold <strong>Reference &#9662;</strong> button is pinned at the
+                left of this row.</td>
+        </tr>
+        <tr>
+            <td><strong>Mine</strong></td>
+            <td>Your own saved <strong>My Charts</strong> (see below), led by a green
+                <strong>&#65291;</strong> tile for saving the chart currently on the canvas.</td>
+        </tr>
+    </table>
+
+    <p>Both rows stay a fixed height no matter how many charts they hold. If there are more charts
+    than fit the width of the window, the extras fold into a trailing <strong>&#9662;</strong>
+    (&ldquo;More charts&rdquo;) menu at the end of the row instead of wrapping or scrolling &ndash;
+    click it to see everything that didn't fit.</p>
+
     <h2>Available Quick Charts</h2>
     <p>The Quick Charts available depend on the snapshot type that is loaded. Snapshot Decoder automatically detects your snapshot format and displays only the relevant charts for that engine type.</p>
-    
+
     <h3>Common Quick Charts</h3>
     <ul>
         <li><strong>Battery Voltage</strong> - Evaluate electrical system health during cranking and running</li>
@@ -34,31 +57,91 @@
         <li><strong>Cam/Crank</strong> - Monitor camshaft and crankshaft status for engine starting</li>
         <li><strong>Engine Use Data</strong> - Review operating conditions, speed bands, elevation, and exhaust temperatures</li>
     </ul>
-    
+
     <h2>Using Quick Charts</h2>
     <p>To open a Quick Chart:</p>
     <ol>
         <li>Load a snapshot file</li>
-        <li>Locate the Quick Charts panel at the top of the main window</li>
-        <li>Click on any available Quick Chart button</li>
+        <li>Locate the Charts panel at the top of the main window</li>
+        <li>Click on any available chart button in the <strong>Quick</strong> row (or the
+            <strong>&#9662;</strong> menu if it isn't showing)</li>
         <li>The chart opens immediately with pre-configured parameters and axes</li>
     </ol>
-    
-    <h2>Benefits of Quick Charts</h2>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="rearranging">Charts Rearrange Themselves By Use</h2>
+    <p>Snapshot Decoder quietly keeps a click count for every chart &ndash; built-in Quick Charts and
+    your own My Charts alike &ndash; and uses it to order each row. The chart you open most often sits
+    leftmost; charts you rarely touch drift toward the end of the row and eventually into the
+    <strong>&#9662;</strong> overflow menu. If two charts have the same click count, they fall back to
+    their normal declared order, so a brand-new install (with no usage history yet) shows every chart
+    in exactly the order it always has.</p>
+
+    <div class="tip">
+        <strong>Tip:</strong> Re-sorting only happens the <em>next</em> time a snapshot is loaded or the
+        panel is rebuilt &ndash; not the instant you click a button. That way the row you're looking at
+        never shifts out from under your cursor mid-session.
+    </div>
+
+    <p>This personalization builds up automatically the more you use Snapshot Decoder; there's nothing
+    to configure. Your most-used diagnostic views simply become the fastest ones to reach.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="mycharts">My Charts &ndash; Save Your Own Custom Charts</h2>
+    <p><strong>My Charts</strong> is the <strong>Mine</strong> row of the Charts panel, right below
+    the built-in Quick Charts. It lets you turn any combination of PIDs and axis settings you've built
+    on the chart canvas into a chart you can reopen with one click, without touching the PID Descriptions
+    panel again.</p>
+
+    <h3>Saving a Chart</h3>
+    <ol>
+        <li>Select the PIDs you want on the left/right axis and adjust the axis ranges as needed</li>
+        <li>Click the green <strong>&#65291;</strong> tile at the start of the <strong>Mine</strong> row</li>
+        <li>Enter a name for the chart in the <strong>Save as My Chart</strong> prompt</li>
+        <li>The chart appears as a new button in the <strong>Mine</strong> row and can be reopened any time</li>
+    </ol>
+    <p>Chart names must be unique &ndash; if a name is already used by a built-in chart or another My
+    Chart, you'll be asked to pick a different one. If you reopen an existing My Chart, change its PIDs
+    or axes, and click <strong>&#65291;</strong> again, Snapshot Decoder asks whether to <strong>update</strong>
+    the existing chart with your changes or <strong>save it as a new one</strong>.</p>
+
+    <h3>Managing a My Chart</h3>
+    <p>Right-click any chart button in the <strong>Mine</strong> row to <strong>Edit</strong>
+    (load it back onto the canvas so you can adjust it), <strong>Duplicate</strong> (create a copy to
+    tweak without touching the original), or <strong>Delete</strong> it. Deleting asks for confirmation
+    first, since it can't be undone.</p>
+
+    <h3>My Charts Are Specific to the Snapshot Type</h3>
+    <p>Every My Chart remembers which engine/snapshot type was loaded when you saved it &ndash; for
+    example a V1 Engine (ECU) snapshot versus a V2 Engine (ECU) snapshot, or an Engine Use Data snapshot.
+    A My Chart only appears in the <strong>Mine</strong> row when that same type of snapshot is loaded
+    again. This keeps the row relevant and uncluttered: a chart built around PIDs from one system won't
+    show up &ndash; and won't confuse you with missing data &ndash; when you're looking at a different
+    engine or system type.</p>
+
+    <div class="info">
+        <strong>Note:</strong> Your My Charts are saved on your computer and carry over between snapshot
+        files of the same type. If a My Chart references a PID that happens to be missing from the
+        specific snapshot you have open, its button is greyed out rather than hidden, so you know it
+        exists but has nothing to plot for this file.
+    </div>
+
+    <h2>Benefits of Quick Charts and My Charts</h2>
     <ul>
         <li><strong>Speed</strong> - Access critical diagnostic views with a single click</li>
         <li><strong>Consistency</strong> - Always view the same parameters for repeatable diagnostics</li>
-        <li><strong>Experience-Based</strong> - Focus on what matters based on real diagnostic scenarios</li>
+        <li><strong>Experience-Based</strong> - Built-in charts focus on what matters based on real diagnostic scenarios</li>
         <li><strong>No Configuration</strong> - Pre-configured axes and scales for optimal viewing</li>
-        <li><strong>Snapshot-Specific</strong> - Only shows charts relevant to your engine type</li>
+        <li><strong>Snapshot-Specific</strong> - Both rows only show charts relevant to your engine/snapshot type</li>
+        <li><strong>Personalized</strong> - The charts you rely on most rise to the front of each row over time</li>
+        <li><strong>Reusable</strong> - Save your own PID combinations once as a My Chart instead of rebuilding them every time</li>
     </ul>
-    
-    <h2>Customization</h2>
-    <p>While Quick Charts provide instant access to common views, you can still create custom charts using the PID Descriptions panel if you need to analyze specific parameter combinations not covered by the Quick Charts.</p>
-    
-    <div class="info">
-        <strong>Tip:</strong> Start with Quick Charts for initial diagnostics, then use custom charts to dive deeper into specific issues you identify.
+
+    <div class="tip">
+        <strong>Tip:</strong> Start with the built-in Quick Charts for initial diagnostics. When you find
+        yourself rebuilding the same custom combination of PIDs, save it as a My Chart with the
+        <strong>&#65291;</strong> tile so it's one click away next time you load that type of snapshot.
     </div>
-    
+
 </body>
 </html>
