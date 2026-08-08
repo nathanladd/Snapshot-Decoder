@@ -24,13 +24,6 @@ V2_RAIL_PRESSURE = QuickChartDef(
     primary_range=(-15, 30000),
 )
 
-V2_RAIL_GAP = QuickChartDef(
-    action_id="V2_RAIL_GAP",
-    title="Rail Pressure Error",
-    primary_pids=["Rail_pDvt"],
-    primary_range=(-50, 4000),
-)
-
 V2_IMV_CURRENT = QuickChartDef(
     action_id="V2_IMV_CURRENT",
     title="IMV Current",
@@ -125,7 +118,6 @@ V2_EGR_FLOW = QuickChartDef(
 V2_CHARTS: dict[str, QuickChartDef] = {
     "V2_BATTERY_TEST": V2_BATTERY_TEST,                   # Battery Voltage vs Engine Speed
     "V2_RAIL_PRESSURE": V2_RAIL_PRESSURE,                 # Actual vs Desired Rail Pressure
-    "V2_RAIL_GAP": V2_RAIL_GAP,                           # Rail Gap
     "V2_IMV_CURRENT": V2_IMV_CURRENT,                     # IMV Current
     "V2_TURBO": V2_TURBO,                                 # Manifold Pressure vs Atmospheric Pressure
     "V2_MISFIRE": V2_MISFIRE,                             # Misfire Counters

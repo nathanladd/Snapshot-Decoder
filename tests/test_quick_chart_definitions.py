@@ -161,7 +161,7 @@ class TestV1Charts:
 
     def test_v1_charts_count(self):
         """Verify expected number of V1 charts."""
-        assert len(V1_CHARTS) == 9
+        assert len(V1_CHARTS) == 8
 
 
 class TestV2Charts:
@@ -187,7 +187,7 @@ class TestV2Charts:
 
     def test_v2_charts_count(self):
         """Verify expected number of V2 charts."""
-        assert len(V2_CHARTS) == 10
+        assert len(V2_CHARTS) == 9
 
 
 class TestEUDCharts:

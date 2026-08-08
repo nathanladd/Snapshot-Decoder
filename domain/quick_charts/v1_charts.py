@@ -26,15 +26,6 @@ V1_RAIL_PRESSURE = QuickChartDef(
     secondary_range=(-5, 300),
 )
 
-V1_RAIL_GAP = QuickChartDef(
-    action_id="V1_RAIL_GAP",
-    title="Rail Pressure Error",
-    primary_pids=["RPC_Rail_pressure_error"],
-    primary_range=(-5000, 5000),
-    secondary_pids=["FQD_Chkd_inj_fuel_dmnd"],
-    secondary_range=(-5, 300),
-)
-
 V1_IMV_CURRENT = QuickChartDef(
     action_id="V1_IMV_CURRENT",
     title="IMV Current",
@@ -110,7 +101,6 @@ V1_TORQUE_CONTROL = QuickChartDef(
 V1_CHARTS: dict[str, QuickChartDef] = {
     "V1_BATTERY_TEST": V1_BATTERY_TEST,             # Battery Test
     "V1_RAIL_PRESSURE": V1_RAIL_PRESSURE,           # Rail Pressure
-    "V1_RAIL_GAP": V1_RAIL_GAP,                     # Rail Gap
     "V1_IMV_CURRENT": V1_IMV_CURRENT,               # IMV Current
     "V1_TURBO": V1_TURBO,                           # Manifold Pressure vs Atmospheric Pressure
     "V1_EGR_FLOW": V1_EGR_FLOW,                     # Speed density vs MAF
