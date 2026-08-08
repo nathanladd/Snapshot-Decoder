@@ -14,10 +14,11 @@
         </div>
         <div style="flex: 1; min-width: 200px;">
             <p>The <strong>Snapshot Data</strong> panel is the left-side dock that appears when you open a snapshot file.
-            It is the central hub for viewing snapshot metadata, identifying equipped systems,
-            accessing data tools, and selecting PIDs for custom charts.</p>
+            It is the central hub for viewing snapshot metadata, accessing data tools, and selecting PIDs
+            for custom charts. Equipped emission systems are shown separately in the
+            <a href="status_bar.html#systems">status bar</a>.</p>
 
-            <p>The panel is divided into four main sections described below.</p>
+            <p>The panel is divided into three main sections described below.</p>
 
             <div class="highlight">
                 <strong>Quick Tip:</strong> The Snapshot Data panel is always accessible on the left side of the main window.
@@ -34,19 +35,24 @@
     <!-- ─────────────────────────────────────────────────── -->
     <h2 id="toolbar">Snapshot Toolbar</h2>
 
-    <p>The toolbar at the top of the Snapshot Data panel provides quick access to commonly used actions.</p>
-
-    <img src="../images/snapshot_toolbar.png" alt="Snapshot toolbar" style="max-width: 260px;">
+    <p>The toolbar at the top of the Snapshot Data panel provides quick access to commonly used actions.
+    It is shown at the top of the panel overview image above.</p>
 
     <p>From left to right, the toolbar buttons are:</p>
 
     <table>
         <tr><th>Icon</th><th>Action</th><th>Description</th></tr>
         <tr>
-            <td>Folder</td>
+            <td>Folder (open)</td>
             <td><strong>Open Snapshot</strong></td>
             <td>Opens a file dialog to load a snapshot file (<code>.xls</code> or <code>.xlsx</code>).
                 Keyboard shortcut: <kbd>Ctrl</kbd>+<kbd>O</kbd>.</td>
+        </tr>
+        <tr>
+            <td>Folder (close)</td>
+            <td><strong>Close Snapshot</strong></td>
+            <td>Clears the currently loaded snapshot and resets the app to its empty state.
+                You'll be asked to confirm, since any unsaved charts or the chart cart cannot be recovered afterward.</td>
         </tr>
         <tr>
             <td>Raw Table</td>
@@ -72,6 +78,11 @@
             <td>Opens this Help browser panel. Keyboard shortcut: <kbd>F1</kbd>.</td>
         </tr>
     </table>
+
+    <div class="info">
+        <strong>Note:</strong> The <strong>Close Snapshot</strong> button is a recent addition to the toolbar,
+        giving you a quick way to return to the empty state without opening a replacement file.
+    </div>
 
     <!-- ─────────────────────────────────────────────────── -->
     <h2 id="header-info">Header Info</h2>
@@ -100,43 +111,6 @@
         V1 ECU and V1 EUD snapshots may show additional fields such as serial number and MDP success rate,
         while V2 ECU snapshots include map version and engine model details.
         Snapshot Decoder displays whatever information is available in the file.
-    </div>
-
-    <!-- ─────────────────────────────────────────────────── -->
-    <h2 id="systems">Snapshot Systems</h2>
-
-    <p>The <strong>Systems</strong> column appears to the right of the Header Info section.
-    It shows which emission-related systems and subsystems are detected in the snapshot.</p>
-
-    <img src="../images/snapshot_systems.png" alt="Snapshot systems indicators" style="max-width: 100px;">
-
-    <p>Each system is shown as a small indicator label:</p>
-    <ul>
-        <li><strong style="color: #00AA00;">Green (lit)</strong> &ndash; The system is present in the snapshot data.
-            Quick Charts related to that system are available.</li>
-        <li><strong style="color: #888;">Gray (dim)</strong> &ndash; The system is not detected.
-            Quick Charts for that system will not be offered.</li>
-    </ul>
-
-    <p>The systems monitored are:</p>
-    <table>
-        <tr><th>System</th><th>Description</th></tr>
-        <tr><td><strong>EGR</strong></td><td>Exhaust Gas Recirculation &ndash; reduces NOx emissions by lowering combustion chamber temperature using recirculated exhaust.</td></tr>
-        <tr><td><strong>DOC</strong></td><td>Diesel Oxidation Catalyst &ndash; oxidizes CO and hydrocarbons in the exhaust.</td></tr>
-        <tr><td><strong>DPF</strong></td><td>Diesel Particulate Filter &ndash; traps soot particles from the exhaust stream.</td></tr>
-        <tr><td><strong>SCR</strong></td><td>Selective Catalytic Reduction &ndash; uses DEF to reduce NOx in the exhaust.</td></tr>
-        <tr><td><strong>Air Throttle</strong></td><td>Intake air throttle valve installed in place of the EGR valve. Controls intake airflow to reduce combustion chamber temperature.</td></tr>
-        <tr><td><strong>MDP</strong></td><td>Minimum Drive Pulse &ndash; injector performance metric (V1 snapshots only).
-            When present, the indicator also displays the calculated MDP success rate percentage.
-            The color reflects health: <strong style="color:#00AA00;">green</strong> (&ge; 76%),
-            <strong style="color:#F9A825;">yellow</strong> (51&ndash;75%), or
-            <strong style="color:#C62828;">red</strong> (&le; 50%).</td></tr>
-    </table>
-
-    <div class="tip">
-        <strong>Tip:</strong> The system indicators give you an instant overview of the engine&rsquo;s emission
-        configuration before you even look at a chart. If a system you expect to see is grayed out,
-        the snapshot may not contain data for that subsystem, or it may be a different engine variant.
     </div>
 
     <!-- ─────────────────────────────────────────────────── -->

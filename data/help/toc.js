@@ -9,6 +9,7 @@
             heading: "User Interface",
             items: [
                 { title: "Snapshot Data Panel", href: "snapshot_panel.html" },
+                { title: "Status Bar",          href: "status_bar.html" },
                 { title: "Quick Charts",        href: "quick_charts.html" },
                 { title: "Chart Controls",      href: "chart_controls.html" },
                 { title: "Keyboard Shortcuts",  href: "shortcuts.html" }

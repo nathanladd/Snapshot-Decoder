@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <script src="toc.js" defer></script>
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+    <h1>Status Bar</h1>
+
+    <p>The <strong>Status Bar</strong> runs along the bottom of the main window. It shows what the
+    application is currently doing on the left, and a row of compact info chips decoded from the
+    loaded snapshot on the right.</p>
+
+    <img src="../images/status_bar.png" alt="Status bar overview" style="max-width: 100%;">
+
+    <div class="highlight">
+        <strong>Quick Tip:</strong> The status bar is always visible, even when the Snapshot Data panel
+        or other docks are hidden. It's the fastest way to confirm which file is loaded and which
+        emission systems it contains without opening any panel.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="status-message">Status Message</h2>
+
+    <p>The left side of the status bar shows a short message describing the application's current state.
+    It updates automatically as you work:</p>
+
+    <table>
+        <tr><th>Message</th><th>When it appears</th></tr>
+        <tr><td><code>Ready - Open a snapshot file to begin</code></td><td>At startup, or after closing a snapshot.</td></tr>
+        <tr><td><code>Loaded: &lt;file&gt; | Type: &lt;type&gt; | Hours: &lt;hours&gt;</code></td><td>After a snapshot file is successfully loaded.</td></tr>
+        <tr><td><code>Raw data loaded (identification failed)</code></td><td>The file was read, but Snapshot Decoder could not identify its snapshot type.</td></tr>
+        <tr><td><code>Saved My Chart '&lt;name&gt;'</code></td><td>A custom PID selection was saved as a My Chart.</td></tr>
+        <tr><td><code>Updated My Chart '&lt;name&gt;'</code></td><td>An existing My Chart was overwritten with new settings.</td></tr>
+        <tr><td><code>Error occurred</code></td><td>A file failed to load or another error was encountered. Check the Log Console for details.</td></tr>
+    </table>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="map-info">ECU Map Info</h2>
+
+    <p>The blue chips are decoded from the snapshot's <strong>ECU Map Version</strong> string
+    (for example <code>DL02_LEL04_B11_UND51E</code>). Snapshot Decoder parses the Bobcat map version
+    format to surface the engine and machine configuration at a glance:</p>
+
+    <table>
+        <tr><th>Chip</th><th>Description</th></tr>
+        <tr><td><strong>Displacement</strong></td><td>Engine displacement decoded from the base engine type &ndash; <code>1.8L</code>, <code>2.4L</code>, or <code>3.4L</code>.</td></tr>
+        <tr><td><strong>Machine Subtype</strong></td><td>The machine family the engine is calibrated for &ndash; <code>Loader</code>, <code>MX</code>, <code>Toolcat</code>, or <code>Versahandler</code>.
+            If the subtype code isn't recognized, the raw code is shown instead.</td></tr>
+        <tr><td><strong>HP Code</strong></td><td>The 2-digit relative horsepower setting from the map version (<code>00</code> is the highest setting).</td></tr>
+    </table>
+
+    <div class="info">
+        <strong>Note:</strong> These chips only appear when the ECU Map Version can be decoded.
+        Snapshots without a recognizable map version string (or an unrecognized engine/displacement
+        code) will not show the Map Info chips.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="systems">Snapshot Systems</h2>
+
+    <p>The system indicator chips show which emission-related systems and subsystems were detected
+    in the loaded snapshot.</p>
+
+    <p>Each system is shown as a small indicator label:</p>
+    <ul>
+        <li><strong style="color: #00AA00;">Green (lit)</strong> &ndash; The system is present in the snapshot data.
+            Quick Charts related to that system are available.</li>
+        <li><strong style="color: #888;">Gray (dim)</strong> &ndash; The system is not detected.
+            Quick Charts for that system will not be offered.</li>
+    </ul>
+
+    <p>The systems monitored are:</p>
+    <table>
+        <tr><th>System</th><th>Description</th></tr>
+        <tr><td><strong>EGR</strong></td><td>Exhaust Gas Recirculation &ndash; reduces NOx emissions by lowering combustion chamber temperature using recirculated exhaust.</td></tr>
+        <tr><td><strong>DOC</strong></td><td>Diesel Oxidation Catalyst &ndash; oxidizes CO and hydrocarbons in the exhaust.</td></tr>
+        <tr><td><strong>DPF</strong></td><td>Diesel Particulate Filter &ndash; traps soot particles from the exhaust stream.</td></tr>
+        <tr><td><strong>SCR</strong></td><td>Selective Catalytic Reduction &ndash; uses DEF to reduce NOx in the exhaust.
+            If shown as <strong>SCR&nbsp;*</strong>, the system was inferred from inlet/outlet temperature sensors
+            because the engine's horsepower could not be verified from the map file &ndash; hover the chip for details.
+            This fall-back method is less accurate than normal detection.</td></tr>
+        <tr><td><strong>Air Throttle</strong></td><td>Intake air throttle valve installed in place of the EGR valve. Controls intake airflow to reduce combustion chamber temperature.</td></tr>
+        <tr><td><strong>MDP</strong></td><td>Minimum Drive Pulse &ndash; injector performance metric (V1 snapshots only).
+            When present, the indicator also displays the calculated MDP success rate percentage.
+            The color reflects health: <strong style="color:#00AA00;">green</strong> (&ge; 76%),
+            <strong style="color:#F9A825;">yellow</strong> (51&ndash;75%), or
+            <strong style="color:#C62828;">red</strong> (&le; 50%).</td></tr>
+    </table>
+
+    <div class="tip">
+        <strong>Tip:</strong> The system indicators give you an instant overview of the engine&rsquo;s emission
+        configuration before you even look at a chart. If a system you expect to see is grayed out,
+        the snapshot may not contain data for that subsystem, or it may be a different engine variant.
+    </div>
+
+</body>
+</html>
