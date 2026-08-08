@@ -18,7 +18,33 @@
         <li>Navigate to your snapshot file location</li>
         <li>Select the file and click Open</li>
     </ol>
-    
+
+    <h2 id="drag-and-drop">Drag and Drop</h2>
+
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+        <div style="flex-shrink: 0;">
+            <img src="../images/drag_snapshot_here.png" alt="Drop snapshot file here prompt" style="max-width: 360px; border: 1px solid #e2e8f0; border-radius: 4px;">
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <p>You can skip the file dialog entirely by dragging a snapshot file straight onto the
+            <strong>Snapshot Data</strong> panel. This works whether the panel is showing its empty state
+            or a snapshot is already loaded.</p>
+
+            <ol>
+                <li>Drag a <code>.xls</code> or <code>.xlsx</code> file from Windows Explorer</li>
+                <li>Drop it anywhere on the Snapshot Data panel &ndash; the panel outlines in blue while
+                    a valid file is hovering over it</li>
+                <li>The file loads immediately, the same as using <strong>Open Snapshot</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="info">
+        <strong>Note:</strong> If a snapshot is already loaded, dropping a new file prompts the same
+        confirmation as opening one from the toolbar, since the current charts and chart cart cannot
+        be recovered afterward. If you drop multiple files at once, only the first valid one is opened.
+    </div>
+
     <h2>Filtering File Types</h2>
     <p>Use the file type filter dropdown to quickly find your snapshot files:</p>
     
@@ -34,14 +60,24 @@
         <li><strong>.xls</strong> - Excel workbook (default format from Bobcat Engine Analyzer)</li>
         <li><strong>.xlsx</strong> - Excel workbook (if saved in newer format)</li>
     </ul>
-    
+
+    <div class="warning">
+        <strong>Complete snapshots only:</strong> Snapshot Decoder can only correctly identify
+        <strong>complete</strong> snapshot files &ndash; a full export from Bobcat Engine Analyzer.
+        Files saved with only a selection of PIDs are likelymissing key PIDs Snapshot
+        Decoder needs to detect the snapshot type, and will fail identification. If this happens,
+        the status bar shows <code>Raw data loaded (identification failed)</code> and the file is
+        loaded as unprocessed raw data instead of a recognized snapshot &ndash; see the
+        <a href="status_bar.html#status-message">Status Bar</a> page for details.
+    </div>
+
     <h2>After Opening</h2>
     <p>Once a file is opened, Snapshot Decoder will:</p>
     <ul>
         <li>Automatically detect the snapshot type</li>
         <li>Load and parse the raw snapshot data</li>
         <li>Display header information and engine hours</li>
-        <li>Configure available Quick Charts for your snapshot type</li>
+        <li>Configure available Quick Charts and My Charts for your snapshot type</li>
     </ul>
     
 </body>

@@ -10,7 +10,7 @@
 
     <div style="display: flex; gap: 20px; align-items: flex-start;">
         <div style="flex-shrink: 0;">
-            <img src="../images/snapshot_panel.png?v=2" alt="Snapshot Data panel overview" style="max-width: 360px;">
+            <img src="../images/snapshot_panel_v2.png" alt="Snapshot Data panel overview" style="max-width: 360px;">
         </div>
         <div style="flex: 1; min-width: 200px;">
             <p>The <strong>Snapshot Data</strong> panel is the left-side dock that appears when you open a snapshot file.
@@ -87,24 +87,28 @@
     <!-- ─────────────────────────────────────────────────── -->
     <h2 id="header-info">Header Info</h2>
 
-    <p>The <strong>Header Info</strong> section displays key metadata extracted from the snapshot file.
-    This information is read directly from the snapshot header rows and varies depending on
-    the snapshot type.</p>
-
-    <img src="../images/snapshot_header_info.png" alt="Snapshot header information" style="max-width: 340px;">
-
-    <p>Common fields include:</p>
-    <ul>
-        <li><strong>File</strong> &ndash; The name of the currently loaded snapshot file.</li>
-        <li><strong>Type</strong> &ndash; The detected snapshot type (V1 ECU, V1 EUD, or V2 ECU).
-            Snapshot Decoder auto-detects this when the file is opened.</li>
-        <li><strong>Engine Model</strong> &ndash; The engine model identifier from the ECU.</li>
-        <li><strong>Map Version</strong> &ndash; The ECU calibration map version.</li>
-        <li><strong>Engine Analyzer</strong> &ndash; The BEA software version and release date that captured the snapshot.</li>
-        <li><strong>Date / Time</strong> &ndash; The date and time the snapshot was recorded.</li>
-        <li><strong>Engine Hours</strong> &ndash; Total operating hours on the engine at the time of capture.
-            Hours are automatically converted from seconds when the snapshot stores them that way.</li>
-    </ul>
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+        <div style="flex-shrink: 0;">
+            <p style="max-width: 340px;">The <strong>Header Info</strong> section displays key metadata extracted from the snapshot file.
+            This information is read directly from the snapshot header rows and varies depending on
+            the snapshot type.</p>
+            <img src="../images/snapshot_header_info.png" alt="Snapshot header information" style="max-width: 340px;">
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <p>Common fields include:</p>
+            <ul>
+                <li><strong>File</strong> &ndash; The name of the currently loaded snapshot file.</li>
+                <li><strong>Type</strong> &ndash; The detected snapshot type (V1 ECU, V1 EUD, or V2 ECU).
+                    Snapshot Decoder auto-detects this when the file is opened.</li>
+                <li><strong>Engine Model</strong> &ndash; The engine model identifier from the ECU.</li>
+                <li><strong>Map Version</strong> &ndash; The ECU calibration map version.</li>
+                <li><strong>Engine Analyzer</strong> &ndash; The BEA software version and release date that captured the snapshot.</li>
+                <li><strong>Date / Time</strong> &ndash; The date and time the snapshot was recorded.</li>
+                <li><strong>Engine Hours</strong> &ndash; Total operating hours on the engine at the time of capture.
+                    Hours are automatically converted from seconds when the snapshot stores them that way.</li>
+            </ul>
+        </div>
+    </div>
 
     <div class="info">
         <strong>Note:</strong> Not all fields appear for every snapshot type.
@@ -116,7 +120,7 @@
     <!-- ─────────────────────────────────────────────────── -->
     <h2 id="pid-selection">PID Selection</h2>
 
-    <div style="display: flex; gap: 20px; align-items: flex-start;">
+    <div style="display: flex; gap: 20px; align-items: center;">
         <div style="flex-shrink: 0;">
             <img src="../images/snapshot_pid_selection.png" alt="PID Selection list" style="max-width: 360px;">
         </div>

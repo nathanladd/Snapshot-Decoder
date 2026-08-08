@@ -9,12 +9,20 @@
     <h1>Welcome to Snapshot Decoder</h1>
     
     <p>Snapshot Decoder is a powerful diagnostic tool for analyzing Bobcat Engine Analyzer (BEA) snapshot files. 
-    It helps service technicians visualize and interpret diagnostic snapshots to quickly identify issues.</p>
+    It helps Bobcat techs visualize and interpret diagnostic snapshots to quickly identify issues.</p>
     
     <div class="highlight">
         <strong>Quick Start:</strong> Open a snapshot file using <code>File → Open Snapshot</code> or press <code>Ctrl+O</code>.
     </div>
-    
+
+    <div class="warning">
+        <strong>Save complete snapshots:</strong> When capturing a snapshot in Bobcat Engine Analyzer,
+        always save <strong>all PIDs possible</strong> &ndash; never a subset. Snapshot Decoder can only
+        correctly identify and process complete snapshot files. Files saved with only a selection of
+        PIDs are missing information Snapshot Decoder needs to detect the snapshot type, and will fail
+        identification. See <a href="opening_files.html">Opening Files</a> for details.
+    </div>
+
     <h2>Key Features</h2>
     <ul>
         <li><strong>Multi-format Support</strong> - Load V1 ECU, V1 Engine Use Data, and ECU V2 snapshot formats</li>
@@ -24,33 +32,7 @@
         <li><strong>Chart Cart</strong> - Export single or multiple charts to PDF for documentation</li>
     </ul>
 
-    <!-- ─────────────────────────────────────────────────── -->
-    <h2>Table of Contents</h2>
-
-    <h3>User Interface</h3>
-    <ul>
-        <li><a href="snapshot_panel.html">Snapshot Data Panel</a> - Toolbar, header info, and PID selection</li>
-        <li><a href="status_bar.html">Status Bar</a> - Status messages, ECU map info, and system indicators</li>
-        <li><a href="quick_charts.html">Quick Charts</a> - One-click pre-configured diagnostic chart views</li>
-        <li><a href="chart_controls.html">Chart Controls</a> - Interacting with charts (zoom, pan, cursors)</li>
-        <li><a href="shortcuts.html">Keyboard Shortcuts</a> - Speed up your workflow</li>
-    </ul>
-
-    <h3>Working with Data</h3>
-    <ul>    
-        <li><a href="opening_files.html">Opening Files</a> - How to load snapshot files</li>
-        <li><a href="raw_data_table.html">Raw Data Table</a> - Viewing original imported data</li>
-        <li><a href="cleaned_data_table.html">Cleaned Data Table</a> - Viewing processed data</li>
-    </ul>
-
-    <h3>Getting Started</h3>
-    <ul>
-        <li><a href="getting_started.html">Getting Started</a> - Learn the basics</li>
-        <li><a href="first_steps.html">First Steps</a> - Complete walkthrough</li>
-        <li><a href="seven_step.html">Seven Step Diagnostic Process</a> - Structured approach to diagnosis and repair</li>
-        <li><a href="troubleshooting.html">Troubleshooting</a> - Common issues and solutions</li>
-    </ul>
-
+   
     <!-- ─────────────────────────────────────────────────── -->
     <h2>Support</h2>
     <p>For additional support or to report issues, contact:</p>
