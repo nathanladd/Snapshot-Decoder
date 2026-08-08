@@ -208,9 +208,14 @@ class MainWindow(QMainWindow):
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self._on_open_file_dialog)
         file_menu.addAction(open_action)
-        
+
+        self._close_snapshot_action = QAction("&Close Snapshot", self)
+        self._close_snapshot_action.setShortcut("Ctrl+W")
+        self._close_snapshot_action.triggered.connect(self._on_close_snapshot)
+        file_menu.addAction(self._close_snapshot_action)
+
         file_menu.addSeparator()
-        
+
         settings_action = QAction("&Settings...", self)
         settings_action.triggered.connect(self._on_show_settings)
         file_menu.addAction(settings_action)
@@ -227,14 +232,78 @@ class MainWindow(QMainWindow):
         
         data_menu = view_menu.addMenu("Data Tables")
         
-        # Chart menu
+        # Chart menu — mirrors the chart toolbar's commands (minus Back/Forward,
+        # which only make sense as history buttons on the toolbar itself).
         chart_menu = menubar.addMenu("&Chart")
-        
-        pop_out_action = QAction("&Pop Out Chart", self)
+        toolbar = self.chart_widget.toolbar
+
+        toolbar.home_action.setText("&Home")
+        toolbar.home_action.setShortcut("Ctrl+Shift+H")
+        chart_menu.addAction(toolbar.home_action)
+
+        chart_menu.addSeparator()
+
+        toolbar.pan_action.setText("&Pan")
+        toolbar.pan_action.setShortcut("Ctrl+Shift+P")
+        chart_menu.addAction(toolbar.pan_action)
+
+        toolbar.zoom_action.setText("&Zoom")
+        toolbar.zoom_action.setShortcut("Ctrl+Shift+Z")
+        chart_menu.addAction(toolbar.zoom_action)
+
+        chart_menu.addSeparator()
+
+        toolbar.save_action.setText("&Save as PDF...")
+        toolbar.save_action.setShortcut("Ctrl+Shift+S")
+        chart_menu.addAction(toolbar.save_action)
+
+        add_to_cart_action = QAction("Add to Chart &Cart", self)
+        add_to_cart_action.setShortcut("Ctrl+Shift+C")
+        add_to_cart_action.triggered.connect(toolbar.cart_button.click)
+        chart_menu.addAction(add_to_cart_action)
+
+        chart_menu.addSeparator()
+
+        self._value_display_action = QAction("&Value Display", self)
+        self._value_display_action.setCheckable(True)
+        self._value_display_action.setShortcut("Ctrl+Shift+V")
+        self._value_display_action.triggered.connect(
+            lambda checked: toolbar.value_display_button.setChecked(checked)
+        )
+        chart_menu.addAction(self._value_display_action)
+
+        self._time_slider_action = QAction("&Time Slider", self)
+        self._time_slider_action.setCheckable(True)
+        self._time_slider_action.setShortcut("Ctrl+Shift+T")
+        self._time_slider_action.triggered.connect(
+            lambda checked: toolbar.time_slider_button.setChecked(checked)
+        )
+        chart_menu.addAction(self._time_slider_action)
+
+        self._separate_charts_action = QAction("Se&parate Charts", self)
+        self._separate_charts_action.setCheckable(True)
+        self._separate_charts_action.setShortcut("Ctrl+Shift+E")
+        self._separate_charts_action.triggered.connect(
+            lambda checked: toolbar.separate_charts_button.setChecked(checked)
+        )
+        chart_menu.addAction(self._separate_charts_action)
+
+        chart_menu.addSeparator()
+
+        self._quick_iq_menu_action = QAction("&Quick IQ", self)
+        self._quick_iq_menu_action.setShortcut("Ctrl+Shift+Q")
+        self._quick_iq_menu_action.triggered.connect(toolbar.quick_iq_button.click)
+        chart_menu.addAction(self._quick_iq_menu_action)
+
+        chart_menu.addSeparator()
+
+        pop_out_action = QAction("Pop &Out Chart", self)
         pop_out_action.setShortcut("Ctrl+P")
         pop_out_action.triggered.connect(self.pop_out_chart)
         chart_menu.addAction(pop_out_action)
-        
+
+        chart_menu.aboutToShow.connect(self._sync_chart_menu_state)
+
         raw_table_action = QAction("&Raw Data...", self)
         raw_table_action.triggered.connect(self._on_show_raw_table)
         data_menu.addAction(raw_table_action)
@@ -1057,6 +1126,15 @@ class MainWindow(QMainWindow):
             # Cart is empty - clear PID panel checkboxes
             self.pid_panel.set_pids([], [], emit_signal=False)
     
+    def _sync_chart_menu_state(self):
+        """Mirror the chart toolbar's toggle-button state onto the Chart menu."""
+        toolbar = self.chart_widget.toolbar
+        self._value_display_action.setChecked(toolbar.value_display_button.isChecked())
+        self._time_slider_action.setChecked(toolbar.time_slider_button.isChecked())
+        self._separate_charts_action.setChecked(toolbar.separate_charts_button.isChecked())
+        self._separate_charts_action.setEnabled(toolbar.separate_charts_button.isEnabled())
+        self._quick_iq_menu_action.setEnabled(toolbar.quick_iq_button.isEnabled())
+
     @Slot()
     def pop_out_chart(self):
         """Open the current chart in a separate window."""

@@ -645,6 +645,11 @@ class ChartWidget(QWidget):
         
         return limits
 
+    @property
+    def toolbar(self) -> CustomNavigationToolbar:
+        """The chart's navigation toolbar, for menus that mirror its commands."""
+        return self._toolbar
+
     def get_axis_settings(self) -> Dict:
         """Get axis settings from toolbar controls."""
         return self._toolbar.get_axis_settings()

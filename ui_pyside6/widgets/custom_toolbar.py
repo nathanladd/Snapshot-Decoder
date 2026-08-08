@@ -9,7 +9,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QToolButton, QWidget, QSizePolicy
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QAction, QIcon
 
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
 from matplotlib.backends.backend_pdf import PdfPages
@@ -268,6 +268,46 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             """)
             self._popout_btn.clicked.connect(self.pop_out_requested.emit)
             self.addWidget(self._popout_btn)
+
+    @property
+    def home_action(self) -> QAction:
+        """The matplotlib 'reset view' action (shared with the toolbar button)."""
+        return self._actions['home']
+
+    @property
+    def pan_action(self) -> QAction:
+        """The matplotlib pan-mode toggle action (shared with the toolbar button)."""
+        return self._actions['pan']
+
+    @property
+    def zoom_action(self) -> QAction:
+        """The matplotlib zoom-mode toggle action (shared with the toolbar button)."""
+        return self._actions['zoom']
+
+    @property
+    def save_action(self) -> QAction:
+        """The 'save as PDF' action (shared with the toolbar button)."""
+        return self._actions['save_figure']
+
+    @property
+    def cart_button(self) -> QToolButton:
+        return self._cart_btn
+
+    @property
+    def value_display_button(self) -> QToolButton:
+        return self._value_display_btn
+
+    @property
+    def time_slider_button(self) -> QToolButton:
+        return self._time_slider_btn
+
+    @property
+    def separate_charts_button(self) -> QToolButton:
+        return self._separate_charts_btn
+
+    @property
+    def quick_iq_button(self) -> QToolButton:
+        return self._quick_iq_btn
 
     def get_axis_settings(self) -> dict:
         """Get current axis settings from toolbar controls."""
