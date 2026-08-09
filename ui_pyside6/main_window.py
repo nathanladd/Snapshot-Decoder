@@ -70,6 +70,9 @@ class MainWindow(QMainWindow):
         self._progress_dialog: Optional[QProgressDialog] = None
         self._is_minimizing: bool = False
         self._update_checkers: list = []
+        # Index of the chart cart entry currently loaded on the canvas for
+        # editing, or None when the canvas isn't editing a cart chart.
+        self._editing_cart_index: Optional[int] = None
         
         # Setup UI and connect signals
         self._setup_ui()
@@ -493,6 +496,7 @@ class MainWindow(QMainWindow):
         self.pid_panel.clear()
         self.quick_chart_panel.clear()
         self.chart_widget.clear()
+        self._exit_cart_edit_mode()
         self.chart_cart_dock.chart_cart.clear_all()
         
         self.statusbar.showMessage("Ready - Open a snapshot file to begin")
@@ -513,7 +517,8 @@ class MainWindow(QMainWindow):
         self.pid_panel.set_snapshot(snapshot)
         self.quick_chart_panel.set_snapshot(snapshot)
         self.chart_widget.clear()
-        
+        self._exit_cart_edit_mode()
+
         self.statusbar.showMessage(
             f"Loaded: {snapshot.file_name} | "
             f"Type: {snapshot.snapshot_type.name} | "
@@ -599,6 +604,7 @@ class MainWindow(QMainWindow):
         else:
             # Clear chart when no PIDs selected
             self.chart_widget.clear()
+            self._exit_cart_edit_mode()
 
         # Update PID panel colors
         config = self.chart_widget.get_current_config()
@@ -637,6 +643,7 @@ class MainWindow(QMainWindow):
         else:
             # No PIDs selected, clear the chart
             self.chart_widget.clear()
+            self._exit_cart_edit_mode()
             # Reset PID panel colors
             self.pid_panel.update_chart_colors(None)
     
@@ -711,6 +718,7 @@ class MainWindow(QMainWindow):
         # from under the cursor.
         ChartUsageStore().record(action_id)
 
+        self._exit_cart_edit_mode()
         self.chart_widget.plot_quick_chart(self.app_controller.get_snapshot(), action_id)
 
         # Sync PID panel with quick chart's PIDs
@@ -947,6 +955,9 @@ class MainWindow(QMainWindow):
         # Listen for cart changes to sync PID panel
         self.chart_cart_dock.chart_cart.cart_changed.connect(self._on_chart_cart_changed)
 
+        # Double-clicking a cart chart loads it onto the main canvas for editing
+        self.chart_cart_dock.chart_cart.edit_requested.connect(self._on_cart_chart_edit_requested)
+
     @Slot(bool)
     def _on_toggle_log_console(self, enabled: bool):
         """Enable/disable the log console dock from the View menu."""
@@ -1001,20 +1012,60 @@ class MainWindow(QMainWindow):
         self._sync_view_menu_checks()
 
     def add_current_chart_to_cart(self):
-        """Add the current chart configuration to the chart cart."""
+        """Add the current chart to the cart, or save it back to its slot if it
+        was loaded from the cart for editing."""
         config = self.chart_widget.get_current_config()
         if not config:
             QMessageBox.information(self, "No Chart", "Create a chart first to add it to the cart.")
             return
-        
+
         config_copy = copy.deepcopy(config)
-        self.chart_cart_dock.add_config(config_copy)
+
+        if self._editing_cart_index is not None:
+            self.chart_cart_dock.chart_cart.update_config(self._editing_cart_index, config_copy)
+            log_info(f"Updated chart in cart: {config.title}")
+        else:
+            self.chart_cart_dock.add_config(config_copy)
+            log_info(f"Added chart to cart: {config.title}")
+
         if not self.chart_cart_dock.isVisible():
             self.chart_cart_dock.show()
         self.chart_cart_dock.raise_()
-        log_info(f"Added chart to cart: {config.title}")
-    
-    
+
+    def _on_cart_chart_edit_requested(self, index: int):
+        """Load a chart cart entry onto the main canvas for editing in place."""
+        configs = self.chart_cart_dock.chart_cart.configs
+        if not (0 <= index < len(configs)):
+            return
+
+        config = configs[index]
+        self.chart_widget.load_config(config)
+        self.pid_panel.set_pids(config.primary_axis.series, config.secondary_axis.series, emit_signal=False)
+        self.pid_panel.update_chart_colors(config)
+        self.chart_widget.update_axis_controls(
+            primary_auto=config.primary_axis.auto_scale,
+            primary_min=config.primary_axis.min_value,
+            primary_max=config.primary_axis.max_value,
+            secondary_auto=config.secondary_axis.auto_scale,
+            secondary_min=config.secondary_axis.min_value,
+            secondary_max=config.secondary_axis.max_value,
+        )
+
+        self._editing_cart_index = index
+        self.chart_widget.toolbar.set_cart_button_save_mode(True)
+
+        if not self.chart_cart_dock.isVisible():
+            self.chart_cart_dock.show()
+        self.chart_cart_dock.raise_()
+        log_info(f"Loaded cart chart for editing: {config.title}")
+
+    def _exit_cart_edit_mode(self):
+        """Stop treating the canvas as an in-place editor for a chart cart entry."""
+        if self._editing_cart_index is not None:
+            self._editing_cart_index = None
+            self.chart_widget.toolbar.set_cart_button_save_mode(False)
+
+
     @Slot()
     def _restore_default_layout(self):
         """Reset all dock widgets to their default positions and visibility."""

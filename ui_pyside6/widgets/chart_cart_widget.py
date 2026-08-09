@@ -33,16 +33,18 @@ class ChartCartItem(QFrame):
     move_up_requested = Signal(int)
     move_down_requested = Signal(int)
     remove_requested = Signal(int)
-    
+    edit_requested = Signal(int)
+
     def __init__(self, config: ChartConfig, index: int, parent=None):
         super().__init__(parent)
         self.config = config
         self.index = index
-        
+
         # Use fixed size policy to prevent expansion
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         # Also set fixed size to prevent flow layout from expanding
         self.setFixedSize(self.CARD_WIDTH, self.CARD_HEIGHT)
+        self.setToolTip("Double-click to open and edit")
         
         self.setFrameShape(QFrame.Shape.Box)
         self.setFrameShadow(QFrame.Shadow.Raised)
@@ -162,7 +164,13 @@ class ChartCartItem(QFrame):
         btn_layout.addStretch()
         
         layout.addLayout(btn_layout)
-    
+
+    def mouseDoubleClickEvent(self, event):
+        """Request this chart be loaded onto the main canvas for editing."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.edit_requested.emit(self.index)
+        super().mouseDoubleClickEvent(event)
+
     def _render_thumbnail(self, config: ChartConfig) -> Optional[QPixmap]:
         """Render a thumbnail of the chart config as a QPixmap."""
         try:
@@ -213,8 +221,9 @@ class ChartCartItem(QFrame):
 
 class ChartCartWidget(QWidget):
     """Manages a list of chart configurations with thumbnail display."""
-    
+
     cart_changed = Signal()
+    edit_requested = Signal(int)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -318,6 +327,14 @@ class ChartCartWidget(QWidget):
             log_info(f"Chart removed from cart: {removed.title} ({len(self.configs)} remaining)")
             self._rebuild_ui()
             self.cart_changed.emit()
+
+    def update_config(self, index: int, config: ChartConfig):
+        """Replace the config at index with an edited version (from the main canvas)."""
+        if 0 <= index < len(self.configs):
+            self.configs[index] = config.clone()
+            self._rebuild_ui()
+            log_info(f"Chart cart entry updated: {self.configs[index].title}")
+            self.cart_changed.emit()
     
     def move_up(self, index: int):
         """Move config up in the list."""
@@ -364,6 +381,7 @@ class ChartCartWidget(QWidget):
             item.move_up_requested.connect(self.move_up)
             item.move_down_requested.connect(self.move_down)
             item.remove_requested.connect(self.remove_config)
+            item.edit_requested.connect(self.edit_requested.emit)
             row = i // cols
             col = i % cols
             self._grid_layout.addWidget(item, row, col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)

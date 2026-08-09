@@ -336,6 +336,13 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         """Reset toolbar axis controls to defaults."""
         self._axis_controls.clear()
 
+    def set_cart_button_save_mode(self, save_mode: bool):
+        """Switch the cart button between 'add a new cart chart' and 'save changes to this cart chart'."""
+        if save_mode:
+            self._cart_btn.setToolTip("Save changes to this cart chart")
+        else:
+            self._cart_btn.setToolTip("Add current chart to the Chart Cart")
+
     def set_separate_charts_checked(self, checked: bool):
         """Sync the stacked-subplot toggle button without emitting a change signal."""
         self._separate_charts_btn.blockSignals(True)

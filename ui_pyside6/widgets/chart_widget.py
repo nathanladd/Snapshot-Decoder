@@ -940,6 +940,12 @@ class ChartWidget(QWidget):
         # Render based on chart type
         self._render_config(config)
     
+    def load_config(self, config: ChartConfig):
+        """Render an existing ChartConfig as-is (e.g. reopening a chart cart entry for editing)."""
+        self._current_action_id = None
+        self._current_config = config.clone()
+        self._render_config(self._current_config)
+
     def get_current_config(self) -> Optional[ChartConfig]:
         """Get the current chart configuration."""
         return self._current_config
