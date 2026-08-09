@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <script src="toc.js" defer></script>
+    <link rel="icon" type="image/png" href="../images/Snapshot%20Decoder%20Icon.png">
+</head>
+<body>
+    <h1>Chart Cart</h1>
+
+    <p>The <strong>Chart Cart</strong> is a collection tray for charts. Build a chart on the main
+    canvas &ndash; a Quick Chart, a My Chart, or a custom PID selection &ndash; add it to the cart,
+    then keep going. When you're done, export every chart in the cart to a single multi-page PDF
+    in one click, complete with chain-of-custody metadata.</p>
+
+    <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+        <div style="flex-shrink: 0;">
+            <img src="../images/chart_cart.png" alt="Chart Cart panel" style="max-width: 229px;">
+        </div>
+        <div style="flex: 1; min-width: 260px;">
+            <p>The cart lives in a dockable panel on the right side of the main window (tabbed with
+            the Log Console by default). Each chart you add appears as a small card with a live
+            thumbnail, a title, and controls to reorder or remove it.</p>
+            <p>Typical use: capture several charts while working through the seven-step diagnostic
+            process, then hand a customer or service writer one PDF that documents everything you
+            looked at.</p>
+        </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="adding">Adding a Chart to the Cart</h2>
+
+    <p>Build any chart on the main canvas &ndash; a Quick Chart, a My Chart, or a custom PID
+    selection &ndash; then add it using any of these:</p>
+
+    <table>
+        <tr><th>Method</th><th>Details</th></tr>
+        <tr>
+            <td>Cart icon on the chart toolbar</td>
+            <td>Click the shopping-cart button in the chart's own toolbar. See
+                <a href="chart_controls.html#toolbar">Chart Controls</a> for the full toolbar
+                layout.</td>
+        </tr>
+        <tr>
+            <td>Menu</td>
+            <td><code>Chart &rarr; Add to Chart Cart</code></td>
+        </tr>
+        <tr>
+            <td>Keyboard shortcut</td>
+            <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> &ndash; see
+                <a href="shortcuts.html">Keyboard Shortcuts</a></td>
+        </tr>
+    </table>
+
+    <p>Each add drops a full copy of the current chart &ndash; its PIDs, axis ranges, and chart
+    type &ndash; into the cart. Later changes on the canvas don't affect charts already in the
+    cart; each card is an independent snapshot.</p>
+
+    <div class="tip">
+        <strong>Tip:</strong> Zooming, panning, or typing custom Min/Max values into the axis range
+        boxes before you add a chart to the cart locks that view in &ndash; the cart entry (and any
+        PDF made from it) keeps the exact range you were looking at instead of auto-scaling. See
+        <a href="chart_controls.html#axis-range">Axis Range Controls</a>.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="panel">The Chart Cart Panel</h2>
+
+    <p>Across the top of the panel:</p>
+
+    <table>
+        <tr><th>Control</th><th>Description</th></tr>
+        <tr>
+            <td><strong>N charts</strong></td>
+            <td>Running count of how many charts are currently in the cart.</td>
+        </tr>
+        <tr>
+            <td><strong>Export PDF</strong></td>
+            <td>Exports every chart in the cart to a single multi-page PDF. See
+                <a href="#exporting">Exporting to PDF</a> below.</td>
+        </tr>
+        <tr>
+            <td><strong>Clear</strong></td>
+            <td>Removes every chart from the cart at once. Asks for confirmation first, since it
+                can't be undone.</td>
+        </tr>
+    </table>
+
+    <p>Below that, each chart is shown as its own card:</p>
+
+    <ul>
+        <li><strong>Thumbnail</strong> &ndash; a small live preview of the chart, redrawn from its
+            saved PIDs and axis settings.</li>
+        <li><strong>Title</strong> &ndash; the chart's title, wrapping to up to two lines.</li>
+        <li><strong>&#9650; / &#9660; (Move Up / Move Down)</strong> &ndash; reorder the chart within
+            the cart. Order in the panel is the order charts appear in the exported PDF.</li>
+        <li><strong>&#10005; (Remove)</strong> &ndash; removes just that one chart from the cart.</li>
+    </ul>
+
+    <p>The panel automatically re-flows cards into more or fewer columns as you resize or float it,
+    and scrolls vertically once you have more charts than fit on screen.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="editing">Editing a Chart Already in the Cart</h2>
+
+    <p><strong>Double-click any card</strong> to load that chart back onto the main canvas for
+    editing &ndash; its PIDs are restored to the PID panel and its axis ranges to the toolbar
+    controls, exactly as they were when it was added.</p>
+
+    <p>While you're editing a cart chart this way, the cart button on the chart toolbar switches
+    from <em>Add to Cart</em> to <em>Save changes to this cart chart</em> (its tooltip updates to
+    match). Clicking it now overwrites that same card in place instead of adding a new one.</p>
+
+    <div class="note">
+        <strong>Note:</strong> You're returned to normal <em>Add to Cart</em> mode automatically
+        the moment you load a new snapshot, click a Quick Chart, or clear all selected PIDs &ndash;
+        there's no separate "cancel edit" step to remember.
+    </div>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="exporting">Exporting to PDF</h2>
+
+    <p>Click <strong>Export PDF</strong> and choose a save location. Snapshot Decoder renders one
+    page per cart chart, in the order shown in the panel, at 11&times;8.5" landscape. Every page
+    includes:</p>
+
+    <ul>
+        <li>The chart itself, redrawn at full print resolution (not just the small thumbnail)</li>
+        <li>Chain-of-custody metadata &ndash; file name, date/time, and engine hours, when available</li>
+        <li>A Snapshot Decoder version watermark</li>
+    </ul>
+
+    <p>This is the same metadata footer used by the single-chart <strong>Save as PDF</strong> export
+    on the chart toolbar &ndash; see <a href="chart_controls.html#toolbar">Chart Controls</a> &ndash;
+    but combined into one file covering every chart you collected.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2 id="managing">Managing the Panel Itself</h2>
+
+    <table>
+        <tr><th>Control</th><th>Description</th></tr>
+        <tr>
+            <td><code>View &rarr; Chart Cart</code></td>
+            <td>Toggles the Chart Cart dock's visibility from the main menu.</td>
+        </tr>
+        <tr>
+            <td>&#8599; (title bar)</td>
+            <td>Pops the panel out into its own floating window, or docks it back &ndash; the icon
+                flips to &#8600; while floating.</td>
+        </tr>
+        <tr>
+            <td>&#10005; (title bar)</td>
+            <td>Closes the dock. Reopen it with <code>View &rarr; Chart Cart</code>.</td>
+        </tr>
+    </table>
+
+    <p>The Chart Cart is tabbed with the Log Console dock by default &ndash; drag either tab to
+    rearrange them, or drag the whole panel to a different edge of the window.</p>
+
+    <!-- ─────────────────────────────────────────────────── -->
+    <h2>Cart Contents Are Not Recoverable</h2>
+
+    <p>The cart only exists in memory for the current session &ndash; it isn't written to disk.
+    It's cleared whenever:</p>
+
+    <ul>
+        <li>You open a <strong>different</strong> snapshot file while one is already loaded</li>
+        <li>You use <code>File &rarr; Close Snapshot</code></li>
+        <li>You close Snapshot Decoder</li>
+    </ul>
+
+    <p>Because of this, Snapshot Decoder always asks for confirmation before opening a new file or
+    closing the current one whenever a snapshot is loaded, warning that current charts and the
+    chart cart "cannot be saved." Export to PDF first if you want to keep what's in the cart.</p>
+
+    <div class="tip">
+        <strong>Quick Tip:</strong> Use the Chart Cart to build a complete diagnostic record as you
+        work through the <a href="seven_step.html">Seven Step Diagnostic Process</a> &ndash; add a
+        chart at each relevant step, then export one PDF that walks through your whole
+        investigation.
+    </div>
+
+</body>
+</html>

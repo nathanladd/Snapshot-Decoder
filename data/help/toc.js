@@ -12,6 +12,7 @@
                 { title: "Status Bar",          href: "status_bar.html" },
                 { title: "Quick Charts",        href: "quick_charts.html" },
                 { title: "Chart Controls",      href: "chart_controls.html" },
+                { title: "Chart Cart",          href: "chart_cart.html" },
                 { title: "Keyboard Shortcuts",  href: "shortcuts.html" }
             ]
         },

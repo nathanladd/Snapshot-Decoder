@@ -113,6 +113,7 @@ class ChartWidget(QWidget):
         self._toolbar.time_slider_changed.connect(self._on_time_slider_changed)
         self._toolbar.separate_charts_changed.connect(self._on_separate_charts_changed)
         self._toolbar.axis_settings_changed.connect(self.axis_settings_changed.emit)
+        self._toolbar.view_changed.connect(self._on_toolbar_view_changed)
         layout.addWidget(self._toolbar)
         
         # Canvas
@@ -626,6 +627,53 @@ class ChartWidget(QWidget):
             self._all_axes.append(self._ax_secondary)
         self._redraw_y_rulers()
         self._canvas.draw()
+
+    def _on_toolbar_view_changed(self, reset_to_auto: bool):
+        """Capture the view left behind by a zoom/pan/home/back/forward gesture.
+
+        The matplotlib toolbar has already applied the new limits directly to
+        the axes by the time this fires — nothing needs to be redrawn. We just
+        mirror those limits into the axis-range controls and the active config
+        so they persist to the Chart Cart / My Charts the same way a manually
+        typed range does. Skipped in "separate charts" (stacked) mode, where
+        each subplot auto-scales independently and there's no single
+        primary/secondary range to capture.
+        """
+        if self._separate_charts or self._ax is None or self._current_config is None:
+            return
+
+        config = self._current_config
+
+        if reset_to_auto:
+            config.primary_axis.auto_scale = True
+            config.primary_axis.min_value = None
+            config.primary_axis.max_value = None
+            config.secondary_axis.auto_scale = True
+            config.secondary_axis.min_value = None
+            config.secondary_axis.max_value = None
+            self._toolbar.clear_axis_controls()
+            return
+
+        p_min, p_max = (round(v, 2) for v in self._ax.get_ylim())
+        config.primary_axis.auto_scale = False
+        config.primary_axis.min_value = p_min
+        config.primary_axis.max_value = p_max
+
+        s_min = s_max = None
+        if self._ax_secondary is not None:
+            s_min, s_max = (round(v, 2) for v in self._ax_secondary.get_ylim())
+            config.secondary_axis.auto_scale = False
+            config.secondary_axis.min_value = s_min
+            config.secondary_axis.max_value = s_max
+
+        self._toolbar.update_axis_controls_from_config(
+            primary_auto=False,
+            primary_min=p_min,
+            primary_max=p_max,
+            secondary_auto=config.secondary_axis.auto_scale,
+            secondary_min=s_min,
+            secondary_max=s_max,
+        )
 
     def get_current_axis_limits(self) -> Optional[Dict[str, float]]:
         """Get the current axis limits from the rendered chart."""

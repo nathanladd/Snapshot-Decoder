@@ -50,7 +50,12 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
     # Signal emitted when axis controls are changed
     axis_settings_changed = Signal()
-    
+
+    # Signal emitted after a zoom/pan/home/back/forward gesture completes.
+    # Payload is True when the gesture restored the original (auto) view
+    # (Home), False when it left the axes at a specific fixed view.
+    view_changed = Signal(bool)
+
     def __init__(self, canvas, parent, *, coordinates=False, chart_config: Optional[ChartConfig] = None, show_popout=True):
         """
         Initialize the custom toolbar.
@@ -268,6 +273,31 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             """)
             self._popout_btn.clicked.connect(self.pop_out_requested.emit)
             self.addWidget(self._popout_btn)
+
+    def push_current(self):
+        """Push the current view onto matplotlib's nav stack.
+
+        This is the base class's own hook for "a zoom or pan gesture just
+        finished" (release_zoom/release_pan both call it once the axes limits
+        have been updated). Piggyback on it to tell listeners the view moved.
+        """
+        super().push_current()
+        self.view_changed.emit(False)
+
+    def home(self, *args):
+        """Reset to the original view, then notify listeners it's back to auto."""
+        super().home(*args)
+        self.view_changed.emit(True)
+
+    def back(self, *args):
+        """Step back in the view history, then notify listeners of the new view."""
+        super().back(*args)
+        self.view_changed.emit(False)
+
+    def forward(self, *args):
+        """Step forward in the view history, then notify listeners of the new view."""
+        super().forward(*args)
+        self.view_changed.emit(False)
 
     @property
     def home_action(self) -> QAction:
