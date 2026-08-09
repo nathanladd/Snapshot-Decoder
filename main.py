@@ -7,7 +7,7 @@ import os
 import time
 from PySide6.QtWidgets import QApplication, QSplashScreen
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPixmap, QFont, QColor, QPalette
+from PySide6.QtGui import QPixmap, QFont, QColor, QPalette, QIcon
 
 from ui_pyside6 import MainWindow
 from version import APP_VERSION
@@ -34,7 +34,8 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Snapshot Decoder")
     app.setOrganizationName("Snapshot Decoder")
-    
+    app.setWindowIcon(QIcon(resource_path("data/app_images/Snapshot_Decoder_Icon.ico")))
+
     # Phase 2: Create and show splash screen
     splash_pixmap = QPixmap(resource_path("data/app_images/splash.png"))
     if splash_pixmap.isNull():

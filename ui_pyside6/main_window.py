@@ -7,6 +7,7 @@ PySide6 implementation with clean controller-based architecture.
 import os
 import copy
 import webbrowser
+from urllib.parse import quote
 from datetime import datetime
 from typing import Optional
 from uuid import uuid4
@@ -367,7 +368,13 @@ class MainWindow(QMainWindow):
         help_menu.addAction(ref_charts_action)
         
         help_menu.addSeparator()
-        
+
+        feedback_action = QAction("Send &Feedback...", self)
+        feedback_action.triggered.connect(self._on_send_feedback)
+        help_menu.addAction(feedback_action)
+
+        help_menu.addSeparator()
+
         about_action = QAction("&About", self)
         about_action.triggered.connect(self._on_show_about)
         help_menu.addAction(about_action)
@@ -904,6 +911,10 @@ class MainWindow(QMainWindow):
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         button_box.accepted.connect(dialog.accept)
+
+        feedback_button = button_box.addButton("Send Feedback...", QDialogButtonBox.ButtonRole.ActionRole)
+        feedback_button.clicked.connect(self._on_send_feedback)
+
         main_layout.addWidget(button_box)
 
         dialog.exec()
@@ -1045,6 +1056,13 @@ class MainWindow(QMainWindow):
         """Open Snapshot Decoder Home in web browser."""
         webbrowser.open("https://berrycompanies.sharepoint.com/sites/BOTRServiceSupport/Snapshot_Decoder")
     
+    @Slot()
+    def _on_send_feedback(self):
+        """Open the default mail client with a pre-filled feedback email."""
+        subject = quote(f"Snapshot Decoder v{APP_VERSION} Feedback")
+        body = quote("Please describe your feedback below:\n\n\n\n---\nApp version: " f"{APP_VERSION}")
+        webbrowser.open(f"mailto:nladd@bobcatoftherockies.com?subject={subject}&body={body}")
+
     @Slot()
     def _on_check_for_updates(self):
         self._run_update_check(silent_if_current=False)
