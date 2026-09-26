@@ -62,8 +62,6 @@ BUTTONS_BY_TYPE: dict[SnapType, list[tuple[str, str, str]]] = {
         "Throttle Valve Actual vs Desired"),
         ("Engine Load", "V2_ENGINE_LOAD",
         "Load Percent and Brake Torque"),
-        ("Torque Limits", "V2_ENGINE_TORQUE_LIMITS",
-        "Torque Limits"),
         ("EGR Flow", "V2_EGR_FLOW",
         "Mass Air Flow Sensor vs Speed Density"),
         

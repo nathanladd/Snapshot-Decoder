@@ -178,16 +178,21 @@ class TestV2Charts:
         assert chart.primary_pids == ["BattU_u"]
         assert chart.primary_range == (0, 18)
 
-    def test_v2_torque_limits_has_digit_labels(self):
-        """Test V2 torque limits chart has digit labels for parsing."""
-        chart = V2_CHARTS["V2_ENGINE_TORQUE_LIMITS"]
-        assert chart.chart_type == "status"
-        assert chart.source_column == "CoETS_stCurrLimActive"
-        assert len(chart.digit_labels) == 15
+    def test_v2_has_no_torque_limits_chart_until_flags_confirmed(self):
+        """Pulled 2026-09-26: CoETS_stCurrLimActive is an apostrophe then 16
+        flag digits, and the 15 labels were read from the apostrophe on, so
+        every flag carried its neighbour's name. Back once Bosch confirms
+        which digit is which limit."""
+        from domain.constants import BUTTONS_BY_TYPE
+        from domain.snaptypes import SnapType
+
+        assert "V2_ENGINE_TORQUE_LIMITS" not in V2_CHARTS
+        labels = [label for label, _, _ in BUTTONS_BY_TYPE[SnapType.ECU_V2]]
+        assert "Torque Limits" not in labels
 
     def test_v2_charts_count(self):
         """Verify expected number of V2 charts."""
-        assert len(V2_CHARTS) == 9
+        assert len(V2_CHARTS) == 8
 
 
 class TestEUDCharts:
@@ -231,6 +236,14 @@ class TestQuickChartRegistry:
         """Verify registry contains all charts from all categories."""
         expected_count = len(V1_CHARTS) + len(V2_CHARTS) + len(EUD_CHARTS) + len(REFERENCE_CHARTS)
         assert len(QUICK_CHART_REGISTRY) == expected_count
+
+    def test_every_quick_chart_button_has_a_chart(self):
+        """A button with no chart behind it does nothing when clicked."""
+        from domain.constants import BUTTONS_BY_TYPE
+
+        for buttons in BUTTONS_BY_TYPE.values():
+            for label, action_id, _ in buttons:
+                assert action_id in QUICK_CHART_REGISTRY, f"{label} ({action_id})"
 
     def test_registry_keys_match_action_ids(self):
         """Verify registry keys match the chart action IDs."""

@@ -5,7 +5,7 @@ These are declarative definitions for charts available when
 viewing V2 ECU snapshot data.
 """
 
-from domain.quick_charts.definitions import QuickChartDef, StatusChartDef
+from domain.quick_charts.definitions import QuickChartDef
 
 
 V2_BATTERY_TEST = QuickChartDef(
@@ -63,33 +63,13 @@ V2_ENGINE_LOAD = QuickChartDef(
     secondary_range=(0, 240),
 )
 
-V2_ENGINE_TORQUE_LIMITS = StatusChartDef(
-    action_id="V2_ENGINE_TORQUE_LIMITS",
-    title="Engine Torque Limits",
-    primary_pids=[],  # PIDs are generated dynamically from source_column
-    chart_type="status",
-    show_legend=False,
-    # The source column contains a string of digits representing bit flags
-    source_column="CoETS_stCurrLimActive",
-    digit_labels=[
-        "System Error Event",
-        "Differential Protection",
-        "Engine Mechanics Protection",
-        "Smoke Limit",
-        "Not Used",
-        "Overheating",
-        "Limit Travel",
-        "Maximum Gearbox Input Torque",
-        "Injection Quantity Limitation",
-        "High Pressure Pump",
-        "Speed Limitation",
-        "Protection From Excessive Torque",
-        "Slow Path Limitation",
-        "Inner Engine Torque",
-        "Engine Protection",
-    ],
-    display_prefix="Torque Limit:",
-)
+# Engine Torque Limits (CoETS_stCurrLimActive, split into one flag per
+# digit) was pulled on 2026-09-26: the value is an apostrophe then 16
+# digits, and its 15 labels were read from the apostrophe on, so every flag
+# wore its neighbour's name. It comes back once Bosch confirms which digit
+# is which limit. The splitting itself (StatusChartDef's source_column and
+# digit_labels, _build_parsed_status_chart) stays for the rebuild. Notes:
+# Vault, Effort/Snapshot Decoder/Snapshot Decoder Web/Torque Limits Chart.md
 
 V2_EGR_FLOW = QuickChartDef(
     action_id="V2_EGR_FLOW",
@@ -110,7 +90,7 @@ V2_EGR_FLOW = QuickChartDef(
 # Chart Generation: Selected chart definition builds the appropriate plot
 # 💡 Example Flow:
 # User loads V2 snapshot data
-# Quick chart panel shows "Rail Pressure", "Misfire", "Torque Limits", etc.
+# Quick chart panel shows "Rail Pressure", "Misfire", "Engine Load", etc.
 # User clicks "V2_MISFIRE" → looks up in V2_CHARTS
 # Gets V2_MISFIRE definition with misfire detection PIDs
 # Creates status chart showing misfire flags
@@ -123,6 +103,5 @@ V2_CHARTS: dict[str, QuickChartDef] = {
     "V2_MISFIRE": V2_MISFIRE,                             # Misfire Counters
     "V2_THROTTLE_VALVE": V2_THROTTLE_VALVE,               # Throttle Valve Position
     "V2_ENGINE_LOAD": V2_ENGINE_LOAD,                     # Engine Load
-    "V2_ENGINE_TORQUE_LIMITS": V2_ENGINE_TORQUE_LIMITS,   # Engine Torque Limits
     "V2_EGR_FLOW": V2_EGR_FLOW,                           # EGR Flow
 }
