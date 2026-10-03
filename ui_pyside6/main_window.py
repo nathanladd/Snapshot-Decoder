@@ -12,14 +12,14 @@ from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
-from PySide6.QtCore import Qt, Signal, Slot, QEvent, QTimer
+from PySide6.QtCore import Qt, Signal, Slot, QEvent, QTimer, QUrl
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox, QProgressDialog, QSplashScreen,
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QMenuBar, QMenu, QStatusBar, QFileDialog, QLabel, QFrame, QInputDialog,
     QDialog, QDialogButtonBox
 )
-from PySide6.QtGui import QAction, QIcon, QPixmap, QFont, QColor
+from PySide6.QtGui import QAction, QIcon, QPixmap, QFont, QColor, QDesktopServices
 
 from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
@@ -27,6 +27,7 @@ from domain.user_charts import UserChartDef, UserChartStore
 from domain.chart_usage import ChartUsageStore
 from controllers.app_controller import AppController
 from version import APP_VERSION
+from utils import resource_path
 from infrastructure import get_logger, log_info, log_error, log_warning, log_debug
 from infrastructure.logging_config import set_error_signal
 
@@ -1151,13 +1152,22 @@ class MainWindow(QMainWindow):
             "https://berrycompanies.sharepoint.com/:u:/r/sites/BOTRServiceSupport/Snapshot_Decoder/SitePages/Reference-Snapshot.aspx?csf=1&web=1&e=HyLXbK"
         )
     
+    def _open_help_page(self, page: str):
+        """Open one of the help pages bundled with the app in the default browser."""
+        path = resource_path(os.path.join("data", "help", page))
+        if not os.path.exists(path):
+            log_error(f"Help page not found: {path}")
+            QMessageBox.warning(self, "Help", f"The help page {page} is missing from this install.")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
     @Slot()
     def _on_show_help_home(self):
-        webbrowser.open("https://decoder.rudi-hq.com/")
+        self._open_help_page("index.html")
 
     @Slot()
     def _on_show_seven_step(self):
-        webbrowser.open("https://decoder.rudi-hq.com/seven_step.html")
+        self._open_help_page("seven_step.html")
 
     @Slot()
     def _on_chart_cart_changed(self):
