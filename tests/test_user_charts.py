@@ -160,10 +160,10 @@ class TestTitleUniqueness:
         fresh_store.add(chart)
         assert fresh_store.is_title_available("My Custom Chart", exclude_id="USER_1")
 
-    def test_slug_matches_quick_iq_url_builder_exactly(self):
+    def test_slug_rules(self):
         from domain.quick_charts import slugify_chart_title
 
-        # Mirrors MainWindow._build_quick_iq_url's historical inline logic.
+        # Same rules as Snapshot Decoder Web's slug.ts.
         assert slugify_chart_title("EGR Flow") == "EGR-Flow"
         assert slugify_chart_title("Rail Pressure & Gap") == "Rail-Pressure-and-Gap"
         assert slugify_chart_title("A/B Test") == "A-B-Test"

@@ -23,7 +23,6 @@ from PySide6.QtGui import QAction, QIcon, QPixmap, QFont, QColor
 
 from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
-from domain.quick_charts import slugify_chart_title
 from domain.user_charts import UserChartDef, UserChartStore
 from domain.chart_usage import ChartUsageStore
 from controllers.app_controller import AppController
@@ -195,7 +194,6 @@ class MainWindow(QMainWindow):
         self.chart_widget = ChartWidget()
         self.chart_widget.add_to_cart_requested.connect(self.add_current_chart_to_cart)
         self.chart_widget.pop_out_requested.connect(self.pop_out_chart)
-        self.chart_widget.quick_iq_requested.connect(self._on_quick_iq_requested)
         self.chart_widget.axis_settings_changed.connect(self._on_axis_settings_changed)
         right_layout.addWidget(self.chart_widget, stretch=1)
         
@@ -291,13 +289,6 @@ class MainWindow(QMainWindow):
             lambda checked: toolbar.separate_charts_button.setChecked(checked)
         )
         chart_menu.addAction(self._separate_charts_action)
-
-        chart_menu.addSeparator()
-
-        self._quick_iq_menu_action = QAction("&Quick IQ", self)
-        self._quick_iq_menu_action.setShortcut("Ctrl+Shift+Q")
-        self._quick_iq_menu_action.triggered.connect(toolbar.quick_iq_button.click)
-        chart_menu.addAction(self._quick_iq_menu_action)
 
         chart_menu.addSeparator()
 
@@ -1168,25 +1159,6 @@ class MainWindow(QMainWindow):
     def _on_show_seven_step(self):
         webbrowser.open("https://decoder.rudi-hq.com/seven_step.html")
 
-    def _build_quick_iq_url(self, chart_title: str) -> str:
-        """Build a Quick IQ URL from chart title."""
-        return f"https://decoder.rudi-hq.com/quick-iq/{slugify_chart_title(chart_title)}.html"
-
-    @Slot(str)
-    def _on_quick_iq_requested(self, chart_title: str):
-        """Open Quick IQ page in the default browser."""
-        current_action_id = self.chart_widget.get_current_action_id()
-        if current_action_id and current_action_id.startswith("USER_"):
-            QMessageBox.information(self, "Quick IQ", "No Quick IQ page for custom charts.")
-            return
-
-        if not chart_title:
-            QMessageBox.information(self, "Quick IQ", "Create or select a chart first.")
-            return
-
-        url = self._build_quick_iq_url(chart_title)
-        webbrowser.open(url)
-    
     @Slot()
     def _on_chart_cart_changed(self):
         """Handle chart cart changes - sync PID panel when cart is cleared."""
@@ -1202,7 +1174,6 @@ class MainWindow(QMainWindow):
         self._time_slider_action.setChecked(toolbar.time_slider_button.isChecked())
         self._separate_charts_action.setChecked(toolbar.separate_charts_button.isChecked())
         self._separate_charts_action.setEnabled(toolbar.separate_charts_button.isEnabled())
-        self._quick_iq_menu_action.setEnabled(toolbar.quick_iq_button.isEnabled())
 
     @Slot()
     def pop_out_chart(self):
@@ -1223,7 +1194,6 @@ class MainWindow(QMainWindow):
             chart_cart=self.chart_cart_dock.chart_cart,
             separate_charts=self.chart_widget.get_separate_charts_enabled(),
         )
-        popup.quick_iq_requested.connect(self._on_quick_iq_requested)
         popup.show()
     
     @Slot()
