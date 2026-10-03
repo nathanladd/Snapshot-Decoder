@@ -1,17 +1,17 @@
 """
 Shared chart-title slugify rules.
 
-Quick IQ resolves a chart's hosted help page by slugifying its *title*
-(https://decoder.rudi-hq.com/quick-iq/{slug}.html), not by action_id. My
-Charts title-uniqueness validation must slugify with the exact same rules so
-a user title can never collide with a built-in chart's Quick IQ page.
+My Charts title-uniqueness validation compares slugs rather than raw titles,
+so "EGR Flow" and "egr-flow!" count as the same name and a user chart can't
+shadow a built-in Quick Chart. The rules match Snapshot Decoder Web's
+slug.ts, which still uses them to find a chart's hosted Quick IQ page.
 """
 
 import re
 
 
 def slugify_chart_title(title: str) -> str:
-    """Return the Quick IQ slug for a chart title."""
+    """Return the slug for a chart title."""
     slug = title.strip()
     slug = slug.replace("&", " and ")
     slug = slug.replace("/", "-")

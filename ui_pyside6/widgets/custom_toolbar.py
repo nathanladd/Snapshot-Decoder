@@ -36,9 +36,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     # Signal emitted when pop-out is requested
     pop_out_requested = Signal()
 
-    # Signal emitted when Quick IQ is requested
-    quick_iq_requested = Signal()
-    
     # Signal emitted when value display toggle changes
     value_display_changed = Signal(bool)
     
@@ -206,33 +203,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         self._separate_charts_btn.toggled.connect(self.separate_charts_changed.emit)
         self.addWidget(self._separate_charts_btn)
 
-        # Add Quick IQ button
-        self._quick_iq_btn = QToolButton(self)
-        self._quick_iq_btn.setToolTip("Open Quick IQ in your default browser")
-
-        # Load brain icon
-        from PySide6.QtCore import QSize
-        self._quick_iq_btn.setIcon(QIcon(resource_path('data/app_images/brain.png')))
-        self._quick_iq_btn.setIconSize(QSize(20, 20))
-
-        self._quick_iq_btn.setStyleSheet("""
-            QToolButton {
-                border: 1px solid #C0C0C0;
-                border-radius: 3px;
-                padding: 4px;
-                background-color: #F0F0F0;
-            }
-            QToolButton:hover {
-                background-color: #E0E0E0;
-                border: 1px solid #0078d4;
-            }
-            QToolButton:pressed {
-                background-color: #D0D0D0;
-            }
-        """)
-        self._quick_iq_btn.clicked.connect(self.quick_iq_requested.emit)
-        self.addWidget(self._quick_iq_btn)
-
         # Spacer to push axis controls to the right
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
@@ -335,10 +305,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def separate_charts_button(self) -> QToolButton:
         return self._separate_charts_btn
 
-    @property
-    def quick_iq_button(self) -> QToolButton:
-        return self._quick_iq_btn
-
     def get_axis_settings(self) -> dict:
         """Get current axis settings from toolbar controls."""
         return self._axis_controls.get_axis_settings()
@@ -382,18 +348,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def set_chart_config(self, config: Optional[ChartConfig]):
         """Update the chart configuration for PDF export."""
         self.chart_config = config
-
-        # My Charts have no hosted Quick IQ page (only built-ins do) — gate the
-        # button off so a title-slug collision can never open the wrong page.
-        is_user_chart = bool(
-            config and config.quick_chart_action_id
-            and config.quick_chart_action_id.startswith("USER_")
-        )
-        self._quick_iq_btn.setEnabled(not is_user_chart)
-        self._quick_iq_btn.setToolTip(
-            "No Quick IQ page for custom charts" if is_user_chart
-            else "Open Quick IQ in your default browser"
-        )
     
     def save_figure(self, *args):
         """Override save_figure to save as PDF with metadata."""
