@@ -900,7 +900,7 @@ class MainWindow(QMainWindow):
             "A tool for analyzing engine snapshot data.<br><br>"
             "Nathan Ladd<br>"
             "Service Trainer<br>"
-            "nladd@bobcatoftherockies.com"
+            "snapshot@rudi-hq.com"
         )
         text_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         top_layout.addWidget(text_label, stretch=1)
@@ -1112,7 +1112,7 @@ class MainWindow(QMainWindow):
         """Open the default mail client with a pre-filled feedback email."""
         subject = quote(f"Snapshot Decoder v{APP_VERSION} Feedback")
         body = quote("Please describe your feedback below:\n\n\n\n---\nApp version: " f"{APP_VERSION}")
-        webbrowser.open(f"mailto:nladd@bobcatoftherockies.com?subject={subject}&body={body}")
+        webbrowser.open(f"mailto:snapshot@rudi-hq.com?subject={subject}&body={body}")
 
     @Slot()
     def _on_check_for_updates(self):
