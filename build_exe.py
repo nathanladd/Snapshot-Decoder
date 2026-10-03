@@ -11,6 +11,7 @@ Requirements:
 import PyInstaller.__main__
 import os
 import sys
+from urllib.parse import unquote
 
 import re
 
@@ -40,7 +41,20 @@ main_script = os.path.join(script_dir, 'main.py')
 # These files will be bundled with the executable
 datas = [
     (os.path.join(script_dir, 'data/app_images'), 'data/app_images'),  # App UI images (icons, splash, logo)
+    (os.path.join(script_dir, 'data/help'), 'data/help'),  # Help pages, opened from disk by the Help menu
 ]
+
+# The help pages load their images from ../images/. Bundle just the ones
+# they reference rather than all of data/images, which also holds large
+# files nothing in the app uses.
+help_dir = os.path.join(script_dir, 'data', 'help')
+help_images = set()
+for name in os.listdir(help_dir):
+    if name.endswith(('.html', '.css', '.js')):
+        with open(os.path.join(help_dir, name), encoding='utf-8') as f:
+            help_images.update(unquote(m) for m in re.findall(r'\.\./images/([^"\')]+)', f.read()))
+for image in sorted(help_images):
+    datas.append((os.path.join(script_dir, 'data', 'images', image), 'data/images'))
 
 # Define hidden imports (modules that PyInstaller might miss)
 hidden_imports = [
