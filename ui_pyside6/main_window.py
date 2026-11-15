@@ -25,6 +25,7 @@ from domain.snapshot import Snapshot
 from domain.constants import APP_TITLE
 from domain.user_charts import UserChartDef, UserChartStore
 from domain.chart_usage import ChartUsageStore
+from infrastructure.metrics import pid_detail, track
 from controllers.app_controller import AppController
 from version import APP_VERSION
 from utils import resource_path
@@ -73,7 +74,13 @@ class MainWindow(QMainWindow):
         # Index of the chart cart entry currently loaded on the canvas for
         # editing, or None when the canvas isn't editing a cart chart.
         self._editing_cart_index: Optional[int] = None
-        
+        # Usage metrics: a hand-built chart counts 2.5 s after the PIDs
+        # stop changing, the same settle time the web app uses.
+        self._custom_chart_timer = QTimer(self)
+        self._custom_chart_timer.setSingleShot(True)
+        self._custom_chart_timer.setInterval(2500)
+        self._custom_chart_timer.timeout.connect(self._on_custom_chart_settled)
+
         # Setup UI and connect signals
         self._setup_ui()
         self._setup_menu()
@@ -607,7 +614,27 @@ class MainWindow(QMainWindow):
             self.pid_panel.update_chart_colors(None)
 
         self.my_charts.set_save_enabled(bool(primary_pids or secondary_pids))
-    
+
+        # A hand-built chart is counted once it settles, not on every tick
+        # of the PID list while it's being built.
+        if primary_pids or secondary_pids:
+            self._custom_chart_timer.start()
+        else:
+            self._custom_chart_timer.stop()
+
+    def _on_custom_chart_settled(self):
+        """Count the chart someone built by hand -- PID names only."""
+        if not self.snapshot or self.chart_widget.get_current_action_id() is not None:
+            return  # a Quick Chart or My Chart is showing; counted already
+        primary_pids = self.pid_panel.get_primary_pids()
+        secondary_pids = self.pid_panel.get_secondary_pids()
+        if not primary_pids and not secondary_pids:
+            return
+        track("custom_chart", detail={
+            **pid_detail(primary_pids, secondary_pids),
+            "count": len(primary_pids) + len(secondary_pids),
+        })
+
     @Slot(list, list)
     def _on_pid_selection_changed(self, primary_pids: list, secondary_pids: list):
         """Handle PID selection changes (alternative handler)."""
@@ -716,6 +743,16 @@ class MainWindow(QMainWindow):
         # Sync PID panel with quick chart's PIDs
         primary_pids = self.chart_widget.get_current_primary_pids()
         secondary_pids = self.chart_widget.get_current_secondary_pids()
+
+        # Built-ins and someone's own saved charts are counted apart. A My
+        # Chart's id is random, so its PIDs ride along -- as it stands now,
+        # not as first saved. A Quick Chart's PIDs are fixed by its id.
+        snap_type = self.snapshot.snapshot_type.name
+        if action_id.startswith("USER_"):
+            track("my_chart", action_id=action_id,
+                  detail={"type": snap_type, **pid_detail(primary_pids, secondary_pids)})
+        else:
+            track("quick_chart", action_id=action_id, detail={"type": snap_type})
         self.pid_panel.set_pids(primary_pids, secondary_pids, emit_signal=False)
 
         # Update PID panel colors to match quick chart
@@ -810,6 +847,13 @@ class MainWindow(QMainWindow):
         store.add(new_def)
         self.my_charts.reload_user_charts()
         self.statusbar.showMessage(f"Saved My Chart '{name}'")
+        # A chart worth saving is a stronger signal than one merely built:
+        # these are the combinations someone expects to come back to. The
+        # name stays here -- only the PIDs go.
+        track("my_chart_saved", action_id=new_def.action_id, detail={
+            "type": new_def.snapshot_type,
+            **pid_detail(primary_pids, secondary_pids),
+        })
 
     @Slot()
     def _on_show_raw_table(self):
@@ -826,6 +870,7 @@ class MainWindow(QMainWindow):
             "Raw Data"
         )
         data_table.show()
+        track("data_table_viewed", detail={"table": "raw"})
     
     @Slot()
     def _on_show_clean_table(self):
@@ -842,6 +887,7 @@ class MainWindow(QMainWindow):
             "Clean Table"
         )
         data_table.show()
+        track("data_table_viewed", detail={"table": "clean"})
     
     @Slot()
     def _on_show_chart_table(self):
@@ -872,6 +918,7 @@ class MainWindow(QMainWindow):
             "Chart Table"
         )
         data_table.show()
+        track("data_table_viewed", detail={"table": "chart"})
     
     @Slot()
     def _on_show_data_table(self):
@@ -892,7 +939,12 @@ class MainWindow(QMainWindow):
             "A tool for analyzing engine snapshot data.<br><br>"
             "Nathan Ladd<br>"
             "Service Trainer<br>"
-            "snapshot@rudi-hq.com"
+            "snapshot@rudi-hq.com<br><br>"
+            # What the usage metrics send, said plainly (infrastructure/metrics.py).
+            "<small>Snapshot Decoder sends anonymous usage counts, such as how many "
+            "snapshots are opened and which charts are used, to help improve it.<br>"
+            "Snapshot readings, file names and anything that identifies you or the "
+            "machine never leave this computer.</small>"
         )
         text_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         top_layout.addWidget(text_label, stretch=1)
@@ -1019,6 +1071,7 @@ class MainWindow(QMainWindow):
         else:
             self.chart_cart_dock.add_config(config_copy)
             log_info(f"Added chart to cart: {config.title}")
+            track("chart_to_cart", action_id=self.chart_widget.get_current_action_id())
 
         if not self.chart_cart_dock.isVisible():
             self.chart_cart_dock.show()
@@ -1250,5 +1303,6 @@ class MainWindow(QMainWindow):
                 f"Reference charts PDF saved to:\n{file_path}"
             )
             log_info(f"Reference PDF generated: {file_path}")
+            track("pdf_exported", detail={"source": "reference"})
         else:
             log_info("Reference PDF generation cancelled or failed")

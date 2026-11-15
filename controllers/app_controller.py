@@ -13,6 +13,7 @@ import time
 from domain.snapshot import Snapshot
 from controllers.snapshot_loader import SnapshotLoader
 from infrastructure import get_logger, log_file_loaded, log_file_error, log_info, log_error, log_warning
+from infrastructure.metrics import scrub_reason, track
 
 
 class AppController(QObject):
@@ -78,7 +79,22 @@ class AppController(QObject):
         """Handle successful snapshot load."""
         self.snapshot = snapshot
         log_info(f"Snapshot loaded successfully: {snapshot.snapshot_type}")
-        
+
+        # Same shapes as the web app. The type is the enum *name*
+        # ("ECU_V2"), not str(), which is the long description -- the web
+        # sends the name, and the dashboard's ECU mix groups on it.
+        loader = self.loader
+        rows = loader.record_count if loader else 0
+        track("snapshot_opened", detail={"type": snapshot.snapshot_type.name, "rows": rows})
+        # Paired with the row count so the numbers answer "how big are real
+        # field files, and how slow does that get".
+        if loader:
+            track("parse_timing", detail={
+                "rows": rows,
+                "ms": round(loader.load_seconds * 1000),
+                "bytes": loader.file_size,
+            })
+
         # Emit to UI
         self.snapshot_loaded.emit(snapshot)
     
@@ -97,6 +113,10 @@ class AppController(QObject):
         # Log error for chain of custody
         file_path = self.loader.file_path if self.loader else "unknown"
         log_file_error(file_path, error_msg)
+
+        # The error text, never the file name: one is a pipeline message,
+        # the other can name a customer or a machine.
+        track("snapshot_failed", detail={"reason": scrub_reason(error_msg, file_path)})
         
         # Emit to UI
         self.error_occurred.emit(error_msg)

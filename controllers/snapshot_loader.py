@@ -36,6 +36,10 @@ class SnapshotLoader(QThread):
         super().__init__(parent)
         self.file_path = file_path
         self._cancelled = False
+        # Filled in on success, for the usage metrics (parse_timing).
+        self.load_seconds = 0.0
+        self.file_size = 0
+        self.record_count = 0
     
     def cancel(self):
         """Request cancellation (checked between phases)."""
@@ -286,7 +290,10 @@ class SnapshotLoader(QThread):
             # Calculate load time and log success
             load_time = time.time() - start_time
             record_count = len(snapshot.snapshot) if snapshot.snapshot is not None else 0
-            
+            self.load_seconds = load_time
+            self.file_size = file_size
+            self.record_count = record_count
+
             self.progress.emit(100, "Complete")
             
             # Summary block (log_debug level)

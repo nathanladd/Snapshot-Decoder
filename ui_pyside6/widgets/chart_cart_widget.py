@@ -20,6 +20,7 @@ from domain.chart_config import ChartConfig
 from rendering.chart_renderer import ChartRenderer
 from version import APP_VERSION
 from infrastructure import log_info, log_error
+from infrastructure.metrics import track
 
 
 class ChartCartItem(QFrame):
@@ -479,6 +480,7 @@ class ChartCartWidget(QWidget):
                 f"Successfully exported {len(self.configs)} charts to:\n{filepath}"
             )
             log_info(f"Chart cart exported to PDF: {filepath}")
+            track("pdf_exported", detail={"source": "cart", "pages": len(self.configs)})
         except Exception as e:
             QMessageBox.critical(
                 self,
