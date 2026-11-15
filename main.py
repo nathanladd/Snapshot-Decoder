@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QFont, QColor, QPalette, QIcon
 
 from ui_pyside6 import MainWindow
+from infrastructure.metrics import start_metrics
 from version import APP_VERSION
 
 
@@ -121,7 +122,10 @@ def main():
     
     # Phase 4: Create main window
     window = MainWindow()
-    
+
+    # Count this launch (anonymous; built app only -- see infrastructure/metrics.py)
+    start_metrics()
+
     if splash:
         splash.showMessage(
             f"Snapshot Decoder v{APP_VERSION}\nReady!",

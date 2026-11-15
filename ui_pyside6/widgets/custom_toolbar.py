@@ -16,6 +16,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from domain.chart_config import ChartConfig
 from version import APP_VERSION
+from infrastructure.metrics import track
 from ui_pyside6.widgets.axis_controls_panel import AxisControlsPanel
 
 from utils import resource_path
@@ -201,6 +202,11 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             }
         """)
         self._separate_charts_btn.toggled.connect(self.separate_charts_changed.emit)
+        # Counted on `clicked`, not `toggled`: the button is also set from code
+        # when a chart loads, and only a person pressing it is worth counting.
+        self._separate_charts_btn.clicked.connect(
+            lambda on: track("subplots_toggled", detail={"on": on})
+        )
         self.addWidget(self._separate_charts_btn)
 
         # Spacer to push axis controls to the right
@@ -375,6 +381,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         
         try:
             self._save_as_pdf(filepath)
+            track("pdf_exported", detail={"source": "chart", "pages": 1})
             QMessageBox.information(
                 self.parent(),
                 "Export Complete",
